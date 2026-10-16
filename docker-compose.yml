@@ -1,0 +1,188 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dsip}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dsip_secret_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-dsip}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dsip} -d ${POSTGRES_DB:-dsip}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dsip
+
+  asterisk:
+    build:
+      context: ./docker/asterisk
+    volumes:
+      - asterisk_config:/var/lib/asterisk/dsip
+      - recordings:/var/spool/asterisk/recording
+      - asterisk_logs:/var/log/asterisk
+    environment:
+      ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-dsip}
+      ASTERISK_ARI_PASSWORD: ${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}
+      ASTERISK_AMI_USER: ${ASTERISK_AMI_USER:-dsip}
+      ASTERISK_AMI_PASSWORD: ${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}
+      EXTERNAL_IP: ${EXTERNAL_IP:-}
+    expose:
+      - "5060/udp"
+      - "5060/tcp"
+      - "5061/tcp"
+      - "8088"
+      - "8089"
+      - "5038"
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "5061:5061/tcp"
+      - "10000-10100:10000-10100/udp"
+    networks:
+      - dsip
+    depends_on:
+      - postgres
+
+  tts:
+    build:
+      context: ./docker/tts
+    environment:
+      TTS_ENGINE: ${TTS_ENGINE:-auto}
+      TTS_EDGE_VOICE_TR: ${TTS_EDGE_VOICE_TR:-tr-TR-EmelNeural}
+      TTS_EDGE_VOICE_EN: ${TTS_EDGE_VOICE_EN:-en-US-JennyNeural}
+    networks:
+      - dsip
+    expose:
+      - "5500"
+    # Optional host access for debugging: ports: ["5500:5500"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5500/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-dsip}:${POSTGRES_PASSWORD:-dsip_secret_change_me}@postgres:5432/${POSTGRES_DB:-dsip}
+      API_PORT: 3000
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-to-a-long-random-session-secret-32chars}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
+      PUBLIC_URL: ${PUBLIC_URL:-https://localhost}
+      EXTERNAL_IP: ${EXTERNAL_IP:-}
+      LOCAL_NETS: ${LOCAL_NETS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32}
+      SIP_DOMAIN: ${SIP_DOMAIN:-localhost}
+      SIP_WSS_URL: ${SIP_WSS_URL:-wss://localhost/asterisk-ws}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      ASTERISK_ARI_URL: http://asterisk:8088
+      ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-dsip}
+      ASTERISK_ARI_PASSWORD: ${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}
+      ASTERISK_AMI_HOST: asterisk
+      ASTERISK_AMI_PORT: 5038
+      ASTERISK_AMI_USER: ${ASTERISK_AMI_USER:-dsip}
+      ASTERISK_AMI_PASSWORD: ${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-dsip_internal_change_me}
+      ASTERISK_CONFIG_DIR: /var/lib/asterisk/dsip
+      RECORDINGS_DIR: /data/recordings
+      UPLOADS_DIR: /data/uploads
+      SECURITY_LOG_PATH: /data/logs/api-security.log
+      TTS_URL: ${TTS_URL:-http://tts:5500}
+    volumes:
+      - asterisk_config:/var/lib/asterisk/dsip
+      - recordings:/data/recordings
+      - uploads:/data/uploads
+      - api_logs:/data/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      asterisk:
+        condition: service_started
+      tts:
+        condition: service_started
+    networks:
+      - dsip
+    expose:
+      - "3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    networks:
+      - dsip
+    expose:
+      - "80"
+
+  coturn:
+    image: coturn/coturn:4.6
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        EXTRA=""
+        if [ -n "$${EXTERNAL_IP}" ]; then EXTRA="--external-ip=$${EXTERNAL_IP}"; fi
+        exec turnserver -n --log-file=stdout --listening-port=3478 --fingerprint \
+          --lt-cred-mech --user=dsip:turnpass --realm=$${TURN_REALM:-localhost} \
+          --min-port=49152 --max-port=49200 --no-cli $$EXTRA
+    environment:
+      EXTERNAL_IP: ${EXTERNAL_IP:-}
+      TURN_REALM: ${TURN_REALM:-localhost}
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "49152-49200:49152-49200/udp"
+    networks:
+      - dsip
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+      - web
+      - asterisk
+    networks:
+      - dsip
+
+  # Lab fail2ban: watches Asterisk message/security logs (host harden is separate)
+  fail2ban:
+    image: crazymax/fail2ban:1.1.0
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+    volumes:
+      - ./docker/fail2ban:/data
+      - asterisk_logs:/var/log/asterisk:ro
+      - api_logs:/var/log/dsip:ro
+    environment:
+      TZ: ${TZ:-Europe/Istanbul}
+      F2B_LOG_TARGET: STDOUT
+      F2B_LOG_LEVEL: INFO
+      # Extend ignoreip via CUSTOM (comma) if needed — jail.d already has RFC1918
+    profiles:
+      - fail2ban
+
+volumes:
+  pgdata:
+  asterisk_config:
+  asterisk_logs:
+  recordings:
+  uploads:
+  api_logs:
+
+networks:
+  dsip:
+    driver: bridge

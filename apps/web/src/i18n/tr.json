@@ -1,0 +1,167 @@
+{
+  "app": {
+    "name": "DSip",
+    "tagline": "Şirket santrali"
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "create": "Oluştur",
+    "search": "Ara",
+    "loading": "Yükleniyor…",
+    "actions": "İşlemler",
+    "status": "Durum",
+    "enabled": "Açık",
+    "disabled": "Kapalı",
+    "logout": "Çıkış",
+    "theme": "Tema",
+    "language": "Dil",
+    "refresh": "Yenile",
+    "export": "Dışa aktar",
+    "import": "İçe aktar",
+    "back": "Geri",
+    "yes": "Evet",
+    "no": "Hayır"
+  },
+  "auth": {
+    "adminLogin": "Yönetici girişi",
+    "portalLogin": "Portal girişi",
+    "email": "E-posta",
+    "password": "Şifre",
+    "extension": "Dahili",
+    "totp": "Doğrulama kodu",
+    "signIn": "Giriş yap",
+    "invalid": "Geçersiz kimlik bilgileri"
+  },
+  "nav": {
+    "dashboard": "Pano",
+    "extensions": "Dahililer",
+    "ringGroups": "Zil grupları",
+    "queues": "Kuyruklar",
+    "schedules": "Zaman planları",
+    "flows": "Menüler",
+    "trunks": "Hatlar",
+    "routes": "Rotalar",
+    "prompts": "Sesler",
+    "moh": "Bekleme müziği",
+    "devices": "Cihazlar",
+    "recordings": "Kayıtlar",
+    "cdr": "Çağrı logları",
+    "missed": "Kaçan çağrılar",
+    "reports": "Raporlar",
+    "integrations": "Entegrasyon",
+    "settings": "Ayarlar",
+    "phone": "Telefon",
+    "directory": "Rehber",
+    "myCalls": "Çağrılarım",
+    "myRecordings": "Kayıtlarım",
+    "mySettings": "Ayarlarım"
+  },
+  "dashboard": {
+    "title": "Canlı pano",
+    "activeCalls": "Aktif çağrılar",
+    "extensions": "Dahililer",
+    "asterisk": "Asterisk",
+    "today": "Bugün",
+    "tvMode": "TV modu",
+    "connected": "Bağlı",
+    "disconnected": "Bağlı değil"
+  },
+  "extensions": {
+    "title": "Dahililer",
+    "number": "Numara",
+    "name": "Ad",
+    "dnd": "DND",
+    "portal": "Portal",
+    "add": "Dahili ekle",
+    "createdPassword": "Portal şifresi (şimdi kaydedin)"
+  },
+  "trunks": {
+    "title": "SIP hatları",
+    "host": "Sunucu",
+    "add": "Hat ekle"
+  },
+  "routes": {
+    "title": "Rotalar",
+    "inbound": "Gelen",
+    "outbound": "Giden",
+    "blacklist": "Kara liste"
+  },
+  "queues": {
+    "title": "Kuyruklar",
+    "members": "Üyeler",
+    "strategy": "Strateji"
+  },
+  "schedules": {
+    "title": "Zaman planları",
+    "override": "Geçersiz kılma",
+    "auto": "Otomatik",
+    "open": "Şimdi açık",
+    "closed": "Şimdi kapalı",
+    "name": "Ad",
+    "timezone": "Saat dilimi",
+    "weekly": "Haftalık saatler",
+    "weeklyHint": "Bu aralıkların dışında plan kapalıdır. Durum: açık veya öğle.",
+    "addRange": "Aralık ekle",
+    "presetWeekdays": "Pzt–Cum 09–18 + öğle",
+    "day": "Gün",
+    "from": "Başlangıç",
+    "to": "Bitiş",
+    "status": "Durum",
+    "openHours": "Açık",
+    "lunch": "Öğle",
+    "destinations": "Hedefler",
+    "whenOpen": "Açıkken",
+    "whenLunch": "Öğle molasında",
+    "whenClosed": "Kapalıyken",
+    "whenHoliday": "Tatilde",
+    "holidays": "Tatiller",
+    "halfDay": "Yarım gün (öğlene kadar açık)",
+    "newName": "Yeni plan adı",
+    "empty": "Henüz plan yok — açık saatleri tanımlamak için oluşturun.",
+    "confirmDelete": "Bu plan silinsin mi?"
+  },
+  "flows": {
+    "title": "Çağrı akışları",
+    "designer": "Tasarımcı",
+    "publish": "Yayınla",
+    "validate": "Doğrula",
+    "simulate": "Simüle et",
+    "versions": "Sürümler"
+  },
+  "cdr": {
+    "title": "Çağrı kayıtları",
+    "caller": "Arayan",
+    "callee": "Aranan",
+    "duration": "Süre",
+    "disposition": "Sonuç"
+  },
+  "reports": {
+    "title": "Raporlar",
+    "summary": "Özet",
+    "answered": "Cevaplanan",
+    "missed": "Kaçan",
+    "avgTalk": "Ort. konuşma"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "company": "Şirket adı",
+    "retention": "Kayıt saklama (ay)",
+    "countries": "İzinli ülkeler",
+    "backup": "Yedek indir",
+    "reload": "Asterisk yenile"
+  },
+  "portal": {
+    "dial": "Ara",
+    "hangup": "Kapat",
+    "answer": "Cevapla",
+    "mute": "Sessiz",
+    "hold": "Beklet",
+    "dnd": "Rahatsız etme",
+    "connecting": "Softphone bağlanıyor…",
+    "registered": "Kayıtlı",
+    "unregistered": "Kayıtlı değil"
+  }
+}

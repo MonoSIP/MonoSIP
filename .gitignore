@@ -1,0 +1,30 @@
+node_modules
+dist
+build
+.env
+.env.*
+!.env.example
+.env.bak
+*.log
+.DS_Store
+coverage
+.turbo
+data/
+recordings/
+uploads/
+*.pem
+docker/nginx/certs/*.crt
+docker/nginx/certs/*.key
+!docker/nginx/certs/.gitkeep
+.temp_files/
+.playwright-mcp/
+apps/web/e2e/artifacts/
+
+# AI / agent tooling (prompts, memories, session dumps)
+.wrongstack/
+.cursor/
+
+# Local IDE / OS
+*.swp
+.idea/
+apps/web/tsconfig.tsbuildinfo

@@ -1,0 +1,25 @@
+{
+  "name": "dsip",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.18.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter @dsip/api --filter @dsip/web run dev",
+    "build": "pnpm -r run build",
+    "db:generate": "pnpm --filter @dsip/api run db:generate",
+    "db:migrate": "pnpm --filter @dsip/api run db:migrate",
+    "db:seed": "pnpm --filter @dsip/api run db:seed",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

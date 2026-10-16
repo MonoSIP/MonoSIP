@@ -1,0 +1,29 @@
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+bantime = 900
+findtime = 600
+maxretry = 8
+banaction = iptables-allports
+
+[asterisk-auth]
+enabled = true
+filter = asterisk
+; Asterisk often writes messages.log (sequential rotate)
+logpath = /var/log/asterisk/messages.log
+          /var/log/asterisk/messages
+          /var/log/asterisk/security
+maxretry = 8
+findtime = 600
+bantime = 900
+action = iptables-allports[name=asterisk]
+         dsip-notify[name=asterisk]
+
+[dsip-admin-login]
+enabled = true
+filter = dsip-admin
+logpath = /var/log/dsip/api-security.log
+maxretry = 8
+findtime = 600
+bantime = 900
+action = iptables-allports[name=dsip-admin]
+         dsip-notify[name=dsip-admin]

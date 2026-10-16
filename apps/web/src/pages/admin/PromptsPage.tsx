@@ -1,0 +1,369 @@
+import { useEffect, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pause, Play, Upload } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { api } from "../../lib/api";
+
+type Prompt = {
+  id: string;
+  name: string;
+  language: string;
+  ttsText: string | null;
+  filePath: string | null;
+};
+
+async function uploadPromptFile(opts: {
+  file: File;
+  name?: string;
+  language?: string;
+  ttsText?: string;
+  promptId?: string;
+}) {
+  const fd = new FormData();
+  // Fields before file so @fastify/multipart attaches them to file.fields
+  if (opts.name) fd.append("name", opts.name);
+  if (opts.language) fd.append("language", opts.language);
+  if (opts.ttsText) fd.append("ttsText", opts.ttsText);
+  fd.append("file", opts.file);
+  const url = opts.promptId
+    ? `/api/v1/admin/prompts/${opts.promptId}/upload`
+    : "/api/v1/admin/prompts/upload";
+  const res = await fetch(url, { method: "POST", body: fd, credentials: "include" });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(err.error ?? res.statusText);
+  }
+  return res.json();
+}
+
+export function PromptsPage() {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const replaceRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+  const [name, setName] = useState("");
+  const [ttsText, setTtsText] = useState("");
+  const [language, setLanguage] = useState<"en" | "tr">("tr");
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [replaceId, setReplaceId] = useState<string | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, []);
+
+  function clearBlob() {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }
+
+  async function playPrompt(id: string) {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playingId === id) {
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        void audio
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch((e) => toast.error(`Playback failed: ${(e as Error).message}`));
+      }
+      return;
+    }
+    try {
+      audio.pause();
+      clearBlob();
+      const res = await fetch(`/api/v1/admin/prompts/${id}/stream`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      if (blob.size < 64) throw new Error("Audio file is empty");
+      const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
+      audio.src = url;
+      await audio.play();
+      setPlayingId(id);
+      setIsPlaying(true);
+    } catch (e) {
+      setPlayingId(null);
+      setIsPlaying(false);
+      toast.error(`Playback failed: ${(e as Error).message}`);
+    }
+  }
+
+  const list = useQuery({
+    queryKey: ["prompts"],
+    queryFn: () => api.get<Prompt[]>("/api/v1/admin/prompts"),
+  });
+  const ttsStatus = useQuery({
+    queryKey: ["tts-status"],
+    queryFn: () =>
+      api.get<{ ok: boolean; engine?: string; error?: string }>(
+        "/api/v1/admin/tts/status",
+      ),
+    refetchInterval: 30_000,
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (audioFile) {
+        return uploadPromptFile({
+          file: audioFile,
+          name: name || audioFile.name.replace(/\.[^.]+$/, ""),
+          language,
+          ttsText: ttsText || undefined,
+        });
+      }
+      return api.post("/api/v1/admin/prompts", {
+        name,
+        language,
+        ttsText,
+        synthesize: !!ttsText.trim(),
+      });
+    },
+    onSuccess: () => {
+      toast.success(
+        audioFile
+          ? t("prompts.uploaded", { defaultValue: "Audio uploaded" })
+          : t("prompts.saved", { defaultValue: "Prompt saved" }),
+      );
+      setName("");
+      setTtsText("");
+      setAudioFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      void qc.invalidateQueries({ queryKey: ["prompts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const synthesize = useMutation({
+    mutationFn: (id: string) => api.post(`/api/v1/admin/prompts/${id}/synthesize`, {}),
+    onSuccess: () => {
+      toast.success(t("prompts.synthesized", { defaultValue: "TTS audio generated (Piper)" }));
+      void qc.invalidateQueries({ queryKey: ["prompts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const replaceAudio = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      uploadPromptFile({ file, promptId: id }),
+    onSuccess: () => {
+      toast.success(t("prompts.uploaded", { defaultValue: "Audio uploaded" }));
+      setReplaceId(null);
+      if (replaceRef.current) replaceRef.current.value = "";
+      void qc.invalidateQueries({ queryKey: ["prompts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      <audio
+        ref={audioRef}
+        className="hidden"
+        preload="auto"
+        onEnded={() => setIsPlaying(false)}
+        onPause={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
+      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-semibold">{t("nav.prompts")}</h1>
+        <p className="text-sm text-[var(--text-muted)]">
+          Piper TTS:{" "}
+          <span className={ttsStatus.data?.ok ? "badge badge-ok" : "badge badge-err"}>
+            {ttsStatus.data?.ok
+              ? t("prompts.ttsReady", { defaultValue: "ready (EN + TR)" })
+              : ttsStatus.data?.error ?? t("prompts.ttsOffline", { defaultValue: "offline" })}
+          </span>
+        </p>
+      </div>
+
+      <form
+        className="card grid gap-3 p-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!name.trim() && !audioFile) {
+            toast.error(t("prompts.nameRequired", { defaultValue: "Name is required" }));
+            return;
+          }
+          create.mutate();
+        }}
+      >
+        <input
+          className="input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t("prompts.name", { defaultValue: "Name" })}
+          required={!audioFile}
+        />
+        <label className="block text-sm text-[var(--text-muted)]">
+          {t("prompts.language", { defaultValue: "Language" })}
+          <select
+            className="input mt-1"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as "en" | "tr")}
+          >
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <textarea
+          className="input min-h-24"
+          value={ttsText}
+          onChange={(e) => setTtsText(e.target.value)}
+          placeholder={t("prompts.ttsPlaceholder", {
+            defaultValue: "Optional TTS text — or upload a WAV below",
+          })}
+        />
+
+        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-soft)] p-4">
+          <div className="mb-2 text-sm font-medium">
+            {t("prompts.uploadTitle", { defaultValue: "Audio file upload" })}
+          </div>
+          <p className="mb-3 text-xs text-[var(--text-muted)]">
+            {t("prompts.uploadHint", {
+              defaultValue: "WAV recommended (mono, 8–22 kHz). Max 25 MB. Used directly in IVR.",
+            })}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".wav,.ulaw,.alaw,.gsm,audio/wav,audio/x-wav,audio/*"
+              className="block w-full max-w-md text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[var(--bg)]"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                setAudioFile(f);
+                if (f && !name.trim()) setName(f.name.replace(/\.[^.]+$/, ""));
+              }}
+            />
+            {audioFile && (
+              <span className="text-sm text-[var(--text-muted)]">
+                {audioFile.name} ({Math.round(audioFile.size / 1024)} KB)
+                <button
+                  type="button"
+                  className="btn ml-2"
+                  onClick={() => {
+                    setAudioFile(null);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                >
+                  {t("common.clear", { defaultValue: "Clear" })}
+                </button>
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button className="btn btn-primary w-fit" type="submit" disabled={create.isPending}>
+            {audioFile
+              ? t("prompts.createWithUpload", { defaultValue: "Create with audio file" })
+              : ttsText.trim()
+                ? t("prompts.createAndSpeak", { defaultValue: "Create + generate TTS" })
+                : t("common.create")}
+          </button>
+        </div>
+      </form>
+
+      <input
+        ref={replaceRef}
+        type="file"
+        accept=".wav,.ulaw,.alaw,.gsm,audio/wav,audio/x-wav,audio/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f && replaceId) replaceAudio.mutate({ id: replaceId, file: f });
+        }}
+      />
+
+      <div className="card overflow-auto">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Lang</th>
+              <th>TTS</th>
+              <th>File</th>
+              <th>Id</th>
+              <th>{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(list.data ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={6}>—</td>
+              </tr>
+            ) : (
+              list.data?.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td>{p.language}</td>
+                  <td className="max-w-md truncate">{p.ttsText}</td>
+                  <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
+                  <td className="font-mono text-xs" title={p.id}>
+                    {p.id.slice(0, 8)}…
+                  </td>
+                  <td>
+                    <div className="flex flex-wrap gap-2">
+                      {p.filePath && (
+                        <button
+                          className={`btn ${playingId === p.id && isPlaying ? "btn-primary" : ""}`}
+                          type="button"
+                          onClick={() => void playPrompt(p.id)}
+                        >
+                          {playingId === p.id && isPlaying ? (
+                            <Pause size={16} />
+                          ) : (
+                            <Play size={16} />
+                          )}
+                          {playingId === p.id && isPlaying
+                            ? t("prompts.pause", { defaultValue: "Pause" })
+                            : t("prompts.play", { defaultValue: "Play" })}
+                        </button>
+                      )}
+                      <button
+                        className="btn"
+                        type="button"
+                        onClick={() => {
+                          setReplaceId(p.id);
+                          replaceRef.current?.click();
+                        }}
+                      >
+                        <Upload size={16} />
+                        {t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
+                      </button>
+                      <button
+                        className="btn"
+                        type="button"
+                        disabled={!p.ttsText || synthesize.isPending}
+                        onClick={() => synthesize.mutate(p.id)}
+                      >
+                        {t("prompts.generate", { defaultValue: "Generate TTS" })}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

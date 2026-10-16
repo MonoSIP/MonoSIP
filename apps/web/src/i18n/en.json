@@ -1,0 +1,167 @@
+{
+  "app": {
+    "name": "DSip",
+    "tagline": "Company PBX"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading…",
+    "actions": "Actions",
+    "status": "Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "logout": "Log out",
+    "theme": "Theme",
+    "language": "Language",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "adminLogin": "Admin sign in",
+    "portalLogin": "Portal sign in",
+    "email": "Email",
+    "password": "Password",
+    "extension": "Extension",
+    "totp": "Authenticator code",
+    "signIn": "Sign in",
+    "invalid": "Invalid credentials"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "extensions": "Extensions",
+    "ringGroups": "Ring groups",
+    "queues": "Queues",
+    "schedules": "Schedules",
+    "flows": "Menus",
+    "trunks": "Trunks",
+    "routes": "Routes",
+    "prompts": "Prompts",
+    "moh": "Music on hold",
+    "devices": "Devices",
+    "recordings": "Recordings",
+    "cdr": "Call logs",
+    "missed": "Missed calls",
+    "reports": "Reports",
+    "integrations": "Integrations",
+    "settings": "Settings",
+    "phone": "Phone",
+    "directory": "Directory",
+    "myCalls": "My calls",
+    "myRecordings": "My recordings",
+    "mySettings": "My settings"
+  },
+  "dashboard": {
+    "title": "Live dashboard",
+    "activeCalls": "Active calls",
+    "extensions": "Extensions",
+    "asterisk": "Asterisk",
+    "today": "Today",
+    "tvMode": "TV mode",
+    "connected": "Connected",
+    "disconnected": "Disconnected"
+  },
+  "extensions": {
+    "title": "Extensions",
+    "number": "Number",
+    "name": "Name",
+    "dnd": "DND",
+    "portal": "Portal",
+    "add": "Add extension",
+    "createdPassword": "Portal password (save now)"
+  },
+  "trunks": {
+    "title": "SIP trunks",
+    "host": "Host",
+    "add": "Add trunk"
+  },
+  "routes": {
+    "title": "Routes",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "blacklist": "Blacklist"
+  },
+  "queues": {
+    "title": "Queues",
+    "members": "Members",
+    "strategy": "Strategy"
+  },
+  "schedules": {
+    "title": "Schedules",
+    "override": "Override",
+    "auto": "Automatic",
+    "open": "Open now",
+    "closed": "Closed now",
+    "name": "Name",
+    "timezone": "Timezone",
+    "weekly": "Weekly hours",
+    "weeklyHint": "Outside these ranges the schedule is closed. Status: open or lunch.",
+    "addRange": "Add range",
+    "presetWeekdays": "Mon–Fri 09–18 + lunch",
+    "day": "Day",
+    "from": "From",
+    "to": "To",
+    "status": "Status",
+    "openHours": "Open",
+    "lunch": "Lunch",
+    "destinations": "Destinations",
+    "whenOpen": "When open",
+    "whenLunch": "When lunch",
+    "whenClosed": "When closed",
+    "whenHoliday": "On holiday",
+    "holidays": "Holidays",
+    "halfDay": "Half day (open until noon)",
+    "newName": "New schedule name",
+    "empty": "No schedules yet — create one to define open hours.",
+    "confirmDelete": "Delete this schedule?"
+  },
+  "flows": {
+    "title": "Call flows",
+    "designer": "Designer",
+    "publish": "Publish",
+    "validate": "Validate",
+    "simulate": "Simulate",
+    "versions": "Versions"
+  },
+  "cdr": {
+    "title": "Call detail records",
+    "caller": "Caller",
+    "callee": "Callee",
+    "duration": "Duration",
+    "disposition": "Result"
+  },
+  "reports": {
+    "title": "Reports",
+    "summary": "Summary",
+    "answered": "Answered",
+    "missed": "Missed",
+    "avgTalk": "Avg talk time"
+  },
+  "settings": {
+    "title": "Settings",
+    "company": "Company name",
+    "retention": "Recording retention (months)",
+    "countries": "Allowed countries",
+    "backup": "Download backup",
+    "reload": "Reload Asterisk"
+  },
+  "portal": {
+    "dial": "Dial",
+    "hangup": "Hang up",
+    "answer": "Answer",
+    "mute": "Mute",
+    "hold": "Hold",
+    "dnd": "Do not disturb",
+    "connecting": "Connecting softphone…",
+    "registered": "Registered",
+    "unregistered": "Not registered"
+  }
+}

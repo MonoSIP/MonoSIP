@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792024810442,
+      "tag": "0000_wakeful_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792054200000,
+      "tag": "0001_flow_extension_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792062000000,
+      "tag": "0002_ip_bans",
+      "breakpoints": true
+    }
+  ]
+}
