@@ -28,6 +28,23 @@ type Settings = {
   securityLoginBanMinutes?: number;
   blockAnonymousInbound?: boolean;
   maxOutboundPerHour?: number;
+  hostname?: string | null;
+  autoSsl?: boolean;
+  sslEmail?: string | null;
+  sslStatus?: "none" | "pending" | "ok" | "error" | null;
+  sslExpiresAt?: string | null;
+  sslLastCheckAt?: string | null;
+  sslLastError?: string | null;
+};
+
+type SslStatus = {
+  hostname: string | null;
+  autoSsl: boolean;
+  status: "none" | "pending" | "ok" | "error";
+  expiresAt: string | null;
+  lastCheckAt: string | null;
+  lastError: string | null;
+  daysRemaining: number | null;
 };
 
 type BanRow = {
@@ -67,8 +84,13 @@ export function SettingsPage() {
   const [banReason, setBanReason] = useState("");
   const [blockAnon, setBlockAnon] = useState(true);
   const [maxPerHour, setMaxPerHour] = useState(60);
+  const [hostname, setHostname] = useState("");
+  const [autoSsl, setAutoSsl] = useState(false);
+  const [sslEmail, setSslEmail] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [qr, setQr] = useState<string | null>(null);
+  const [totpSecret, setTotpSecret] = useState<string | null>(null);
+  const [otpauth, setOtpauth] = useState<string | null>(null);
 
   const settings = useQuery({
     queryKey: ["settings"],
@@ -102,6 +124,11 @@ export function SettingsPage() {
     queryFn: () =>
       api.get<{ clientIp?: string; fail2banHint?: string }>("/api/v1/admin/security/status"),
   });
+  const sslStatus = useQuery({
+    queryKey: ["ssl-status"],
+    queryFn: () => api.get<SslStatus>("/api/v1/admin/ssl/status"),
+    refetchInterval: (q) => (q.state.data?.status === "pending" ? 3000 : 30_000),
+  });
 
   useEffect(() => {
     if (settings.data) {
@@ -128,6 +155,9 @@ export function SettingsPage() {
       setLoginBanMin(settings.data.securityLoginBanMinutes ?? 15);
       setBlockAnon(settings.data.blockAnonymousInbound ?? true);
       setMaxPerHour(settings.data.maxOutboundPerHour ?? 60);
+      setHostname(settings.data.hostname ?? "");
+      setAutoSsl(settings.data.autoSsl ?? false);
+      setSslEmail(settings.data.sslEmail ?? "");
     }
   }, [settings.data]);
 
@@ -163,11 +193,15 @@ export function SettingsPage() {
         securityLoginBanMinutes: loginBanMin,
         blockAnonymousInbound: blockAnon,
         maxOutboundPerHour: maxPerHour,
+        hostname: hostname.trim() || null,
+        autoSsl,
+        sslEmail: sslEmail.trim() || null,
       }),
     onSuccess: () => {
       toast.success("Saved");
       void qc.invalidateQueries({ queryKey: ["settings"] });
       void qc.invalidateQueries({ queryKey: ["security-status"] });
+      void qc.invalidateQueries({ queryKey: ["ssl-status"] });
     },
   });
 
@@ -177,27 +211,37 @@ export function SettingsPage() {
   });
 
   async function setupTotp() {
-    const r = await api.post<{ qr: string; secret: string }>("/api/v1/admin/auth/totp/setup");
+    const r = await api.post<{ qr: string; secret: string; otpauth: string }>(
+      "/api/v1/admin/auth/totp/setup",
+    );
     setQr(r.qr);
-    toast.message("Scan QR, then enter code to enable");
+    setTotpSecret(r.secret);
+    setOtpauth(r.otpauth);
+    setTotpCode("");
+    toast.message(t("settings.totpScanHint"));
   }
 
   async function enableTotp() {
     await api.post("/api/v1/admin/auth/totp/enable", { code: totpCode });
-    toast.success("2FA enabled");
+    toast.success(t("settings.totpEnabled"));
     setQr(null);
+    setTotpSecret(null);
+    setOtpauth(null);
+    setTotpCode("");
     void qc.invalidateQueries({ queryKey: ["totp-status"] });
   }
 
   async function disableTotp() {
     if (!totpCode.trim()) {
-      toast.error("Enter current TOTP code to disable");
+      toast.error(t("settings.totpCodeRequired"));
       return;
     }
     await api.post("/api/v1/admin/auth/totp/disable", { code: totpCode });
-    toast.success("2FA disabled");
+    toast.success(t("settings.totpDisabled"));
     setTotpCode("");
     setQr(null);
+    setTotpSecret(null);
+    setOtpauth(null);
     void qc.invalidateQueries({ queryKey: ["totp-status"] });
   }
 
@@ -221,6 +265,79 @@ export function SettingsPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <h1 className="text-2xl font-semibold">{t("settings.title")}</h1>
+      <div className="card space-y-4 p-5">
+        <h2 className="font-medium">{t("settings.hostnameSection")}</h2>
+        <label className="block">
+          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.hostname")}</span>
+          <input
+            className="input font-mono"
+            value={hostname}
+            onChange={(e) => setHostname(e.target.value)}
+            placeholder="pbx.example.com"
+            autoComplete="off"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={autoSsl} onChange={(e) => setAutoSsl(e.target.checked)} />
+          {t("settings.autoSsl")}
+        </label>
+        <p className="text-xs text-[var(--text-muted)]">{t("settings.autoSslHint")}</p>
+        <label className="block">
+          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.sslEmail")}</span>
+          <input
+            className="input"
+            type="email"
+            value={sslEmail}
+            onChange={(e) => setSslEmail(e.target.value)}
+            placeholder="admin@example.com"
+            disabled={!autoSsl}
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span
+            className={`badge ${
+              sslStatus.data?.status === "ok"
+                ? "badge-ok"
+                : sslStatus.data?.status === "error"
+                  ? "badge-err"
+                  : sslStatus.data?.status === "pending"
+                    ? "badge-warn"
+                    : ""
+            }`}
+          >
+            {sslStatus.data?.status ?? settings.data?.sslStatus ?? "none"}
+          </span>
+          {sslStatus.data?.expiresAt ? (
+            <span className="text-[var(--text-muted)]">
+              {t("settings.sslExpires")}: {new Date(sslStatus.data.expiresAt).toLocaleString()}
+              {sslStatus.data.daysRemaining != null
+                ? ` (${sslStatus.data.daysRemaining}d)`
+                : ""}
+            </span>
+          ) : null}
+          {sslStatus.data?.lastError ? (
+            <span className="text-[var(--danger)] text-xs break-all">{sslStatus.data.lastError}</span>
+          ) : null}
+        </div>
+        <button
+          className="btn"
+          type="button"
+          disabled={!autoSsl || !hostname.trim()}
+          onClick={() => {
+            void api
+              .post<{ ok: boolean; error?: string; expiresAt?: string }>("/api/v1/admin/ssl/renew", {})
+              .then((r) => {
+                if (r.ok) toast.success(t("settings.sslRenewOk"));
+                else toast.error(r.error ?? "SSL failed");
+                void qc.invalidateQueries({ queryKey: ["ssl-status"] });
+                void qc.invalidateQueries({ queryKey: ["settings"] });
+              })
+              .catch((e) => toast.error((e as Error).message));
+          }}
+        >
+          {t("settings.sslRenewNow")}
+        </button>
+      </div>
       <div className="card space-y-4 p-5">
         <label className="block">
           <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.company")}</span>
@@ -535,37 +652,126 @@ export function SettingsPage() {
         </button>
       </div>
 
-      <div className="card space-y-3 p-5">
-        <h2 className="font-semibold">Two-factor authentication</h2>
-        <p className="text-sm text-[var(--text-muted)]">
-          Status: {totpStatus.data?.enabled ? "Enabled" : "Disabled"}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn" type="button" onClick={() => void setupTotp()}>
-            Setup / rotate
-          </button>
-          {(qr || totpStatus.data?.enabled) && (
-            <input
-              className="input max-w-[8rem]"
-              value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value)}
-              placeholder="Code"
-            />
-          )}
-          {qr && (
-            <>
-              <img src={qr} alt="TOTP QR" className="h-40 w-40 rounded border border-[var(--border)]" />
-              <button className="btn btn-primary" type="button" onClick={() => void enableTotp()}>
-                Enable
-              </button>
-            </>
-          )}
-          {totpStatus.data?.enabled && (
-            <button className="btn btn-danger" type="button" onClick={() => void disableTotp().catch((e) => toast.error(String(e)))}>
-              Disable 2FA
-            </button>
-          )}
+      <div className="card space-y-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">{t("settings.totpTitle")}</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{t("settings.totpBlurb")}</p>
+          </div>
+          <span className={`badge ${totpStatus.data?.enabled ? "badge-ok" : ""}`}>
+            {totpStatus.data?.enabled ? t("settings.totpOn") : t("settings.totpOff")}
+          </span>
         </div>
+
+        {!qr && (
+          <div className="flex flex-wrap gap-2">
+            <button className="btn btn-primary" type="button" onClick={() => void setupTotp()}>
+              {totpStatus.data?.enabled ? t("settings.totpRotate") : t("settings.totpSetup")}
+            </button>
+          </div>
+        )}
+
+        {qr && (
+          <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+            <div className="flex justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] p-3">
+              <img src={qr} alt="TOTP QR" className="h-44 w-44" />
+            </div>
+            <div className="space-y-3">
+              <ol className="list-decimal space-y-1 pl-5 text-sm text-[var(--text-muted)]">
+                <li>{t("settings.totpStepScan")}</li>
+                <li>{t("settings.totpStepApple")}</li>
+                <li>{t("settings.totpStepCode")}</li>
+              </ol>
+              {otpauth ? (
+                <a
+                  className="btn btn-primary inline-flex items-center gap-2 no-underline"
+                  href={otpauth}
+                  onClick={() => toast.message(t("settings.totpAppleOpened"))}
+                >
+                  {t("settings.totpAddApple")}
+                </a>
+              ) : null}
+              {totpSecret ? (
+                <div>
+                  <div className="mb-1 text-xs text-[var(--text-muted)]">{t("settings.totpManual")}</div>
+                  <code className="block break-all rounded border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 font-mono text-sm tracking-wider">
+                    {totpSecret}
+                  </code>
+                  <button
+                    className="btn mt-2"
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(totpSecret).then(
+                        () => toast.success(t("settings.totpCopied")),
+                        () => toast.error("Copy failed"),
+                      );
+                    }}
+                  >
+                    {t("settings.totpCopy")}
+                  </button>
+                </div>
+              ) : null}
+              <div className="flex flex-wrap items-end gap-2 pt-1">
+                <label className="block">
+                  <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.totpCode")}</span>
+                  <input
+                    className="input max-w-[10rem] font-mono tracking-widest"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={8}
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
+                    placeholder="000000"
+                  />
+                </label>
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  disabled={totpCode.trim().length < 6}
+                  onClick={() => void enableTotp().catch((e) => toast.error(String(e)))}
+                >
+                  {t("settings.totpEnable")}
+                </button>
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => {
+                    setQr(null);
+                    setTotpSecret(null);
+                    setOtpauth(null);
+                    setTotpCode("");
+                  }}
+                >
+                  {t("common.cancel", { defaultValue: "Cancel" })}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {totpStatus.data?.enabled && !qr ? (
+          <div className="flex flex-wrap items-end gap-2 border-t border-[var(--border)] pt-4">
+            <label className="block">
+              <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.totpCode")}</span>
+              <input
+                className="input max-w-[10rem] font-mono tracking-widest"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
+                placeholder="000000"
+              />
+            </label>
+            <button
+              className="btn btn-danger"
+              type="button"
+              onClick={() => void disableTotp().catch((e) => toast.error(String(e)))}
+            >
+              {t("settings.totpDisable")}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap gap-3">

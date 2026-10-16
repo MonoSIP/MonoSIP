@@ -186,6 +186,17 @@ export const SettingsSchema = z.object({
   recordingArchivePath: z.string().optional().nullable(),
   /** sftp://user[:pass]@host[:port]/remote/path — optional remote archive */
   recordingArchiveSftp: z.string().optional().nullable(),
+  /** Public FQDN for the panel (e.g. pbx.example.com). Used for softphone URLs + Let's Encrypt. */
+  hostname: z.string().max(253).optional().nullable(),
+  /** When true, obtain/renew Let's Encrypt certs for `hostname` and install them for nginx. */
+  autoSsl: z.boolean().default(false),
+  /** Contact email for ACME registration (defaults to admin email). */
+  sslEmail: z.string().max(254).optional().nullable(),
+  /** Last known SSL status — written by the cert job, not set by the UI directly. */
+  sslStatus: z.enum(["none", "pending", "ok", "error"]).optional().nullable(),
+  sslExpiresAt: z.string().optional().nullable(),
+  sslLastCheckAt: z.string().optional().nullable(),
+  sslLastError: z.string().optional().nullable(),
 });
 
 export const PortalLoginSchema = z.object({

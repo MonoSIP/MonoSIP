@@ -95,11 +95,14 @@ services:
       UPLOADS_DIR: /data/uploads
       SECURITY_LOG_PATH: /data/logs/api-security.log
       TTS_URL: ${TTS_URL:-http://tts:5500}
+      CERTS_DIR: /etc/nginx/certs
+      ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-}
     volumes:
       - asterisk_config:/var/lib/asterisk/dsip
       - recordings:/data/recordings
       - uploads:/data/uploads
       - api_logs:/data/logs
+      - ./docker/nginx/certs:/etc/nginx/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -143,6 +146,12 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
+    # Reload periodically so Let's Encrypt certs written by the API are picked up
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        (while true; do sleep 60; nginx -s reload 2>/dev/null || true; done) &
+        exec nginx -g 'daemon off;'
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/certs:/etc/nginx/certs:ro

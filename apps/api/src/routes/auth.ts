@@ -13,7 +13,7 @@ import {
 } from "../lib/auth.js";
 import { db } from "../db/client.js";
 import { admins } from "../db/schema.js";
-import { generateTotpSecret, totpQrDataUrl, verifyTotp } from "../lib/totp.js";
+import { generateTotpSecret, totpQrDataUrl, totpUri, verifyTotp } from "../lib/totp.js";
 import { writeAudit } from "../lib/audit.js";
 
 export async function authRoutes(app: FastifyInstance) {
@@ -79,8 +79,9 @@ export async function authRoutes(app: FastifyInstance) {
       .update(admins)
       .set({ totpSecret: secret, totpEnabled: false })
       .where(eq(admins.id, actor.id));
+    const otpauth = totpUri(actor.email, secret);
     const qr = await totpQrDataUrl(actor.email, secret);
-    return { secret, qr, otpauth: `otpauth://totp/DSip:${actor.email}?secret=${secret}&issuer=DSip` };
+    return { secret, qr, otpauth };
   });
 
   app.post("/api/v1/admin/auth/totp/enable", async (req, reply) => {

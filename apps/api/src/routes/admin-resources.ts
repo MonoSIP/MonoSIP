@@ -1832,8 +1832,15 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const actor = await admin(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;
     const body = SettingsSchema.partial().parse(req.body);
+    // Normalize blank hostname/email to null
+    if (body.hostname !== undefined) {
+      body.hostname = body.hostname?.trim() ? body.hostname.trim().toLowerCase() : null;
+    }
+    if (body.sslEmail !== undefined) {
+      body.sslEmail = body.sslEmail?.trim() ? body.sslEmail.trim() : null;
+    }
     const [row] = await db.select().from(settings).where(eq(settings.id, 1));
-    const next = { ...(row?.data as object), ...body };
+    const next = SettingsSchema.parse({ ...(row?.data as object), ...body });
     if (row) await db.update(settings).set({ data: next }).where(eq(settings.id, 1));
     else await db.insert(settings).values({ id: 1, data: next });
     await writeAudit({
@@ -1850,7 +1857,34 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     ) {
       await tryReloadAsterisk();
     }
+    // Auto-SSL: issue/renew when enabled or hostname changes
+    if (body.autoSsl === true || (next.autoSsl && body.hostname !== undefined)) {
+      void import("../lib/ssl-certs.js")
+        .then(({ issueOrRenewCertificate }) => issueOrRenewCertificate({ force: true }))
+        .catch((e) => console.warn("[ssl] issue after settings", (e as Error).message));
+    } else if (body.autoSsl === false) {
+      const cleared = SettingsSchema.parse({
+        ...next,
+        sslStatus: "none",
+        sslLastError: null,
+        sslLastCheckAt: new Date().toISOString(),
+      });
+      await db.update(settings).set({ data: cleared }).where(eq(settings.id, 1));
+      return cleared;
+    }
     return next;
+  });
+
+  app.get("/api/v1/admin/ssl/status", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { getSslStatus } = await import("../lib/ssl-certs.js");
+    return getSslStatus();
+  });
+
+  app.post("/api/v1/admin/ssl/renew", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { issueOrRenewCertificate } = await import("../lib/ssl-certs.js");
+    return issueOrRenewCertificate({ force: true });
   });
 
   // Encrypted secrets for API-node auth (never returned in plaintext after create)

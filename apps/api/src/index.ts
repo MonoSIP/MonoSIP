@@ -51,6 +51,15 @@ async function main() {
     if (!ok) return;
   });
 
+  // Let's Encrypt HTTP-01 (proxied from nginx :80) — public, no auth
+  app.get("/.well-known/acme-challenge/:token", async (req, reply) => {
+    const { getHttp01Challenge } = await import("./lib/ssl-certs.js");
+    const { token } = req.params as { token: string };
+    const body = getHttp01Challenge(token);
+    if (!body) return reply.code(404).send("not found");
+    return reply.type("text/plain").send(body);
+  });
+
   await authRoutes(app);
   await adminExtensionRoutes(app);
   await adminResourceRoutes(app);
@@ -81,6 +90,8 @@ async function main() {
   startTrunkMonitorJob();
   const { startNightlyBackupJob } = await import("./jobs/nightly-backup.js");
   startNightlyBackupJob();
+  const { startSslRenewJob } = await import("./jobs/ssl-renew.js");
+  startSslRenewJob();
 
   // Pre-generate queue position TTS (MOH ducks during announce) — non-blocking
   void import("./lib/queue-announce-tts.js")

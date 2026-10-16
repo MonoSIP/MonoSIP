@@ -252,7 +252,18 @@ describe("SettingsPage", () => {
       if (path === "/api/v1/admin/prompts") return [];
       if (path.includes("bans")) return { bans: [], memoryBans: [] };
       if (path.includes("security/status")) return { clientIp: "127.0.0.1" };
-      // DestPicker also queries this page0027s lists; an object here crashes its .map.
+      if (path.includes("/ssl/status")) {
+        return {
+          hostname: null,
+          autoSsl: false,
+          status: "none",
+          expiresAt: null,
+          lastCheckAt: null,
+          lastError: null,
+          daysRemaining: null,
+        };
+      }
+      // DestPicker also queries this page's lists; an object here crashes its .map.
       return [];
     });
   }
