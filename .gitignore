@@ -28,3 +28,4 @@ apps/web/e2e/artifacts/
 *.swp
 .idea/
 apps/web/tsconfig.tsbuildinfo
+packages/shared/tsconfig.tsbuildinfo
