@@ -3,160 +3,363 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>DSip — Company PBX</title>
+    <title>DSip — Company PBX on Docker</title>
     <meta
       name="description"
-      content="Open-source Asterisk PBX with admin panel and browser softphone. Docker Compose on your VM."
+      content="Open-source Asterisk company PBX: extensions, queues, IVR designer, browser softphone, CDR, and automatic Let's Encrypt — Docker Compose on your VM."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="noise" aria-hidden="true"></div>
+    <a class="skip" href="#main">Skip to content</a>
 
     <header class="top">
       <a class="mark" href="#top">DSip</a>
-      <nav>
-        <a href="#install">Install</a>
+      <nav aria-label="Primary">
         <a href="#features">Features</a>
-        <a href="#stack">Stack</a>
+        <a href="#softphone">Softphone</a>
+        <a href="#ops">Ops</a>
+        <a href="#install">Install</a>
         <a class="nav-cta" href="https://github.com/diggyen/DSip">GitHub</a>
       </nav>
     </header>
 
-    <main id="top">
-      <section class="hero">
-        <div class="hero-copy">
+    <main id="main">
+      <!-- Compact hero: brand + one job, not a sparse full viewport -->
+      <section class="hero" id="top">
+        <div class="hero-inner">
           <p class="brand">DSip</p>
-          <h1>Your office dial tone, on a server you control.</h1>
+          <h1>Company PBX you run yourself — Asterisk, panel, and softphone in one Compose stack.</h1>
           <p class="lede">
-            Asterisk PBX with admin panel and browser softphone — Docker Compose,
-            ~20 extensions, English UI (Turkish too).
+            Built for offices around ~20 extensions: trunks and queues, visual IVR, browser
+            softphone over WSS, CDR and recordings, hostname SSL from Settings. Default UI
+            English; Turkish available.
           </p>
           <div class="cta-row">
             <a class="btn primary" href="#install">Install with Docker</a>
+            <a class="btn ghost" href="#features">See capabilities</a>
             <a class="btn ghost" href="https://github.com/diggyen/DSip/releases/tag/v1.0.0"
-              >v1.0.0 release</a
+              >v1.0.0</a
             >
           </div>
+          <ul class="hero-meta" aria-label="At a glance">
+            <li><strong>Asterisk 22</strong> PJSIP · ARI · WebRTC</li>
+            <li><strong>Docker volumes</strong> DB &amp; recordings persist</li>
+            <li><strong>Let’s Encrypt</strong> from Admin → Settings</li>
+          </ul>
         </div>
-        <div class="hero-stage" aria-hidden="true">
-          <div class="wave">
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
-            <span></span><span></span><span></span><span></span><span></span>
+        <aside class="hero-panel" aria-label="Live call mock">
+          <div class="panel-head">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="panel-title">Portal · EXT 101</span>
           </div>
-          <div class="handset">
-            <div class="handset-ear"></div>
-            <div class="handset-body">
-              <div class="lcd">
-                <span class="lcd-line">EXT 101 · Alice</span>
-                <span class="lcd-num">0:00:00</span>
-              </div>
-              <div class="keys">
-                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-              </div>
+          <div class="panel-body">
+            <p class="status-ok">Registered · WSS</p>
+            <p class="dial">0532 111 22 33</p>
+            <div class="wave" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
             </div>
-            <div class="handset-mic"></div>
+            <div class="panel-actions">
+              <span>Mute</span><span>Hold</span><span class="end">End</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="band" id="features">
+        <header class="band-head">
+          <h2>Telephony that covers the desk</h2>
+          <p>
+            Not a hosted black box — you keep the media plane (Asterisk) and the control plane
+            (Fastify + React) on your VM. Everything below ships in the open-source stack.
+          </p>
+        </header>
+
+        <div class="feat-grid">
+          <article class="feat">
+            <div class="feat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M4 6h16M4 12h10M4 18h14" stroke-linecap="round" />
+              </svg>
+            </div>
+            <h3>Extensions</h3>
+            <p>
+              CRUD plus CSV import/export for bulk desks. Per-extension outbound CLI, call
+              permissions (local / mobile / 444 / international), server-side DND
+              (<code>*78</code>/<code>*79</code>), forwarding chains (max depth 5), voicemail,
+              directed pickup, BLF hints, and distinctive ring tones. Emergency
+              <strong>112</strong> is always allowed regardless of permission class.
+            </p>
+          </article>
+
+          <article class="feat">
+            <div class="feat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <circle cx="12" cy="12" r="8" />
+                <path d="M12 8v4l3 2" stroke-linecap="round" />
+              </svg>
+            </div>
+            <h3>Queues &amp; ring groups</h3>
+            <p>
+              Asterisk queue strategies: ringall, leastrecent, fewestcalls, rrmemory, linear,
+              random. Member penalty and wrap-up, max wait / callers, MOH class, Piper TTS for
+              position &amp; estimated hold-time, overflow destinations, and queue callback
+              (“press 1 to keep your place”). Simpler ring groups when you only need ringall or
+              linear hunt.
+            </p>
+          </article>
+
+          <article class="feat">
+            <div class="feat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M8 3v4M16 3v4M3 11h18" stroke-linecap="round" />
+              </svg>
+            </div>
+            <h3>Schedules &amp; holidays</h3>
+            <p>
+              Weekly ranges with lunch status, TR holiday pack, company-specific days, manual
+              override (open / closed / auto), and a separate destination per status. Timezone
+              default: Europe/Istanbul.
+            </p>
+          </article>
+
+          <article class="feat">
+            <div class="feat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M4 12h4l2-6 4 12 2-6h4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <h3>Trunks &amp; routes</h3>
+            <p>
+              Multi-trunk SIP providers, inbound DID / caller patterns, outbound patterns &amp;
+              permissions, blacklist, anonymous inbound block, country allowlist, daily/monthly
+              spend limits, and last-dial callback (12h) when a missed number calls back.
+            </p>
+          </article>
+
+          <article class="feat">
+            <div class="feat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+                <path d="M8 9h8M8 13h5" stroke-linecap="round" />
+              </svg>
+            </div>
+            <h3>IVR / flow designer</h3>
+            <p>
+              Visual canvas driven by Asterisk ARI — not a static dialplan file. Nodes: menu
+              (DTMF), play, dial, queue, schedule gate, HTTP API (auth, JSONPath, timeout, test),
+              TTS, name lookup, variables. Validate → publish with version lock, rollback, and
+              simulate a path before go-live.
+            </p>
+          </article>
+
+          <article class="feat">
+            <div class="feat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path
+                  d="M12 14a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3Z"
+                  stroke-linecap="round"
+                />
+                <path d="M19 11a7 7 0 0 1-14 0M12 18v3" stroke-linecap="round" />
+              </svg>
+            </div>
+            <h3>Recording &amp; CDR</h3>
+            <p>
+              MixMonitor with optional KVKK announcement, retention job, Opus convert when
+              ffmpeg is present, local/NAS/SFTP archive. CDR filters, CSV export, call timeline,
+              missed-call list with “called back” tracking.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band band-alt" id="softphone">
+        <header class="band-head">
+          <h2>Softphone &amp; desk phones</h2>
+          <p>
+            Same PBX for browser users and SIP handsets — credentials and presence from the
+            portal, provisioning for common desk brands.
+          </p>
+        </header>
+        <div class="split">
+          <div>
+            <h3>Browser softphone</h3>
+            <ul class="bullets">
+              <li>SIP.js over <code>wss://…/asterisk-ws</code> (TLS at nginx → Asterisk HTTP)</li>
+              <li>coturn TURN for off-site WebRTC when UDP is blocked</li>
+              <li>Directory &amp; presence, own calls, listen-only recordings, voicemail</li>
+              <li>Forwarding and DND from the portal without touching the desk set</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Desk &amp; provisioning</h3>
+            <ul class="bullets">
+              <li>Yealink / Fanvil / Grandstream-style MAC provisioning</li>
+              <li>QR softphone setup for quick onboarding</li>
+              <li>Point phones at <code>EXTERNAL_IP:5060</code> with portal SIP password</li>
+              <li>Prefer locking SIP/RTP to office, VPN, or trunk IPs</li>
+            </ul>
           </div>
         </div>
       </section>
 
-      <section id="install" class="band">
-        <h2>Install</h2>
-        <p class="section-lede">
-          Clone, copy env, generate lab certs, bring the stack up. Data lives in Docker
-          volumes — rebuilds keep your database and recordings.
-        </p>
-        <pre class="terminal"><code>git clone https://github.com/diggyen/DSip.git
-cd DSip
-cp .env.example .env
-./scripts/gen-certs.sh
-docker compose up --build -d
-# → https://localhost</code></pre>
-        <p class="fine">
-          Full guide:
-          <a href="https://github.com/diggyen/DSip/blob/main/docs/INSTALL.md">docs/INSTALL.md</a>
-          · VPS / phones:
-          <a href="https://github.com/diggyen/DSip/blob/main/docs/DEPLOY-VPS.md">docs/DEPLOY-VPS.md</a>
-        </p>
+      <section class="band" id="ops">
+        <header class="band-head">
+          <h2>Ops, security, SSL</h2>
+          <p>Day-two tools live in the admin panel — not a second product.</p>
+        </header>
+        <div class="ops-grid">
+          <article>
+            <h3>Live dashboard</h3>
+            <p>
+              WebSocket fan-out for active calls, queues, extensions, trunks. TV / full-screen
+              mode. Spy, whisper, and barge via ARI snoop (audited).
+            </p>
+          </article>
+          <article>
+            <h3>Reports &amp; integrations</h3>
+            <p>
+              Summary, queue, extension, IVR DTMF, quality. Daily/monthly email when SMTP is set
+              (otherwise log-only). Webhooks + API keys for originate, CDR, recordings.
+            </p>
+          </article>
+          <article>
+            <h3>Hostname &amp; auto SSL</h3>
+            <p>
+              Settings → public hostname + Automatic SSL (Let’s Encrypt HTTP-01). Certs write to
+              <code>docker/nginx/certs</code>; nginx reloads; renew checked on a schedule.
+            </p>
+          </article>
+          <article>
+            <h3>Security</h3>
+            <p>
+              Admin 2FA (TOTP, Add to Apple Passwords). IP allowlists, login flood bans, optional
+              fail2ban profile, nftables/ufw export from Settings.
+            </p>
+          </article>
+        </div>
       </section>
 
-      <section id="features" class="band band-alt">
-        <h2>Built for the desk and the browser</h2>
-        <p class="section-lede">
-          One stack for trunks, queues, IVR, softphone, and ops — not a call-center
-          suite bolted onto a host you can’t touch.
-        </p>
-        <ul class="feature-list">
-          <li>
-            <strong>Extensions & routes</strong>
-            Permissions, DND, forwarding, blacklist, emergency 112 always open.
-          </li>
-          <li>
-            <strong>Queues & schedules</strong>
-            Announce position, callback, holidays, per-status destinations.
-          </li>
-          <li>
-            <strong>IVR designer</strong>
-            Visual flows on ARI — menus, API nodes, TTS, publish & rollback.
-          </li>
-          <li>
-            <strong>Softphone + desks</strong>
-            SIP.js over WSS, coturn, provisioning QR for desk phones.
-          </li>
-          <li>
-            <strong>Live ops</strong>
-            Dashboard, spy/whisper, CDR, recordings, reports, webhooks.
-          </li>
-          <li>
-            <strong>Hostname SSL</strong>
-            Let’s Encrypt from Settings — issue, install, renew on its own.
-          </li>
-        </ul>
+      <section class="band band-alt" id="stack">
+        <header class="band-head">
+          <h2>Stack &amp; persistence</h2>
+          <p>
+            Rebuild images anytime — named volumes keep PostgreSQL, recordings, uploads, and
+            generated Asterisk config.
+          </p>
+        </header>
+        <div class="stack-table-wrap">
+          <table class="stack-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Role</th>
+                <th>Persists</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>nginx</code></td>
+                <td>TLS, ACME, reverse proxy, Asterisk WSS</td>
+                <td>certs bind mount</td>
+              </tr>
+              <tr>
+                <td><code>web</code></td>
+                <td>Admin panel + user portal (React)</td>
+                <td>—</td>
+              </tr>
+              <tr>
+                <td><code>api</code></td>
+                <td>Fastify, ARI flows, config writer, SSL client</td>
+                <td>logs volume</td>
+              </tr>
+              <tr>
+                <td><code>asterisk</code></td>
+                <td>PJSIP, ARI, AMI, WebRTC, MixMonitor</td>
+                <td>config + recordings</td>
+              </tr>
+              <tr>
+                <td><code>postgres</code></td>
+                <td>Extensions, CDR, flows, settings</td>
+                <td><code>pgdata</code></td>
+              </tr>
+              <tr>
+                <td><code>coturn</code> / <code>tts</code></td>
+                <td>TURN · Piper TTS (TR/EN)</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p class="fine">
-          Details:
+          Architecture notes:
+          <a href="https://github.com/diggyen/DSip/blob/main/docs/ARCHITECTURE.md"
+            >docs/ARCHITECTURE.md</a
+          >
+          · Full feature list:
           <a href="https://github.com/diggyen/DSip/blob/main/docs/FEATURES.md">docs/FEATURES.md</a>
         </p>
       </section>
 
-      <section id="stack" class="band">
-        <h2>Stack</h2>
-        <p class="section-lede">
-          nginx terminates TLS; Fastify drives Asterisk over ARI; Postgres holds truth;
-          volumes keep it after you rebuild images.
-        </p>
-        <div class="stack-row">
-          <span>nginx</span>
-          <span>web</span>
-          <span>api</span>
-          <span>asterisk</span>
-          <span>postgres</span>
-          <span>coturn</span>
-          <span>tts</span>
+      <section class="band" id="install">
+        <header class="band-head">
+          <h2>Install</h2>
+          <p>
+            Lab on localhost in minutes. Production: set public host / IP, strong secrets, then
+            enable Automatic SSL in Settings.
+          </p>
+        </header>
+        <pre class="terminal" tabindex="0"><code>git clone https://github.com/diggyen/DSip.git
+cd DSip
+cp .env.example .env
+chmod +x scripts/gen-certs.sh && ./scripts/gen-certs.sh
+docker compose up --build -d
+# → https://localhost   (accept self-signed warning)</code></pre>
+        <div class="install-notes">
+          <div>
+            <h3>Lab logins</h3>
+            <ul class="bullets">
+              <li>Admin: <code>admin@example.com</code> / <code>Admin123!</code></li>
+              <li>Portal: <code>101</code> / <code>portal101</code></li>
+              <li>Change passwords before any real traffic</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Don’t lose data</h3>
+            <ul class="bullets">
+              <li><code>docker compose up --build</code> keeps volumes</li>
+              <li><code>docker compose down -v</code> deletes DB &amp; recordings</li>
+              <li>Guide: <a href="https://github.com/diggyen/DSip/blob/main/docs/INSTALL.md">INSTALL.md</a></li>
+            </ul>
+          </div>
         </div>
-        <p class="fine">
-          Diagram:
-          <a href="https://github.com/diggyen/DSip/blob/main/docs/ARCHITECTURE.md"
-            >docs/ARCHITECTURE.md</a
+        <div class="cta-row climax">
+          <a class="btn primary" href="https://github.com/diggyen/DSip">Open repository</a>
+          <a class="btn ghost" href="https://github.com/diggyen/DSip/blob/main/docs/DEPLOY-VPS.md"
+            >VPS + phones</a
           >
-        </p>
+        </div>
       </section>
     </main>
 
     <footer class="foot">
-      <span class="mark">DSip</span>
-      <span>Open-source company PBX · <a href="https://github.com/diggyen">@diggyen</a></span>
+      <a class="mark" href="#top">DSip</a>
+      <p>
+        Open-source company PBX ·
+        <a href="https://github.com/diggyen">@diggyen</a>
+      </p>
     </footer>
 
     <script>
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!reduce) {
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         document.documentElement.classList.add("motion");
       }
     </script>
