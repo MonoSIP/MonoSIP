@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DSip — Company PBX</title>
+    <meta
+      name="description"
+      content="Open-source Asterisk PBX with admin panel and browser softphone. Docker Compose on your VM."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+
+    <header class="top">
+      <a class="mark" href="#top">DSip</a>
+      <nav>
+        <a href="#install">Install</a>
+        <a href="#features">Features</a>
+        <a href="#stack">Stack</a>
+        <a class="nav-cta" href="https://github.com/diggyen/DSip">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="brand">DSip</p>
+          <h1>Your office dial tone, on a server you control.</h1>
+          <p class="lede">
+            Asterisk PBX with admin panel and browser softphone — Docker Compose,
+            ~20 extensions, English UI (Turkish too).
+          </p>
+          <div class="cta-row">
+            <a class="btn primary" href="#install">Install with Docker</a>
+            <a class="btn ghost" href="https://github.com/diggyen/DSip/releases/tag/v1.0.0"
+              >v1.0.0 release</a
+            >
+          </div>
+        </div>
+        <div class="hero-stage" aria-hidden="true">
+          <div class="wave">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="handset">
+            <div class="handset-ear"></div>
+            <div class="handset-body">
+              <div class="lcd">
+                <span class="lcd-line">EXT 101 · Alice</span>
+                <span class="lcd-num">0:00:00</span>
+              </div>
+              <div class="keys">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
+            </div>
+            <div class="handset-mic"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="install" class="band">
+        <h2>Install</h2>
+        <p class="section-lede">
+          Clone, copy env, generate lab certs, bring the stack up. Data lives in Docker
+          volumes — rebuilds keep your database and recordings.
+        </p>
+        <pre class="terminal"><code>git clone https://github.com/diggyen/DSip.git
+cd DSip
+cp .env.example .env
+./scripts/gen-certs.sh
+docker compose up --build -d
+# → https://localhost</code></pre>
+        <p class="fine">
+          Full guide:
+          <a href="https://github.com/diggyen/DSip/blob/main/docs/INSTALL.md">docs/INSTALL.md</a>
+          · VPS / phones:
+          <a href="https://github.com/diggyen/DSip/blob/main/docs/DEPLOY-VPS.md">docs/DEPLOY-VPS.md</a>
+        </p>
+      </section>
+
+      <section id="features" class="band band-alt">
+        <h2>Built for the desk and the browser</h2>
+        <p class="section-lede">
+          One stack for trunks, queues, IVR, softphone, and ops — not a call-center
+          suite bolted onto a host you can’t touch.
+        </p>
+        <ul class="feature-list">
+          <li>
+            <strong>Extensions & routes</strong>
+            Permissions, DND, forwarding, blacklist, emergency 112 always open.
+          </li>
+          <li>
+            <strong>Queues & schedules</strong>
+            Announce position, callback, holidays, per-status destinations.
+          </li>
+          <li>
+            <strong>IVR designer</strong>
+            Visual flows on ARI — menus, API nodes, TTS, publish & rollback.
+          </li>
+          <li>
+            <strong>Softphone + desks</strong>
+            SIP.js over WSS, coturn, provisioning QR for desk phones.
+          </li>
+          <li>
+            <strong>Live ops</strong>
+            Dashboard, spy/whisper, CDR, recordings, reports, webhooks.
+          </li>
+          <li>
+            <strong>Hostname SSL</strong>
+            Let’s Encrypt from Settings — issue, install, renew on its own.
+          </li>
+        </ul>
+        <p class="fine">
+          Details:
+          <a href="https://github.com/diggyen/DSip/blob/main/docs/FEATURES.md">docs/FEATURES.md</a>
+        </p>
+      </section>
+
+      <section id="stack" class="band">
+        <h2>Stack</h2>
+        <p class="section-lede">
+          nginx terminates TLS; Fastify drives Asterisk over ARI; Postgres holds truth;
+          volumes keep it after you rebuild images.
+        </p>
+        <div class="stack-row">
+          <span>nginx</span>
+          <span>web</span>
+          <span>api</span>
+          <span>asterisk</span>
+          <span>postgres</span>
+          <span>coturn</span>
+          <span>tts</span>
+        </div>
+        <p class="fine">
+          Diagram:
+          <a href="https://github.com/diggyen/DSip/blob/main/docs/ARCHITECTURE.md"
+            >docs/ARCHITECTURE.md</a
+          >
+        </p>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span class="mark">DSip</span>
+      <span>Open-source company PBX · <a href="https://github.com/diggyen">@diggyen</a></span>
+    </footer>
+
+    <script>
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!reduce) {
+        document.documentElement.classList.add("motion");
+      }
+    </script>
+  </body>
+</html>

@@ -1,80 +1,65 @@
-# DSip — Company PBX
+# DSip
 
-Open-source Asterisk-based VoIP PBX with an admin panel and user portal. Runs as a Docker Compose stack on a company VM (~20 extensions).
+**Company PBX** — open-source Asterisk VoIP with an admin panel and browser softphone. Built for small offices (~20 extensions). Runs as Docker Compose on a Linux VM.
 
-**Default language: English** (Turkish also available in the UI).
+[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.0.0](https://github.com/diggyen/DSip/releases/tag/v1.0.0)
+
+Default UI language: **English** (Turkish available in the app).
 
 ## Quick start
 
 ```bash
+git clone https://github.com/diggyen/DSip.git
+cd DSip
 cp .env.example .env
-chmod +x scripts/gen-certs.sh
-./scripts/gen-certs.sh
+chmod +x scripts/gen-certs.sh && ./scripts/gen-certs.sh
 docker compose up --build -d
 ```
 
-Open **https://localhost** (self-signed certificate — accept the browser warning).
+Open **https://localhost** (self-signed cert — accept the browser warning).
 
 | Role | Login | Password |
 | --- | --- | --- |
 | Admin | `admin@example.com` | `Admin123!` |
 | Portal (ext 101) | `101` | `portal101` |
-| Portal (ext 100–103) | extension number | `portal{number}` |
+
+Lab passwords only — change them for production.
+
+## What you get
+
+- Extensions, trunks, inbound/outbound routes, blacklist  
+- Ring groups, queues (announce + callback), schedules & holidays  
+- Visual IVR / flow designer (ARI)  
+- Portal softphone (SIP.js + coturn), desk-phone provisioning  
+- Live dashboard, spy/whisper, CDR, recordings, reports  
+- Hostname + automatic Let’s Encrypt SSL from Settings  
+
+Full list: **[docs/FEATURES.md](docs/FEATURES.md)** · Turkish detail: **[docs/01-ozellikler.md](docs/01-ozellikler.md)**
 
 ## Stack
 
 | Service | Role |
 | --- | --- |
-| `nginx` | HTTPS + reverse proxy (API, web, Asterisk WSS) |
-| `web` | Admin panel + user portal (React) |
-| `api` | Fastify API, ARI flow engine, Asterisk config writer |
+| `nginx` | HTTPS, ACME, reverse proxy (API, web, Asterisk WSS) |
+| `web` | Admin + portal (React) |
+| `api` | Fastify, ARI flow engine, config writer, SSL client |
 | `asterisk` | Asterisk 22 (PJSIP, ARI, AMI, WebRTC) |
-| `postgres` | Settings, CDR, flows |
+| `postgres` | Settings, CDR, flows (**persistent volume**) |
 | `coturn` | TURN for off-site softphone |
-| `tts` | Piper TTS (open-source) — Turkish + English prompt WAV generation |
-| `fail2ban` | Optional profile (`--profile fail2ban`) — Asterisk auth jail |
+| `tts` | Piper TTS (TR/EN prompts) |
 
-## Development (without rebuilding images)
+Data survives rebuilds via named volumes (`pgdata`, `recordings`, …). See [INSTALL.md](docs/INSTALL.md).
 
-```bash
-pnpm install
-pnpm --filter @dsip/shared build
-# start only infra
-docker compose up -d postgres asterisk coturn
-# run API + web locally
-export DATABASE_URL=postgresql://dsip:dsip_secret_change_me@localhost:5432/dsip
-pnpm --filter @dsip/api run db:generate
-pnpm --filter @dsip/api run db:migrate
-pnpm --filter @dsip/api run db:seed
-pnpm dev
-```
+## Production
 
-## Docs
+Use Docker on Linux. Set `EXTERNAL_IP`, `PUBLIC_HOST`, strong secrets; then enable **Automatic SSL** in Admin → Settings. Desk phones → `EXTERNAL_IP:5060`.
 
-See [docs/](docs/) and [TASKS.md](TASKS.md) for the full product specification.
+Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
-## Deploy on a VPS (phones)
+## Documentation
 
-**Use Docker on Linux** — that is the supported production path. The local Mac softphone NAT quirk does not apply on a normal Linux VM. See **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**.
+All docs live under **[docs/](docs/README.md)**. Static product site: **[site/](site/index.html)** (open locally or publish with GitHub Pages → `/site`).
 
-Minimal `.env` for a public VM:
+## License / ownership
 
-```env
-EXTERNAL_IP=YOUR.PUBLIC.IPV4
-PUBLIC_HOST=pbx.example.com
-PUBLIC_URL=https://pbx.example.com
-SIP_DOMAIN=pbx.example.com
-SIP_WSS_URL=wss://pbx.example.com/asterisk-ws
-TURN_REALM=pbx.example.com
-```
-
-Then open firewall ports (443, and SIP/RTP only for office/VPN/trunk), `docker compose up --build -d`, and point desk phones at `EXTERNAL_IP:5060` with the extension SIP password from the portal.
-
-## Notes
-
-- Add a real SIP trunk in **Trunks** and enable it for external calls.
-- Softphone needs microphone permission over HTTPS.
-- Optional env: `RECORDING_ARCHIVE_PATH` (or Settings `recordingArchivePath`), SMTP fields in Settings for daily summary (log-only if unset).
-- Fail2ban lab: `docker compose --profile fail2ban up -d` (Asterisk + API security logs).
-- Host firewall: Admin → Settings → Security export, or `scripts/harden-firewall.sh`.
-- **TTS:** Admin → Prompts → text + language (TR/EN) → Generate. Uses local [Piper](https://github.com/rhasspy/piper) (`tr_TR-fettah-medium`, `en_US-lessac-medium`). No cloud API keys.
+Maintained by [@diggyen](https://github.com/diggyen).

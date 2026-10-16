@@ -41,12 +41,12 @@ ASTERISK_AMI_PASSWORD=…
 
 ## 2. TLS certificate
 
-For production, put a real cert in `docker/nginx/certs/`:
+**Preferred:** after the stack is up, open **Admin → Settings → Hostname & SSL**, set the public hostname, turn on **Automatic SSL**, and save. DSip uses Let's Encrypt (HTTP-01 on port 80), writes `docker/nginx/certs/cert.pem` + `key.pem`, and renews automatically.
+
+Lab / offline only:
 
 ```bash
-# Let's Encrypt (example with certbot standalone — stop nginx first if ports busy)
-# then copy fullchain.pem → cert.pem, privkey.pem → key.pem
-./scripts/gen-certs.sh   # only for lab / self-signed
+./scripts/gen-certs.sh   # self-signed
 ```
 
 ## 3. Firewall
