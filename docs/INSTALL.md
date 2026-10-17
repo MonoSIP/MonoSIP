@@ -58,7 +58,7 @@ If the panel still builds with context `apps/api`, clear **baseDir** / subdirect
 
 ### NineDeploy (one-click)
 
-The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** (ARI on `127.0.0.1:8088`, softphone WSS at `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — NineDeploy typically only exposes HTTPS→3000.
+The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** (ARI/WSS bound to `127.0.0.1:8088` only; public HTTPS must hit container **port 3000**, softphone via `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — NineDeploy typically only exposes HTTPS→3000.
 
 Press **Deploy**. No panel env is required for a first boot:
 

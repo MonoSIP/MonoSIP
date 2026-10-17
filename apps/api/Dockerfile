@@ -60,5 +60,7 @@ ENV WEB_DIST=/app/apps/web/dist \
     UPLOADS_DIR=/data/uploads \
     DSIP_DATA_DIR=/data
 
-EXPOSE 3000 5060/udp 5060/tcp 8088 10000-10100/udp
+# NineDeploy publishes the first/configured HTTP port — only expose the API.
+# Asterisk ARI/WSS stay on 127.0.0.1:8088 inside the container (see start-asterisk.sh).
+EXPOSE 3000
 ENTRYPOINT ["/entrypoint.sh"]

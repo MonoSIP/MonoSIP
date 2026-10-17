@@ -128,6 +128,16 @@ sed -i "s|__ARI_PASS__|${ARI_PASS}|g" /etc/asterisk/ari.conf 2>/dev/null || true
 sed -i "s|__AMI_USER__|${AMI_USER}|g" /etc/asterisk/manager.conf 2>/dev/null || true
 sed -i "s|__AMI_PASS__|${AMI_PASS}|g" /etc/asterisk/manager.conf 2>/dev/null || true
 
+# All-in-one: never publish Asterisk HTTP/AMI on 0.0.0.0 — PaaS may route
+# public HTTPS to EXPOSE 8088 and steal traffic from the Node API on :3000.
+sed -i 's/^bindaddr=.*/bindaddr=127.0.0.1/' /etc/asterisk/http.conf 2>/dev/null || true
+sed -i 's/^bindaddr = .*/bindaddr = 127.0.0.1/' /etc/asterisk/manager.conf 2>/dev/null || true
+# AMI ACL is docker-nets only in Compose; allow localhost for embedded API.
+if ! grep -q 'permit = 127.0.0.1' /etc/asterisk/manager.conf 2>/dev/null; then
+  sed -i '/^permit = 10.0.0.0\/8/a\
+permit = 127.0.0.1/32' /etc/asterisk/manager.conf 2>/dev/null || true
+fi
+
 EXTERNAL_IP="${EXTERNAL_IP:-}"
 if [ -n "$EXTERNAL_IP" ]; then
   sed -i "s|;externaddr=__EXTERNAL_IP__|externaddr=${EXTERNAL_IP}|g" /etc/asterisk/rtp.conf
