@@ -11,6 +11,7 @@
 | [DATA-MODEL.md](DATA-MODEL.md) | Data model |
 | [API.md](API.md) | API surface |
 | [SCREENS.md](SCREENS.md) | UI screens |
+| [TEST-PLAN.md](TEST-PLAN.md) | Full product test checklist (admin, portal, IVR, telephony, deploy) |
 | [SERVER-SECURITY.md](SERVER-SECURITY.md) | Server, network, security, KVKK |
 | [TTS.md](TTS.md) | Text-to-speech service |
 

@@ -215,7 +215,8 @@ socket.on("message", (buf) => {
       } else if (code === 200) {
         registered = true;
         console.log(`[${ext}] REGISTERED OK`);
-        if (/^\d+$/.test(mode)) setTimeout(() => invite(mode), 800);
+        // Digits or feature codes (*78, *79, …)
+        if (/^[\d*#]+$/.test(mode)) setTimeout(() => invite(mode), 800);
       } else if (code >= 400) {
         console.error(`[${ext}] REGISTER FAILED`);
         process.exit(1);
@@ -248,17 +249,53 @@ socket.on("message", (buf) => {
           "",
         ].join("\n");
         sendRaw(ack);
-        if (dtmfDigits) {
-          let t = 1200;
-          for (const d of dtmfDigits) {
+        // DTMF_PHASES="9000:1;14000:1234" → digit groups at absolute ms after answer
+        // else DTMF / argv digits with DTMF_DELAY_MS then 500ms spacing
+        const phases = process.env.DTMF_PHASES
+          ? process.env.DTMF_PHASES.split(";")
+              .map((p) => p.trim())
+              .filter(Boolean)
+              .map((p) => {
+                const [ms, digs] = p.split(":");
+                return { at: Number(ms), digs: digs || "" };
+              })
+          : dtmfDigits
+            ? [{ at: Number(process.env.DTMF_DELAY_MS || 1200), digs: dtmfDigits }]
+            : [];
+        let lastAt = 0;
+        for (const ph of phases) {
+          let t = ph.at;
+          for (const d of ph.digs) {
             setTimeout(() => sendDtmfInfo(d), t);
-            t += 500;
+            t += Number(process.env.DTMF_GAP_MS || 500);
+            lastAt = t;
           }
         }
+        const holdMs = Number(
+          process.env.CALL_HOLD_MS ||
+            (phases.length ? Math.max(14000, lastAt + 8000) : 2500),
+        );
         setTimeout(() => {
+          if (dialog) {
+            const bye = [
+              `BYE ${dialog.remote} SIP/2.0`,
+              hdr({
+                Via: `SIP/2.0/UDP ${ourIp}:${localPort};rport;branch=${branch()}`,
+                From: dialog.from,
+                To: dialog.to,
+                "Call-ID": dialog.callId,
+                CSeq: `${invCseq++} BYE`,
+                "Content-Length": "0",
+              }),
+              "",
+              "",
+            ].join("\n");
+            sendRaw(bye);
+            console.log(`[${ext}] BYE`);
+          }
           console.log(`[${ext}] SUCCESS`);
-          process.exit(0);
-        }, dtmfDigits ? 14000 : 2500);
+          setTimeout(() => process.exit(0), 400);
+        }, holdMs);
       } else if (code >= 400) {
         console.error(`[${ext}] CALL FAILED ${code}`);
         process.exit(2);
@@ -268,9 +305,19 @@ socket.on("message", (buf) => {
   }
 
   if (msg.startsWith("INVITE ")) {
-    console.log(`[${ext}] Incoming INVITE — answering`);
-    reply(msg, 100, "Trying");
-    reply(msg, 200, "OK", { "Content-Type": "application/sdp" }, sdp());
+    if (process.env.BUSY === "1") {
+      console.log(`[${ext}] Incoming INVITE — busy (486)`);
+      reply(msg, 100, "Trying");
+      reply(msg, 486, "Busy Here");
+    } else if (process.env.NO_ANSWER === "1") {
+      console.log(`[${ext}] Incoming INVITE — ringing only (NO_ANSWER)`);
+      reply(msg, 100, "Trying");
+      reply(msg, 180, "Ringing");
+    } else {
+      console.log(`[${ext}] Incoming INVITE — answering`);
+      reply(msg, 100, "Trying");
+      reply(msg, 200, "OK", { "Content-Type": "application/sdp" }, sdp());
+    }
   } else if (msg.startsWith("ACK ")) {
     console.log(`[${ext}] ACK — call up`);
   } else if (msg.startsWith("BYE ")) {

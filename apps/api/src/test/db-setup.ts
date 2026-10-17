@@ -5,10 +5,16 @@
  *
  * The dev `postgres` container publishes no host port, so tests reach it through
  * the local TCP forwarder on TEST_PG_PORT (see README/testing notes).
+ *
+ * Also applies pending Drizzle migrations so host vitest stays in sync with
+ * compose (API entrypoint migrates `dsip`, not `dsip_test`).
  */
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import pg from "pg";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const apiRoot = path.resolve(here, "../..");
@@ -43,3 +49,8 @@ for (const dir of ["asterisk", "recordings", "uploads"]) {
     { asterisk: "ASTERISK_CONFIG_DIR", recordings: "RECORDINGS_DIR", uploads: "UPLOADS_DIR" }[dir]!
   ] = full;
 }
+
+const migrationsFolder = path.join(apiRoot, "drizzle");
+const pool = new pg.Pool({ connectionString: testUrl });
+await migrate(drizzle(pool), { migrationsFolder });
+await pool.end();
