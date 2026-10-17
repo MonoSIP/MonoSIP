@@ -1,7 +1,12 @@
 #!/bin/sh
 set -e
 cd /app
-pnpm --filter @dsip/shared build
+
+# Image already builds @dsip/shared — only rebuild if dist is missing (dev/override images).
+if [ ! -f /app/packages/shared/dist/index.js ]; then
+  pnpm --filter @dsip/shared build
+fi
+
 cd /app/apps/api
 
 # shellcheck disable=SC1091
@@ -10,17 +15,18 @@ cd /app/apps/api
 echo "Waiting for postgres..."
 i=0
 ok=0
-while [ "$i" -lt 60 ]; do
-  if pnpm exec tsx -e "import pg from 'pg'; const p=new pg.Pool({connectionString:process.env.DATABASE_URL}); await p.query('select 1'); await p.end(); console.log('postgres ok');"; then
+while [ "$i" -lt 30 ]; do
+  if psql "$DATABASE_URL" -c 'select 1' >/dev/null 2>&1; then
+    echo "postgres ok"
     ok=1
     break
   fi
   i=$((i + 1))
-  sleep 2
+  sleep 1
 done
 
 if [ "$ok" != "1" ]; then
-  echo "FATAL: Postgres not reachable with DATABASE_URL after ~2 minutes."
+  echo "FATAL: Postgres not reachable with DATABASE_URL."
   exit 1
 fi
 

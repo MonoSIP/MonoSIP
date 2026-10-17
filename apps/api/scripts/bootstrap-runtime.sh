@@ -7,11 +7,12 @@ DATA_DIR="${DSIP_DATA_DIR:-/data}"
 SECRETS_FILE="$DATA_DIR/.dsip-secrets"
 PGDATA="$DATA_DIR/postgres"
 PGLOG="$PGDATA/server.log"
+# Tiny shared memory profile — NineDeploy/Docker often leave /dev/shm at 64MB.
+PG_OPTS="-c listen_addresses=127.0.0.1 -c port=5432 -c unix_socket_directories=/var/run/postgresql -c logging_collector=off -c shared_buffers=32MB -c max_connections=40 -c work_mem=1MB -c maintenance_work_mem=16MB -c wal_buffers=1MB -c min_wal_size=32MB -c max_wal_size=64MB -c dynamic_shared_memory_type=posix"
 
 mkdir -p "$DATA_DIR/recordings" "$DATA_DIR/uploads" "$DATA_DIR/asterisk" "$PGDATA" /var/run/postgresql
 
-# NineDeploy volumes are often not owned by postgres — fix every boot.
-# Own only what we need; never require writing logs at /data/*.log (root of volume).
+# NineDeploy volumes may be owned by a non-root UID — reclaim postgres data dir every boot.
 chown -R postgres:postgres "$PGDATA" /var/run/postgresql 2>/dev/null || true
 chmod 700 "$PGDATA" 2>/dev/null || true
 
@@ -32,14 +33,16 @@ if [ -z "${INTERNAL_API_SECRET:-}" ]; then
 fi
 
 umask 077
-# Secrets file must be writable by the entrypoint user (root).
-cat > "$SECRETS_FILE" <<EOF
+if ! cat > "$SECRETS_FILE" <<EOF
 export SESSION_SECRET='$SESSION_SECRET'
 export ENCRYPTION_KEY='$ENCRYPTION_KEY'
 export INTERNAL_API_SECRET='$INTERNAL_API_SECRET'
 EOF
+then
+  echo "WARN: cannot write $SECRETS_FILE (volume permissions?) — secrets will not persist"
+fi
 # shellcheck disable=SC1090
-. "$SECRETS_FILE"
+[ -f "$SECRETS_FILE" ] && . "$SECRETS_FILE"
 export SESSION_SECRET ENCRYPTION_KEY INTERNAL_API_SECRET
 
 export ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
@@ -76,32 +79,57 @@ fi
 
 echo "No DATABASE_URL — starting embedded Postgres in $PGDATA"
 
-# If a previous boot left a broken empty/partial data dir owned by root, reset it.
-if [ -d "$PGDATA" ] && [ ! -s "$PGDATA/PG_VERSION" ]; then
-  # Keep directory, wipe contents so initdb can run as postgres
-  find "$PGDATA" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
-fi
-
-chown -R postgres:postgres "$PGDATA" /var/run/postgresql
-chmod 700 "$PGDATA"
-
-if [ ! -s "$PGDATA/PG_VERSION" ]; then
-  echo "Initializing embedded Postgres cluster…"
-  su -s /bin/sh postgres -c "$PG_BIN/initdb -D '$PGDATA' --auth-local=trust --auth-host=trust --encoding=UTF8 --locale=C"
-fi
-
-# Stop stale postmaster if any
-if [ -f "$PGDATA/postmaster.pid" ]; then
+wipe_pgdata() {
+  echo "Resetting embedded Postgres data dir…"
+  # Stop if running
   su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -m fast stop" >/dev/null 2>&1 || true
   rm -f "$PGDATA/postmaster.pid"
+  find "$PGDATA" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+  chown -R postgres:postgres "$PGDATA" /var/run/postgresql
+  chmod 700 "$PGDATA"
+}
+
+init_pgdata() {
+  chown -R postgres:postgres "$PGDATA" /var/run/postgresql
+  chmod 700 "$PGDATA"
+  if [ ! -s "$PGDATA/PG_VERSION" ]; then
+    echo "Initializing embedded Postgres cluster…"
+    su -s /bin/sh postgres -c "$PG_BIN/initdb -D '$PGDATA' --auth-local=trust --auth-host=trust --encoding=UTF8 --locale=C"
+  fi
+}
+
+start_pg() {
+  # Clear stale pid from previous container instance (volume reuse)
+  if [ -f "$PGDATA/postmaster.pid" ]; then
+    su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -m fast stop" >/dev/null 2>&1 || true
+    rm -f "$PGDATA/postmaster.pid"
+  fi
+  # Truncate log so failures are readable
+  : > "$PGLOG" 2>/dev/null || true
+  chown postgres:postgres "$PGLOG" 2>/dev/null || true
+  su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -l '$PGLOG' -o \"$PG_OPTS\" -w start"
+}
+
+# Broken partial dirs from earlier failed deploys
+if [ -d "$PGDATA" ] && [ ! -s "$PGDATA/PG_VERSION" ]; then
+  wipe_pgdata
 fi
 
+init_pgdata
+
 echo "Starting embedded Postgres…"
-if ! su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -l '$PGLOG' -o \"-c listen_addresses=127.0.0.1 -c port=5432 -c unix_socket_directories=/var/run/postgresql -c logging_collector=off\" -w start"; then
-  echo "FATAL: embedded Postgres failed to start. Log:"
-  tail -n 80 "$PGLOG" 2>/dev/null || true
-  ls -la "$DATA_DIR" "$PGDATA" 2>/dev/null || true
-  return 1
+if ! start_pg; then
+  echo "WARN: first Postgres start failed — wiping broken cluster and retrying once"
+  tail -n 40 "$PGLOG" 2>/dev/null || true
+  wipe_pgdata
+  init_pgdata
+  if ! start_pg; then
+    echo "FATAL: embedded Postgres failed to start. Log:"
+    tail -n 80 "$PGLOG" 2>/dev/null || true
+    ls -la "$DATA_DIR" "$PGDATA" 2>/dev/null || true
+    df -h "$DATA_DIR" /dev/shm 2>/dev/null || true
+    return 1
+  fi
 fi
 
 i=0
