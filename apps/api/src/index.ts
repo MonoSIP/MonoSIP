@@ -2,8 +2,12 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
+import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { ari } from "./asterisk/ari.js";
 import { attachFlowRuntime } from "./asterisk/flow-runtime.js";
@@ -97,6 +101,36 @@ async function main() {
   void import("./lib/queue-announce-tts.js")
     .then(({ ensureQueueAnnounceSounds }) => ensureQueueAnnounceSounds())
     .catch((e) => console.warn("[queue-tts]", (e as Error).message));
+
+  // NineDeploy / single-container: serve the Vite SPA next to the API.
+  const webDist =
+    process.env.WEB_DIST?.trim() ||
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web/dist");
+  if (existsSync(path.join(webDist, "index.html"))) {
+    await app.register(fastifyStatic, {
+      root: webDist,
+      wildcard: false,
+    });
+    app.setNotFoundHandler((req, reply) => {
+      const u = (req.url.split("?")[0] ?? "").replace(/\/+$/, "") || "/";
+      if (
+        req.method === "GET" &&
+        !u.startsWith("/api") &&
+        !u.startsWith("/ws") &&
+        !u.startsWith("/.well-known")
+      ) {
+        return reply.sendFile("index.html");
+      }
+      return reply.code(404).send({
+        message: `Route ${req.method}:${u} not found`,
+        error: "Not Found",
+        statusCode: 404,
+      });
+    });
+    app.log.info(`Serving web UI from ${webDist}`);
+  } else {
+    app.log.warn(`Web UI not found at ${webDist} — only API routes available`);
+  }
 
   await app.listen({ port: config.port, host: "0.0.0.0" });
   app.log.info(`DSip API listening on :${config.port}`);

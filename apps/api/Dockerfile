@@ -13,9 +13,13 @@ RUN corepack enable && corepack prepare pnpm@12.14.0 --activate \
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
+COPY apps/web ./apps/web
 
-RUN pnpm install --filter @dsip/api... --frozen-lockfile=false \
-  && pnpm --filter @dsip/shared build
+# API + web UI in one image (domain root serves the SPA; /api stays on Fastify).
+# Vite lives in web devDependencies — force a full install even if NODE_ENV=production.
+RUN pnpm install --filter @dsip/api... --filter @dsip/web... --frozen-lockfile=false --prod=false \
+  && pnpm --filter @dsip/shared build \
+  && pnpm --filter @dsip/web build
 
 # Entrypoint is already in the tree from COPY apps/api — do not COPY apps/api/... again
 # (that path breaks when the build context is wrongly set to apps/api).
@@ -23,5 +27,6 @@ RUN cp /app/apps/api/docker-entrypoint.sh /entrypoint.sh \
   && chmod +x /entrypoint.sh /app/apps/api/scripts/bootstrap-runtime.sh
 
 WORKDIR /app/apps/api
+ENV WEB_DIST=/app/apps/web/dist
 EXPOSE 3000
 ENTRYPOINT ["/entrypoint.sh"]

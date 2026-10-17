@@ -33,6 +33,7 @@ env:
 watch:
   paths:
     - "apps/api/**"
+    - "apps/web/**"
     - "packages/shared/**"
     - "package.json"
     - "pnpm-workspace.yaml"
