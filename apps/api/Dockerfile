@@ -4,7 +4,7 @@
 # NineDeploy: set build.dockerfile to apps/api/Dockerfile and do NOT set baseDir to apps/api
 FROM node:24-bookworm-slim
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@10.18.0 --activate \
+RUN corepack enable && corepack prepare pnpm@12.14.0 --activate \
   && apt-get update && apt-get install -y --no-install-recommends \
     openssl ca-certificates ffmpeg \
     postgresql postgresql-client \
