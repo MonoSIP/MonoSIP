@@ -174,11 +174,13 @@ export async function writeAsteriskConfig(): Promise<void> {
       "force_rport=yes",
       `rewrite_contact=${rewriteContact}`,
       "dtmf_mode=auto",
-      // WebRTC softphone (DTLS via webrtc=yes) + desk phones (UDP/TLS signaling)
+      // WebRTC softphone (DTLS via webrtc=yes) + desk phones (UDP/TLS + SDES SRTP)
       "webrtc=yes",
       "dtls_auto_generate_cert=yes",
-      // no = allow classic RTP desks; WebRTC still negotiates DTLS when offered
-      "media_encryption=no",
+      // Offer SDES SRTP to desk phones (matches provisioning); allow clear RTP fallback.
+      // Browser softphone still negotiates DTLS-SRTP when webrtc=yes.
+      "media_encryption=sdes",
+      "media_encryption_optimistic=yes",
       "use_avpf=yes",
       "force_avp=yes",
       "rtcp_mux=yes",

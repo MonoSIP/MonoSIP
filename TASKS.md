@@ -16,7 +16,7 @@ Work is split into three phases; the PBX is usable at the end of each phase. Aft
 - [x] Schedules, holidays, manual override
 - [x] Recording, KVKK announcement, Opus convert, retention *(WAV + retention; Opus optional)*
 - [x] CDR and recordings screens
-- [x] Security: fail2ban, country limit, spend stop, rate limit, TLS/SRTP *(login-guard + compose profile)*
+- [x] Security: fail2ban, country limit, spend stop, rate limit, TLS + SDES SRTP (optimistic) / WebRTC DTLS *(login-guard + compose profile)*
 - [x] IP phone provisioning and QR softphone setup
 - [x] Backup
 
@@ -49,8 +49,8 @@ Work is split into three phases; the PBX is usable at the end of each phase. Aft
 
 **Smoke (Phase 3):** Dashboard WS; spy; reports date range+quality; API key perms; webhook Test; missed tabs; SMTP; Opus convert (when ffmpeg present).
 
-## Open questions
+## Open questions (operator decisions — not code)
 
 - [ ] Which SIP provider, how many DIDs?
-- [ ] Recording retention months?
-- [ ] Desk phone brands and models
+- [ ] Recording retention months? (configurable in Settings; default from seed)
+- [ ] Desk phone brands and models (Yealink / Fanvil / Grandstream profiles ship)

@@ -36,7 +36,7 @@ The largest financial risk is toll fraud from a compromised extension. Call rest
 - Outbound country allowlist; default Turkey-only
 - Dial-rate limit: extension that dials abnormally is stopped; admin gets email
 - Spend stop: global and per-extension daily/monthly limits
-- SIP TLS and SRTP; WebRTC uses DTLS-SRTP
+- SIP TLS; desk media offers SDES SRTP (`media_encryption=sdes` + optimistic fallback); WebRTC uses DTLS-SRTP
 
 ### Panel and portal
 

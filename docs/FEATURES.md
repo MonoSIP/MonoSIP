@@ -45,7 +45,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Inbound routes: DID → destination; caller pattern; blacklist; anonymous block; default route
 - Shared destination model: extension, ring group, queue, menu, schedule, voicemail, external number, play-and-hangup. Same destination picker everywhere
 - Last-dial callback (12h): if a number the extension missed calls back, route straight to that extension
-- Spend stop: daily and monthly minute/amount limits
+- Spend stop: daily and monthly minute limits
 - Country allowlist for outbound; stop an extension on abnormal dial rate
 
 ## Recording and logs
@@ -53,7 +53,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Per-extension or per-queue recording; KVKK announcement on inbound/outbound when recording
 - Optional Opus convert; retention job deletes expired files; NAS or SFTP archive
 - Waveform player in the panel; admin can download
-- CDR: filters, CSV/Excel export, link to recording, DND inbound flagged
+- CDR: filters, CSV export, link to recording, DND inbound flagged
 - Missed calls: list, email notify, auto “called back” when returned
 
 ## Monitoring and reports
@@ -63,7 +63,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Reports: answered, missed, abandoned; wait and talk times; service level; by extension and queue
 - IVR DTMF report: which key, where hung up
 - Call quality: jitter, packet loss, MOS per call
-- Automatic email reports: daily summary and monthly (PDF, Excel)
+- Automatic email reports: daily summary and monthly (CSV attachment; log-only without SMTP)
 
 ## Integration
 
