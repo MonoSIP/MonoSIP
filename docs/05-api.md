@@ -1,8 +1,8 @@
-# Backend API
+# Arka uç API
 
-Backend üç ayrı yüzey sunar: admin API, kullanıcı portalı API'si ve dış sistemler için entegrasyon API'si. Hepsi `/api/v1` altında; istek ve yanıtlar `packages/shared` içindeki Zod şemalarıyla doğrulanır.
+Arka uç üç ayrı yüzey sunar: yönetici API, kullanıcı portalı API'si ve dış sistemler için entegrasyon API'si. Hepsi `/api/v1` altında; istek ve yanıtlar `packages/shared` içindeki Zod şemalarıyla doğrulanır.
 
-## Admin API (`/api/v1/admin`, oturum + 2FA)
+## Yönetici API (`/api/v1/admin`, oturum + 2FA)
 
 | Kaynak | Uçlar |
 | --- | --- |
@@ -39,6 +39,6 @@ Backend üç ayrı yüzey sunar: admin API, kullanıcı portalı API'si ve dış
 
 ## WebSocket (`/ws`)
 
-- Admin: `call.*`, `queue.*` (bekleyen, üye durumu), `extension.state`, `trunk.state`, `alert.*`
+- Yönetici: `call.*`, `queue.*` (bekleyen, üye durumu), `extension.state`, `trunk.state`, `alert.*`
 - Portal: `presence.*` (iş arkadaşları), `voicemail.new`, `missed.new`
-- Olaylar AMI ve ARI'den toplanır, backend tarafından süzülerek yayınlanır.
+- Olaylar AMI ve ARI'den toplanır, arka uç tarafından süzülerek yayınlanır.

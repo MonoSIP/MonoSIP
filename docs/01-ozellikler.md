@@ -59,7 +59,7 @@ Bu liste, kararlaştırılan özelliklerle Netsipp, Verimor, Karel, Yeastar ve A
 ## İzleme ve raporlar
 
 - Canlı pano: aktif çağrılar, kuyrukta bekleyenler, dahili durumları; TV için tam ekran modu.
-- Admin için canlı dinleme, fısıldama, araya girme (her kullanım loglanır).
+- Yönetici için canlı dinleme, fısıldama, araya girme (her kullanım loglanır).
 - Raporlar: cevaplanan, cevapsız, terk edilen; bekleme ve konuşma süreleri; hizmet seviyesi; dahili ve kuyruk bazında.
 - IVR tuşlama raporu: hangi tuşa basıldı, nerede kapatıldı.
 - Ses kalitesi: her çağrı için jitter, paket kaybı, MOS.
@@ -91,3 +91,25 @@ Bu liste, kararlaştırılan özelliklerle Netsipp, Verimor, Karel, Yeastar ve A
 | Çağrı park, camp-on, sayfalama / interkom, yönetici–sekreter | Kapsam dışı |
 | AI transkript (Whisper), AI sesli asistan düğümü | Kapsam dışı |
 | SMS düğümü | Kapsam dışı |
+
+## Teknik yığın
+
+| Katman | Teknoloji |
+| --- | --- |
+| Medya / SIP | Asterisk 22, PJSIP, ARI, AMI, WebRTC |
+| API | Node 24, Fastify, Drizzle, PostgreSQL 17 |
+| Arayüz | React, Vite, TanStack Query, SIP.js |
+| Kenar | nginx (TLS, WSS), coturn |
+| Metinden sese | Piper (+ TTS servisinde edge-tts yedek) |
+
+Kalıcılık: Docker adlı birimleri (`pgdata`, `recordings`, …) — bkz. [KURULUM.md](KURULUM.md).
+
+## Yönetim ve işletim (özet)
+
+- Canlı pano + TV modu (WebSocket): çağrılar, kuyruklar, dahililer, hatlar
+- Dinleme / fısıldama / araya girme (ARI snoop), kapatma
+- Raporlar: özet, kuyruk, dahili, IVR tuşlama, kalite; günlük/aylık e-posta (SMTP veya yalnızca günlük)
+- Webhook + API anahtarları (arama başlatma, CDR, kayıtlar)
+- Yedek / geri yükleme JSON; panelden Asterisk yapılandırma yenileme
+- **Hostname ve otomatik SSL** — Let's Encrypt HTTP-01, nginx sertifikalarına kurulum, periyodik yenileme kontrolü
+- Güvenlik: yönetici 2FA (TOTP + Apple Passwords bağlantısı), IP izin listeleri, giriş taşkın yasağı, isteğe bağlı fail2ban profili, güvenlik duvarı dışa aktarma

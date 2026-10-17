@@ -8,7 +8,7 @@
 - [x] SIP sağlayıcı ile ilk dış hat; gelen ve giden test *(trunk CRUD + dialplan; gerçek trunk ayrı)*
 - [x] Monorepo iskeleti: `apps/web`, `apps/api`, `packages/shared`; Biome, Vitest, CI
 - [x] Veritabanı şeması ve Asterisk yapılandırma üreticisi (PJSIP realtime veya dosya + reload)
-- [x] Admin girişi, 2FA, işlem logu
+- [x] Yönetici girişi, 2FA, işlem logu
 - [x] Arayüz iskeleti: tema, yerleşim, shadcn bileşenleri, ortak hedef seçici
 - [x] Dahililer ekranı: CRUD, yetkiler, yönlendirme, DND, CSV
 - [x] Hatlar ve rotalar ekranları, kara liste *(PATCH rota + üye PUT dahil)*

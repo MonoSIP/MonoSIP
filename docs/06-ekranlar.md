@@ -1,8 +1,8 @@
 # Ekranlar
 
-Admin paneli 15 ekrandan, kullanıcı portalı 5 ekrandan oluşur. İkisi aynı Vite uygulamasında, giriş yapanın rolüne göre farklı yerleşimle açılır.
+Yönetici paneli 15 ekrandan, kullanıcı portalı 5 ekrandan oluşur. İkisi aynı Vite uygulamasında, giriş yapanın rolüne göre farklı yerleşimle açılır.
 
-## Admin paneli
+## Yönetici paneli
 
 | Ekran | İçerik |
 | --- | --- |
@@ -20,7 +20,7 @@ Admin paneli 15 ekrandan, kullanıcı portalı 5 ekrandan oluşur. İkisi aynı 
 | Kaçan çağrılar | Bekliyor / dönüldü listesi |
 | Raporlar | Özet, kuyruk, dahili, IVR tuşlama, ses kalitesi; tarih aralığı |
 | Entegrasyon | Webhook'lar, API anahtarları |
-| Ayarlar | Genel; güvenlik (admin/portal/SIP IP allowlist, denylist, ban listesi, firewall export, login flood); ülke/fatura limiti; KVKK; e-posta; yedekleme; işlem logları; 2FA |
+| Ayarlar | Genel; güvenlik (yönetici/portal/SIP IP izin ve engel listeleri, yasak listesi, güvenlik duvarı dışa aktarma, giriş taşkını); ülke/fatura limiti; KVKK; e-posta; yedekleme; işlem logları; 2FA |
 
 ## Kullanıcı portalı
 
@@ -34,7 +34,7 @@ Admin paneli 15 ekrandan, kullanıcı portalı 5 ekrandan oluşur. İkisi aynı 
 
 ## Ortak arayüz kuralları
 
-- Masaüstünde sol menü, mobilde alt sekme çubuğu (portal) veya açılır menü (admin).
+- Masaüstünde sol menü, mobilde alt sekme çubuğu (portal) veya açılır menü (yönetici).
 - Açık/koyu tema; sistem tercihini izler, elle değiştirilebilir.
 - Tablolar mobilde kart görünümüne geçer; akış tasarımcısı mobilde salt görüntüleme olur.
-- Tüm metinler Türkçe; tarih ve sayı biçimleri tr-TR.
+- Arayüz metinleri İngilizce varsayılan; Türkçe seçilebilir. Tarih ve sayı biçimleri tr-TR.

@@ -7,7 +7,7 @@ Her çalışan dahili numarası ve portal şifresiyle girer; tarayıcıdan arar,
 - Kullanıcı adı dahili numarasıdır. Portal şifresi SIP şifresinden ayrıdır.
 - SIP şifresi uzun ve rastgele üretilir; softphone bağlantı bilgisini backend oturum açıldıktan sonra verir.
 - Portal şifresi sızsa masa telefonları etkilenmez; şifre değişince telefonların yeniden ayarlanması gerekmez.
-- Admin şifreyi sıfırlar; portal erişimi dahili bazında açılıp kapatılır.
+- Yönetici şifreyi sıfırlar; portal erişimi dahili bazında açılıp kapatılır.
 
 ## Softphone
 
@@ -28,7 +28,7 @@ Her çalışan dahili numarası ve portal şifresiyle girer; tarayıcıdan arar,
 
 - Yalnızca kendisinin taraf olduğu görüşmeler.
 - Yalnızca dinleme; indirme yok. Oynatıcı ses akışı olarak verir, indirme bağlantısı sunmaz.
-- Admin dahili bazında dinleme iznini kapatabilir.
+- Yönetici dahili bazında dinleme iznini kapatabilir.
 - Her dinleme loglanır (kim, hangi kayıt, ne zaman).
 
 ## Sesli mesaj ve yönlendirme

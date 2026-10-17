@@ -32,7 +32,7 @@ En büyük finansal risk, ele geçirilen bir dahiliden yapılan yurt dışı ara
 - SIP şifreleri 32 karakter rastgele; kullanıcı görmez.
 - Fail2ban: hatalı SIP kaydı / admin login denemesinde IP engelleme (`docker compose --profile fail2ban`; prod’da host firewall tercih edilir).
 - Panel → Ayarlar → Security: `sipIpAllowlist` / `sipIpDenylist` → PJSIP ACL; host için nftables/ufw export.
-- Host firewall şablonu: `scripts/harden-firewall.sh` (SIP/RTP yalnızca allowlist).
+- Ana makine güvenlik duvarı şablonu: `scripts/harden-firewall.sh` (SIP/RTP yalnızca izin listesi).
 - Ülkeye göre giden arama kısıtı; varsayılan olarak yalnızca Türkiye açık.
 - Arama sıklığı sınırı: kısa sürede anormal sayıda giden arama yapan dahili durdurulur, admin'e e-posta gider.
 - Fatura stop: genel ve dahili bazında günlük ve aylık limit.
@@ -41,10 +41,10 @@ En büyük finansal risk, ele geçirilen bir dahiliden yapılan yurt dışı ara
 ### Panel ve portal
 
 - Yalnızca HTTPS; Let's Encrypt otomatik sertifika.
-- Admin girişi 2FA zorunlu; `adminIpAllowlist` tüm admin API’ye uygulanır (boş = lab’de açık).
-- Portal: isteğe bağlı `portalIpAllowlist`; login flood → geçici ban (`ip_bans` + bellek).
+- Yönetici girişi 2FA zorunlu; `adminIpAllowlist` tüm yönetici API’sine uygulanır (boş = laboratuvarda açık).
+- Portal: isteğe bağlı `portalIpAllowlist`; giriş taşkını → geçici yasak (`ip_bans` + bellek).
 - Hatlar ve API düğümlerinin gizli bilgileri veritabanında şifreli.
-- Admin'in her değişikliği işlem loguna yazılır.
+- Yöneticinin her değişikliği işlem loguna yazılır.
 
 ## KVKK
 
