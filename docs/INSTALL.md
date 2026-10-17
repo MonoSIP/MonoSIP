@@ -45,6 +45,17 @@ docker compose down          # stop (keeps volumes)
 docker compose down -v       # stop AND delete DB/recordings volumes
 ```
 
+## NineDeploy / remote Docker build
+
+The API Dockerfile expects the **repository root** as build context (it needs `packages/shared` and `pnpm-workspace.yaml`):
+
+```bash
+docker build -f apps/api/Dockerfile .
+```
+
+A `.ninedeploy` manifest is in the repo root with `build.dockerfile: apps/api/Dockerfile`.  
+If the panel still builds with context `apps/api`, clear **baseDir** / subdirectory settings so context is `.` — otherwise `COPY` paths fail.
+
 ## Production (VPS)
 
 1. Set public identity in `.env`:
