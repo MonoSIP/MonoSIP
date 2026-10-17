@@ -19,7 +19,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { flowNodeTypes, type FlowNodeData } from "./flow/FlowNodes";
+import { FlowCanvasActionsProvider, flowNodeTypes, type FlowNodeData } from "./flow/FlowNodes";
 
 const palette = [
   "announce",
@@ -142,6 +142,7 @@ export function FlowDesignerPage() {
   const [flowName, setFlowName] = useState("");
   const [extensionNumber, setExtensionNumber] = useState("");
   const [mobileView, setMobileView] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
@@ -399,18 +400,40 @@ export function FlowDesignerPage() {
     setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
   }
 
+  const requestDeleteNode = useCallback((nodeId: string) => {
+    const n = nodes.find((x) => x.id === nodeId);
+    if (!n || n.data.flowType === "start" || n.type === "start") return;
+    setPendingDeleteId(nodeId);
+  }, [nodes]);
+
+  function confirmDeleteNode() {
+    if (!pendingDeleteId) return;
+    const idToRemove = pendingDeleteId;
+    setPendingDeleteId(null);
+    setNodes((ns) => ns.filter((n) => n.id !== idToRemove));
+    setEdges((es) => es.filter((e) => e.source !== idToRemove && e.target !== idToRemove));
+    if (selectedId === idToRemove) {
+      setSelectedId(null);
+      setHttpTestResult(null);
+    }
+    toast.success("Node deleted");
+  }
+
   useEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId && !pendingDeleteId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedId(null);
-        setHttpTestResult(null);
-        setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
+      if (e.key !== "Escape") return;
+      if (pendingDeleteId) {
+        setPendingDeleteId(null);
+        return;
       }
+      setSelectedId(null);
+      setHttpTestResult(null);
+      setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, setNodes]);
+  }, [selectedId, pendingDeleteId, setNodes]);
 
   if (!loaded) return <div className="p-4">{t("common.loading")}</div>;
 
@@ -540,27 +563,29 @@ export function FlowDesignerPage() {
         )}
 
         <div className="card relative min-h-0 min-w-0 flex-1 overflow-hidden">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={flowNodeTypes}
-            onNodesChange={mobileView ? undefined : onNodesChange}
-            onEdgesChange={mobileView ? undefined : onEdgesChange}
-            onConnect={mobileView ? undefined : onConnect}
-            onSelectionChange={onSelectionChange}
-            nodesDraggable={!mobileView}
-            nodesConnectable={!mobileView}
-            elementsSelectable
-            fitView
-            proOptions={{ hideAttribution: true }}
-            defaultEdgeOptions={{
-              markerEnd: { type: MarkerType.ArrowClosed },
-              style: { stroke: "var(--accent)" },
-            }}
-          >
-            <Background gap={18} color="var(--border)" />
-            <Controls showInteractive={false} />
-          </ReactFlow>
+          <FlowCanvasActionsProvider requestDelete={requestDeleteNode}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={flowNodeTypes}
+              onNodesChange={mobileView ? undefined : onNodesChange}
+              onEdgesChange={mobileView ? undefined : onEdgesChange}
+              onConnect={mobileView ? undefined : onConnect}
+              onSelectionChange={onSelectionChange}
+              nodesDraggable={!mobileView}
+              nodesConnectable={!mobileView}
+              elementsSelectable
+              fitView
+              proOptions={{ hideAttribution: true }}
+              defaultEdgeOptions={{
+                markerEnd: { type: MarkerType.ArrowClosed },
+                style: { stroke: "var(--accent)" },
+              }}
+            >
+              <Background gap={18} color="var(--border)" />
+              <Controls showInteractive={false} />
+            </ReactFlow>
+          </FlowCanvasActionsProvider>
         </div>
 
         <div className="card w-56 shrink-0 space-y-3 overflow-auto p-3">
@@ -1131,6 +1156,40 @@ export function FlowDesignerPage() {
                   </select>
                 </label>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingDeleteId && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm delete"
+          onClick={() => setPendingDeleteId(null)}
+        >
+          <div
+            className="card w-full max-w-sm space-y-4 p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <div className="text-sm font-semibold">{t("common.delete")}</div>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">
+                {(() => {
+                  const n = nodes.find((x) => x.id === pendingDeleteId);
+                  const label = n?.data.label || n?.data.flowType || pendingDeleteId;
+                  return `Delete “${label}” from the IVR map? Connected links will be removed.`;
+                })()}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button className="btn" type="button" onClick={() => setPendingDeleteId(null)}>
+                {t("common.cancel")}
+              </button>
+              <button className="btn btn-danger" type="button" onClick={() => confirmDeleteNode()}>
+                {t("common.delete")}
+              </button>
             </div>
           </div>
         </div>

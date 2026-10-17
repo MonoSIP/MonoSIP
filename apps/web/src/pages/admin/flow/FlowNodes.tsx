@@ -1,5 +1,6 @@
-import { memo } from "react";
+import { createContext, memo, useContext, type ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Trash2 } from "lucide-react";
 
 export type FlowNodeData = {
   label?: string;
@@ -9,6 +10,24 @@ export type FlowNodeData = {
   promptId?: string;
   [key: string]: unknown;
 };
+
+type FlowCanvasActions = {
+  requestDelete: (nodeId: string) => void;
+};
+
+const FlowCanvasActionsCtx = createContext<FlowCanvasActions | null>(null);
+
+export function FlowCanvasActionsProvider({
+  requestDelete,
+  children,
+}: {
+  requestDelete: (nodeId: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <FlowCanvasActionsCtx.Provider value={{ requestDelete }}>{children}</FlowCanvasActionsCtx.Provider>
+  );
+}
 
 const exits: Record<string, string[]> = {
   start: ["next"],
@@ -46,20 +65,36 @@ function subtitle(data: FlowNodeData): string {
   return "";
 }
 
-export const FlowNode = memo(function FlowNode({ data, selected }: NodeProps) {
+export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps) {
   const d = data as FlowNodeData;
   const type = d.flowType || "announce";
   const outs = exits[type] ?? ["next"];
   const detail = subtitle(d);
+  const actions = useContext(FlowCanvasActionsCtx);
+  const canDelete = type !== "start" && Boolean(actions?.requestDelete);
 
   return (
     <div
-      className={`min-w-[140px] rounded-xl border px-3 py-2 shadow-sm ${
+      className={`relative min-w-[140px] rounded-xl border px-3 py-2 pr-8 shadow-sm ${
         selected
           ? "border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_18%,var(--bg-elevated))]"
           : "border-[var(--border)] bg-[var(--bg-elevated)]"
       }`}
     >
+      {canDelete && (
+        <button
+          type="button"
+          className="nodrag nopan absolute right-1 top-1 rounded-md p-1 text-[var(--text-muted)] hover:bg-[color-mix(in_oklab,var(--danger)_18%,transparent)] hover:text-[var(--danger)]"
+          title="Delete"
+          aria-label="Delete node"
+          onClick={(e) => {
+            e.stopPropagation();
+            actions?.requestDelete(id);
+          }}
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
       {type !== "start" && (
         <Handle
           type="target"
@@ -74,22 +109,22 @@ export const FlowNode = memo(function FlowNode({ data, selected }: NodeProps) {
       {detail ? (
         <div className="mt-0.5 max-w-[180px] truncate text-xs text-[var(--text-muted)]">{detail}</div>
       ) : null}
-      {outs.map((id, i) => (
+      {outs.map((exitId, i) => (
         <Handle
-          key={id}
-          id={id}
+          key={exitId}
+          id={exitId}
           type="source"
           position={Position.Right}
           style={{ top: `${((i + 1) / (outs.length + 1)) * 100}%` }}
           className="!h-2.5 !w-2.5 !border-[var(--border)] !bg-[var(--accent)]"
-          title={id}
+          title={exitId}
         />
       ))}
       {outs.length > 0 && (
         <div className="mt-1 flex flex-col gap-0.5 text-[9px] text-[var(--text-muted)]">
-          {outs.map((id) => (
-            <div key={id} className="text-right">
-              {id}
+          {outs.map((exitId) => (
+            <div key={exitId} className="text-right">
+              {exitId}
             </div>
           ))}
         </div>
