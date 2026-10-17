@@ -1,6 +1,6 @@
-# Menu (flow) designer
+# IVR (flow) designer
 
-Menus are built with React Flow (drag-and-drop), stored as JSON, and executed by the ARI flow engine on the backend. Each node exit is a separate edge to the next node.
+IVR flows are built with React Flow (drag-and-drop), stored as JSON, and executed by the ARI flow engine on the backend. Each node exit is a separate edge to the next node.
 
 ## Nodes
 

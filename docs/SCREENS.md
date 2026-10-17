@@ -11,7 +11,7 @@ The admin panel has 15 screens; the user portal has 5. Both live in the same Vit
 | Ring groups | List and edit |
 | Queues | List; detail: settings, members (drag-and-drop order, pause), announces, overflow destinations |
 | Schedules | Weekly editor, holiday calendar, manual override, “now” status |
-| Menus (flows) | List; designer: canvas, node palette, node settings, simulation panel, version history |
+| IVR (flows) | List; designer: canvas, node palette, node settings, simulation panel, version history |
 | Trunks | SIP provider list, create form, live status |
 | Routes | Inbound and outbound routes, blacklist |
 | Prompts | Upload announces, generate via TTS, MOH classes |

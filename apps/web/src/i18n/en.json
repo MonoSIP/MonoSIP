@@ -41,7 +41,7 @@
     "ringGroups": "Ring groups",
     "queues": "Queues",
     "schedules": "Schedules",
-    "flows": "Menus",
+    "flows": "IVR",
     "trunks": "SIP providers",
     "routes": "Routes",
     "prompts": "Prompts",
@@ -150,7 +150,7 @@
     "confirmDelete": "Delete this schedule?"
   },
   "flows": {
-    "title": "Call flows",
+    "title": "IVR",
     "designer": "Designer",
     "publish": "Publish",
     "validate": "Validate",

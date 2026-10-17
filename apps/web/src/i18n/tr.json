@@ -41,7 +41,7 @@
     "ringGroups": "Zil grupları",
     "queues": "Kuyruklar",
     "schedules": "Zaman planları",
-    "flows": "Menüler",
+    "flows": "IVR",
     "trunks": "SIP sağlayıcıları",
     "routes": "Rotalar",
     "prompts": "Sesler",
@@ -150,7 +150,7 @@
     "confirmDelete": "Bu plan silinsin mi?"
   },
   "flows": {
-    "title": "Çağrı akışları",
+    "title": "IVR",
     "designer": "Tasarımcı",
     "publish": "Yayınla",
     "validate": "Doğrula",
