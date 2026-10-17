@@ -29,9 +29,14 @@ Menus are built with React Flow (drag-and-drop), stored as JSON, and executed by
 - **Response mapping:** JSONPath → variable, e.g. `$.data.agent → agent`; HTTP status → `http_status`
 - **Safety:** Timeout (default 3s, max 10s); optional one retry. Can play MOH/announce while waiting
 - **Error exit:** Timeout, non-2xx, or unparseable body. Flow cannot publish if the error exit is unconnected
-- **Test:** Send a sample request from the node panel; show raw response and mapped variables
+- **Test:** Send a sample request from the node settings popup; show raw response and mapped variables
 
 Example: inbound → POST caller to CRM → `{"customer":true,"agent":"201"}` → transfer to 201. If API fails → general queue.
+
+## Editing nodes
+
+- Click a node on the canvas to open its **settings popup** (Escape / Close / backdrop to dismiss)
+- The right sidebar is **Test call** only (simulate with caller, DID, DTMF, optional mock API JSON)
 
 ## Call simulation
 

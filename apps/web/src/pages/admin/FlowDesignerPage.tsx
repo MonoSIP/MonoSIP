@@ -361,6 +361,25 @@ export function FlowDesignerPage() {
     );
   }
 
+  function closeInspector() {
+    setSelectedId(null);
+    setHttpTestResult(null);
+    setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
+  }
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedId(null);
+        setHttpTestResult(null);
+        setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, setNodes]);
+
   if (!loaded) return <div className="p-4">{t("common.loading")}</div>;
 
   return (
@@ -499,7 +518,7 @@ export function FlowDesignerPage() {
             onSelectionChange={onSelectionChange}
             nodesDraggable={!mobileView}
             nodesConnectable={!mobileView}
-            elementsSelectable={!mobileView}
+            elementsSelectable
             fitView
             proOptions={{ hideAttribution: true }}
             defaultEdgeOptions={{
@@ -513,10 +532,68 @@ export function FlowDesignerPage() {
         </div>
 
         <div className="card w-56 shrink-0 space-y-3 overflow-auto p-3">
-          <div className="text-xs font-semibold uppercase text-[var(--text-muted)]">Inspector</div>
-          {selected ? (
-            <>
-              <div className="text-sm font-medium">{selected.data.flowType}</div>
+            <div className="mb-1 text-xs font-semibold uppercase text-[var(--text-muted)]">Test call</div>
+            <label className="mb-1 block text-xs text-[var(--text-muted)]">
+              Caller
+              <input className="input mt-1 w-full" value={simCaller} onChange={(e) => setSimCaller(e.target.value)} />
+            </label>
+            <label className="mb-1 block text-xs text-[var(--text-muted)]">
+              DID
+              <input className="input mt-1 w-full" value={simDid} onChange={(e) => setSimDid(e.target.value)} />
+            </label>
+            <label className="mb-2 block text-xs text-[var(--text-muted)]">
+              DTMF seq (comma)
+              <input className="input mt-1 w-full" value={simDtmf} onChange={(e) => setSimDtmf(e.target.value)} />
+            </label>
+            <label className="mb-2 block text-xs text-[var(--text-muted)]">
+              Mock API JSON (optional)
+              <textarea
+                className="input mt-1 w-full font-mono text-[10px]"
+                rows={3}
+                placeholder='{"api1":{"temsilci":"101"}}'
+                value={simMockApi}
+                onChange={(e) => setSimMockApi(e.target.value)}
+              />
+            </label>
+            <button className="btn w-full text-sm" type="button" onClick={() => void simulate()}>
+              Run simulation
+            </button>
+            {simSteps.length > 0 && (
+              <ol className="mt-2 space-y-1 text-xs text-[var(--text)]">
+                {simSteps.map((s, i) => (
+                  <li key={`${i}-${s}`} className="rounded bg-[var(--bg-soft)] px-2 py-1">
+                    {i + 1}. {s}
+                  </li>
+                ))}
+              </ol>
+            )}
+        </div>
+      </div>
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Node settings"
+          onClick={() => closeInspector()}
+        >
+          <div
+            className="card flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                  Node settings
+                </div>
+                <div className="text-sm font-medium">{selected.data.flowType}</div>
+              </div>
+              <button className="btn" type="button" onClick={() => closeInspector()}>
+                Close
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4">
               <label className="block text-xs text-[var(--text-muted)]">
                 Label
                 <input
@@ -1003,50 +1080,10 @@ export function FlowDesignerPage() {
                   </select>
                 </label>
               )}
-            </>
-          ) : (
-            <p className="text-sm text-[var(--text-muted)]">Select a node to edit.</p>
-          )}
-
-          <div className="border-t border-[var(--border)] pt-3">
-            <div className="mb-1 text-xs font-semibold uppercase text-[var(--text-muted)]">Test call</div>
-            <label className="mb-1 block text-xs text-[var(--text-muted)]">
-              Caller
-              <input className="input mt-1 w-full" value={simCaller} onChange={(e) => setSimCaller(e.target.value)} />
-            </label>
-            <label className="mb-1 block text-xs text-[var(--text-muted)]">
-              DID
-              <input className="input mt-1 w-full" value={simDid} onChange={(e) => setSimDid(e.target.value)} />
-            </label>
-            <label className="mb-2 block text-xs text-[var(--text-muted)]">
-              DTMF seq (comma)
-              <input className="input mt-1 w-full" value={simDtmf} onChange={(e) => setSimDtmf(e.target.value)} />
-            </label>
-            <label className="mb-2 block text-xs text-[var(--text-muted)]">
-              Mock API JSON (optional)
-              <textarea
-                className="input mt-1 w-full font-mono text-[10px]"
-                rows={3}
-                placeholder='{"api1":{"temsilci":"101"}}'
-                value={simMockApi}
-                onChange={(e) => setSimMockApi(e.target.value)}
-              />
-            </label>
-            <button className="btn w-full text-sm" type="button" onClick={() => void simulate()}>
-              Run simulation
-            </button>
-            {simSteps.length > 0 && (
-              <ol className="mt-2 space-y-1 text-xs text-[var(--text)]">
-                {simSteps.map((s, i) => (
-                  <li key={`${i}-${s}`} className="rounded bg-[var(--bg-soft)] px-2 py-1">
-                    {i + 1}. {s}
-                  </li>
-                ))}
-              </ol>
-            )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
