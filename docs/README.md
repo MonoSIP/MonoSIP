@@ -1,18 +1,18 @@
-# Belgeler
+# Documentation
 
-| Belge | Açıklama |
+| Doc | Description |
 | --- | --- |
-| [KURULUM.md](KURULUM.md) | Docker kurulumu, birimler, laboratuvar ve VPS |
-| [01-ozellikler.md](01-ozellikler.md) | Özellik kapsamı |
-| [MIMARI.md](MIMARI.md) | Servisler ve veri akışı |
-| [VPS-DAGITIM.md](VPS-DAGITIM.md) | Genel sanal sunucuda telefon, NAT, güvenlik duvarı |
-| [02-kullanici-portali.md](02-kullanici-portali.md) | Kullanıcı portalı |
-| [03-akis-tasarimcisi.md](03-akis-tasarimcisi.md) | Akış tasarımcısı |
-| [04-veri-modeli.md](04-veri-modeli.md) | Veri modeli |
-| [05-api.md](05-api.md) | API yüzeyi |
-| [06-ekranlar.md](06-ekranlar.md) | Ekranlar |
-| [07-sunucu-ve-guvenlik.md](07-sunucu-ve-guvenlik.md) | Sunucu ve güvenlik |
-| [METINDEN-SESE.md](METINDEN-SESE.md) | Metinden sese servisi |
+| [INSTALL.md](INSTALL.md) | Docker install, volumes, lab & VPS |
+| [FEATURES.md](FEATURES.md) | Feature scope and stack |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Services and data flow |
+| [DEPLOY-VPS.md](DEPLOY-VPS.md) | Phones, NAT, firewall on a public VM |
+| [USER-PORTAL.md](USER-PORTAL.md) | User portal and softphone |
+| [FLOW-DESIGNER.md](FLOW-DESIGNER.md) | Flow / IVR designer |
+| [DATA-MODEL.md](DATA-MODEL.md) | Data model |
+| [API.md](API.md) | API surface |
+| [SCREENS.md](SCREENS.md) | UI screens |
+| [SERVER-SECURITY.md](SERVER-SECURITY.md) | Server, network, security, KVKK |
+| [TTS.md](TTS.md) | Text-to-speech service |
 
-Ürün yolu / faz kontrol listesi: [../TASKS.md](../TASKS.md)  
-Tanıtım sitesi (statik): [../site/](../site/)
+Product roadmap / phase checklist: [../TASKS.md](../TASKS.md)  
+Marketing site (static): [../site/](../site/)

@@ -1,56 +1,56 @@
-# Fazlar ve görev listesi
+# Phases and task list
 
-İş üç faza bölünür; her faz sonunda santral kullanılabilir durumdadır. İlk fazın sonunda şirket mevcut sistemden yeni santrale geçebilir.
+Work is split into three phases; the PBX is usable at the end of each phase. After phase 1 the company can cut over from the old system.
 
-## Faz 1: Çekirdek santral ve temel panel
+## Phase 1: Core PBX and admin panel
 
-- [x] Sanal sunucu, Debian 13, Asterisk 24 kurulumu; PJSIP, ARI, AMI yapılandırması *(Docker Asterisk 22 lab)*
-- [x] SIP sağlayıcı ile ilk dış hat; gelen ve giden test *(trunk CRUD + dialplan; gerçek trunk ayrı)*
-- [x] Monorepo iskeleti: `apps/web`, `apps/api`, `packages/shared`; Biome, Vitest, CI
-- [x] Veritabanı şeması ve Asterisk yapılandırma üreticisi (PJSIP realtime veya dosya + reload)
-- [x] Yönetici girişi, 2FA, işlem logu
-- [x] Arayüz iskeleti: tema, yerleşim, shadcn bileşenleri, ortak hedef seçici
-- [x] Dahililer ekranı: CRUD, yetkiler, yönlendirme, DND, CSV
-- [x] Hatlar ve rotalar ekranları, kara liste *(PATCH rota + üye PUT dahil)*
-- [x] Zil grupları ve kuyruklar (üyeler, strateji, anonslar, taşma)
-- [x] Zaman planları, tatiller, elle geçersiz kılma
-- [x] Kayıt, KVKK anonsu, Opus dönüşümü, saklama ve silme *(WAV + retention; Opus opsiyonel)*
-- [x] CDR ve kayıtlar ekranları
-- [x] Güvenlik: fail2ban, ülke kısıtı, fatura stop, sıklık sınırı, TLS/SRTP *(login-guard + compose profile)*
-- [x] IP telefon provizyonu ve karekodlu softphone kurulumu
-- [x] Yedekleme
+- [x] VM, Debian 13, Asterisk 24; PJSIP, ARI, AMI *(Docker Asterisk 22 lab)*
+- [x] First SIP trunk; inbound/outbound test *(trunk CRUD + dialplan; real trunk separate)*
+- [x] Monorepo skeleton: `apps/web`, `apps/api`, `packages/shared`; Biome, Vitest, CI
+- [x] DB schema and Asterisk config writer (PJSIP realtime or files + reload)
+- [x] Admin login, 2FA, audit log
+- [x] UI shell: theme, layout, shadcn components, shared destination picker
+- [x] Extensions screen: CRUD, permissions, forwarding, DND, CSV
+- [x] Trunks and routes screens, blacklist *(PATCH route + member PUT included)*
+- [x] Ring groups and queues (members, strategy, announces, overflow)
+- [x] Schedules, holidays, manual override
+- [x] Recording, KVKK announcement, Opus convert, retention *(WAV + retention; Opus optional)*
+- [x] CDR and recordings screens
+- [x] Security: fail2ban, country limit, spend stop, rate limit, TLS/SRTP *(login-guard + compose profile)*
+- [x] IP phone provisioning and QR softphone setup
+- [x] Backup
 
-**Smoke (Faz 1):** kara liste reddi; mesai dışı schedule; 2FA; CSV; backup; SMTP/IP/KVKK; gizli numara; yetki; 112; CDR filtre/timeline; DestPicker; ring group edit; internal hook secret; AMI trunk status.
+**Smoke (Phase 1):** blacklist reject; after-hours schedule; 2FA; CSV; backup; SMTP/IP/KVKK; anonymous block; permissions; 112; CDR filter/timeline; DestPicker; ring group edit; internal hook secret; AMI trunk status.
 
-## Faz 2: Menü tasarımcısı ve kullanıcı portalı
+## Phase 2: Flow designer and user portal
 
-- [x] ARI akış motoru: düğüm çalıştırıcı, değişkenler, sürüm kilidi
-- [x] Tasarımcı arayüzü: kanvas, palet, düğüm panelleri, doğrulama, yayınlama, geri alma
-- [x] API isteği düğümü: şablon, kimlik doğrulama, JSONPath, zaman aşımı, test
-- [x] TTS, dil seçimi, isimle arama düğümleri *(TTS lab beep fallback)*
-- [x] Test çağrısı simülasyonu
-- [x] Sesler ekranı: yükleme, TTS, bekleme müziği *(WAV upload + MOH config)*
-- [x] Kullanıcı portalı: giriş, SIP.js softphone, coturn, rehber ve durum
-- [x] Portal: çağrılarım, kayıtlarım (yalnızca dinleme), sesli mesaj, yönlendirme, DND
+- [x] ARI flow engine: node runner, variables, version lock
+- [x] Designer UI: canvas, palette, node panels, validate, publish, rollback
+- [x] API request node: template, auth, JSONPath, timeout, test
+- [x] TTS, language, name-lookup nodes *(TTS lab beep fallback)*
+- [x] Call simulation
+- [x] Prompts screen: upload, TTS, MOH *(WAV upload + MOH config)*
+- [x] User portal: login, SIP.js softphone, coturn, directory and presence
+- [x] Portal: my calls, my recordings (listen only), voicemail, forwarding, DND
 
-**Smoke (Faz 2):** IVR API+headers+Test HTTP; simulate/rollback; portal dial/rehber/recent/DND init; VM; MOH; waveform player.
+**Smoke (Phase 2):** IVR API+headers+Test HTTP; simulate/rollback; portal dial/directory/recent/DND init; VM; MOH; waveform player.
 
-## Faz 3: İzleme, raporlar, entegrasyon
+## Phase 3: Monitoring, reports, integration
 
-- [x] Canlı pano ve TV modu (WebSocket)
-- [x] Canlı dinleme, fısıldama, araya girme *(ARI snoop)*
-- [x] Raporlar: özet, kuyruk, dahili, IVR tuşlama, ses kalitesi *(özet/IVR/dahili)*
-- [x] Kaçan çağrılar, "Dönüldü" takibi, e-posta bildirimleri *(SMTP yoksa log-only özet)*
-- [x] Geri dönen aramayı arayana bağlama *(12s last-dial)*
-- [x] Kuyruk geri arama
-- [x] Otomatik günlük ve aylık rapor e-postaları
-- [x] Webhook'lar, entegrasyon API'si, API anahtarları
-- [x] Kayıt arşivi (NAS / SFTP) *(yerel path kopya; `recordingArchivePath`)*
+- [x] Live dashboard and TV mode (WebSocket)
+- [x] Spy, whisper, barge *(ARI snoop)*
+- [x] Reports: summary, queue, extension, IVR DTMF, quality *(summary/IVR/extension)*
+- [x] Missed calls, “called back” tracking, email *(log-only summary without SMTP)*
+- [x] Last-dial callback *(12h)*
+- [x] Queue callback
+- [x] Automatic daily and monthly report emails
+- [x] Webhooks, integration API, API keys
+- [x] Recording archive (NAS / SFTP) *(local path copy; `recordingArchivePath`)*
 
-**Smoke (Faz 3):** Dashboard WS; spy; reports date range+quality; API key perms; webhook Test; missed tabs; SMTP; Opus convert (ffmpeg varsa).
+**Smoke (Phase 3):** Dashboard WS; spy; reports date range+quality; API key perms; webhook Test; missed tabs; SMTP; Opus convert (when ffmpeg present).
 
-## Açık konular
+## Open questions
 
-- [ ] SIP sağlayıcı hangisi olacak, kaç numara (DID) gelecek?
-- [ ] Kayıt saklama süresi kaç ay?
-- [ ] Masa telefonlarının marka ve modelleri
+- [ ] Which SIP provider, how many DIDs?
+- [ ] Recording retention months?
+- [ ] Desk phone brands and models

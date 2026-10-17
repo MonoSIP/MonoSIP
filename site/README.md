@@ -1,13 +1,13 @@
-# DSip sitesi
+# DSip website
 
-Statik ürün sayfası. Bu klasör GitHub Actions ile GitHub Pages’e yayınlanır.
+Static product page. Published via GitHub Actions → GitHub Pages from this folder.
 
-**Canlı:** https://diggyen.github.io/DSip/
+**Live:** https://diggyen.github.io/DSip/
 
 ```bash
-# yerelde önizleme
+# preview locally
 python3 -m http.server 8765 --directory site
 # → http://localhost:8765
 ```
 
-Sayfadaki belge bağlantıları Pages’te çalışması için `github.com/diggyen/DSip/blob/main/docs/...` adresine gider.
+Docs links on the page point at `github.com/diggyen/DSip/blob/main/docs/...` so they work on Pages.
