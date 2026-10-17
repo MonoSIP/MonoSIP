@@ -80,8 +80,12 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         authType: body.authType,
         username: body.username,
         secretEnc: body.secret ? encrypt(body.secret) : null,
+        fromDomain: body.fromDomain?.trim() || null,
+        outboundProxy: body.outboundProxy?.trim() || null,
+        register: body.register,
         codecs: body.codecs,
         maxChannels: body.maxChannels,
+        notes: body.notes?.trim() || null,
         enabled: body.enabled,
       })
       .returning();
@@ -98,6 +102,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const patch: Record<string, unknown> = { ...body };
     delete patch.secret;
     if (body.secret) patch.secretEnc = encrypt(body.secret);
+    if (body.fromDomain !== undefined) patch.fromDomain = body.fromDomain?.trim() || null;
+    if (body.outboundProxy !== undefined) patch.outboundProxy = body.outboundProxy?.trim() || null;
+    if (body.notes !== undefined) patch.notes = body.notes?.trim() || null;
     // An empty body leaves `patch` empty, and drizzle throws "No values to set"
     // on an empty .set().
     if (!Object.keys(patch).length) {

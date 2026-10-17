@@ -22,6 +22,13 @@
       "when": 1792062000000,
       "tag": "0002_ip_bans",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792252800000,
+      "tag": "0003_trunk_provider_fields",
+      "breakpoints": true
     }
   ]
 }

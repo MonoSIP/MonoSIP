@@ -46,8 +46,16 @@ export const TrunkCreateSchema = z.object({
   authType: z.enum(["userpass", "ip"]).default("userpass"),
   username: z.string().optional().nullable(),
   secret: z.string().optional().nullable(),
-  codecs: z.array(z.string()).default(["ulaw", "alaw", "opus"]),
+  /** SIP From domain / realm (defaults to host when empty). */
+  fromDomain: z.string().max(255).optional().nullable(),
+  /** Optional outbound proxy host[:port]. */
+  outboundProxy: z.string().max(255).optional().nullable(),
+  /** REGISTER toward the provider (userpass only). */
+  register: z.boolean().default(true),
+  codecs: z.array(z.string()).default(["ulaw", "alaw"]),
   maxChannels: z.number().int().min(1).max(100).default(10),
+  /** Free-text: account #, DID list, support notes. */
+  notes: z.string().max(2000).optional().nullable(),
   enabled: z.boolean().default(true),
 });
 

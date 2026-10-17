@@ -359,17 +359,23 @@ describe("TrunksPage", () => {
     renderPage(<TrunksPage />);
 
     await screen.findByText("main");
-    // The add button submits a form whose inputs are required, so drive the
-    // form rather than the button (jsdom honours the constraint).
-    const form = screen
-      .getByRole("button", { name: "trunks.add" })
-      .closest("form") as HTMLFormElement;
-    fireEvent.submit(form);
+    fireEvent.change(screen.getByPlaceholderText("Netgsm / Turkcell / Custom"), {
+      target: { value: "Carrier" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("sip.provider.example"), {
+      target: { value: "sip.example.net" },
+    });
+    fireEvent.change(document.querySelector('input[type="password"]') as HTMLInputElement, {
+      target: { value: "secret" },
+    });
+    fireEvent.submit(
+      screen.getByRole("button", { name: "trunks.add" }).closest("form") as HTMLFormElement,
+    );
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     const [path, payload] = apiPost.mock.calls[0] as [string, Record<string, unknown>];
     expect(path).toBe("/api/v1/admin/trunks");
-    expect(payload).toMatchObject({ enabled: true });
+    expect(payload).toMatchObject({ enabled: true, name: "Carrier", host: "sip.example.net" });
   });
 
   it("deletes a trunk from its row", async () => {
@@ -840,11 +846,9 @@ describe("TrunksPage enable toggle", () => {
     apiPatch.mockResolvedValue({});
     renderPage(<TrunksPage />);
 
-    // The row's first button is the enable toggle; the row shows yes/no.
     const row = (await screen.findByText("main")).closest("tr") as HTMLElement;
     expect(within(row).getByText("common.yes")).toBeInTheDocument();
-    const toggle = within(row).getAllByRole("button")[0]!;
-    await userEvent.click(toggle);
+    await userEvent.click(within(row).getByRole("button", { name: "trunks.disable" }));
 
     await waitFor(() =>
       expect(apiPatch).toHaveBeenCalledWith("/api/v1/admin/trunks/t1", { enabled: false }),

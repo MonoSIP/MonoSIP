@@ -39,7 +39,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 
 ## Trunks and routes
 
-- Multiple SIP providers: registered (user/password) or IP-based; protocol, codecs, channel limit, number format
+- Multiple SIP providers (Admin → SIP providers): registered (user/password) or IP-based; transport, From domain, outbound proxy, codecs, channel limit, notes / DID memo
 - Trunk status (registration, latency) in the panel; email if trunk drops
 - Outbound routes: prefix rules, provider priority and failover
 - Inbound routes: DID → destination; caller pattern; blacklist; anonymous block; default route

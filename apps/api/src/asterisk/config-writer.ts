@@ -214,25 +214,50 @@ export async function writeAsteriskConfig(): Promise<void> {
         /* empty */
       }
     }
+    const codecs = ((trunk.codecs as string[]) ?? ["ulaw", "alaw"]).filter(Boolean);
+    const tport =
+      trunk.transport === "tls"
+        ? "transport-tls"
+        : trunk.transport === "tcp"
+          ? "transport-udp"
+          : "transport-udp";
+    const userpass = trunk.authType !== "ip";
+    const fromDomain = (trunk.fromDomain?.trim() || trunk.host).replace(/^sip:/i, "");
+    const proxy = trunk.outboundProxy?.trim() || "";
+    const contactUri = proxy
+      ? `sip:${proxy.includes(":") ? proxy : `${proxy}:${trunk.port}`}`
+      : `sip:${trunk.host}:${trunk.port}`;
+    const doRegister = userpass && trunk.register !== false && Boolean(trunk.username);
+
     pjsip.push(
       `[${id}]`,
       "type=endpoint",
       "context=from-trunk",
       "disallow=all",
-      `allow=${(trunk.codecs as string[]).join(",")}`,
-      `outbound_auth=${id}`,
+      `allow=${codecs.join(",") || "ulaw,alaw"}`,
+      ...(userpass ? [`outbound_auth=${id}`] : []),
       `aors=${id}`,
+      `transport=${tport}`,
+      `from_domain=${fromDomain}`,
+      ...(trunk.username ? [`from_user=${trunk.username}`] : []),
       "direct_media=no",
+      `device_state_busy_at=${Math.max(1, trunk.maxChannels ?? 10)}`,
       "",
-      `[${id}]`,
-      "type=auth",
-      "auth_type=userpass",
-      `username=${trunk.username ?? ""}`,
-      `password=${secret}`,
-      "",
+    );
+    if (userpass) {
+      pjsip.push(
+        `[${id}]`,
+        "type=auth",
+        "auth_type=userpass",
+        `username=${trunk.username ?? ""}`,
+        `password=${secret}`,
+        "",
+      );
+    }
+    pjsip.push(
       `[${id}]`,
       "type=aor",
-      `contact=sip:${trunk.host}:${trunk.port}`,
+      `contact=${contactUri}`,
       "qualify_frequency=60",
       "",
       `[${id}]`,
@@ -240,14 +265,18 @@ export async function writeAsteriskConfig(): Promise<void> {
       `endpoint=${id}`,
       `match=${trunk.host}`,
       "",
-      `[${id}]`,
-      "type=registration",
-      `outbound_auth=${id}`,
-      `server_uri=sip:${trunk.host}:${trunk.port}`,
-      `client_uri=sip:${trunk.username}@${trunk.host}`,
-      `retry_interval=60`,
-      "",
     );
+    if (doRegister) {
+      pjsip.push(
+        `[${id}]`,
+        "type=registration",
+        `outbound_auth=${id}`,
+        `server_uri=sip:${trunk.host}:${trunk.port}`,
+        `client_uri=sip:${trunk.username}@${fromDomain}`,
+        `retry_interval=60`,
+        "",
+      );
+    }
   }
 
   const resolveQueueDest = (

@@ -49,8 +49,8 @@ Work is split into three phases; the PBX is usable at the end of each phase. Aft
 
 **Smoke (Phase 3):** Dashboard WS; spy; reports date range+quality; API key perms; webhook Test; missed tabs; SMTP; Opus convert (when ffmpeg present).
 
-## Open questions (operator decisions — not code)
+## Operator setup (done in UI — not blocking code)
 
-- [ ] Which SIP provider, how many DIDs?
-- [ ] Recording retention months? (configurable in Settings; default from seed)
-- [ ] Desk phone brands and models (Yealink / Fanvil / Grandstream profiles ship)
+- [x] SIP provider settings — Admin → SIP providers (trunk CRUD: auth, codecs, channels, notes); DIDs via Routes
+- [x] Recording retention months — Admin → Settings
+- [x] Desk phone brands — Devices provisioning profiles (Yealink / Fanvil / Grandstream / softphone)
