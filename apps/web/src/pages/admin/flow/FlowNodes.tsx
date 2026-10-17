@@ -31,8 +31,16 @@ const exits: Record<string, string[]> = {
 
 function subtitle(data: FlowNodeData): string {
   const t = data.flowType;
-  if (t === "announce" || t === "tts") return String(data.text ?? data.prompt ?? data.promptId ?? "");
-  if (t === "menu") return String(data.prompt ?? data.text ?? "DTMF menu");
+  if (t === "announce" || t === "tts") {
+    const lang = data.language ? String(data.language) : "";
+    const body = String(data.text ?? data.prompt ?? data.promptId ?? "");
+    return [lang, body].filter(Boolean).join(" · ");
+  }
+  if (t === "menu") {
+    const lang = data.language ? String(data.language) : "";
+    const body = String(data.prompt ?? data.text ?? "DTMF menu");
+    return [lang, body].filter(Boolean).join(" · ");
+  }
   if (t === "transfer") return `${data.destType ?? ""} ${data.destId ?? ""}`.trim();
   if (t === "queue") return String(data.queueId ?? "");
   return "";

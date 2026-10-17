@@ -176,6 +176,35 @@ export function FlowDesignerPage() {
     queryKey: ["moh"],
     queryFn: () => api.get<Array<{ id: string; name: string }>>("/api/v1/admin/moh"),
   });
+  const ttsStatus = useQuery({
+    queryKey: ["tts-status"],
+    queryFn: () =>
+      api.get<{
+        ok: boolean;
+        voices?: { edge?: Record<string, string>; piper?: Record<string, string> };
+      }>("/api/v1/admin/tts/status"),
+    staleTime: 60_000,
+  });
+  const ttsLanguages = useMemo(() => {
+    const labels: Record<string, string> = {
+      en: "English (en)",
+      tr: "Turkish (tr)",
+    };
+    const codes = new Set<string>(["en", "tr"]);
+    const voices = ttsStatus.data?.voices;
+    if (voices && typeof voices === "object") {
+      for (const engine of Object.values(voices)) {
+        if (!engine || typeof engine !== "object") continue;
+        for (const key of Object.keys(engine)) {
+          const code = key.split(/[-_]/)[0]?.toLowerCase();
+          if (code === "en" || code === "tr") codes.add(code);
+        }
+      }
+    }
+    return [...codes]
+      .sort()
+      .map((code) => ({ code, label: labels[code] ?? code.toUpperCase() }));
+  }, [ttsStatus.data]);
 
   useEffect(() => {
     if (!id) return;
@@ -348,7 +377,10 @@ export function FlowDesignerPage() {
           flowType: type,
           label: type,
           ...(type === "menu" ? { prompt: "Press 1 or 2" } : {}),
-          ...(type === "announce" || type === "tts" ? { text: "Welcome" } : {}),
+          ...(type === "announce" || type === "tts"
+            ? { text: "Welcome", language: "en" }
+            : {}),
+          ...(type === "menu" ? { language: "en" } : {}),
         },
       },
     ]);
@@ -626,6 +658,24 @@ export function FlowDesignerPage() {
                     />
                   </label>
                   {(selected.data.flowType === "announce" ||
+                    selected.data.flowType === "tts" ||
+                    selected.data.flowType === "menu") && (
+                    <label className="block text-xs text-[var(--text-muted)]">
+                      Language
+                      <select
+                        className="input mt-1 w-full"
+                        value={String(selected.data.language ?? "en")}
+                        onChange={(e) => patchSelected({ language: e.target.value })}
+                      >
+                        {ttsLanguages.map((l) => (
+                          <option key={l.code} value={l.code}>
+                            {l.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {(selected.data.flowType === "announce" ||
                     selected.data.flowType === "tts") && (
                     <>
                       <label className="block text-xs text-[var(--text-muted)]">
@@ -643,7 +693,8 @@ export function FlowDesignerPage() {
                           ))}
                         </select>
                       </label>
-                      {selected.data.flowType === "tts" && (
+                      {(selected.data.flowType === "announce" ||
+                        selected.data.flowType === "tts") && (
                         <label className="block text-xs text-[var(--text-muted)]">
                           Voice gender
                           <select

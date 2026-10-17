@@ -7,9 +7,9 @@ Menus are built with React Flow (drag-and-drop), stored as JSON, and executed by
 | Node | What it does | Exits |
 | --- | --- | --- |
 | Start | Call enters the flow; `caller`, `did`, `time` variables ready | next |
-| Play | Plays an audio file | next |
-| TTS | Speaks text; `{{variable}}` supported, voice/gender, TR/EN | next |
-| Menu | Play + collect DTMF; single or multi-digit, timeout, retries | per digit, timeout, invalid |
+| Play / Announce | Speaks text or plays a prompt WAV; **language** (en/tr from TTS model), voice gender | next |
+| TTS | Speaks text; `{{variable}}` supported; language (en/tr), voice/gender | next |
+| Menu | Play + collect DTMF; language (en/tr), voice gender; single or multi-digit, timeout, retries | per digit, timeout, invalid |
 | API request | HTTP call; map response into variables | success, error |
 | Condition | Compare variables (=, ≠, >, <, contains, empty, regex); area/country codes | true, false |
 | Schedule gate | Looks up a schedule’s current status | open, lunch, after hours, holiday |

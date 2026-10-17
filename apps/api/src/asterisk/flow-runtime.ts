@@ -70,6 +70,17 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Node language wins when set; otherwise flow `language` variable / English. */
+export function resolveSpeechLang(
+  data: Record<string, unknown>,
+  vars: Record<string, string>,
+): "en" | "tr" {
+  const raw = String(data.language ?? "").trim().toLowerCase();
+  if (raw === "tr" || raw.startsWith("tr")) return "tr";
+  if (raw === "en" || raw.startsWith("en")) return "en";
+  return vars.language === "tr" ? "tr" : "en";
+}
+
 async function playSpeech(
   channelId: string,
   text: string,
@@ -290,9 +301,7 @@ export async function executeFlowLoop(
         if (!played && text) {
           try {
             const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
-            const lang = (vars.language === "tr" || data.language === "tr" ? "tr" : "en") as
-              | "en"
-              | "tr";
+            const lang = resolveSpeechLang(data, vars);
             const gender = String(data.gender ?? data.voice ?? "female");
             const wav = await synthesizeSpeech(text, lang, 1.05, gender);
             const tmpId = `live-${channelId.replace(/\W/g, "").slice(0, 24)}`;
@@ -314,7 +323,7 @@ export async function executeFlowLoop(
         const timeoutMs = Number(data.timeoutMs ?? 12000);
         const maxDigits = Math.max(1, Math.min(12, Number(data.maxDigits ?? 1) || 1));
         const retries = Math.max(0, Math.min(5, Number(data.retries ?? 2) || 0));
-        const lang = (vars.language === "tr" || data.language === "tr" ? "tr" : "en") as "en" | "tr";
+        const lang = resolveSpeechLang(data, vars);
         const gender = String(data.gender ?? data.voice ?? "female");
         let attempt = 0;
         let chosen: string | null = null;

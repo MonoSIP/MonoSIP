@@ -150,13 +150,14 @@ vi.mock("../lib/tts.js", () => ({
 }));
 
 import { ari } from "./ari.js";
-import { attachFlowRuntime } from "./flow-runtime.js";
 import { loadPublishedFlow, resolveDestination, isBlacklisted, resolveInbound } from "./routing.js";
 import { cdrAnswered, cdrEnd, cdrIsOpen, cdrStart } from "../lib/cdr.js";
 import {
   applyResolved,
+  attachFlowRuntime,
   executeFlowLoop,
   handleOutbound,
+  resolveSpeechLang,
   runFlowOnChannel,
 } from "./flow-runtime.js";
 import {
@@ -397,6 +398,18 @@ describe("executeFlowLoop — node-type dispatch", () => {
     const flow = flowOf([node("u", "bogus-node"), node("h", "hangup")], [edge("u", "h")]);
     await runLoop(node("u", "bogus-node"), flow);
     expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+  });
+});
+
+describe("resolveSpeechLang", () => {
+  it("prefers the node language over the flow variable", () => {
+    expect(resolveSpeechLang({ language: "en" }, { language: "tr" })).toBe("en");
+    expect(resolveSpeechLang({ language: "tr" }, { language: "en" })).toBe("tr");
+  });
+
+  it("falls back to the flow language variable when the node has none", () => {
+    expect(resolveSpeechLang({}, { language: "tr" })).toBe("tr");
+    expect(resolveSpeechLang({}, {})).toBe("en");
   });
 });
 
