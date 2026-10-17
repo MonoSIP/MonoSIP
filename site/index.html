@@ -23,6 +23,7 @@
       <a class="mark" href="#top">DSip</a>
       <nav aria-label="Primary">
         <a href="#features">Features</a>
+        <a href="#ivr">IVR</a>
         <a href="#softphone">Softphone</a>
         <a href="#ops">Ops</a>
         <a href="#install">Install</a>
@@ -154,10 +155,9 @@
             </div>
             <h3>IVR / flow designer</h3>
             <p>
-              Visual canvas driven by Asterisk ARI — not a static dialplan file. Nodes: menu
-              (DTMF), play, dial, queue, schedule gate, HTTP API (auth, JSONPath, timeout, test),
-              TTS, name lookup, variables. Validate → publish with version lock, rollback, and
-              simulate a path before go-live.
+              Visual ARI canvas: menu, Get key (<code>$pin</code>), API (GET/POST…), TTS, queue,
+              transfer. Pencil opens settings; drag only moves. Validate, publish, rollback,
+              simulate. <a href="#ivr">See the panel →</a>
             </p>
           </article>
 
@@ -181,7 +181,87 @@
         </div>
       </section>
 
-      <section class="band band-alt" id="softphone">
+      <section class="band band-alt" id="ivr">
+        <header class="band-head">
+          <h2>IVR designer in the admin panel</h2>
+          <p>
+            Build the call path on a map. Drag nodes to arrange; use the pencil to edit. Variables
+            from Get key, Set variable, or API mappings expand as <code>$name</code> or
+            <code>{{name}}</code> in prompts and HTTP fields.
+          </p>
+        </header>
+
+        <figure class="shot">
+          <img
+            src="images/ivr-designer.png"
+            width="1440"
+            height="900"
+            alt="DSip IVR designer: node palette, canvas with Welcome → menu → Get key / queue, and Test call sidebar"
+            loading="lazy"
+          />
+          <figcaption>
+            Main IVR on extension 900 — Welcome, menu, Get key, CRM API lookup, queue, and hangup.
+            Right sidebar is Test call only.
+          </figcaption>
+        </figure>
+
+        <div class="shot-grid">
+          <figure class="shot">
+            <img
+              src="images/ivr-get-key.png"
+              width="1440"
+              height="900"
+              alt="Get key node settings: store digits as $pin, prompt language and voice, max and min digits"
+              loading="lazy"
+            />
+            <figcaption>
+              <strong>Get key</strong> — collect keypad digits into a named variable (e.g.
+              <code>$pin</code>), then reuse it in TTS or API URLs.
+            </figcaption>
+          </figure>
+          <figure class="shot">
+            <img
+              src="images/ivr-api-settings.png"
+              width="1440"
+              height="900"
+              alt="API request settings with GET POST method selector and URL using $pin and $caller"
+              loading="lazy"
+            />
+            <figcaption>
+              <strong>API request</strong> — pick GET / POST / PUT / PATCH / DELETE, inject
+              <code>$caller</code> / <code>$pin</code>, map JSON into variables, send a test
+              request.
+            </figcaption>
+          </figure>
+        </div>
+
+        <div class="shot-grid shot-grid-wide">
+          <figure class="shot">
+            <img
+              src="images/dashboard.png"
+              width="1440"
+              height="900"
+              alt="Live dashboard with call stats, trunks, extensions, and queues"
+              loading="lazy"
+            />
+            <figcaption>Live dashboard — active calls, trunks, extensions, queues.</figcaption>
+          </figure>
+          <figure class="shot">
+            <img
+              src="images/settings-defaults.png"
+              width="1440"
+              height="900"
+              alt="Admin settings on defaults: company DSip, English locale, retention and security"
+              loading="lazy"
+            />
+            <figcaption>
+              Settings at defaults — company name, English UI, retention, security, hostname SSL.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="band" id="softphone">
         <header class="band-head">
           <h2>Softphone &amp; desk phones</h2>
           <p>
@@ -211,7 +291,7 @@
         </div>
       </section>
 
-      <section class="band" id="ops">
+      <section class="band band-alt" id="ops">
         <header class="band-head">
           <h2>Ops, security, SSL</h2>
           <p>Day-two tools live in the admin panel — not a second product.</p>

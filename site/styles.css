@@ -394,6 +394,50 @@ nav a:hover {
   font-size: 0.9rem;
   line-height: 1.55;
 }
+.feat a {
+  color: var(--signal-hi);
+  text-decoration: none;
+  font-weight: 600;
+}
+.feat a:hover {
+  text-decoration: underline;
+}
+
+.shot {
+  margin: 0 0 1.15rem;
+}
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+}
+.shot figcaption {
+  margin: 0.55rem 0 0;
+  color: var(--mist);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  max-width: 72ch;
+}
+.shot figcaption strong {
+  color: var(--paper);
+  font-weight: 650;
+}
+.shot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.15rem;
+  margin-bottom: 1.15rem;
+}
+.shot-grid .shot {
+  margin-bottom: 0;
+}
+.shot-grid-wide {
+  margin-top: 0.25rem;
+}
 
 .split {
   display: grid;
@@ -536,7 +580,8 @@ nav a:hover {
   .feat-grid,
   .ops-grid,
   .split,
-  .install-notes {
+  .install-notes,
+  .shot-grid {
     grid-template-columns: 1fr;
   }
 }
