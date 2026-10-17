@@ -6,8 +6,14 @@ set -e
 DATA_DIR="${DSIP_DATA_DIR:-/data}"
 SECRETS_FILE="$DATA_DIR/.dsip-secrets"
 PGDATA="$DATA_DIR/postgres"
+PGLOG="$PGDATA/server.log"
 
 mkdir -p "$DATA_DIR/recordings" "$DATA_DIR/uploads" "$DATA_DIR/asterisk" "$PGDATA" /var/run/postgresql
+
+# NineDeploy volumes are often not owned by postgres — fix every boot.
+# Own only what we need; never require writing logs at /data/*.log (root of volume).
+chown -R postgres:postgres "$PGDATA" /var/run/postgresql 2>/dev/null || true
+chmod 700 "$PGDATA" 2>/dev/null || true
 
 # --- Secrets (persist across redeploys via volume) ---
 if [ -f "$SECRETS_FILE" ]; then
@@ -26,6 +32,7 @@ if [ -z "${INTERNAL_API_SECRET:-}" ]; then
 fi
 
 umask 077
+# Secrets file must be writable by the entrypoint user (root).
 cat > "$SECRETS_FILE" <<EOF
 export SESSION_SECRET='$SESSION_SECRET'
 export ENCRYPTION_KEY='$ENCRYPTION_KEY'
@@ -68,14 +75,33 @@ if [ -z "$PG_BIN" ]; then
 fi
 
 echo "No DATABASE_URL — starting embedded Postgres in $PGDATA"
+
+# If a previous boot left a broken empty/partial data dir owned by root, reset it.
+if [ -d "$PGDATA" ] && [ ! -s "$PGDATA/PG_VERSION" ]; then
+  # Keep directory, wipe contents so initdb can run as postgres
+  find "$PGDATA" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+fi
+
 chown -R postgres:postgres "$PGDATA" /var/run/postgresql
+chmod 700 "$PGDATA"
 
 if [ ! -s "$PGDATA/PG_VERSION" ]; then
+  echo "Initializing embedded Postgres cluster…"
   su -s /bin/sh postgres -c "$PG_BIN/initdb -D '$PGDATA' --auth-local=trust --auth-host=trust --encoding=UTF8 --locale=C"
 fi
 
-if ! su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' status" >/dev/null 2>&1; then
-  su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -l '$DATA_DIR/postgres.log' -o \"-c listen_addresses=127.0.0.1 -c port=5432 -c unix_socket_directories=/var/run/postgresql\" -w start"
+# Stop stale postmaster if any
+if [ -f "$PGDATA/postmaster.pid" ]; then
+  su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -m fast stop" >/dev/null 2>&1 || true
+  rm -f "$PGDATA/postmaster.pid"
+fi
+
+echo "Starting embedded Postgres…"
+if ! su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -l '$PGLOG' -o \"-c listen_addresses=127.0.0.1 -c port=5432 -c unix_socket_directories=/var/run/postgresql -c logging_collector=off\" -w start"; then
+  echo "FATAL: embedded Postgres failed to start. Log:"
+  tail -n 80 "$PGLOG" 2>/dev/null || true
+  ls -la "$DATA_DIR" "$PGDATA" 2>/dev/null || true
+  return 1
 fi
 
 i=0
@@ -86,6 +112,12 @@ while [ "$i" -lt 30 ]; do
   i=$((i + 1))
   sleep 1
 done
+
+if ! su -s /bin/sh postgres -c "$PG_BIN/pg_isready -h 127.0.0.1 -p 5432" >/dev/null 2>&1; then
+  echo "FATAL: embedded Postgres not accepting connections"
+  tail -n 80 "$PGLOG" 2>/dev/null || true
+  return 1
+fi
 
 su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 FROM pg_roles WHERE rolname='dsip'\"" | grep -q 1 \
   || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE ROLE dsip LOGIN PASSWORD 'dsip' SUPERUSER;\""
