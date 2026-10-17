@@ -60,6 +60,7 @@ Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
 All docs live under **[docs/](docs/README.md)**. Static product site: **[site/](site/index.html)** (open locally or publish with GitHub Pages → `/site`).
 
-## License / ownership
+## Ownership / updates
 
-Maintained by [@diggyen](https://github.com/diggyen).
+Canonical repo: **[github.com/diggyen/DSip](https://github.com/diggyen/DSip)**.  
+All updates are made by **[@diggyen](https://github.com/diggyen)** only. Unauthorized modifications and third-party PRs are closed (see [.github/MAINTENANCE.md](.github/MAINTENANCE.md)).

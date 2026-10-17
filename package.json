@@ -2,6 +2,16 @@
   "name": "dsip",
   "private": true,
   "version": "1.2.0",
+  "description": "DSip — company PBX. Maintained exclusively by @diggyen.",
+  "author": "diggyen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diggyen/DSip.git"
+  },
+  "homepage": "https://github.com/diggyen/DSip",
+  "bugs": {
+    "url": "https://github.com/diggyen/DSip/issues"
+  },
   "packageManager": "pnpm@10.18.0",
   "scripts": {
     "dev": "pnpm -r --parallel --filter @dsip/api --filter @dsip/web run dev",
