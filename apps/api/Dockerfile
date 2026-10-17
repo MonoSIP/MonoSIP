@@ -5,7 +5,9 @@
 FROM node:24-bookworm-slim
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.18.0 --activate \
-  && apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates ffmpeg \
+  && apt-get update && apt-get install -y --no-install-recommends \
+    openssl ca-certificates ffmpeg \
+    postgresql postgresql-client \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -17,7 +19,8 @@ RUN pnpm install --filter @dsip/api... --frozen-lockfile=false \
 
 # Entrypoint is already in the tree from COPY apps/api — do not COPY apps/api/... again
 # (that path breaks when the build context is wrongly set to apps/api).
-RUN cp /app/apps/api/docker-entrypoint.sh /entrypoint.sh && chmod +x /entrypoint.sh
+RUN cp /app/apps/api/docker-entrypoint.sh /entrypoint.sh \
+  && chmod +x /entrypoint.sh /app/apps/api/scripts/bootstrap-runtime.sh
 
 WORKDIR /app/apps/api
 EXPOSE 3000

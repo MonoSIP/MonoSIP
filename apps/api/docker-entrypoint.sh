@@ -4,11 +4,8 @@ cd /app
 pnpm --filter @dsip/shared build
 cd /app/apps/api
 
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "FATAL: DATABASE_URL is not set."
-  echo "NineDeploy: attach a managed Postgres (database.ref) or set DATABASE_URL in the service env vault, then redeploy."
-  exit 1
-fi
+# shellcheck disable=SC1091
+. /app/apps/api/scripts/bootstrap-runtime.sh
 
 echo "Waiting for postgres..."
 i=0

@@ -56,17 +56,17 @@ docker build -f apps/api/Dockerfile .
 A `.ninedeploy` manifest is in the repo root with `build.dockerfile: apps/api/Dockerfile`.  
 If the panel still builds with context `apps/api`, clear **baseDir** / subdirectory settings so context is `.` — otherwise `COPY` paths fail.
 
-### NineDeploy env (required for healthcheck)
+### NineDeploy (one-click)
 
-Build can succeed while the container never listens on `:3000` if Postgres is missing. Set these in the service **env vault** (or attach a managed database):
+Press **Deploy**. No panel env is required for a first boot:
 
-| Variable | Notes |
-| --- | --- |
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/dsip` — attach panel DB with `database.ref` / `env: DATABASE_URL` |
-| `SESSION_SECRET` | ≥32 random characters |
-| `ENCRYPTION_KEY` | 64 hex characters |
+- If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres`
+- `SESSION_SECRET` / `ENCRYPTION_KEY` are generated and stored in `/data/.dsip-secrets`
+- `.ninedeploy` mounts persistent volume `/data`
 
-Until `DATABASE_URL` works, the entrypoint exits and health probes (`nc … 3000`) fail.
+Default admin (change after login): `admin@example.com` / `Admin123!`
+
+Optional later: attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped.
 
 ## Production (VPS)
 
