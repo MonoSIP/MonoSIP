@@ -31,12 +31,29 @@ fi
 if [ -z "${INTERNAL_API_SECRET:-}" ]; then
   INTERNAL_API_SECRET="$(openssl rand -hex 24)"
 fi
+# ARI/AMI — persist so redeploys keep dialplan curl + ARI clients in sync
+if [ -z "${ASTERISK_ARI_PASSWORD:-}" ]; then
+  ASTERISK_ARI_PASSWORD="$(openssl rand -hex 16)"
+fi
+if [ -z "${ASTERISK_AMI_PASSWORD:-}" ]; then
+  ASTERISK_AMI_PASSWORD="$(openssl rand -hex 16)"
+fi
+if [ -z "${ASTERISK_ARI_USER:-}" ]; then
+  ASTERISK_ARI_USER="dsip"
+fi
+if [ -z "${ASTERISK_AMI_USER:-}" ]; then
+  ASTERISK_AMI_USER="dsip"
+fi
 
 umask 077
 if ! cat > "$SECRETS_FILE" <<EOF
 export SESSION_SECRET='$SESSION_SECRET'
 export ENCRYPTION_KEY='$ENCRYPTION_KEY'
 export INTERNAL_API_SECRET='$INTERNAL_API_SECRET'
+export ASTERISK_ARI_USER='$ASTERISK_ARI_USER'
+export ASTERISK_ARI_PASSWORD='$ASTERISK_ARI_PASSWORD'
+export ASTERISK_AMI_USER='$ASTERISK_AMI_USER'
+export ASTERISK_AMI_PASSWORD='$ASTERISK_AMI_PASSWORD'
 EOF
 then
   echo "WARN: cannot write $SECRETS_FILE (volume permissions?) — secrets will not persist"
@@ -44,12 +61,29 @@ fi
 # shellcheck disable=SC1090
 [ -f "$SECRETS_FILE" ] && . "$SECRETS_FILE"
 export SESSION_SECRET ENCRYPTION_KEY INTERNAL_API_SECRET
+export ASTERISK_ARI_USER ASTERISK_ARI_PASSWORD ASTERISK_AMI_USER ASTERISK_AMI_PASSWORD
 
 export ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
 export ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin123!}"
 export RECORDINGS_DIR="${RECORDINGS_DIR:-$DATA_DIR/recordings}"
 export UPLOADS_DIR="${UPLOADS_DIR:-$DATA_DIR/uploads}"
 export ASTERISK_CONFIG_DIR="${ASTERISK_CONFIG_DIR:-$DATA_DIR/asterisk}"
+
+# Public identity — vault should set these for production (e.g. dsip.gatex.uk)
+if [ -n "${PUBLIC_HOST:-}" ] && { [ -z "${PUBLIC_URL:-}" ] || [ "$PUBLIC_URL" = "https://localhost" ]; }; then
+  export PUBLIC_URL="https://${PUBLIC_HOST}"
+fi
+if [ -n "${PUBLIC_HOST:-}" ] && { [ -z "${SIP_DOMAIN:-}" ] || [ "$SIP_DOMAIN" = "localhost" ]; }; then
+  export SIP_DOMAIN="$PUBLIC_HOST"
+fi
+if [ -n "${PUBLIC_HOST:-}" ] && { [ -z "${SIP_WSS_URL:-}" ] || [ "$SIP_WSS_URL" = "wss://localhost/asterisk-ws" ]; }; then
+  export SIP_WSS_URL="wss://${PUBLIC_HOST}/asterisk-ws"
+fi
+
+# All-in-one defaults (Compose overrides with http://asterisk:8088)
+export ASTERISK_ARI_URL="${ASTERISK_ARI_URL:-http://127.0.0.1:8088}"
+export ASTERISK_AMI_HOST="${ASTERISK_AMI_HOST:-127.0.0.1}"
+export ASTERISK_AMI_PORT="${ASTERISK_AMI_PORT:-5038}"
 
 # Prefer injected / vault DATABASE_URL (or common aliases).
 if [ -z "${DATABASE_URL:-}" ] && [ -n "${POSTGRES_URL:-}" ]; then

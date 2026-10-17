@@ -12,6 +12,10 @@ cd /app/apps/api
 # shellcheck disable=SC1091
 . /app/apps/api/scripts/bootstrap-runtime.sh
 
+# Embedded Asterisk (NineDeploy all-in-one). Skipped when ASTERISK_ARI_URL points at `asterisk` host (Compose).
+# shellcheck disable=SC1091
+. /app/apps/api/scripts/start-asterisk.sh
+
 echo "Waiting for postgres..."
 i=0
 ok=0

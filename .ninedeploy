@@ -13,7 +13,7 @@ run:
   healthcheck: "/api/v1/health"
   restart: unless-stopped
 
-# Persist DB (embedded) + uploads + secrets across redeploys.
+# Persist DB (embedded) + Asterisk config + uploads + secrets across redeploys.
 volume:
   mount: "/data"
   backups:
@@ -21,8 +21,8 @@ volume:
     retention: 14
 
 resources:
-  # Embedded Postgres + Node + ffmpeg headroom
-  memMb: 1536
+  # Embedded Postgres + Asterisk + Node + ffmpeg
+  memMb: 2560
   cpuShares: 1024
 
 env:
@@ -35,6 +35,7 @@ watch:
     - "apps/api/**"
     - "apps/web/**"
     - "packages/shared/**"
+    - "docker/asterisk/**"
     - "package.json"
     - "pnpm-workspace.yaml"
     - "pnpm-lock.yaml"

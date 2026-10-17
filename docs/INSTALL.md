@@ -58,13 +58,28 @@ If the panel still builds with context `apps/api`, clear **baseDir** / subdirect
 
 ### NineDeploy (one-click)
 
+The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** (ARI on `127.0.0.1:8088`, softphone WSS at `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — NineDeploy typically only exposes HTTPS→3000.
+
 Press **Deploy**. No panel env is required for a first boot:
 
 - If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres`
-- `SESSION_SECRET` / `ENCRYPTION_KEY` are generated and stored in `/data/.dsip-secrets`
-- `.ninedeploy` mounts persistent volume `/data`
+- Embedded **Asterisk** starts unless `ASTERISK_ARI_URL` points at another host (Compose sets `http://asterisk:8088`)
+- `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets`
+- Asterisk dialplan/PJSIP config persists under `/data/asterisk`
+- `.ninedeploy` mounts persistent volume `/data` (~2.5 GB RAM recommended)
 
 Default admin (change after login): `admin@example.com` / `Admin123!`
+
+**Vault (recommended for a public host such as `dsip.gatex.uk`):**
+
+```env
+PUBLIC_HOST=dsip.gatex.uk
+PUBLIC_URL=https://dsip.gatex.uk
+SIP_DOMAIN=dsip.gatex.uk
+SIP_WSS_URL=wss://dsip.gatex.uk/asterisk-ws
+EXTERNAL_IP=<public IPv4 of the NineDeploy host>
+ADMIN_PASSWORD=<strong password>
+```
 
 Optional later: attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped.
 

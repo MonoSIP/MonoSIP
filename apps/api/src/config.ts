@@ -36,14 +36,15 @@ export const config = {
   adminEmail: process.env.ADMIN_EMAIL ?? "admin@example.com",
   adminPassword: process.env.ADMIN_PASSWORD ?? "Admin123!",
   asterisk: {
-    ariUrl: process.env.ASTERISK_ARI_URL ?? "http://asterisk:8088",
+    // All-in-one / NineDeploy defaults to localhost; Compose sets http://asterisk:8088
+    ariUrl: process.env.ASTERISK_ARI_URL ?? "http://127.0.0.1:8088",
     ariUser: process.env.ASTERISK_ARI_USER ?? "dsip",
     ariPassword: process.env.ASTERISK_ARI_PASSWORD ?? "ari_secret_change_me",
-    amiHost: process.env.ASTERISK_AMI_HOST ?? "asterisk",
+    amiHost: process.env.ASTERISK_AMI_HOST ?? "127.0.0.1",
     amiPort: Number(process.env.ASTERISK_AMI_PORT ?? 5038),
     amiUser: process.env.ASTERISK_AMI_USER ?? "dsip",
     amiPassword: process.env.ASTERISK_AMI_PASSWORD ?? "ami_secret_change_me",
-    configDir: process.env.ASTERISK_CONFIG_DIR ?? "/var/lib/asterisk/dsip",
+    configDir: process.env.ASTERISK_CONFIG_DIR ?? "/data/asterisk",
   },
   recordingsDir: process.env.RECORDINGS_DIR ?? "/data/recordings",
   uploadsDir: process.env.UPLOADS_DIR ?? "/data/uploads",

@@ -17,6 +17,7 @@ import { adminResourceRoutes } from "./routes/admin-resources.js";
 import { portalRoutes } from "./routes/portal.js";
 import { integrationRoutes } from "./routes/integration.js";
 import { wsRoutes } from "./routes/ws.js";
+import { asteriskWsProxyRoutes } from "./routes/asterisk-ws-proxy.js";
 
 async function main() {
   await mkdir(config.recordingsDir, { recursive: true });
@@ -72,6 +73,7 @@ async function main() {
   await portalRoutes(app);
   await integrationRoutes(app);
   await wsRoutes(app);
+  await asteriskWsProxyRoutes(app);
 
   attachFlowRuntime();
   await ari.start();
@@ -117,6 +119,7 @@ async function main() {
         req.method === "GET" &&
         !u.startsWith("/api") &&
         !u.startsWith("/ws") &&
+        !u.startsWith("/asterisk-ws") &&
         !u.startsWith("/.well-known")
       ) {
         return reply.sendFile("index.html");
