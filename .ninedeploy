@@ -4,18 +4,30 @@ runtime:
   type: node
   version: "24"
 
-# Monorepo: Docker build context MUST be the repository root so
-# packages/shared and pnpm-workspace.yaml are available.
-# Do not set baseDir to apps/api — that produces:
-#   docker build -f apps/api/Dockerfile apps/api
-# which fails COPY of monorepo paths.
+# Monorepo: Docker build context MUST be the repository root.
 build:
   dockerfile: "apps/api/Dockerfile"
 
 run:
   port: 3000
+  # TCP probe only needs the process listening; path used if HTTP probe is enabled.
   healthcheck: "/api/v1/health"
   restart: unless-stopped
+
+# Attach a managed Postgres in the panel (or set DATABASE_URL in the env vault).
+# Example once you create a DB named "dsip-postgres":
+# database:
+#   ref: dsip-postgres
+#   env: DATABASE_URL
+
+env:
+  required:
+    - DATABASE_URL
+    - SESSION_SECRET
+    - ENCRYPTION_KEY
+  aliases:
+    # If NineDeploy injects POSTGRES_URL, map it to what the API expects.
+    POSTGRES_URL: DATABASE_URL
 
 watch:
   paths:
@@ -25,9 +37,3 @@ watch:
     - "pnpm-workspace.yaml"
     - "pnpm-lock.yaml"
     - "apps/api/Dockerfile"
-
-env:
-  required:
-    - DATABASE_URL
-    - SESSION_SECRET
-    - ENCRYPTION_KEY

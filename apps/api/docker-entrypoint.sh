@@ -4,18 +4,27 @@ cd /app
 pnpm --filter @dsip/shared build
 cd /app/apps/api
 
+if [ -z "${DATABASE_URL:-}" ]; then
+  echo "FATAL: DATABASE_URL is not set."
+  echo "NineDeploy: attach a managed Postgres (database.ref) or set DATABASE_URL in the service env vault, then redeploy."
+  exit 1
+fi
+
 echo "Waiting for postgres..."
 i=0
-while [ "$i" -lt 40 ]; do
-  if pnpm exec tsx -e "import pg from 'pg'; const p=new pg.Pool({connectionString:process.env.DATABASE_URL}); p.query('select 1').then(()=>p.end()).then(()=>console.log('ok')).catch((e)=>{console.error(e); process.exit(1)})"; then
+ok=0
+while [ "$i" -lt 60 ]; do
+  if pnpm exec tsx -e "import pg from 'pg'; const p=new pg.Pool({connectionString:process.env.DATABASE_URL}); await p.query('select 1'); await p.end(); console.log('postgres ok');"; then
+    ok=1
     break
   fi
-  i=$((i+1))
+  i=$((i + 1))
   sleep 2
 done
 
-if [ ! -d drizzle ] || [ -z "$(ls -A drizzle 2>/dev/null)" ]; then
-  pnpm exec drizzle-kit generate
+if [ "$ok" != "1" ]; then
+  echo "FATAL: Postgres not reachable with DATABASE_URL after ~2 minutes."
+  exit 1
 fi
 
 pnpm exec tsx src/db/migrate.ts
