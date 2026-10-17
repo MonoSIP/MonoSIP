@@ -62,11 +62,12 @@ The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Aste
 
 Press **Deploy**. No panel env is required for a first boot:
 
-- If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres`
+- If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres` (persists only if the `/data` volume is kept across deploys)
 - Embedded **Asterisk** starts unless `ASTERISK_ARI_URL` points at another host (Compose sets `http://asterisk:8088`)
-- `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets`
+- `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets` — **do not lose this file** or encrypted SIP secrets become unreadable
 - Asterisk dialplan/PJSIP config persists under `/data/asterisk`
 - `.ninedeploy` mounts persistent volume `/data` (~2.5 GB RAM recommended)
+- Boot **never wipes** an existing Postgres cluster on start failure (set `DSIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
 
 Default admin (change after login): `admin@example.com` / `Admin123!`
 
@@ -81,7 +82,7 @@ EXTERNAL_IP=<public IPv4 of the NineDeploy host>
 ADMIN_PASSWORD=<strong password>
 ```
 
-Optional later: attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped.
+**Strongly recommended:** attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped and survives image rebuilds/major PG upgrades without risk of an empty lab seed.
 
 ## Production (VPS)
 

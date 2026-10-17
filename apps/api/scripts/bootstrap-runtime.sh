@@ -144,24 +144,37 @@ start_pg() {
   su -s /bin/sh postgres -c "$PG_BIN/pg_ctl -D '$PGDATA' -l '$PGLOG' -o \"$PG_OPTS\" -w start"
 }
 
-# Broken partial dirs from earlier failed deploys
+# Only wipe incomplete inits (no PG_VERSION). Never destroy a real cluster by default —
+# a failed start after image upgrade used to wipe /data/postgres and look like a "reset".
 if [ -d "$PGDATA" ] && [ ! -s "$PGDATA/PG_VERSION" ]; then
+  echo "WARN: incomplete Postgres dir (no PG_VERSION) — clearing for initdb"
   wipe_pgdata
 fi
 
 init_pgdata
 
+if [ -s "$PGDATA/PG_VERSION" ]; then
+  echo "Embedded Postgres data version=$(cat "$PGDATA/PG_VERSION") at $PGDATA"
+fi
+
 echo "Starting embedded Postgres…"
 if ! start_pg; then
-  echo "WARN: first Postgres start failed — wiping broken cluster and retrying once"
-  tail -n 40 "$PGLOG" 2>/dev/null || true
-  wipe_pgdata
-  init_pgdata
-  if ! start_pg; then
-    echo "FATAL: embedded Postgres failed to start. Log:"
-    tail -n 80 "$PGLOG" 2>/dev/null || true
-    ls -la "$DATA_DIR" "$PGDATA" 2>/dev/null || true
-    df -h "$DATA_DIR" /dev/shm 2>/dev/null || true
+  echo "ERROR: Postgres failed to start with existing data (NOT wiping)."
+  echo "  If this is a major-version mismatch, attach a managed DATABASE_URL or set"
+  echo "  DSIP_PG_WIPE_ON_FAIL=1 once (destructive) after backing up /data."
+  tail -n 80 "$PGLOG" 2>/dev/null || true
+  ls -la "$DATA_DIR" "$PGDATA" 2>/dev/null || true
+  df -h "$DATA_DIR" /dev/shm 2>/dev/null || true
+  if [ "${DSIP_PG_WIPE_ON_FAIL:-}" = "1" ] && [ -s "$PGDATA/PG_VERSION" ]; then
+    echo "DSIP_PG_WIPE_ON_FAIL=1 — wiping cluster and re-initializing (DATA LOSS)"
+    wipe_pgdata
+    init_pgdata
+    if ! start_pg; then
+      echo "FATAL: embedded Postgres failed after wipe"
+      tail -n 80 "$PGLOG" 2>/dev/null || true
+      return 1
+    fi
+  else
     return 1
   fi
 fi
