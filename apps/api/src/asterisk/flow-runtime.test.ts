@@ -420,6 +420,29 @@ describe("executeFlowLoop — variable and branching nodes", () => {
     expect(vars.tier).toBe("gold");
   });
 
+  it("get_key stores collected digits under the named variable", async () => {
+    vi.mocked(ari.waitDtmfDigits).mockResolvedValue("4321");
+    const flow = flowOf(
+      [node("g", "get_key", { name: "pin", maxDigits: 4 }), node("h", "hangup")],
+      [edge("g", "h", "next"), edge("g", "h", "timeout")],
+    );
+    const { vars } = await runLoop(node("g", "get_key", { name: "pin", maxDigits: 4 }), flow);
+    expect(vars.pin).toBe("4321");
+    expect(vars.dtmf).toBe("4321");
+    expect(ari.waitDtmfDigits).toHaveBeenCalled();
+  });
+
+  it("get_key takes timeout when digits are missing", async () => {
+    vi.mocked(ari.waitDtmfDigits).mockResolvedValue("");
+    const flow = flowOf(
+      [node("g", "get_key", { name: "pin", minDigits: 1 }), node("h", "hangup")],
+      [edge("g", "h", "timeout")],
+    );
+    const { vars } = await runLoop(node("g", "get_key", { name: "pin", minDigits: 1 }), flow);
+    expect(vars.pin).toBe("");
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+  });
+
   it("language sets the locale used by later TTS", async () => {
     const flow = flowOf([node("l", "language", { language: "tr" })]);
     const { vars } = await runLoop(node("l", "language", { language: "tr" }), flow);

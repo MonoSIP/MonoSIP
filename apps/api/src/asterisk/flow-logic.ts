@@ -1,5 +1,15 @@
 import type { FlowJson } from "@dsip/shared";
 
+/**
+ * Expand variable placeholders from the flow bag.
+ * Supports both `{{name}}` and `$name` (e.g. `$pin`, `{{caller}}`).
+ */
+export function expandTemplate(tpl: string, vars: Record<string, unknown>): string {
+  return String(tpl ?? "")
+    .replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? ""))
+    .replace(/\$([A-Za-z_]\w*)/g, (_, k: string) => String(vars[k] ?? ""));
+}
+
 /** Navigate to next node by sourceHandle (or label). */
 export function nextNode(
   flow: FlowJson,

@@ -705,13 +705,30 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         headers: z.record(z.string()).optional(),
         body: z.string().optional(),
         timeoutMs: z.number().max(10000).default(3000),
+        authType: z.enum(["none", "bearer", "basic", "header"]).optional(),
+        secretId: z.string().uuid().optional(),
+        authHeader: z.string().optional(),
       })
       .parse(req.body);
     try {
+      let headers: Record<string, string> = { ...(body.headers ?? {}) };
+      const authType = body.authType ?? "none";
+      if (body.secretId && authType !== "none") {
+        const [sec] = await db.select().from(secrets).where(eq(secrets.id, body.secretId)).limit(1);
+        if (sec) {
+          const token = decrypt(sec.valueEnc);
+          if (authType === "bearer") headers = { ...headers, Authorization: `Bearer ${token}` };
+          else if (authType === "basic") headers = { ...headers, Authorization: `Basic ${token}` };
+          else if (authType === "header") {
+            headers = { ...headers, [body.authHeader || "X-Api-Key"]: token };
+          }
+        }
+      }
+      const method = body.method.toUpperCase();
       const res = await fetch(body.url, {
-        method: body.method,
-        headers: body.headers,
-        body: body.body,
+        method,
+        headers,
+        body: method !== "GET" && method !== "HEAD" && body.body ? body.body : undefined,
         signal: AbortSignal.timeout(body.timeoutMs),
       });
       const text = await res.text();

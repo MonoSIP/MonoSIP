@@ -11,20 +11,21 @@ import {
   type Connection,
   type Node,
   type Edge,
-  type OnSelectionChangeParams,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { DestPicker } from "../../components/DestPicker";
 import { FlowCanvasActionsProvider, flowNodeTypes, type FlowNodeData } from "./flow/FlowNodes";
+import { NodeSettings } from "./flow/NodeSettings";
+import { defaultDataForType, menuDigits, modalMaxWidth, nodeBlurb, nodeTitle } from "./flow/nodeMeta";
 
 const palette = [
   "announce",
   "tts",
   "menu",
+  "get_key",
   "api",
   "condition",
   "set_var",
@@ -67,78 +68,20 @@ function toRfEdges(raw: Array<Record<string, unknown>>): Edge[] {
   }));
 }
 
-function SecretPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
-  const [newName, setNewName] = useState("");
-  const [newVal, setNewVal] = useState("");
-  const secrets = useQuery({
-    queryKey: ["secrets"],
-    queryFn: () => api.get<Array<{ id: string; name: string }>>("/api/v1/admin/secrets"),
-  });
-  return (
-    <div className="space-y-2">
-      <label className="block text-xs text-[var(--text-muted)]">
-        Secret
-        <select className="input mt-1 w-full" value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">— select —</option>
-          {(secrets.data ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="flex flex-wrap gap-1">
-        <input
-          className="input flex-1"
-          placeholder="New secret name"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-        />
-        <input
-          className="input flex-1"
-          placeholder="Value"
-          type="password"
-          value={newVal}
-          onChange={(e) => setNewVal(e.target.value)}
-        />
-        <button
-          className="btn"
-          type="button"
-          onClick={() => {
-            if (!newName || !newVal) return;
-            void api
-              .post<{ id: string }>("/api/v1/admin/secrets", { name: newName, value: newVal })
-              .then((r) => {
-                toast.success("Secret saved");
-                setNewName("");
-                setNewVal("");
-                onChange(r.id);
-                void secrets.refetch();
-              })
-              .catch((e: Error) => toast.error(e.message));
-          }}
-        >
-          Add
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function FlowDesignerPage() {
   const { id } = useParams();
   const { t } = useTranslation();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [loaded, setLoaded] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Node whose settings modal is open (pencil / add) — not the same as RF selection. */
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [simSteps, setSimSteps] = useState<string[]>([]);
   const [simCaller, setSimCaller] = useState("05551234567");
   const [simDid, setSimDid] = useState("default");
   const [simDtmf, setSimDtmf] = useState("1,timeout");
   const [simMockApi, setSimMockApi] = useState("");
   const [versions, setVersions] = useState<Array<{ id: string; version: number; publishedAt: string }>>([]);
-  const [httpTestResult, setHttpTestResult] = useState<string | null>(null);
   const [flowName, setFlowName] = useState("");
   const [extensionNumber, setExtensionNumber] = useState("");
   const [mobileView, setMobileView] = useState(false);
@@ -177,36 +120,6 @@ export function FlowDesignerPage() {
     queryKey: ["moh"],
     queryFn: () => api.get<Array<{ id: string; name: string }>>("/api/v1/admin/moh"),
   });
-  const ttsStatus = useQuery({
-    queryKey: ["tts-status"],
-    queryFn: () =>
-      api.get<{
-        ok: boolean;
-        voices?: { edge?: Record<string, string>; piper?: Record<string, string> };
-      }>("/api/v1/admin/tts/status"),
-    staleTime: 60_000,
-  });
-  const ttsLanguages = useMemo(() => {
-    const labels: Record<string, string> = {
-      en: "English (en)",
-      tr: "Turkish (tr)",
-    };
-    const codes = new Set<string>(["en", "tr"]);
-    const voices = ttsStatus.data?.voices;
-    if (voices && typeof voices === "object") {
-      for (const engine of Object.values(voices)) {
-        if (!engine || typeof engine !== "object") continue;
-        for (const key of Object.keys(engine)) {
-          const code = key.split(/[-_]/)[0]?.toLowerCase();
-          if (code === "en" || code === "tr") codes.add(code);
-        }
-      }
-    }
-    return [...codes]
-      .sort()
-      .map((code) => ({ code, label: labels[code] ?? code.toUpperCase() }));
-  }, [ttsStatus.data]);
-
   useEffect(() => {
     if (!id) return;
     void api
@@ -230,8 +143,8 @@ export function FlowDesignerPage() {
   }, [id, setNodes, setEdges]);
 
   const selected = useMemo(
-    () => nodes.find((n) => n.id === selectedId) ?? null,
-    [nodes, selectedId],
+    () => nodes.find((n) => n.id === editingId) ?? null,
+    [nodes, editingId],
   );
 
   const onConnect = useCallback(
@@ -251,8 +164,8 @@ export function FlowDesignerPage() {
     [setEdges],
   );
 
-  const onSelectionChange = useCallback((p: OnSelectionChangeParams) => {
-    setSelectedId(p.nodes[0]?.id ?? null);
+  const openSettings = useCallback((nodeId: string) => {
+    setEditingId(nodeId);
   }, []);
 
   async function save() {
@@ -340,64 +253,58 @@ export function FlowDesignerPage() {
     toast.message(msgs.join(" → "));
   }
 
-  async function testHttp() {
-    if (!selected || selected.data.flowType !== "api") return;
-    try {
-      let headers: Record<string, string> = {};
-      try {
-        headers =
-          typeof selected.data.headers === "string"
-            ? (JSON.parse(selected.data.headers) as Record<string, string>)
-            : ((selected.data.headers as Record<string, string>) ?? {});
-      } catch {
-        headers = {};
-      }
-      const r = await api.post<{ status: number; body: string }>("/api/v1/admin/flows/test-http", {
-        method: String(selected.data.method ?? "GET"),
-        url: String(selected.data.url ?? ""),
-        headers,
-        body: selected.data.body ? String(selected.data.body) : undefined,
-        timeoutMs: Number(selected.data.timeoutMs ?? 3000),
-      });
-      setHttpTestResult(`${r.status}: ${r.body.slice(0, 500)}`);
-      toast.success(`HTTP ${r.status}`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
-  }
-
   function addNode(type: string) {
     const nid = `${type}-${Date.now()}`;
     setNodes((ns) => [
-      ...ns,
+      ...ns.map((n) => ({ ...n, selected: false })),
       {
         id: nid,
         type,
         position: { x: 160 + (ns.length % 5) * 48, y: 60 + ns.length * 28 },
+        selected: true,
         data: {
           flowType: type,
-          label: type,
-          ...(type === "menu" ? { prompt: "Press 1 or 2" } : {}),
-          ...(type === "announce" || type === "tts"
-            ? { text: "Welcome", language: "en" }
-            : {}),
-          ...(type === "menu" ? { language: "en" } : {}),
+          label: nodeTitle(type),
+          ...defaultDataForType(type),
         },
       },
     ]);
+    setEditingId(nid);
   }
 
   function patchSelected(patch: Partial<FlowNodeData>) {
-    if (!selectedId) return;
+    if (!editingId) return;
+    const sid = editingId;
     setNodes((ns) =>
-      ns.map((n) => (n.id === selectedId ? { ...n, data: { ...n.data, ...patch } } : n)),
+      ns.map((n) => (n.id === sid ? { ...n, data: { ...n.data, ...patch } } : n)),
     );
+    // Drop edges for menu digits that were unchecked
+    if (Array.isArray(patch.digits)) {
+      const keep = new Set([...menuDigits({ digits: patch.digits }), "timeout", "invalid"]);
+      setEdges((es) =>
+        es.filter((e) => {
+          if (e.source !== sid) return true;
+          const h = e.sourceHandle ?? (typeof e.label === "string" ? e.label : undefined);
+          if (!h) return true;
+          return keep.has(String(h));
+        }),
+      );
+    }
+    // Transfer to non-extension: remove dial-status edges
+    if (patch.destType && patch.destType !== "extension") {
+      const dial = new Set(["noanswer", "busy", "chanunavail"]);
+      setEdges((es) =>
+        es.filter((e) => {
+          if (e.source !== sid) return true;
+          const h = e.sourceHandle ?? (typeof e.label === "string" ? e.label : undefined);
+          return !h || !dial.has(String(h));
+        }),
+      );
+    }
   }
 
   function closeInspector() {
-    setSelectedId(null);
-    setHttpTestResult(null);
-    setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
+    setEditingId(null);
   }
 
   const requestDeleteNode = useCallback((nodeId: string) => {
@@ -412,28 +319,25 @@ export function FlowDesignerPage() {
     setPendingDeleteId(null);
     setNodes((ns) => ns.filter((n) => n.id !== idToRemove));
     setEdges((es) => es.filter((e) => e.source !== idToRemove && e.target !== idToRemove));
-    if (selectedId === idToRemove) {
-      setSelectedId(null);
-      setHttpTestResult(null);
+    if (editingId === idToRemove) {
+      setEditingId(null);
     }
     toast.success("Node deleted");
   }
 
   useEffect(() => {
-    if (!selectedId && !pendingDeleteId) return;
+    if (!editingId && !pendingDeleteId) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (pendingDeleteId) {
         setPendingDeleteId(null);
         return;
       }
-      setSelectedId(null);
-      setHttpTestResult(null);
-      setNodes((ns) => ns.map((n) => ({ ...n, selected: false })));
+      setEditingId(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, pendingDeleteId, setNodes]);
+  }, [editingId, pendingDeleteId]);
 
   if (!loaded) return <div className="p-4">{t("common.loading")}</div>;
 
@@ -556,14 +460,14 @@ export function FlowDesignerPage() {
           <div className="text-xs font-semibold uppercase text-[var(--text-muted)]">Nodes</div>
           {palette.map((p) => (
             <button key={p} type="button" className="btn w-full justify-start text-sm" onClick={() => addNode(p)}>
-              {p}
+              {nodeTitle(p)}
             </button>
           ))}
         </div>
         )}
 
         <div className="card relative min-h-0 min-w-0 flex-1 overflow-hidden">
-          <FlowCanvasActionsProvider requestDelete={requestDeleteNode}>
+          <FlowCanvasActionsProvider openSettings={openSettings} requestDelete={requestDeleteNode}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -571,7 +475,6 @@ export function FlowDesignerPage() {
               onNodesChange={mobileView ? undefined : onNodesChange}
               onEdgesChange={mobileView ? undefined : onEdgesChange}
               onConnect={mobileView ? undefined : onConnect}
-              onSelectionChange={onSelectionChange}
               nodesDraggable={!mobileView}
               nodesConnectable={!mobileView}
               elementsSelectable
@@ -600,7 +503,13 @@ export function FlowDesignerPage() {
             </label>
             <label className="mb-2 block text-xs text-[var(--text-muted)]">
               DTMF seq (comma)
-              <input className="input mt-1 w-full" value={simDtmf} onChange={(e) => setSimDtmf(e.target.value)} />
+              <input
+                className="input mt-1 w-full"
+                value={simDtmf}
+                onChange={(e) => setSimDtmf(e.target.value)}
+                placeholder="1,1234,timeout"
+                title="Menu: one digit. Get key: full code e.g. 1234"
+              />
             </label>
             <label className="mb-2 block text-xs text-[var(--text-muted)]">
               Mock API JSON (optional)
@@ -636,526 +545,41 @@ export function FlowDesignerPage() {
           onClick={() => closeInspector()}
         >
           <div
-            className="card flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col overflow-hidden shadow-xl"
+            className={`card flex max-h-[min(92vh,820px)] w-full flex-col overflow-hidden shadow-xl ${modalMaxWidth(selected.data.flowType)}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-              <div>
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
+              <div className="min-w-0">
                 <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                   Node settings
                 </div>
-                <div className="text-sm font-medium">{selected.data.flowType}</div>
+                <div className="text-base font-semibold text-[var(--text)]">
+                  {nodeTitle(selected.data.flowType)}
+                </div>
+                {nodeBlurb(selected.data.flowType) ? (
+                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                    {nodeBlurb(selected.data.flowType)}
+                  </p>
+                ) : null}
               </div>
-              <button className="btn" type="button" onClick={() => closeInspector()}>
-                Close
+              <button className="btn shrink-0" type="button" onClick={() => closeInspector()}>
+                Done
               </button>
             </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-auto p-4">
-              <label className="block text-xs text-[var(--text-muted)]">
-                Label
-                <input
-                  className="input mt-1 w-full"
-                  value={String(selected.data.label ?? "")}
-                  onChange={(e) => patchSelected({ label: e.target.value })}
-                />
-              </label>
-              {(selected.data.flowType === "announce" ||
-                selected.data.flowType === "tts" ||
-                selected.data.flowType === "menu") && (
-                <>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    {selected.data.flowType === "menu" ? "Prompt" : "Text"}
-                    <textarea
-                      className="input mt-1 w-full"
-                      rows={3}
-                      value={String(
-                        selected.data.flowType === "menu"
-                          ? (selected.data.prompt ?? selected.data.text ?? "")
-                          : (selected.data.text ?? selected.data.prompt ?? ""),
-                      )}
-                      onChange={(e) =>
-                        patchSelected(
-                          selected.data.flowType === "menu"
-                            ? { prompt: e.target.value }
-                            : { text: e.target.value },
-                        )
-                      }
-                    />
-                  </label>
-                  {(selected.data.flowType === "announce" ||
-                    selected.data.flowType === "tts" ||
-                    selected.data.flowType === "menu") && (
-                    <label className="block text-xs text-[var(--text-muted)]">
-                      Language
-                      <select
-                        className="input mt-1 w-full"
-                        value={String(selected.data.language ?? "en")}
-                        onChange={(e) => patchSelected({ language: e.target.value })}
-                      >
-                        {ttsLanguages.map((l) => (
-                          <option key={l.code} value={l.code}>
-                            {l.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  {(selected.data.flowType === "announce" ||
-                    selected.data.flowType === "tts") && (
-                    <>
-                      <label className="block text-xs text-[var(--text-muted)]">
-                        Prompt (Piper WAV)
-                        <select
-                          className="input mt-1 w-full"
-                          value={String(selected.data.promptId ?? "")}
-                          onChange={(e) => patchSelected({ promptId: e.target.value || undefined })}
-                        >
-                          <option value="">— none —</option>
-                          {(prompts.data ?? []).map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {(selected.data.flowType === "announce" ||
-                        selected.data.flowType === "tts") && (
-                        <label className="block text-xs text-[var(--text-muted)]">
-                          Voice gender
-                          <select
-                            className="input mt-1 w-full"
-                            value={String(selected.data.gender ?? selected.data.voice ?? "female")}
-                            onChange={(e) => patchSelected({ gender: e.target.value })}
-                          >
-                            <option value="female">Female</option>
-                            <option value="male">Male</option>
-                          </select>
-                        </label>
-                      )}
-                    </>
-                  )}
-                  {selected.data.flowType === "menu" && (
-                    <>
-                      <label className="block text-xs text-[var(--text-muted)]">
-                        Voice gender
-                        <select
-                          className="input mt-1 w-full"
-                          value={String(selected.data.gender ?? selected.data.voice ?? "female")}
-                          onChange={(e) => patchSelected({ gender: e.target.value })}
-                        >
-                          <option value="female">Female</option>
-                          <option value="male">Male</option>
-                        </select>
-                      </label>
-                      <label className="block text-xs text-[var(--text-muted)]">
-                        Max digits
-                        <input
-                          className="input mt-1 w-full"
-                          type="number"
-                          min={1}
-                          max={12}
-                          value={Number(selected.data.maxDigits ?? 1)}
-                          onChange={(e) =>
-                            patchSelected({
-                              maxDigits: Math.max(1, Math.min(12, Number(e.target.value) || 1)),
-                            })
-                          }
-                        />
-                      </label>
-                      <label className="block text-xs text-[var(--text-muted)]">
-                        Retries on invalid
-                        <input
-                          className="input mt-1 w-full"
-                          type="number"
-                          min={0}
-                          max={5}
-                          value={Number(selected.data.retries ?? 2)}
-                          onChange={(e) =>
-                            patchSelected({
-                              retries: Math.max(0, Math.min(5, Number(e.target.value) || 0)),
-                            })
-                          }
-                        />
-                      </label>
-                      <label className="block text-xs text-[var(--text-muted)]">
-                        Timeout (ms)
-                        <input
-                          className="input mt-1 w-full"
-                          type="number"
-                          min={1000}
-                          value={Number(selected.data.timeoutMs ?? 12000)}
-                          onChange={(e) =>
-                            patchSelected({ timeoutMs: Math.max(1000, Number(e.target.value) || 12000) })
-                          }
-                        />
-                      </label>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        Wire exits for digits, <code>timeout</code>, and <code>invalid</code>.
-                      </p>
-                    </>
-                  )}
-                </>
-              )}
-              {selected.data.flowType === "transfer" && (
-                <DestPicker
-                  destType={String(selected.data.destType ?? "extension")}
-                  destId={(selected.data.destId as string | null) ?? null}
-                  onChange={(destType, destId) => patchSelected({ destType, destId })}
-                />
-              )}
-              {selected.data.flowType === "queue" && (
-                <>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Queue
-                    <select
-                      className="input mt-1 w-full"
-                      value={String(selected.data.queueNumber ?? selected.data.queueId ?? "")}
-                      onChange={(e) => {
-                        const q = queues.data?.find(
-                          (x) => x.number === e.target.value || x.id === e.target.value,
-                        );
-                        patchSelected({
-                          queueId: q?.id,
-                          queueNumber: q?.number ?? e.target.value,
-                        });
-                      }}
-                    >
-                      <option value="">— select —</option>
-                      {(queues.data ?? []).map((q) => (
-                        <option key={q.id} value={q.number}>
-                          {q.number} — {q.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Priority / VIP (0–99)
-                    <input
-                      className="input mt-1 w-full"
-                      type="number"
-                      min={0}
-                      max={99}
-                      value={Number(selected.data.priority ?? 0)}
-                      onChange={(e) =>
-                        patchSelected({ priority: Math.max(0, Math.min(99, Number(e.target.value) || 0)) })
-                      }
-                    />
-                  </label>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Higher priority jumps ahead. Flow vars <code>priority</code> or{" "}
-                    <code>vip=true</code> also apply.
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Overflow (timeout / full / no agents) is configured on the{" "}
-                    <strong>Queues</strong> screen — flow edges after Queue are not used once the
-                    call leaves Stasis.
-                  </p>
-                </>
-              )}
-              {selected.data.flowType === "voicemail" && (
-                <label className="block text-xs text-[var(--text-muted)]">
-                  Extension
-                  <select
-                    className="input mt-1 w-full"
-                    value={String(selected.data.extension ?? selected.data.extensionId ?? "")}
-                    onChange={(e) =>
-                      patchSelected({ extension: e.target.value, extensionId: e.target.value })
-                    }
-                  >
-                    <option value="">— select —</option>
-                    {(exts.data ?? []).map((e) => (
-                      <option key={e.id} value={e.number}>
-                        {e.number} — {e.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {selected.data.flowType === "directory" && (
-                <p className="text-xs text-[var(--text-muted)]">
-                  Caller dials last name on the ABC keypad (2=ABC … 9=WXYZ), then #.
-                  Matches surname or extension number.
-                </p>
-              )}
-              {selected.data.flowType === "api" && (
-                <>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Method
-                    <input
-                      className="input mt-1 w-full"
-                      value={String(selected.data.method ?? "GET")}
-                      onChange={(e) => patchSelected({ method: e.target.value })}
-                    />
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    URL
-                    <input
-                      className="input mt-1 w-full"
-                      value={String(selected.data.url ?? "")}
-                      onChange={(e) => patchSelected({ url: e.target.value })}
-                    />
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Auth type
-                    <select
-                      className="input mt-1 w-full"
-                      value={String(selected.data.authType ?? "none")}
-                      onChange={(e) => patchSelected({ authType: e.target.value })}
-                    >
-                      <option value="none">none</option>
-                      <option value="bearer">Bearer (secret)</option>
-                      <option value="basic">Basic (secret = base64 user:pass)</option>
-                      <option value="header">Custom header (secret)</option>
-                    </select>
-                  </label>
-                  {(selected.data.authType === "bearer" ||
-                    selected.data.authType === "basic" ||
-                    selected.data.authType === "header") && (
-                    <SecretPicker
-                      value={String(selected.data.secretId ?? "")}
-                      onChange={(secretId) => patchSelected({ secretId })}
-                    />
-                  )}
-                  {selected.data.authType === "header" && (
-                    <label className="block text-xs text-[var(--text-muted)]">
-                      Header name
-                      <input
-                        className="input mt-1 w-full"
-                        value={String(selected.data.authHeader ?? "X-Api-Key")}
-                        onChange={(e) => patchSelected({ authHeader: e.target.value })}
-                      />
-                    </label>
-                  )}
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Headers JSON (no secrets)
-                    <textarea
-                      className="input mt-1 w-full font-mono"
-                      rows={2}
-                      value={
-                        typeof selected.data.headers === "string"
-                          ? selected.data.headers
-                          : JSON.stringify(selected.data.headers ?? {}, null, 0)
-                      }
-                      onChange={(e) => {
-                        try {
-                          patchSelected({ headers: JSON.parse(e.target.value) });
-                        } catch {
-                          patchSelected({ headers: e.target.value });
-                        }
-                      }}
-                      placeholder="{}"
-                    />
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Timeout ms
-                    <input
-                      className="input mt-1 w-full"
-                      value={String(selected.data.timeoutMs ?? 3000)}
-                      onChange={(e) => patchSelected({ timeoutMs: Number(e.target.value) })}
-                    />
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                    <input
-                      type="checkbox"
-                      checked={Number(selected.data.retry ?? 0) > 0}
-                      onChange={(e) => patchSelected({ retry: e.target.checked ? 1 : 0 })}
-                    />
-                    Retry once on failure
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Wait prompt (while API runs)
-                    <select
-                      className="input mt-1 w-full"
-                      value={String(selected.data.waitPromptId ?? "")}
-                      onChange={(e) =>
-                        patchSelected({
-                          waitPromptId: e.target.value || undefined,
-                          waitMoh: e.target.value ? undefined : selected.data.waitMoh,
-                        })
-                      }
-                    >
-                      <option value="">— none —</option>
-                      {(prompts.data ?? []).map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Wait MOH class (if no prompt)
-                    <select
-                      className="input mt-1 w-full"
-                      value={String(selected.data.waitMoh ?? "")}
-                      disabled={Boolean(selected.data.waitPromptId)}
-                      onChange={(e) => patchSelected({ waitMoh: e.target.value || undefined })}
-                    >
-                      <option value="">— none —</option>
-                      {(mohClasses.data ?? []).map((m) => (
-                        <option key={m.id} value={m.name}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Body (non-GET)
-                    <textarea
-                      className="input mt-1 w-full"
-                      rows={2}
-                      value={String(selected.data.body ?? "")}
-                      onChange={(e) => patchSelected({ body: e.target.value })}
-                    />
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Mappings JSON (path/var)
-                    <textarea
-                      className="input mt-1 w-full font-mono"
-                      rows={2}
-                      value={JSON.stringify(selected.data.mappings ?? [])}
-                      onChange={(e) => {
-                        try {
-                          patchSelected({ mappings: JSON.parse(e.target.value) });
-                        } catch {
-                          /* ignore invalid while typing */
-                        }
-                      }}
-                    />
-                  </label>
-                  <button className="btn w-full text-sm" type="button" onClick={() => void testHttp()}>
-                    Test HTTP
-                  </button>
-                  {httpTestResult && (
-                    <pre className="max-h-24 overflow-auto rounded bg-[var(--bg-soft)] p-2 text-[10px]">
-                      {httpTestResult}
-                    </pre>
-                  )}
-                </>
-              )}
-              {selected.data.flowType === "condition" && (
-                <>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Variable
-                    <input
-                      className="input mt-1 w-full"
-                      value={String(selected.data.variable ?? "")}
-                      onChange={(e) => patchSelected({ variable: e.target.value })}
-                      placeholder={
-                        selected.data.op === "area_code" || selected.data.op === "country_code"
-                          ? "empty = caller/DID"
-                          : "var name"
-                      }
-                    />
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Operator
-                    <select
-                      className="input mt-1 w-full"
-                      value={String(selected.data.op ?? "=")}
-                      onChange={(e) => patchSelected({ op: e.target.value })}
-                    >
-                      <option value="=">=</option>
-                      <option value="!=">!=</option>
-                      <option value=">">&gt;</option>
-                      <option value="<">&lt;</option>
-                      <option value=">=">&gt;=</option>
-                      <option value="<=">&lt;=</option>
-                      <option value="contains">contains</option>
-                      <option value="starts_with">starts_with</option>
-                      <option value="ends_with">ends_with</option>
-                      <option value="empty">empty</option>
-                      <option value="area_code">area_code</option>
-                      <option value="country_code">country_code</option>
-                    </select>
-                  </label>
-                  {selected.data.op !== "empty" && (
-                    <label className="block text-xs text-[var(--text-muted)]">
-                      Value
-                      <input
-                        className="input mt-1 w-full"
-                        value={String(selected.data.value ?? "")}
-                        onChange={(e) => patchSelected({ value: e.target.value })}
-                        placeholder={
-                          selected.data.op === "area_code"
-                            ? "e.g. 212"
-                            : selected.data.op === "country_code"
-                              ? "e.g. 90"
-                              : ""
-                        }
-                      />
-                    </label>
-                  )}
-                  {(selected.data.op === "area_code" || selected.data.op === "country_code") && (
-                    <p className="text-xs text-[var(--text-muted)]">
-                      Uses caller or DID when variable is empty.
-                    </p>
-                  )}
-                </>
-              )}
-              {selected.data.flowType === "set_var" && (
-                <>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Name
-                    <input
-                      className="input mt-1 w-full"
-                      value={String(selected.data.name ?? "")}
-                      onChange={(e) => patchSelected({ name: e.target.value })}
-                    />
-                  </label>
-                  <label className="block text-xs text-[var(--text-muted)]">
-                    Value
-                    <input
-                      className="input mt-1 w-full"
-                      value={String(selected.data.value ?? "")}
-                      onChange={(e) => patchSelected({ value: e.target.value })}
-                    />
-                  </label>
-                </>
-              )}
-              {selected.data.flowType === "language" && (
-                <label className="block text-xs text-[var(--text-muted)]">
-                  Language
-                  <input
-                    className="input mt-1 w-full"
-                    value={String(selected.data.language ?? "en")}
-                    onChange={(e) => patchSelected({ language: e.target.value })}
-                  />
-                </label>
-              )}
-              {selected.data.flowType === "subflow" && (
-                <label className="block text-xs text-[var(--text-muted)]">
-                  Subflow
-                  <select
-                    className="input mt-1 w-full"
-                    value={String(selected.data.flowId ?? "")}
-                    onChange={(e) => patchSelected({ flowId: e.target.value })}
-                  >
-                    <option value="">— select —</option>
-                    {(allFlows.data ?? []).map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {selected.data.flowType === "time_condition" && (
-                <label className="block text-xs text-[var(--text-muted)]">
-                  Schedule
-                  <select
-                    className="input mt-1 w-full"
-                    value={String(selected.data.scheduleId ?? "")}
-                    onChange={(e) => patchSelected({ scheduleId: e.target.value })}
-                  >
-                    <option value="">— select —</option>
-                    {(schedules.data ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
+            <div className="min-h-0 flex-1 overflow-auto p-4">
+              <NodeSettings
+                data={selected.data}
+                patch={patchSelected}
+                ctx={{
+                  prompts: prompts.data ?? [],
+                  mohClasses: mohClasses.data ?? [],
+                  queues: queues.data ?? [],
+                  extensions: exts.data ?? [],
+                  schedules: schedules.data ?? [],
+                  flows: allFlows.data ?? [],
+                  currentFlowId: id,
+                }}
+              />
             </div>
           </div>
         </div>

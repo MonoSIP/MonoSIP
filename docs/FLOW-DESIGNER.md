@@ -8,8 +8,9 @@ IVR flows are built with React Flow (drag-and-drop), stored as JSON, and execute
 | --- | --- | --- |
 | Start | Call enters the flow; `caller`, `did`, `time` variables ready | next |
 | Play / Announce | Speaks text or plays a prompt WAV; **language** (en/tr from TTS model), voice gender | next |
-| TTS | Speaks text; `{{variable}}` supported; language (en/tr), voice/gender | next |
+| TTS | Speaks text; `$var` / `{{var}}` supported; language (en/tr), voice/gender | next |
 | Menu | Play + collect DTMF; language (en/tr), voice gender; single or multi-digit, timeout, retries | per digit, timeout, invalid |
+| Get key | Collect keypad digits into a named variable (e.g. `pin` → use as `$pin`) | next, timeout |
 | API request | HTTP call; map response into variables | success, error |
 | Condition | Compare variables (=, ≠, >, <, contains, empty, regex); area/country codes | true, false |
 | Schedule gate | Looks up a schedule’s current status | open, lunch, after hours, holiday |
@@ -24,7 +25,7 @@ IVR flows are built with React Flow (drag-and-drop), stored as JSON, and execute
 
 ## API request node
 
-- **Request:** GET, POST, PUT, PATCH, DELETE; URL, headers, and body templates (`{{caller}}`, `{{dtmf}}`, variables from earlier API responses)
+- **Request:** GET, POST, PUT, PATCH, DELETE; URL, headers, and body templates (`$caller`, `$pin`, or `{{caller}}`)
 - **Auth:** None, Bearer, Basic; secrets stored encrypted, never in flow JSON
 - **Response mapping:** JSONPath → variable, e.g. `$.data.agent → agent`; HTTP status → `http_status`
 - **Safety:** Timeout (default 3s, max 10s); optional one retry. Can play MOH/announce while waiting
@@ -33,9 +34,14 @@ IVR flows are built with React Flow (drag-and-drop), stored as JSON, and execute
 
 Example: inbound → POST caller to CRM → `{"customer":true,"agent":"201"}` → transfer to 201. If API fails → general queue.
 
+## Variables in text fields
+
+Use `$name` or `{{name}}` in announce/TTS/menu prompts and API URL/headers/body. Built-ins: `caller`, `did`, `time`. Get key / set var / API mappings add more.
+
 ## Editing nodes
 
-- Click a node on the canvas to open its **settings popup** (Escape / Close / backdrop to dismiss)
+- Drag nodes freely; click the **pencil** icon on a node to open its settings (Escape / Done / backdrop to dismiss)
+- Trash icon deletes (with confirm). Adding from the palette opens settings once
 - The right sidebar is **Test call** only (simulate with caller, DID, DTMF, optional mock API JSON)
 
 ## Call simulation

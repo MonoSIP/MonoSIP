@@ -26,6 +26,7 @@ import {
   compare,
   conditionLeft,
   dialStatusToHandle,
+  expandTemplate,
   jsonPath,
   matchDirectoryExtension,
   menuHasExit,
@@ -280,7 +281,10 @@ export async function executeFlowLoop(
         break;
       case "announce":
       case "tts": {
-        const text = String(data.text ?? data.prompt ?? data.ttsText ?? "Welcome");
+        const text = expandTemplate(
+          String(data.text ?? data.prompt ?? data.ttsText ?? "Welcome"),
+          vars,
+        );
         console.log(`[flow] ${channelId} ${node.type}: ${text}`);
         const promptId = data.promptId ? String(data.promptId) : "";
         let played = false;
@@ -318,7 +322,7 @@ export async function executeFlowLoop(
         break;
       }
       case "menu": {
-        const prompt = String(data.prompt ?? data.text ?? "menu");
+        const prompt = expandTemplate(String(data.prompt ?? data.text ?? "menu"), vars);
         console.log(`[flow] ${channelId} menu: ${prompt}`);
         const timeoutMs = Number(data.timeoutMs ?? 12000);
         const maxDigits = Math.max(1, Math.min(12, Number(data.maxDigits ?? 1) || 1));
@@ -396,15 +400,64 @@ export async function executeFlowLoop(
         await ari.hangup(channelId);
         return "left";
       }
+      case "get_key": {
+        const varName = String(data.name ?? data.variable ?? "digits").trim() || "digits";
+        const prompt = expandTemplate(String(data.prompt ?? data.text ?? ""), vars);
+        const timeoutMs = Number(data.timeoutMs ?? 12000);
+        const maxDigits = Math.max(1, Math.min(24, Number(data.maxDigits ?? 4) || 4));
+        const minDigits = Math.max(0, Math.min(maxDigits, Number(data.minDigits ?? 1) || 1));
+        const lang = resolveSpeechLang(data, vars);
+        const gender = String(data.gender ?? data.voice ?? "female");
+        console.log(`[flow] ${channelId} get_key → $${varName} max=${maxDigits}`);
+        if (prompt) {
+          try {
+            const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
+            const wav = await synthesizeSpeech(prompt, lang, 1.05, gender);
+            const tmpId = `key-${channelId.replace(/\W/g, "").slice(0, 24)}`;
+            const { media } = await writePromptWav(tmpId, wav);
+            await ari.playAndWait(channelId, media, 60_000).catch(() => undefined);
+          } catch (e) {
+            console.warn(`[flow] get_key prompt failed`, (e as Error).message);
+            await playSpeech(channelId, prompt, lang).catch(() => undefined);
+          }
+        }
+        ari.clearDtmfBuffer(channelId);
+        const collected = await ari.waitDtmfDigits(channelId, {
+          maxDigits,
+          firstTimeoutMs: timeoutMs,
+          interDigitMs: Number(data.interDigitMs ?? 3000) || 3000,
+        });
+        if (!collected || collected.length < minDigits) {
+          handle = "timeout";
+          vars[varName] = collected || "";
+          vars.dtmf = "";
+          console.log(`[flow] ${channelId} get_key timeout (got="${collected}")`);
+        } else {
+          vars[varName] = collected;
+          vars.dtmf = collected;
+          handle = "next";
+          console.log(`[flow] ${channelId} get_key $${varName}=${collected}`);
+        }
+        try {
+          await db.insert(callEvents).values({
+            callId: channelId,
+            type: "ivr.get_key",
+            data: { var: varName, digits: collected || null, nodeId: node.id, handle },
+          });
+        } catch {
+          /* ignore */
+        }
+        break;
+      }
       case "api": {
-        const urlTpl = String(data.url ?? "");
-        const url = urlTpl.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? "");
-        const method = String(data.method ?? "GET");
+        const url = expandTemplate(String(data.url ?? ""), vars);
+        const method = String(data.method ?? "GET").toUpperCase();
         const timeoutMs = Number(data.timeoutMs ?? 3000);
         const retries = Math.min(1, Math.max(0, Number(data.retry ?? 0) || 0));
-        let headers: Record<string, string> = {
-          ...((data.headers as Record<string, string>) ?? {}),
-        };
+        let headers: Record<string, string> = {};
+        for (const [k, v] of Object.entries((data.headers as Record<string, string>) ?? {})) {
+          headers[k] = expandTemplate(String(v), vars);
+        }
         // Inject auth from encrypted secrets table (never store tokens in flow JSON)
         const authType = String(data.authType ?? "none");
         const secretId = String(data.secretId ?? "");
@@ -455,12 +508,16 @@ export async function executeFlowLoop(
             /* ignore */
           }
         }
+        const bodyTpl =
+          method !== "GET" && method !== "HEAD" && data.body
+            ? expandTemplate(String(data.body), vars)
+            : undefined;
         const doFetch = async () =>
           fetch(url, {
             method,
             signal: AbortSignal.timeout(timeoutMs),
             headers,
-            body: method !== "GET" && data.body ? String(data.body) : undefined,
+            body: bodyTpl,
           });
         try {
           let res = await doFetch();
@@ -515,7 +572,7 @@ export async function executeFlowLoop(
         break;
       }
       case "set_var":
-        vars[String(data.name ?? "var")] = String(data.value ?? "");
+        vars[String(data.name ?? "var")] = expandTemplate(String(data.value ?? ""), vars);
         break;
       case "language":
         vars.language = String(data.language ?? "en");
@@ -532,7 +589,15 @@ export async function executeFlowLoop(
       }
       case "directory": {
         console.log(`[flow] ${channelId} directory search`);
-        const lang = (vars.language === "tr" ? "tr" : "en") as "en" | "tr";
+        const lang = (
+          data.language === "tr" || data.language === "en"
+            ? data.language
+            : vars.language === "tr"
+              ? "tr"
+              : "en"
+        ) as "en" | "tr";
+        const firstTimeoutMs = Math.max(3000, Math.min(60000, Number(data.timeoutMs ?? 10000) || 10000));
+        const maxDigits = Math.max(1, Math.min(12, Number(data.maxDigits ?? 8) || 8));
         await playSpeech(
           channelId,
           lang === "tr"
@@ -542,8 +607,8 @@ export async function executeFlowLoop(
         );
         ari.clearDtmfBuffer(channelId);
         const digits = await ari.waitDtmfDigits(channelId, {
-          maxDigits: 8,
-          firstTimeoutMs: 10000,
+          maxDigits,
+          firstTimeoutMs,
           interDigitMs: 3000,
         });
         if (digits) {

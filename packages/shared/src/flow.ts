@@ -5,6 +5,7 @@ export const FlowNodeType = z.enum([
   "announce",
   "tts",
   "menu",
+  "get_key",
   "api",
   "condition",
   "time_condition",

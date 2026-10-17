@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 
 const DEST_TYPES = [
-  "extension",
-  "queue",
-  "ring_group",
-  "flow",
-  "schedule",
-  "voicemail",
-  "external",
-  "hangup",
+  { value: "extension", label: "Extension" },
+  { value: "queue", label: "Queue" },
+  { value: "ring_group", label: "Ring group" },
+  { value: "flow", label: "IVR flow" },
+  { value: "schedule", label: "Schedule" },
+  { value: "voicemail", label: "Voicemail" },
+  { value: "external", label: "External number" },
+  { value: "hangup", label: "Hangup" },
 ] as const;
 
 type Props = {
@@ -76,39 +76,50 @@ export function DestPicker({ destType, destId, onChange, className }: Props) {
   const useSelect = options.length > 0 && destType !== "external";
 
   return (
-    <div className={`flex flex-wrap gap-2 ${className ?? ""}`}>
-      <select
-        className="input"
-        value={destType}
-        onChange={(e) => onChange(e.target.value, e.target.value === "hangup" ? null : destId)}
-      >
-        {DEST_TYPES.map((d) => (
-          <option key={d} value={d}>
-            {d}
-          </option>
-        ))}
-      </select>
-      {needsId && useSelect && (
+    <div className={`grid w-full gap-2 sm:grid-cols-2 ${className ?? ""}`}>
+      <label className="block text-xs text-[var(--text-muted)]">
+        <span className="font-medium text-[var(--text)]">Type</span>
         <select
-          className="input min-w-[12rem]"
-          value={destId ?? ""}
-          onChange={(e) => onChange(destType, e.target.value || null)}
+          className="input mt-1 w-full"
+          value={destType}
+          onChange={(e) => onChange(e.target.value, e.target.value === "hangup" ? null : destId)}
         >
-          <option value="">— select —</option>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
+          {DEST_TYPES.map((d) => (
+            <option key={d.value} value={d.value}>
+              {d.label}
             </option>
           ))}
         </select>
+      </label>
+      {needsId && useSelect && (
+        <label className="block text-xs text-[var(--text-muted)]">
+          <span className="font-medium text-[var(--text)]">Target</span>
+          <select
+            className="input mt-1 w-full"
+            value={destId ?? ""}
+            onChange={(e) => onChange(destType, e.target.value || null)}
+          >
+            <option value="">— select —</option>
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
       {needsId && !useSelect && (
-        <input
-          className="input min-w-[10rem] font-mono"
-          value={destId ?? ""}
-          onChange={(e) => onChange(destType, e.target.value || null)}
-          placeholder={destType === "external" ? "Number" : "Dest id"}
-        />
+        <label className="block text-xs text-[var(--text-muted)]">
+          <span className="font-medium text-[var(--text)]">
+            {destType === "external" ? "Number" : "Target"}
+          </span>
+          <input
+            className="input mt-1 w-full font-mono"
+            value={destId ?? ""}
+            onChange={(e) => onChange(destType, e.target.value || null)}
+            placeholder={destType === "external" ? "+90555…" : "id"}
+          />
+        </label>
       )}
     </div>
   );

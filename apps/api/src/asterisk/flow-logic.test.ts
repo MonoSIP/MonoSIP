@@ -6,6 +6,7 @@ import {
   decodeCallbackPlace,
   dialStatusToHandle,
   encodeCallbackPlace,
+  expandTemplate,
   jsonPath,
   matchDirectoryExtension,
   menuHasExit,
@@ -31,6 +32,21 @@ const menuFlow: FlowJson = {
     { id: "ei", source: "m", target: "inv", sourceHandle: "invalid" },
   ],
 };
+
+describe("expandTemplate", () => {
+  it("replaces {{vars}} and leaves missing empty", () => {
+    expect(expandTemplate("hi {{caller}} / {{x}}", { caller: "0555" })).toBe("hi 0555 / ");
+  });
+
+  it("replaces $name style placeholders", () => {
+    expect(expandTemplate("PIN=$pin agent=$agent", { pin: "1234", agent: "101" })).toBe(
+      "PIN=1234 agent=101",
+    );
+    expect(expandTemplate("mix {{caller}} and $pin", { caller: "9", pin: "1" })).toBe(
+      "mix 9 and 1",
+    );
+  });
+});
 
 describe("compare", () => {
   it("equality and inequality", () => {

@@ -2,6 +2,7 @@ import type { FlowJson } from "@dsip/shared";
 import {
   compare,
   conditionLeft,
+  expandTemplate,
   jsonPath,
   nextNode,
   resolveMenuDigit,
@@ -30,6 +31,7 @@ const REQUIRED_EXITS: Record<string, string[]> = {
   directory: ["found", "not_found"],
   transfer: ["noanswer", "busy", "chanunavail"],
   menu: ["timeout"],
+  get_key: ["next", "timeout"],
 };
 
 function edgeMatchesHandle(
@@ -135,6 +137,18 @@ export function validateFlow(flow: FlowJson): string[] {
       if (!data.url) errors.push(`API node ${node.id} missing url`);
     }
 
+    if (node.type === "get_key") {
+      const varName = String(data.name ?? data.variable ?? "").trim();
+      if (!varName) errors.push(`Get key node ${node.id} missing variable name`);
+      else if (!/^[A-Za-z_]\w*$/.test(varName)) {
+        errors.push(`Get key node ${node.id} variable must be like pin or order_id`);
+      }
+      const maxDigits = Number(data.maxDigits ?? 4);
+      if (Number.isFinite(maxDigits) && (maxDigits < 1 || maxDigits > 24)) {
+        errors.push(`Get key node ${node.id} maxDigits must be 1–24`);
+      }
+    }
+
     if (node.type === "time_condition" && !data.scheduleId) {
       errors.push(`Time condition node ${node.id} missing scheduleId`);
     }
@@ -229,10 +243,10 @@ export async function simulateFlow(
         message = "Call entered flow";
         break;
       case "announce":
-        message = `Play: ${String(data.text ?? data.prompt ?? data.promptId ?? data.file ?? "announce")}`;
+        message = `Play: ${expandTemplate(String(data.text ?? data.prompt ?? data.promptId ?? data.file ?? "announce"), vars)}`;
         break;
       case "tts":
-        message = `TTS: ${String(data.text ?? "").replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ""))}`;
+        message = `TTS: ${expandTemplate(String(data.text ?? ""), vars)}`;
         break;
       case "menu": {
         const retries = Math.max(0, Math.min(5, Number(data.retries ?? 2) || 0));
@@ -247,6 +261,26 @@ export async function simulateFlow(
         handle = resolved.handle;
         vars.dtmf = handle;
         message = `DTMF ${handle}`;
+        break;
+      }
+      case "get_key": {
+        const varName = String(data.name ?? data.variable ?? "digits").trim() || "digits";
+        const minDigits = Math.max(0, Number(data.minDigits ?? 1) || 1);
+        const raw = (input.dtmfSequence ?? [])[dtmfIdx];
+        if (raw !== undefined) dtmfIdx++;
+        const digits =
+          raw && raw !== "timeout" && raw !== "invalid" ? String(raw).replace(/[^0-9*]/g, "") : "";
+        if (!digits || digits.length < minDigits) {
+          handle = "timeout";
+          vars[varName] = digits;
+          vars.dtmf = "";
+          message = `Get key $${varName} timeout`;
+        } else {
+          handle = "next";
+          vars[varName] = digits;
+          vars.dtmf = digits;
+          message = `Get key $${varName}=${digits}`;
+        }
         break;
       }
       case "api": {
@@ -293,13 +327,26 @@ export async function simulateFlow(
         break;
       }
       case "set_var":
-        vars[String(data.name ?? "var")] = data.value;
-        message = `Set ${String(data.name)}`;
+        vars[String(data.name ?? "var")] = expandTemplate(String(data.value ?? ""), vars);
+        message = `Set ${String(data.name)}=${vars[String(data.name ?? "var")]}`;
         break;
       case "language":
         vars.language = data.language ?? "en";
         message = `Language ${vars.language}`;
         break;
+      case "time_condition": {
+        handle = "open";
+        message = `Schedule ${String(data.scheduleId ?? "")} → ${handle} (sim assumes open)`;
+        break;
+      }
+      case "directory": {
+        const digits = (input.dtmfSequence ?? [])[dtmfIdx];
+        if (digits) dtmfIdx++;
+        handle = digits ? "found" : "not_found";
+        if (digits) vars.directory_ext = digits;
+        message = `Directory ${handle}${digits ? ` (${digits})` : ""}`;
+        break;
+      }
       case "subflow":
         message = `Subflow ${String(data.flowId ?? "")}`;
         handle = "return";
