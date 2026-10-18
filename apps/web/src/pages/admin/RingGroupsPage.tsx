@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { BellRing, Hash, List, Tag, UsersRound } from "lucide-react";
+import { BellRing, Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = { id: string; number: string; name: string };
 type Group = {
@@ -95,7 +95,7 @@ export function RingGroupsPage() {
             else create.mutate();
           }}
         >
-          <div className="flex flex-wrap gap-3">
+          <div className="toolbar">
             <TextField
               label={t("extensions.number")}
               icon={Hash}
@@ -140,46 +140,43 @@ export function RingGroupsPage() {
           </div>
         </form>
       </SectionCard>
-      <SectionCard title="Ring groups" icon={List} tone="blue" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-          <table className="table">
+      <SectionCard title="Ring groups" icon={List} tone="blue" flush>
+        <table className="table">
             <thead>
               <tr>
                 <th>{t("extensions.number")}</th>
-                <th>{t("extensions.name")}</th>
+                <th className="col-grow">{t("extensions.name")}</th>
                 <th>Strategy</th>
                 <th>Members</th>
-                <th />
+                <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {list.data?.map((g) => (
                 <tr key={g.id}>
                   <td className="font-mono">{g.number}</td>
-                  <td>{g.name}</td>
+                  <td className="col-grow">{g.name}</td>
                   <td>{g.strategy}</td>
                   <td>{g.memberIds?.length ?? 0}</td>
-                  <td className="flex gap-1">
-                    <button className="btn" type="button" onClick={() => startEdit(g)}>
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      type="button"
-                      onClick={() =>
-                        void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
-                          qc.invalidateQueries({ queryKey: ["ring-groups"] }),
-                        )
-                      }
-                    >
-                      {t("common.delete")}
-                    </button>
+                  <td className="col-actions">
+                    <div className="btn-icon-row">
+                      <IconBtn icon={Pencil} label="Edit" onClick={() => startEdit(g)} />
+                      <IconBtn
+                        icon={Trash2}
+                        label={t("common.delete")}
+                        danger
+                        onClick={() =>
+                          void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
+                            qc.invalidateQueries({ queryKey: ["ring-groups"] }),
+                          )
+                        }
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
       </SectionCard>
     </div>
   );

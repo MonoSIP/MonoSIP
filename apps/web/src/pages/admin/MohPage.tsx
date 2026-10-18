@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music, Pause, Play, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
 
 type MohClass = { id: string; name: string; files: unknown };
 
@@ -155,7 +155,7 @@ export function MohPage() {
       />
       <SectionCard title="New MOH class" icon={Plus} tone="blue">
         <form
-          className="flex flex-wrap items-end gap-3"
+          className="toolbar"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
@@ -170,7 +170,7 @@ export function MohPage() {
             placeholder="Class name"
             required
           />
-          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+          <button className="btn btn-primary" type="submit">
             Create class
           </button>
         </form>
@@ -190,7 +190,7 @@ export function MohPage() {
                 title={m.name}
                 icon={Music}
                 tone="blue"
-                className="!p-0 overflow-hidden"
+                flush
                 actions={
                   <>
                     <input
@@ -218,14 +218,13 @@ export function MohPage() {
                 }
               >
                 {files.length === 0 ? (
-                  <div className="px-4 pb-4 text-sm text-[var(--text-muted)] md:px-5 md:pb-5">No files yet.</div>
+                  <div className="px-4 pb-4 text-sm text-[var(--text-muted)]">No files yet.</div>
                 ) : (
-                  <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-                    <table className="table">
+                  <table className="table">
                       <thead>
                         <tr>
-                          <th>File</th>
-                          <th className="w-[1%] whitespace-nowrap">Actions</th>
+                          <th className="col-grow">File</th>
+                          <th className="col-actions">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -234,25 +233,21 @@ export function MohPage() {
                           const playingThis = active && isPlaying;
                           return (
                             <tr key={f}>
-                              <td className="font-mono text-sm">{f}</td>
-                              <td>
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    className={`btn ${playingThis ? "btn-primary" : ""}`}
-                                    type="button"
+                              <td className="col-grow font-mono text-sm">{f}</td>
+                              <td className="col-actions">
+                                <div className="btn-icon-row">
+                                  <IconBtn
+                                    icon={playingThis ? Pause : Play}
+                                    label={playingThis ? "Pause" : "Play"}
+                                    primary={playingThis}
                                     onClick={() => togglePlay(m.id, f)}
-                                  >
-                                    {playingThis ? <Pause size={16} /> : <Play size={16} />}
-                                    {playingThis ? "Pause" : "Play"}
-                                  </button>
-                                  <button
-                                    className="btn btn-danger"
-                                    type="button"
+                                  />
+                                  <IconBtn
+                                    icon={Trash2}
+                                    label="Delete"
+                                    danger
                                     onClick={() => removeFile(m.id, f, active)}
-                                  >
-                                    <Trash2 size={16} />
-                                    Delete
-                                  </button>
+                                  />
                                 </div>
                               </td>
                             </tr>
@@ -260,7 +255,6 @@ export function MohPage() {
                         })}
                       </tbody>
                     </table>
-                  </div>
                 )}
               </SectionCard>
             );

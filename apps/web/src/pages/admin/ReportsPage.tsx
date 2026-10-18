@@ -82,7 +82,7 @@ export function ReportsPage() {
         description="Call volume, queues, IVR, and voice quality for the selected range"
       />
       <SectionCard title="Date range" icon={CalendarRange} tone="cyan">
-        <div className="flex flex-wrap gap-3">
+        <div className="toolbar">
           <TextField
             label="From"
             type="datetime-local"
@@ -138,116 +138,108 @@ export function ReportsPage() {
           )}
         </div>
       </SectionCard>
-      <SectionCard title="By queue" icon={ListOrdered} tone="cyan" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+      <SectionCard title="By queue" icon={ListOrdered} tone="cyan" flush>
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="col-grow">Queue</th>
+              <th className="col-num">Calls</th>
+              <th className="col-num">Answered</th>
+              <th className="col-num">Abandoned</th>
+              <th className="col-num">Avg wait</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(byQueue.data ?? []).filter((r) => r.queue).length === 0 ? (
+              <tr>
+                <td colSpan={5}>—</td>
+              </tr>
+            ) : (
+              (byQueue.data ?? [])
+                .filter((r) => r.queue)
+                .map((r) => (
+                  <tr key={String(r.queue)}>
+                    <td className="col-grow font-mono">{r.queue}</td>
+                    <td className="col-num">{r.total}</td>
+                    <td className="col-num">{r.answered ?? "—"}</td>
+                    <td className="col-num">{r.abandoned ?? "—"}</td>
+                    <td className="col-num">{r.avgWait}s</td>
+                  </tr>
+                ))
+            )}
+          </tbody>
+        </table>
+      </SectionCard>
+      <SectionCard title="By extension" icon={Hash} tone="blue" flush>
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="col-grow">{t("extensions.number")}</th>
+              <th className="col-num">Calls</th>
+              <th className="col-num">Talk</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(byExt.data ?? [])
+              .filter((r) => r.extension)
+              .map((r) => (
+                <tr key={r.extension}>
+                  <td className="col-grow font-mono">{r.extension}</td>
+                  <td className="col-num">{r.total}</td>
+                  <td className="col-num">{r.talk}s</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </SectionCard>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SectionCard title="IVR DTMF" icon={Radio} tone="coral" flush>
           <table className="table">
             <thead>
               <tr>
-                <th>Queue</th>
-                <th>Calls</th>
-                <th>Answered</th>
-                <th>Abandoned</th>
-                <th>Avg wait</th>
+                <th>Digit</th>
+                <th className="col-num">Count</th>
               </tr>
             </thead>
             <tbody>
-              {(byQueue.data ?? []).filter((r) => r.queue).length === 0 ? (
+              {(ivr.data?.items ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={5}>—</td>
+                  <td colSpan={2}>—</td>
                 </tr>
               ) : (
-                (byQueue.data ?? [])
-                  .filter((r) => r.queue)
-                  .map((r) => (
-                    <tr key={String(r.queue)}>
-                      <td className="font-mono">{r.queue}</td>
-                      <td>{r.total}</td>
-                      <td>{r.answered ?? "—"}</td>
-                      <td>{r.abandoned ?? "—"}</td>
-                      <td>{r.avgWait}s</td>
-                    </tr>
-                  ))
+                ivr.data?.items.map((r) => (
+                  <tr key={r.digit}>
+                    <td className="font-mono">{r.digit}</td>
+                    <td className="col-num">{r.count}</td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
-        </div>
-      </SectionCard>
-      <SectionCard title="By extension" icon={Hash} tone="blue" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+        </SectionCard>
+        <SectionCard title="IVR hangup location" icon={Radio} tone="coral" flush>
           <table className="table">
             <thead>
               <tr>
-                <th>{t("extensions.number")}</th>
-                <th>Calls</th>
-                <th>Talk</th>
+                <th>Where</th>
+                <th className="col-num">Count</th>
               </tr>
             </thead>
             <tbody>
-              {(byExt.data ?? [])
-                .filter((r) => r.extension)
-                .map((r) => (
-                  <tr key={r.extension}>
-                    <td className="font-mono">{r.extension}</td>
-                    <td>{r.total}</td>
-                    <td>{r.talk}s</td>
+              {(ivr.data?.hangups ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={2}>—</td>
+                </tr>
+              ) : (
+                (ivr.data?.hangups ?? []).map((r) => (
+                  <tr key={r.where}>
+                    <td className="font-mono text-sm">{r.where}</td>
+                    <td className="col-num">{r.count}</td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </table>
-        </div>
-      </SectionCard>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="IVR DTMF" icon={Radio} tone="coral" className="!p-0 overflow-hidden">
-          <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Digit</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(ivr.data?.items ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={2}>—</td>
-                  </tr>
-                ) : (
-                  ivr.data?.items.map((r) => (
-                    <tr key={r.digit}>
-                      <td className="font-mono">{r.digit}</td>
-                      <td>{r.count}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </SectionCard>
-        <SectionCard title="IVR hangup location" icon={Radio} tone="coral" className="!p-0 overflow-hidden">
-          <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Where</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(ivr.data?.hangups ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={2}>—</td>
-                  </tr>
-                ) : (
-                  (ivr.data?.hangups ?? []).map((r) => (
-                    <tr key={r.where}>
-                      <td className="font-mono text-sm">{r.where}</td>
-                      <td>{r.count}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
         </SectionCard>
       </div>
     </div>

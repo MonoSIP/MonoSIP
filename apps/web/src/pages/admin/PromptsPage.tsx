@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Upload } from "lucide-react";
+import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Upload, Wand2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Prompt = {
   id: string;
@@ -302,9 +302,8 @@ export function PromptsPage() {
         }}
       />
 
-      <SectionCard title="All prompts" icon={List} tone="blue" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-          <table className="table">
+      <SectionCard title="All prompts" icon={List} tone="blue" flush>
+        <table className="table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -312,7 +311,7 @@ export function PromptsPage() {
                 <th>TTS</th>
                 <th>File</th>
                 <th>Id</th>
-                <th>{t("common.actions")}</th>
+                <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -330,43 +329,34 @@ export function PromptsPage() {
                     <td className="font-mono text-xs" title={p.id}>
                       {p.id.slice(0, 8)}…
                     </td>
-                    <td>
-                      <div className="flex flex-wrap gap-2">
+                    <td className="col-actions">
+                      <div className="btn-icon-row">
                         {p.filePath && (
-                          <button
-                            className={`btn ${playingId === p.id && isPlaying ? "btn-primary" : ""}`}
-                            type="button"
+                          <IconBtn
+                            icon={playingId === p.id && isPlaying ? Pause : Play}
+                            label={
+                              playingId === p.id && isPlaying
+                                ? t("prompts.pause", { defaultValue: "Pause" })
+                                : t("prompts.play", { defaultValue: "Play" })
+                            }
+                            primary={playingId === p.id && isPlaying}
                             onClick={() => void playPrompt(p.id)}
-                          >
-                            {playingId === p.id && isPlaying ? (
-                              <Pause size={16} />
-                            ) : (
-                              <Play size={16} />
-                            )}
-                            {playingId === p.id && isPlaying
-                              ? t("prompts.pause", { defaultValue: "Pause" })
-                              : t("prompts.play", { defaultValue: "Play" })}
-                          </button>
+                          />
                         )}
-                        <button
-                          className="btn"
-                          type="button"
+                        <IconBtn
+                          icon={Upload}
+                          label={t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
                           onClick={() => {
                             setReplaceId(p.id);
                             replaceRef.current?.click();
                           }}
-                        >
-                          <Upload size={16} />
-                          {t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
-                        </button>
-                        <button
-                          className="btn"
-                          type="button"
+                        />
+                        <IconBtn
+                          icon={Wand2}
+                          label={t("prompts.generate", { defaultValue: "Generate TTS" })}
                           disabled={!p.ttsText || synthesize.isPending}
                           onClick={() => synthesize.mutate(p.id)}
-                        >
-                          {t("prompts.generate", { defaultValue: "Generate TTS" })}
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>
@@ -374,7 +364,6 @@ export function PromptsPage() {
               )}
             </tbody>
           </table>
-        </div>
       </SectionCard>
     </div>
   );

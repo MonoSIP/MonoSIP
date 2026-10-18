@@ -49,7 +49,7 @@ export function FlowsPage() {
       />
       <SectionCard title={t("common.create")} icon={GitBranch} tone="cyan">
         <form
-          className="flex flex-wrap items-end gap-3"
+          className="toolbar"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
@@ -73,7 +73,7 @@ export function FlowsPage() {
             placeholder="Ext (900)"
             title="Optional dialable extension for softphone testing"
           />
-          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+          <button className="btn btn-primary" type="submit">
             {t("common.create")}
           </button>
         </form>

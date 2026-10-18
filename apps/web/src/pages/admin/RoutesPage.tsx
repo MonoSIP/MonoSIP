@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Ban, Plus, Route, Signpost } from "lucide-react";
+import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Inbound = {
   id: string;
@@ -208,21 +208,20 @@ export function RoutesPage() {
                   {r.destType}:{r.destId ?? "—"}
                 </td>
                 <td>{r.priority}</td>
-                <td className="space-x-2">
-                  <button className="btn" type="button" onClick={() => loadInbound(r)}>
-                    {t("common.edit", { defaultValue: "Edit" })}
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    type="button"
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/routes/inbound/${r.id}`).then(() =>
-                        qc.invalidateQueries({ queryKey: ["inbound"] }),
-                      )
-                    }
-                  >
-                    {t("common.delete")}
-                  </button>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <IconBtn icon={Pencil} label={t("common.edit", { defaultValue: "Edit" })} onClick={() => loadInbound(r)} />
+                    <IconBtn
+                      icon={Trash2}
+                      label={t("common.delete")}
+                      danger
+                      onClick={() =>
+                        void api.delete(`/api/v1/admin/routes/inbound/${r.id}`).then(() =>
+                          qc.invalidateQueries({ queryKey: ["inbound"] }),
+                        )
+                      }
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
@@ -299,21 +298,20 @@ export function RoutesPage() {
                   <td className="font-mono">{r.pattern}</td>
                   <td className="text-xs">{r.requiredPermission}</td>
                   <td>{r.enabled ? t("common.yes") : t("common.no")}</td>
-                  <td className="space-x-2">
-                    <button className="btn" type="button" onClick={() => loadOutbound(r)}>
-                      {t("common.edit", { defaultValue: "Edit" })}
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      type="button"
-                      onClick={() =>
-                        void api.delete(`/api/v1/admin/routes/outbound/${r.id}`).then(() =>
-                          qc.invalidateQueries({ queryKey: ["outbound"] }),
-                        )
-                      }
-                    >
-                      {t("common.delete")}
-                    </button>
+                  <td className="col-actions">
+                    <div className="btn-icon-row">
+                      <IconBtn icon={Pencil} label={t("common.edit", { defaultValue: "Edit" })} onClick={() => loadOutbound(r)} />
+                      <IconBtn
+                        icon={Trash2}
+                        label={t("common.delete")}
+                        danger
+                        onClick={() =>
+                          void api.delete(`/api/v1/admin/routes/outbound/${r.id}`).then(() =>
+                            qc.invalidateQueries({ queryKey: ["outbound"] }),
+                          )
+                        }
+                      />
+                    </div>
                   </td>
                 </tr>
               ))
@@ -323,7 +321,7 @@ export function RoutesPage() {
       </SectionCard>
       <SectionCard title={t("routes.blacklist")} icon={Ban} tone="coral">
         <form
-          className="mb-3 flex flex-wrap items-end gap-2"
+          className="toolbar"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
@@ -346,7 +344,7 @@ export function RoutesPage() {
             <option value="both">both</option>
           </SelectField>
           <TextField label="Note" name="note" />
-          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+          <button className="btn btn-primary" type="submit">
             <Plus size={16} />
             {t("common.create")}
           </button>
@@ -356,8 +354,8 @@ export function RoutesPage() {
             <tr>
               <th>Pattern</th>
               <th>Direction</th>
-              <th>Note</th>
-              <th />
+              <th className="col-grow">Note</th>
+              <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -365,19 +363,18 @@ export function RoutesPage() {
               <tr key={b.id}>
                 <td className="font-mono">{b.pattern}</td>
                 <td>{b.direction}</td>
-                <td>{b.note ?? "—"}</td>
-                <td>
-                  <button
-                    className="btn btn-danger"
-                    type="button"
+                <td className="col-grow">{b.note ?? "—"}</td>
+                <td className="col-actions">
+                  <IconBtn
+                    icon={Trash2}
+                    label={t("common.delete")}
+                    danger
                     onClick={() =>
                       void api.delete(`/api/v1/admin/blacklist/${b.id}`).then(() =>
                         qc.invalidateQueries({ queryKey: ["blacklist"] }),
                       )
                     }
-                  >
-                    {t("common.delete")}
-                  </button>
+                  />
                 </td>
               </tr>
             ))}

@@ -3,10 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
-import { ClipboardList, Disc, FileAudio } from "lucide-react";
+import { ClipboardList, Disc, Download, FileAudio, Pause, Play, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard } from "../../components/ui";
+import { IconBtn, IconLink, PageHeader, SectionCard } from "../../components/ui";
 
 type Rec = {
   id: string;
@@ -100,10 +100,11 @@ export function RecordingsPage() {
                     ? `Playing ${playingId.slice(0, 8)}…`
                     : `Loaded ${playingId.slice(0, 8)}`}
               </span>
-              <div className="flex gap-2">
-                <button
-                  className="btn btn-primary"
-                  type="button"
+              <div className="btn-icon-row">
+                <IconBtn
+                  icon={isPlaying ? Pause : Play}
+                  label={isPlaying ? "Pause" : "Play"}
+                  primary
                   disabled={!!loadError}
                   onClick={() => {
                     const ws = wsRef.current;
@@ -111,27 +112,22 @@ export function RecordingsPage() {
                     if (ws.isPlaying()) ws.pause();
                     else void ws.play();
                   }}
-                >
-                  {isPlaying ? "Pause" : "Play"}
-                </button>
-                <button className="btn" type="button" onClick={() => setPlayingId(null)}>
-                  Close
-                </button>
+                />
+                <IconBtn icon={X} label="Close" onClick={() => setPlayingId(null)} />
               </div>
             </div>
             <div ref={waveRef} />
           </div>
         </SectionCard>
       )}
-      <SectionCard title="Recordings" icon={Disc} tone="blue" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-          <table className="table">
+      <SectionCard title="Recordings" icon={Disc} tone="blue" flush>
+        <table className="table">
             <thead>
               <tr>
                 <th>Call</th>
                 <th>{t("cdr.duration")}</th>
                 <th>Created</th>
-                <th>{t("common.actions")}</th>
+                <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -145,34 +141,33 @@ export function RecordingsPage() {
                     <td className="font-mono text-sm">{r.callId}</td>
                     <td>{r.duration}s</td>
                     <td>{new Date(r.createdAt).toLocaleString()}</td>
-                    <td className="flex flex-wrap gap-2">
-                      <button className="btn" type="button" onClick={() => setPlayingId(r.id)}>
-                        Play
-                      </button>
-                      <a className="btn" href={`/api/v1/admin/recordings/${r.id}/download`}>
-                        Download
-                      </a>
-                      <button className="btn" type="button" onClick={() => setAccessId(r.id)}>
-                        Access log
-                      </button>
+                    <td className="col-actions">
+                      <div className="btn-icon-row">
+                        <IconBtn icon={Play} label="Play" onClick={() => setPlayingId(r.id)} />
+                        <IconLink
+                          icon={Download}
+                          label="Download"
+                          href={`/api/v1/admin/recordings/${r.id}/download`}
+                        />
+                        <IconBtn
+                          icon={ClipboardList}
+                          label="Access log"
+                          onClick={() => setAccessId(r.id)}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </div>
       </SectionCard>
       {accessId && (
         <SectionCard
           title="Access log"
           icon={ClipboardList}
           tone="coral"
-          actions={
-            <button className="btn" type="button" onClick={() => setAccessId(null)}>
-              Close
-            </button>
-          }
+          actions={<IconBtn icon={X} label="Close" onClick={() => setAccessId(null)} />}
         >
           <ul className="space-y-1 text-sm">
             {(access.data ?? []).length === 0 ? (

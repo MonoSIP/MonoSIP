@@ -59,9 +59,8 @@ export function MissedPage() {
         description="Track missed calls and mark follow-up status"
         actions={tabButtons}
       />
-      <SectionCard title="Missed calls" icon={List} tone="coral" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-          <table className="table">
+      <SectionCard title="Missed calls" icon={List} tone="coral" flush>
+        <table className="table">
             <thead>
               <tr>
                 <th>{t("cdr.caller")}</th>
@@ -110,7 +109,6 @@ export function MissedPage() {
               )}
             </tbody>
           </table>
-        </div>
       </SectionCard>
     </div>
   );

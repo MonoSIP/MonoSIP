@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Headphones, ListOrdered, Plus } from "lucide-react";
+import { Headphones, ListOrdered, Pencil, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = { id: string; number: string; name: string };
 type Member = { extensionId: string; penalty: number; paused?: boolean };
@@ -215,10 +215,10 @@ export function QueuesPage() {
             else create.mutate();
           }}
         >
-        <div className="flex flex-wrap gap-3">
+        <div className="toolbar toolbar-wrap">
           <TextField
             label={t("extensions.number")}
-            className="max-w-[140px]"
+            className="w-[7.5rem]"
             placeholder={t("extensions.number")}
             value={number}
             onChange={(e) => setNumber(e.target.value)}
@@ -227,7 +227,7 @@ export function QueuesPage() {
           />
           <TextField
             label={t("extensions.name")}
-            className="max-w-xs"
+            className="min-w-[12rem]"
             placeholder={t("extensions.name")}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -235,7 +235,7 @@ export function QueuesPage() {
           />
           <SelectField
             label={t("queues.strategy")}
-            className="max-w-[10rem]"
+            className="w-[10rem]"
             value={strategy}
             onChange={(e) => setStrategy(e.target.value)}
           >
@@ -247,14 +247,14 @@ export function QueuesPage() {
           </SelectField>
           <TextField
             label="Max wait (s)"
-            className="w-24"
+            className="w-[7rem]"
             type="number"
             value={maxWait}
             onChange={(e) => setMaxWait(Number(e.target.value))}
           />
           <TextField
             label="Max callers"
-            className="w-24"
+            className="w-[7rem]"
             type="number"
             min={0}
             value={maxCallers}
@@ -262,19 +262,19 @@ export function QueuesPage() {
           />
           <TextField
             label="Agent ring (s)"
-            className="w-24"
+            className="w-[7rem]"
             type="number"
             value={memberTimeout}
             onChange={(e) => setMemberTimeout(Number(e.target.value))}
           />
           <TextField
             label="Wrap-up (s)"
-            className="w-24"
+            className="w-[7rem]"
             type="number"
             value={wrapup}
             onChange={(e) => setWrapup(Number(e.target.value))}
           />
-          <SelectField label="MOH class" value={mohId} onChange={(e) => setMohId(e.target.value)}>
+          <SelectField label="MOH class" className="w-[10rem]" value={mohId} onChange={(e) => setMohId(e.target.value)}>
             <option value="">default</option>
             {(moh.data ?? []).map((m) => (
               <option key={m.id} value={m.id}>
@@ -391,16 +391,16 @@ export function QueuesPage() {
         </div>
         </form>
       </SectionCard>
-      <SectionCard title="Queue list" icon={ListOrdered} tone="blue" className="overflow-auto !space-y-0">
+      <SectionCard title="Queue list" icon={ListOrdered} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
               <th>{t("extensions.number")}</th>
               <th>{t("extensions.name")}</th>
               <th>{t("queues.strategy")}</th>
-              <th>{t("queues.members")}</th>
+              <th className="col-grow">{t("queues.members")}</th>
               <th>Callback</th>
-              <th />
+              <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -409,7 +409,7 @@ export function QueuesPage() {
                 <td className="font-mono">{q.number}</td>
                 <td>{q.name}</td>
                 <td>{q.strategy}</td>
-                <td>
+                <td className="col-grow">
                   <div className="flex flex-wrap gap-1">
                     {(q.members ?? []).map((m) => {
                       const ext = exts.data?.find((e) => e.id === m.extensionId);
@@ -430,10 +430,8 @@ export function QueuesPage() {
                   </div>
                 </td>
                 <td>{q.callbackEnabled ? "on" : "off"}</td>
-                <td>
-                  <button className="btn" type="button" onClick={() => startEdit(q)}>
-                    Edit
-                  </button>
+                <td className="col-actions">
+                  <IconBtn icon={Pencil} label="Edit" onClick={() => startEdit(q)} />
                 </td>
               </tr>
             ))}

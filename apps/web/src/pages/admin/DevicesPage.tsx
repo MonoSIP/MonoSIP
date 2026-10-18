@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cpu, List, Network, QrCode, Smartphone } from "lucide-react";
+import { Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = { id: string; number: string; name: string };
 type Dev = {
@@ -110,7 +110,7 @@ export function DevicesPage() {
               </option>
             ))}
           </SelectField>
-          <button className="btn btn-primary mb-[0.85rem] w-fit" type="submit">
+          <button className="btn btn-primary w-fit" type="submit">
             Add device
           </button>
         </form>
@@ -120,9 +120,8 @@ export function DevicesPage() {
           <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />
         </SectionCard>
       )}
-      <SectionCard title="Devices" icon={List} tone="cyan" className="!p-0 overflow-hidden">
-        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
-          <table className="table">
+      <SectionCard title="Devices" icon={List} tone="cyan" flush>
+        <table className="table">
             <thead>
               <tr>
                 <th>Extension</th>
@@ -141,28 +140,26 @@ export function DevicesPage() {
                     <td>{d.model ?? "—"}</td>
                     <td className="font-mono text-xs">{d.mac ?? "—"}</td>
                     <td>{d.provisioningProfile ?? "—"}</td>
-                    <td className="flex gap-2">
-                      <button className="btn" type="button" onClick={() => void showQr(d.id)}>
-                        QR
-                      </button>
-                      <button
-                        className="btn btn-danger"
-                        type="button"
-                        onClick={() =>
-                          void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
-                            qc.invalidateQueries({ queryKey: ["devices"] }),
-                          )
-                        }
-                      >
-                        Delete
-                      </button>
+                    <td className="col-actions">
+                      <div className="btn-icon-row">
+                        <IconBtn icon={QrCode} label="QR" onClick={() => void showQr(d.id)} />
+                        <IconBtn
+                          icon={Trash2}
+                          label="Delete"
+                          danger
+                          onClick={() =>
+                            void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
+                              qc.invalidateQueries({ queryKey: ["devices"] }),
+                            )
+                          }
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
       </SectionCard>
     </div>
   );

@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Download, Upload, UserPlus, Users } from "lucide-react";
+import { Download, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = {
   id: string;
@@ -233,7 +233,7 @@ export function ExtensionsPage() {
       />
       <SectionCard title="Add extension" icon={UserPlus} tone="cyan" className="mb-6">
         <form
-          className="grid gap-3 sm:grid-cols-4 sm:items-end"
+          className="toolbar"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
@@ -247,12 +247,12 @@ export function ExtensionsPage() {
           />
           <TextField
             label={t("extensions.name")}
-            className="sm:col-span-2"
+            className="min-w-[16rem]"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
-          <button className="btn btn-primary mb-[0.85rem] justify-center" type="submit">
+          <button className="btn btn-primary justify-center" type="submit">
             <UserPlus size={16} />
             {t("extensions.add")}
           </button>
@@ -426,7 +426,7 @@ export function ExtensionsPage() {
         </SectionCard>
       )}
 
-      <SectionCard title="Extensions" icon={Users} tone="blue" className="overflow-auto">
+      <SectionCard title="Extensions" icon={Users} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
@@ -435,16 +435,16 @@ export function ExtensionsPage() {
               <th>{t("extensions.dnd")}</th>
               <th>{t("extensions.portal")}</th>
               <th>Secretary</th>
-              <th>{t("common.actions")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
             {list.data?.map((e) => (
               <tr key={e.id}>
                 <td className="font-mono">{e.number}</td>
-                <td>{e.name}</td>
+                <td className="col-grow">{e.name}</td>
                 <td>
-                  <button className="btn" type="button" onClick={() => toggleDnd.mutate(e)}>
+                  <button className="btn btn-icon" type="button" onClick={() => toggleDnd.mutate(e)} title="DND" aria-label="DND">
                     {e.dnd ? "ON" : "OFF"}
                   </button>
                 </td>
@@ -454,13 +454,11 @@ export function ExtensionsPage() {
                     ? list.data?.find((x) => x.id === e.bossSecretaryOf)?.number ?? "…"
                     : "—"}
                 </td>
-                <td className="flex gap-1">
-                  <button className="btn" type="button" onClick={() => void openEdit(e)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger" type="button" onClick={() => remove.mutate(e.id)}>
-                    {t("common.delete")}
-                  </button>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <IconBtn icon={Pencil} label="Edit" onClick={() => void openEdit(e)} />
+                    <IconBtn icon={Trash2} label={t("common.delete")} danger onClick={() => remove.mutate(e.id)} />
+                  </div>
                 </td>
               </tr>
             ))}

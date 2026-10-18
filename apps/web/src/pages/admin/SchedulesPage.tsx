@@ -253,34 +253,40 @@ export function SchedulesPage() {
         title={t("schedules.title")}
         tone="cyan"
         description="Open hours, overrides, and holiday routing"
-        actions={
-          <form
-            className="flex flex-wrap items-end gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              create.mutate();
-            }}
-          >
-            <TextField
-              label={t("schedules.newName", { defaultValue: "New schedule name" })}
-              placeholder={t("schedules.newName")}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <button className="btn btn-primary mb-[0.85rem]" type="submit">
-              <Plus size={16} />
-              {t("common.create")}
-            </button>
-          </form>
-        }
       />
+
+      <SectionCard title="Create schedule" icon={Plus} tone="cyan">
+        <p className="text-sm text-[var(--text-muted)]">
+          Name a schedule to get a weekday open-hours template. Pick it below to edit ranges, holidays, and destinations.
+        </p>
+        <form
+          className="toolbar toolbar-wrap"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
+          <TextField
+            label={t("schedules.newName", { defaultValue: "Schedule name" })}
+            placeholder={t("schedules.newName")}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="min-w-[16rem]"
+          />
+          <button className="btn btn-primary" type="submit" disabled={create.isPending}>
+            <Plus size={16} />
+            {t("common.create")}
+          </button>
+        </form>
+      </SectionCard>
 
       {!list.data?.length ? (
         <p className="text-[var(--text-muted)]">
-          {t("schedules.empty", { defaultValue: "No schedules yet — create one to define open hours." })}
+          {t("schedules.empty", { defaultValue: "No schedules yet — create one above to define open hours." })}
         </p>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-[var(--text-muted)]">Schedules</span>
           {list.data.map((s) => (
             <button
               key={s.id}
@@ -473,7 +479,7 @@ export function SchedulesPage() {
           <div>
             <h2 className="mb-2 font-medium">{t("schedules.holidays", { defaultValue: "Holidays" })}</h2>
             <form
-              className="mb-3 flex flex-wrap items-end gap-2"
+              className="toolbar"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!holDate || !holName) return;

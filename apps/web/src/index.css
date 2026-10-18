@@ -162,6 +162,21 @@ html.light .btn-primary {
   border: none;
   font-weight: 700;
 }
+.btn-icon {
+  padding: 0.5rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  aspect-ratio: 1;
+}
+a.btn-icon {
+  text-decoration: none;
+}
+.btn-icon-row {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+}
 
 .input {
   width: 100%;
@@ -181,6 +196,27 @@ html.light .btn-primary {
 }
 select.input {
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  /* Re-declare fill so background-image is not wiped by .input shorthand */
+  background-color: color-mix(in oklab, var(--bg) 88%, var(--bg-elevated));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238aa0b2' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+html.light select.input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234f6678' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+select.input:hover,
+select.input:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232ee6c5' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+.field-control.has-icon select.input {
+  padding-left: 2.55rem;
+  padding-right: 2.5rem;
 }
 textarea.input {
   min-height: 88px;
@@ -228,25 +264,130 @@ textarea.input {
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 }
 .table th,
 .table td {
   text-align: left;
-  padding: 0.8rem 0.9rem;
+  padding: 0.7rem 0.9rem;
   border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  /* Shrink-wrap by default — put .col-grow on the column that should absorb leftover space */
+  width: 1%;
+  white-space: nowrap;
 }
 .table th {
   color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.8rem;
-  text-transform: none;
+  font-weight: 650;
+  font-size: 0.78rem;
   letter-spacing: 0.02em;
+  background: color-mix(in oklab, var(--bg-soft) 92%, var(--accent) 8%);
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, var(--accent) 30%);
 }
 .table tbody tr {
   transition: background 0.12s ease;
 }
 .table tbody tr:hover {
   background: color-mix(in oklab, var(--accent) 6%, transparent);
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+.table .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table .col-narrow {
+  width: 1%;
+}
+.table .col-actions {
+  width: 1%;
+  text-align: right;
+}
+.table .col-grow {
+  width: auto;
+  white-space: normal;
+}
+
+/* Section cards: keep title padded even when body is flush (tables) */
+.section-card {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.section-card-head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem 0.85rem;
+}
+.section-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  min-width: 0;
+  white-space: nowrap;
+}
+.section-card-body {
+  padding: 0 1.15rem 1.15rem;
+}
+.section-card-body-flush {
+  padding: 0;
+  overflow: auto;
+}
+.section-card-body-flush .table {
+  margin: 0;
+}
+.section-card-flush .section-card-head {
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
+  padding-bottom: 0.85rem;
+}
+
+/* Single-row action / form toolbars */
+.toolbar {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-end;
+  gap: 0.65rem;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 1px;
+  scrollbar-width: thin;
+}
+/* Multi-field forms: wrap instead of horizontal scroll */
+.toolbar-wrap {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.toolbar-actions {
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+.toolbar .field {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+  min-width: 7.5rem;
+}
+.toolbar .field:has(input[type="datetime-local"]) {
+  min-width: 13.5rem;
+}
+.toolbar .field.flex-1 {
+  flex: 1 1 auto;
+  min-width: 12rem;
+}
+.toolbar .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.page-header .toolbar-actions {
+  margin-left: auto;
 }
 
 .nav-link {
@@ -316,11 +457,17 @@ textarea.input {
 
 .page-header {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.35rem;
+}
+@media (max-width: 720px) {
+  .page-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
 }
 .page-header-title {
   display: flex;

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Download, Filter, History } from "lucide-react";
+import { Download, Filter, History, Play, X } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type CdrRow = {
   id: string;
@@ -70,7 +70,7 @@ export function CdrPage() {
       />
       <SectionCard title="Filters" icon={Filter} tone="cyan">
         <form
-          className="flex flex-wrap items-end gap-2"
+          className="toolbar"
           onSubmit={(e) => {
             e.preventDefault();
             void list.refetch();
@@ -90,27 +90,27 @@ export function CdrPage() {
             <option value="BUSY">BUSY</option>
             <option value="FAILED">FAILED</option>
           </SelectField>
-          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+          <button className="btn btn-primary" type="submit">
             <Filter size={16} />
             Filter
           </button>
         </form>
       </SectionCard>
-      <SectionCard title="Call log" icon={History} tone="blue" className="overflow-auto !space-y-0">
+      <SectionCard title="Call log" icon={History} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
               <th>Time</th>
-              <th>Dir</th>
+              <th className="col-narrow">Dir</th>
               <th>{t("cdr.caller")}</th>
               <th>{t("cdr.callee")}</th>
-              <th>{t("cdr.disposition")}</th>
-              <th>{t("cdr.duration")}</th>
-              <th>Agent</th>
-              <th>MOS</th>
-              <th>DND</th>
-              <th>Rec</th>
-              <th />
+              <th className="col-narrow">{t("cdr.disposition")}</th>
+              <th className="col-num">{t("cdr.duration")}</th>
+              <th className="col-narrow">Agent</th>
+              <th className="col-num">MOS</th>
+              <th className="col-num">DND</th>
+              <th className="col-narrow">Rec</th>
+              <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -130,25 +130,21 @@ export function CdrPage() {
                   <td>
                     <span className="badge">{r.disposition ?? "—"}</span>
                   </td>
-                  <td>{r.duration ?? 0}s</td>
+                  <td className="col-num">{r.duration ?? 0}s</td>
                   <td className="font-mono text-xs">{r.extensionNumber ?? "—"}</td>
-                  <td className="text-xs tabular-nums">
+                  <td className="col-num text-xs">
                     {r.mos != null ? r.mos.toFixed(2) : "—"}
                   </td>
                   <td>{r.dndFlag ? "yes" : "—"}</td>
                   <td>
                     {r.recordingId ? (
-                      <a className="btn" href={`/recordings?id=${r.recordingId}`}>
-                        Play
-                      </a>
+                      <IconLink icon={Play} label="Play recording" href={`/recordings?id=${r.recordingId}`} />
                     ) : (
                       "—"
                     )}
                   </td>
-                  <td>
-                    <button className="btn" type="button" onClick={() => setTimelineId(r.id)}>
-                      Timeline
-                    </button>
+                  <td className="col-actions">
+                    <IconBtn icon={History} label="Timeline" onClick={() => setTimelineId(r.id)} />
                   </td>
                 </tr>
               ))
@@ -161,11 +157,7 @@ export function CdrPage() {
           title="Call timeline"
           icon={History}
           tone="coral"
-          actions={
-            <button className="btn" type="button" onClick={() => setTimelineId(null)}>
-              Close
-            </button>
-          }
+          actions={<IconBtn icon={X} label="Close" onClick={() => setTimelineId(null)} />}
         >
           {(timeline.data?.events ?? []).length === 0 ? (
             <p className="text-sm text-[var(--text-muted)]">No IVR/flow events for this call.</p>

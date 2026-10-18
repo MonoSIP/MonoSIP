@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from "react";
 
 type Tone = "cyan" | "coral" | "blue" | "success" | "warn" | "danger";
 
@@ -36,7 +43,7 @@ export function PageHeader({
           {description ? <div className="mt-1 text-[0.92rem] text-[var(--text-muted)]">{description}</div> : null}
         </div>
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}
     </header>
   );
 }
@@ -163,6 +170,54 @@ export function TextAreaField({
   );
 }
 
+/** Compact icon-only control for table / list actions */
+export function IconBtn({
+  icon: Icon,
+  label,
+  danger,
+  primary,
+  className,
+  ...props
+}: {
+  icon: LucideIcon;
+  label: string;
+  danger?: boolean;
+  primary?: boolean;
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type="button"
+      className={`btn btn-icon ${danger ? "btn-danger" : ""} ${primary ? "btn-primary" : ""} ${className ?? ""}`}
+      aria-label={label}
+      title={label}
+      {...props}
+    >
+      <Icon size={16} strokeWidth={2.25} />
+    </button>
+  );
+}
+
+export function IconLink({
+  icon: Icon,
+  label,
+  className,
+  ...props
+}: {
+  icon: LucideIcon;
+  label: string;
+} & AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return (
+    <a
+      className={`btn btn-icon ${className ?? ""}`}
+      aria-label={label}
+      title={label}
+      {...props}
+    >
+      <Icon size={16} strokeWidth={2.25} />
+    </a>
+  );
+}
+
 export function SectionCard({
   title,
   icon: Icon,
@@ -170,6 +225,8 @@ export function SectionCard({
   children,
   actions,
   className,
+  /** Flush body padding — use for tables so headers align cleanly */
+  flush = false,
 }: {
   title: string;
   icon?: LucideIcon;
@@ -177,22 +234,20 @@ export function SectionCard({
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
+  flush?: boolean;
 }) {
   const tint =
     tone === "coral" ? "card-tint-coral" : tone === "blue" ? "card-tint-blue" : "card-tint-cyan";
   return (
-    <section className={`card ${tint} space-y-3 p-4 md:p-5 ${className ?? ""}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2
-          className="flex items-center gap-2 text-base font-semibold"
-          style={{ color: TONE_VAR[tone] }}
-        >
+    <section className={`card section-card ${tint} ${flush ? "section-card-flush" : ""} ${className ?? ""}`}>
+      <div className="section-card-head">
+        <h2 className="section-card-title" style={{ color: TONE_VAR[tone] }}>
           {Icon ? <Icon size={18} strokeWidth={2.25} /> : null}
           {title}
         </h2>
-        {actions}
+        {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}
       </div>
-      {children}
+      <div className={`section-card-body ${flush ? "section-card-body-flush" : "space-y-3"}`}>{children}</div>
     </section>
   );
 }

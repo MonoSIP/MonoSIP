@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Cable, Link2, Plus } from "lucide-react";
+import { Cable, Link2, Pencil, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Trunk = {
   id: string;
@@ -349,7 +349,7 @@ export function TrunksPage() {
         <p className="text-sm text-[var(--text-muted)]">{t("trunks.noDids")}</p>
       )}
 
-      <SectionCard title="Trunk list" icon={Cable} tone="blue" className="overflow-auto !space-y-0">
+      <SectionCard title="Trunk list" icon={Cable} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
@@ -381,29 +381,28 @@ export function TrunksPage() {
                   {trow.latencyMs != null ? ` ${trow.latencyMs}ms` : ""}
                 </td>
                 <td>{trow.enabled ? t("common.yes") : t("common.no")}</td>
-                <td className="flex flex-wrap gap-1">
-                  <button className="btn" type="button" onClick={() => startEdit(trow)}>
-                    {t("common.edit")}
-                  </button>
-                  <button className="btn" type="button" onClick={() => void toggle(trow)}>
-                    {trow.enabled ? t("trunks.disable") : t("trunks.enable")}
-                  </button>
-                  <button className="btn" type="button" onClick={() => void refreshStatus(trow.id)}>
-                    {t("trunks.status")}
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    type="button"
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/trunks/${trow.id}`).then(() => {
-                        toast.success(t("common.delete"));
-                        if (editingId === trow.id) cancelEdit();
-                        void qc.invalidateQueries({ queryKey: ["trunks"] });
-                      })
-                    }
-                  >
-                    {t("common.delete")}
-                  </button>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <IconBtn icon={Pencil} label={t("common.edit")} onClick={() => startEdit(trow)} />
+                    <IconBtn
+                      icon={Power}
+                      label={trow.enabled ? t("trunks.disable") : t("trunks.enable")}
+                      onClick={() => void toggle(trow)}
+                    />
+                    <IconBtn icon={RefreshCw} label={t("trunks.status")} onClick={() => void refreshStatus(trow.id)} />
+                    <IconBtn
+                      icon={Trash2}
+                      label={t("common.delete")}
+                      danger
+                      onClick={() =>
+                        void api.delete(`/api/v1/admin/trunks/${trow.id}`).then(() => {
+                          toast.success(t("common.delete"));
+                          if (editingId === trow.id) cancelEdit();
+                          void qc.invalidateQueries({ queryKey: ["trunks"] });
+                        })
+                      }
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

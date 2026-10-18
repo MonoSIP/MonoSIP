@@ -518,7 +518,7 @@ export function SettingsPage() {
         </div>
 
         <h3 className="pt-2 text-sm font-medium">Active bans</h3>
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="toolbar">
           <TextField
             label="IP to ban"
             className="max-w-[12rem] font-mono text-sm"
@@ -780,11 +780,11 @@ export function SettingsPage() {
         </label>
       </div>
 
-      <SectionCard title="Audit log" icon={ScrollText} tone="cyan" className="overflow-auto">
-        <table className="w-full text-left text-sm">
+      <SectionCard title="Audit log" icon={ScrollText} tone="cyan" flush>
+        <table className="table">
           <thead>
-            <tr className="text-[var(--text-muted)]">
-              <th className="py-1">When</th>
+            <tr>
+              <th>When</th>
               <th>Action</th>
               <th>Object</th>
             </tr>

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Copy, KeyRound, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
 
 const ALL_PERMS = ["cdr", "originate", "recordings"] as const;
 
@@ -119,7 +119,7 @@ export function IntegrationsPage() {
       />
       <SectionCard title="Webhooks" icon={Webhook} tone="coral">
         <form
-          className="mb-3 flex flex-wrap items-end gap-2"
+          className="toolbar"
           onSubmit={(e) => {
             e.preventDefault();
             addHook.mutate();
@@ -132,7 +132,7 @@ export function IntegrationsPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+          <button className="btn btn-primary" type="submit">
             {t("common.create")}
           </button>
         </form>
@@ -226,32 +226,28 @@ export function IntegrationsPage() {
                     <span className="font-mono text-[var(--text-muted)]">{w.publicKey}</span>
                     {!w.enabled ? " (disabled)" : ""}
                   </span>
-                  <button
-                    className="btn btn-danger"
-                    type="button"
+                  <IconBtn
+                    icon={Trash2}
+                    label="Delete"
+                    danger
                     onClick={() =>
                       void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
                         toast.message("Widget deleted");
                         void qc.invalidateQueries({ queryKey: ["widgets"] });
                       })
                     }
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
+                  />
                 </div>
                 <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">{embed}</code>
-                <button
-                  className="btn mt-2"
-                  type="button"
+                <IconBtn
+                  className="mt-2"
+                  icon={Copy}
+                  label="Copy embed"
                   onClick={() => {
                     void navigator.clipboard.writeText(embed);
                     toast.success("Embed code copied");
                   }}
-                >
-                  <Copy size={14} />
-                  Copy embed
-                </button>
+                />
               </li>
             );
           })}
@@ -293,18 +289,16 @@ export function IntegrationsPage() {
                   <span className="font-mono">
                     {k.name} · {k.keyPrefix}…
                   </span>
-                  <button
-                    className="btn btn-danger"
-                    type="button"
+                  <IconBtn
+                    icon={Trash2}
+                    label="Revoke"
+                    danger
                     onClick={() =>
                       void api.delete(`/api/v1/admin/api-keys/${k.id}`).then(() =>
                         qc.invalidateQueries({ queryKey: ["api-keys"] }),
                       )
                     }
-                  >
-                    <Trash2 size={14} />
-                    Revoke
-                  </button>
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ALL_PERMS.map((p) => (

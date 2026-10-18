@@ -82,7 +82,7 @@ export function MyCallsPage() {
         }
       />
       {tab === "missed" && (missed.data ?? []).length > 0 && (
-        <SectionCard title="Pending missed" icon={History} tone="blue" className="overflow-auto !p-0">
+        <SectionCard title="Pending missed" icon={History} tone="blue" flush>
           <table className="table">
             <thead>
               <tr>
@@ -113,7 +113,7 @@ export function MyCallsPage() {
           </table>
         </SectionCard>
       )}
-      <SectionCard title="Call history" icon={History} tone="blue" className="overflow-auto !p-0">
+      <SectionCard title="Call history" icon={History} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
