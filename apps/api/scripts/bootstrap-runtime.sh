@@ -79,6 +79,14 @@ fi
 if [ -n "${PUBLIC_HOST:-}" ] && { [ -z "${SIP_WSS_URL:-}" ] || [ "$SIP_WSS_URL" = "wss://localhost/asterisk-ws" ]; }; then
   export SIP_WSS_URL="wss://${PUBLIC_HOST}/asterisk-ws"
 fi
+# WebRTC/RTP needs a public address in ICE candidates (softphone audio).
+if [ -z "${EXTERNAL_IP:-}" ] && [ -n "${PUBLIC_HOST:-}" ]; then
+  RESOLVED="$(getent ahostsv4 "$PUBLIC_HOST" 2>/dev/null | awk '{print $1; exit}')"
+  if [ -n "$RESOLVED" ]; then
+    export EXTERNAL_IP="$RESOLVED"
+    echo "EXTERNAL_IP unset — using $EXTERNAL_IP from PUBLIC_HOST=$PUBLIC_HOST"
+  fi
+fi
 
 # All-in-one defaults (Compose overrides with http://asterisk:8088)
 export ASTERISK_ARI_URL="${ASTERISK_ARI_URL:-http://127.0.0.1:8088}"

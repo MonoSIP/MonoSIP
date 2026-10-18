@@ -82,6 +82,9 @@ EXTERNAL_IP=<public IPv4 of the NineDeploy host>
 ADMIN_PASSWORD=<strong password>
 ```
 
+**Softphone audio (WebRTC):** SIP over WSS works through HTTPS, but media is UDP RTP.
+Publish host UDP **10000–10100** to the container (NineDeploy → service → network / ports) and set `EXTERNAL_IP` (or leave it empty so boot resolves it from `PUBLIC_HOST`). Without those, calls connect but stay silent.
+
 **Strongly recommended:** attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped and survives image rebuilds/major PG upgrades without risk of an empty lab seed.
 
 ## Production (VPS)

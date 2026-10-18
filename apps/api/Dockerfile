@@ -30,6 +30,7 @@ ARG NODE_VERSION=24.11.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl openssl ffmpeg python3 \
+    espeak-ng \
     postgresql postgresql-client \
     xz-utils \
   && NODE_ARCH="$TARGETARCH" \
@@ -62,5 +63,7 @@ ENV WEB_DIST=/app/apps/web/dist \
 
 # NineDeploy publishes the first/configured HTTP port — only expose the API.
 # Asterisk ARI/WSS stay on 127.0.0.1:8088 inside the container (see start-asterisk.sh).
+# Softphone WebRTC also needs host UDP 10000-10100 published + EXTERNAL_IP in vault.
 EXPOSE 3000
+EXPOSE 10000-10100/udp
 ENTRYPOINT ["/entrypoint.sh"]

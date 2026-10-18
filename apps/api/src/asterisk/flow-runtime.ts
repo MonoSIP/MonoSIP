@@ -161,7 +161,7 @@ export async function runFlowOnChannel(
   if (!asSubflow) {
     await ari.answer(channelId);
     // WebRTC ICE/RTP often not ready immediately — early play becomes a short beep then silence
-    await sleep(600);
+    await sleep(1800);
   }
 
   // KVKK announcement — configured prompt, else short spoken notice (not a bare beep)

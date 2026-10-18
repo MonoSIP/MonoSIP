@@ -188,12 +188,29 @@ async function seed() {
       { id: "e3", source: "menu1", target: "xfer1", sourceHandle: "1", label: "1" },
       { id: "e4", source: "menu1", target: "xfer2", sourceHandle: "2", label: "2" },
       { id: "e5", source: "menu1", target: "hangup1", sourceHandle: "timeout", label: "timeout" },
+      // Transfer failure exits (required to publish)
+      { id: "e6", source: "xfer1", target: "hangup1", sourceHandle: "noanswer" },
+      { id: "e7", source: "xfer1", target: "hangup1", sourceHandle: "busy" },
+      { id: "e8", source: "xfer1", target: "hangup1", sourceHandle: "chanunavail" },
+      { id: "e9", source: "xfer2", target: "hangup1", sourceHandle: "noanswer" },
+      { id: "e10", source: "xfer2", target: "hangup1", sourceHandle: "busy" },
+      { id: "e11", source: "xfer2", target: "hangup1", sourceHandle: "chanunavail" },
     );
     const [f] = await db
       .insert(flows)
       .values({ name: "Main IVR", extensionNumber: "900", draftJson: draft })
       .returning();
     flowId = f.id;
+    const { flowVersions } = await import("./schema.js");
+    const [ver] = await db
+      .insert(flowVersions)
+      .values({ flowId: f.id, version: 1, json: draft })
+      .returning();
+    await db
+      .update(flows)
+      .set({ publishedVersionId: ver.id, updatedAt: new Date() })
+      .where(eq(flows.id, f.id));
+    console.log("Main IVR published as v1 on 900");
   } else {
     // Ensure Main IVR has a dialable test number + destinations that aren't the softphone (101)
     const [main] = await db.select().from(flows).where(eq(flows.name, "Main IVR")).limit(1);

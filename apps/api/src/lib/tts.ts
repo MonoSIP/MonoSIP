@@ -1,6 +1,11 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 import { config } from "../config.js";
+
+const execFileAsync = promisify(execFile);
 
 export type TtsLanguage = "en" | "tr";
 
@@ -10,15 +15,47 @@ export async function ttsHealth(): Promise<{
   voices?: unknown;
   error?: string;
 }> {
-  if (!config.ttsUrl) return { ok: false, error: "TTS_URL not configured" };
+  if (config.ttsUrl) {
+    try {
+      const res = await fetch(`${config.ttsUrl}/health`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      const body = (await res.json()) as { ok?: boolean; engine?: string; voices?: unknown };
+      if (res.ok && body.ok) {
+        return { ok: true, engine: body.engine ?? "remote", voices: body.voices };
+      }
+    } catch {
+      /* fall through to espeak */
+    }
+  }
   try {
-    const res = await fetch(`${config.ttsUrl}/health`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    const body = (await res.json()) as { ok?: boolean; engine?: string; voices?: unknown };
-    return { ok: !!body.ok && res.ok, engine: body.engine, voices: body.voices };
+    await execFileAsync("espeak-ng", ["--version"], { timeout: 3000 });
+    return { ok: true, engine: "espeak-ng" };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
+  }
+}
+
+/** Offline fallback when TTS microservice is unreachable (NineDeploy all-in-one). */
+async function synthesizeWithEspeak(text: string, language: TtsLanguage): Promise<Buffer> {
+  const dir = await mkdtemp(path.join(tmpdir(), "dsip-tts-"));
+  const raw = path.join(dir, "raw.wav");
+  const out = path.join(dir, "8k.wav");
+  try {
+    const voice = language === "tr" ? "tr" : "en";
+    await execFileAsync(
+      "espeak-ng",
+      ["-v", voice, "-s", "140", "-w", raw, text.slice(0, 500)],
+      { timeout: 30_000 },
+    );
+    await execFileAsync(
+      "ffmpeg",
+      ["-y", "-i", raw, "-ac", "1", "-ar", "8000", "-sample_fmt", "s16", out],
+      { timeout: 30_000 },
+    );
+    return await readFile(out);
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   }
 }
 
@@ -28,7 +65,6 @@ export async function synthesizeSpeech(
   lengthScale = 1.05,
   genderOrVoice: string = "female",
 ): Promise<Buffer> {
-  if (!config.ttsUrl) throw new Error("TTS service not configured (TTS_URL)");
   const g = genderOrVoice.toLowerCase();
   let voice: string | undefined;
   if (g === "male" || g === "erkek") {
@@ -38,17 +74,22 @@ export async function synthesizeSpeech(
   } else if (genderOrVoice.includes("-")) {
     voice = genderOrVoice;
   }
-  const res = await fetch(`${config.ttsUrl}/synthesize`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ text, language, lengthScale, voice, gender: g }),
-    signal: AbortSignal.timeout(60_000),
-  });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error ?? `TTS failed (${res.status})`);
+  if (config.ttsUrl) {
+    try {
+      const res = await fetch(`${config.ttsUrl}/synthesize`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, language, lengthScale, voice, gender: g }),
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      console.warn("[tts] remote failed:", err.error ?? res.status);
+    } catch (e) {
+      console.warn("[tts] remote unreachable:", (e as Error).message);
+    }
   }
-  return Buffer.from(await res.arrayBuffer());
+  return synthesizeWithEspeak(text, language);
 }
 
 /**
