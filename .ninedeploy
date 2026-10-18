@@ -6,7 +6,7 @@ runtime:
 
 # Monorepo: Docker build context MUST be the repository root.
 build:
-  dockerfile: "apps/api/Dockerfile"
+  dockerfile: "Dockerfile"
 
 run:
   port: 3000
@@ -49,4 +49,4 @@ watch:
     - "package.json"
     - "pnpm-workspace.yaml"
     - "pnpm-lock.yaml"
-    - "apps/api/Dockerfile"
+    - "Dockerfile"

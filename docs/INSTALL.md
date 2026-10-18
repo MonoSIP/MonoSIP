@@ -45,15 +45,28 @@ docker compose down          # stop (keeps volumes)
 docker compose down -v       # stop AND delete DB/recordings volumes
 ```
 
-## Remote Docker build (PaaS)
+## Deploy on any platform (single Docker image)
 
-The API Dockerfile expects the **repository root** as build context (it needs `packages/shared` and `pnpm-workspace.yaml`):
+The whole product ships as **one image** built from the root `Dockerfile` with the
+**repository root** as build context — the universal default, so it works on any
+Docker-based host (Render, Railway, Fly.io, Coolify, Dokploy, CapRover,
+DigitalOcean App Platform, NineDeploy, a plain VM, …) with no platform-specific config:
 
 ```bash
-docker build -f apps/api/Dockerfile .
+docker build -t dsip .
+docker run -d -p 3000:3000 -p 10000-10100:10000-10100/udp -v dsip-data:/data dsip
 ```
 
-If a build panel builds with context `apps/api`, clear **baseDir** / subdirectory settings so context is `.` — otherwise `COPY` paths fail.
+What every platform needs:
+
+- **Dockerfile:** repo root `Dockerfile` (leave the build context at the repo root — the default; if a panel defaults to a subdirectory, clear its **baseDir** so context is `.`, otherwise `COPY` paths fail)
+- **Persistent volume** mounted at `/data` (DB, Asterisk config, recordings, secrets)
+- **Port 3000** published for HTTPS/API/web/softphone signalling (`/asterisk-ws`)
+- **UDP 10000-10100** published + `EXTERNAL_IP` set for softphone audio (RTP); or run coturn and enable TURNS on 443 for strict edges
+- Optional `DATABASE_URL` for managed Postgres (otherwise embedded Postgres runs under `/data/postgres`)
+
+`.ninedeploy` is an optional convenience manifest for NineDeploy (volume, ports, RAM
+hints); it is **not** required to build or run anywhere else.
 
 ### One-click image deploy
 

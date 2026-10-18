@@ -67,7 +67,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-dsip}:${POSTGRES_PASSWORD:-dsip_secret_change_me}@postgres:5432/${POSTGRES_DB:-dsip}
       API_PORT: 3000

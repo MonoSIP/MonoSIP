@@ -1,7 +1,10 @@
-# Build with repository root as context:
-#   docker build -f apps/api/Dockerfile .
-# Compose: context: .  dockerfile: apps/api/Dockerfile
-# NineDeploy: build.dockerfile apps/api/Dockerfile, context = repo root (no baseDir=apps/api)
+# All-in-one image — deployable on ANY Docker-based platform.
+# Build from the repository root (the universal default: root Dockerfile + root context):
+#   docker build -t dsip .
+# Most PaaS (Render, Railway, Fly.io, Coolify, Dokploy, DO App Platform, NineDeploy, …)
+# auto-detect this root Dockerfile and use the repo root as context — no extra config.
+# Runtime needs: a persistent volume at /data, TCP 3000 published, and (for softphone
+# audio) UDP 10000-10100 published + EXTERNAL_IP set. See docs/INSTALL.md.
 #
 # All-in-one runtime: Asterisk (andrius/asterisk:22) + Node API + web SPA + embedded Postgres.
 # Compose still runs a separate asterisk service and sets ASTERISK_ARI_URL=http://asterisk:8088

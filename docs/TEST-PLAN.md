@@ -496,7 +496,7 @@ Simulate alone is insufficient. Mark LIVE.
 | R-03 | `docker compose down` (keep volumes) | Data persists on up | MANUAL | |
 | R-04 | Document `down -v` destroys data | Operator aware | MANUAL | |
 | R-06 | One-click image deploy with managed Postgres | Uses `DATABASE_URL` | LIVE | |
-| R-07 | Build context repo root (`apps/api/Dockerfile`) | Image builds | MANUAL | |
+| R-07 | Build from repo root (`docker build .`, root `Dockerfile`) | Image builds | MANUAL | |
 | R-08 | SPA from API `WEB_DIST` | Domain root not 404 | LIVE | |
 | R-09 | VPS: EXTERNAL_IP, WSS, TURN, firewall script | Softphone off-site works | LIVE | |
 | R-10 | Ports 443/80/5060/RTP/3478 | Documented exposure only | MANUAL | |
