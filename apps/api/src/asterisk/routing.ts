@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import {
   blacklist,
@@ -12,6 +12,7 @@ import {
   extensionForwarding,
   queues,
   ringGroups,
+  webWidgets,
 } from "../db/schema.js";
 import type { FlowJson } from "@dsip/shared";
 
@@ -261,6 +262,16 @@ export async function resolveInbound(
   if (await isBlacklisted(caller, "inbound")) {
     return { kind: "hangup", reason: "blacklist" };
   }
+  // Website call widgets use a virtual DID (no inbound_routes row required)
+  const [widget] = await db
+    .select()
+    .from(webWidgets)
+    .where(and(eq(webWidgets.number, did), eq(webWidgets.enabled, true)))
+    .limit(1);
+  if (widget) {
+    return resolveDestination({ destType: widget.destType, destId: widget.destId });
+  }
+
   const routes = await db.select().from(inboundRoutes);
   const sorted = [...routes].sort((a, b) => a.priority - b.priority);
   const candidates = sorted.filter((r) => r.did === did || r.did === "default" || r.did === "_X.");

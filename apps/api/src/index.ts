@@ -77,6 +77,8 @@ async function main() {
   await securityRoutes(app);
   await portalRoutes(app);
   await integrationRoutes(app);
+  const { widgetRoutes } = await import("./routes/widgets.js");
+  await widgetRoutes(app);
   await wsRoutes(app);
   await asteriskWsProxyRoutes(app);
 

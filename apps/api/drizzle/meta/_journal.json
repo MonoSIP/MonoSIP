@@ -29,6 +29,13 @@
       "when": 1792252800000,
       "tag": "0003_trunk_provider_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792315200000,
+      "tag": "0004_web_widgets",
+      "breakpoints": true
     }
   ]
 }

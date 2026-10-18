@@ -367,10 +367,19 @@ export class Softphone {
         ? opts.websocketUrl
         : sipWsUrl();
 
-    // STUN only by default — NineDeploy has no coturn on :3478; a dead TURN slows ICE.
-    const iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+    // Prefer API ICE (TURNS@443 + time-limited creds). Fall back to STUN / VITE_TURN_*.
+    let iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+    try {
+      const iceRes = await fetch("/api/v1/ice-servers", { credentials: "include" });
+      if (iceRes.ok) {
+        const body = (await iceRes.json()) as { iceServers?: RTCIceServer[] };
+        if (body.iceServers?.length) iceServers = body.iceServers;
+      }
+    } catch {
+      /* keep STUN */
+    }
     const turnUrl = (import.meta.env.VITE_TURN_URL as string | undefined)?.trim();
-    if (turnUrl) {
+    if (turnUrl && !iceServers.some((s) => String(s.urls).includes("turn"))) {
       iceServers.push({
         urls: turnUrl,
         username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) || "dsip",

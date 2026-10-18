@@ -52,4 +52,20 @@ export const config = {
   ttsUrl: (process.env.TTS_URL ?? "http://tts:5500").replace(/\/$/, ""),
   /** Shared secret for Asterisk dialplan → API internal hooks. */
   internalApiSecret: process.env.INTERNAL_API_SECRET ?? "dsip_internal_change_me",
+  /**
+   * Coturn `--static-auth-secret` for time-limited TURN/TURNS credentials.
+   * Empty = softphone uses STUN only (NineDeploy without coturn).
+   */
+  turnSecret: (process.env.TURN_SECRET ?? "").trim(),
+  turnRealm: (process.env.TURN_REALM ?? process.env.PUBLIC_HOST ?? "localhost").trim(),
+  /**
+   * Advertise `turns:host:443` (nginx ALPN mux → coturn:5349). Compose enables this;
+   * NineDeploy/Traefik typically cannot mux TURNS on 443 — set DSIP_TURNS_ON_443=0.
+   */
+  turnsOn443:
+    process.env.DSIP_TURNS_ON_443 === "0" || process.env.DSIP_TURNS_ON_443 === "false"
+      ? false
+      : process.env.DSIP_TURNS_ON_443 === "1" ||
+        process.env.DSIP_TURNS_ON_443 === "true" ||
+        Boolean((process.env.TURN_SECRET ?? "").trim()),
 };

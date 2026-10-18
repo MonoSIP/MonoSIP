@@ -70,6 +70,8 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Webhooks: ringing, answered, ended, missed (open CRM cards)
 - REST API: originate (click-to-call), CDR and recording access; API key
 - Email on critical events: trunk down, spend limit, suspicious dialing
+- **Website call widget** — embed `widget.js` on any site (browser WebRTC call + optional call-back form); Admin → Integrations
+- **TURNS on 443** (Compose) — nginx ALPN mux forwards empty-ALPN TLS to coturn so softphones work behind strict firewalls without opening UDP TURN ports
 
 ## Out of scope
 

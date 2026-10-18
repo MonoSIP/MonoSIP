@@ -82,14 +82,13 @@ EXTERNAL_IP=<public IPv4 of the NineDeploy host>
 ADMIN_PASSWORD=<strong password>
 ```
 
-**Softphone audio (WebRTC):** SIP over WSS works through HTTPS, but media is UDP RTP.
-On every deploy, container logs print a clear banner if audio ports are missing — you do **not** need to know networking jargon.
+**Softphone audio (WebRTC):** SIP over WSS works through HTTPS. Media is UDP RTP to Asterisk, and when behind corporate firewalls the softphone also uses **TURNS on port 443**.
 
-1. NineDeploy → **Service → Network / Ports** → publish **UDP 10000–10100** → container **10000–10100**
-2. Vault: `EXTERNAL_IP=<public IPv4>` (or leave empty so boot resolves it from `PUBLIC_HOST`)
-3. Vault: `DSIP_RTP_PUBLISHED=1` after the ports are open (hides the warning banner)
+**Docker Compose:** nginx multiplexes TLS on `:443` by ALPN — browsers (HTTPS/WSS) vs TURNS (empty ALPN → coturn `:5349`). Set `TURN_SECRET` (shared with the API) and `EXTERNAL_IP`. Softphone fetches `/api/v1/ice-servers` automatically.
 
-Without those, calls connect but stay silent. Portal Phone also shows the same warning and detects “no RTP” during a live call.
+**NineDeploy / Traefik:** ALPN mux is not available on the panel edge. Publish host **UDP 10000–10100** for RTP, set `EXTERNAL_IP`, then `DSIP_RTP_PUBLISHED=1`. Optionally set `DSIP_TURNS_ON_443=0` and skip `TURN_SECRET` (STUN-only). Deploy logs and `/api/v1/health.media` warn when RTP ports are missing.
+
+**Website widgets:** Admin → Integrations → create a widget, copy the embed `<script src="https://…/widget.js" data-widget="w_…">`.
 
 **Strongly recommended:** attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped and survives image rebuilds/major PG upgrades without risk of an empty lab seed.
 

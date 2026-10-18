@@ -426,3 +426,68 @@ export const lastDialAttempts = pgTable("last_dial_attempts", {
   number: varchar("number", { length: 64 }).notNull(),
   at: timestamp("at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/** Website “Call us” widgets (WebRTC guest + optional call-back). */
+export const webWidgets = pgTable(
+  "web_widgets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    publicKey: varchar("public_key", { length: 32 }).notNull(),
+    name: varchar("name", { length: 100 }).notNull(),
+    /** Virtual DID shown in CDR / dialled by the guest softphone. */
+    number: varchar("number", { length: 20 }).notNull(),
+    destType: varchar("dest_type", { length: 32 }).notNull(),
+    destId: text("dest_id"),
+    allowedOrigins: jsonb("allowed_origins").notNull().default([]),
+    maxConcurrent: integer("max_concurrent").notNull().default(5),
+    maxCallSeconds: integer("max_call_seconds").notNull().default(600),
+    dailyLimit: integer("daily_limit").notNull().default(100),
+    requestsPerIpHour: integer("requests_per_ip_hour").notNull().default(30),
+    buttonText: varchar("button_text", { length: 64 }).notNull().default("Call us"),
+    buttonColor: varchar("button_color", { length: 16 }).notNull().default("#0f766e"),
+    position: varchar("position", { length: 24 }).notNull().default("bottom-right"),
+    locale: varchar("locale", { length: 8 }).notNull().default("en"),
+    askName: boolean("ask_name").notNull().default(false),
+    browserCallEnabled: boolean("browser_call_enabled").notNull().default(true),
+    callbackEnabled: boolean("callback_enabled").notNull().default(false),
+    /** Digit prefixes allowed for call-back (e.g. ["05","90"]). */
+    callbackPrefixes: jsonb("callback_prefixes").notNull().default([]),
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("web_widgets_public_key_idx").on(t.publicKey),
+    uniqueIndex("web_widgets_number_idx").on(t.number),
+  ],
+);
+
+export const widgetSessions = pgTable(
+  "widget_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    widgetId: uuid("widget_id")
+      .notNull()
+      .references(() => webWidgets.id, { onDelete: "cascade" }),
+    sipUser: varchar("sip_user", { length: 32 }).notNull(),
+    sipPassEnc: text("sip_pass_enc").notNull(),
+    callerName: varchar("caller_name", { length: 100 }),
+    origin: varchar("origin", { length: 255 }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("widget_sessions_sip_user_idx").on(t.sipUser)],
+);
+
+export const widgetDailyStats = pgTable(
+  "widget_daily_stats",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    widgetId: uuid("widget_id")
+      .notNull()
+      .references(() => webWidgets.id, { onDelete: "cascade" }),
+    day: varchar("day", { length: 10 }).notNull(),
+    calls: integer("calls").notNull().default(0),
+    callbacks: integer("callbacks").notNull().default(0),
+  },
+  (t) => [uniqueIndex("widget_daily_stats_day_idx").on(t.widgetId, t.day)],
+);

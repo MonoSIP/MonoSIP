@@ -20,9 +20,11 @@ import {
   mohClasses,
   flows,
   settings,
+  webWidgets,
 } from "../db/schema.js";
 import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
+import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -337,6 +339,53 @@ export async function writeAsteriskConfig(): Promise<void> {
       "remove_unavailable=yes",
       "",
     );
+  }
+
+  // Website widget guest WebRTC endpoints (short-lived; context=from-widget)
+  try {
+    const guests = await listActiveWidgetSessions();
+    for (const g of guests) {
+      if (!g.password) continue;
+      const id = g.sipUser;
+      pjsip.push(
+        `[${id}]`,
+        "type=endpoint",
+        "context=from-widget",
+        "disallow=all",
+        "allow=ulaw,alaw,g722",
+        `auth=${id}`,
+        `aors=${id}`,
+        "direct_media=no",
+        "rtp_symmetric=yes",
+        "force_rport=yes",
+        `rewrite_contact=${rewriteContact}`,
+        "dtmf_mode=rfc4733",
+        "webrtc=yes",
+        "dtls_auto_generate_cert=yes",
+        "media_encryption=dtls",
+        "media_use_received_transport=yes",
+        "rtp_timeout=60",
+        `set_var=DSIP_WIDGET_NUM=${g.widgetNumber}`,
+        `set_var=DSIP_WIDGET_MAX=${g.maxCallSeconds}`,
+        g.callerName ? `callerid="${g.callerName.replace(/"/g, "")}" <${id}>` : `callerid=Web <${id}>`,
+        "",
+        `[${id}]`,
+        "type=auth",
+        "auth_type=userpass",
+        `username=${id}`,
+        `password=${g.password}`,
+        "",
+        `[${id}]`,
+        "type=aor",
+        "max_contacts=1",
+        "remove_existing=yes",
+        "default_expiration=300",
+        "maximum_expiration=300",
+        "",
+      );
+    }
+  } catch (e) {
+    console.warn("[config] widget guests skipped:", (e as Error).message);
   }
 
   for (const trunk of trks) {
@@ -871,6 +920,30 @@ export async function writeAsteriskConfig(): Promise<void> {
       `exten => ${ext.number},1,Goto(from-internal,*${ext.number},1)`,
       "",
     );
+  }
+
+  // Website widgets: guest may only dial their widget DID
+  extensionsConf.push(
+    "[from-widget]",
+    "exten => _X.,1,NoOp(Widget guest ${CHANNEL(endpoint)} dial ${EXTEN})",
+    " same => n,GotoIf($[\"${EXTEN}\" = \"${DSIP_WIDGET_NUM}\"]?ok:deny)",
+    " same => n(deny),Playback(ss-noservice)",
+    " same => n,Hangup(21)",
+    " same => n(ok),Set(TIMEOUT(absolute)=${IF($[\"${DSIP_WIDGET_MAX}\"=\"\"]?600:${DSIP_WIDGET_MAX})})",
+    " same => n,Stasis(dsip-inbound,${EXTEN},${CALLERID(num)})",
+    " same => n,Hangup()",
+    "",
+  );
+
+  try {
+    const widgets = await db.select().from(webWidgets).where(eq(webWidgets.enabled, true));
+    for (const w of widgets) {
+      extensionsConf.push(
+        `; widget ${w.publicKey} DID ${w.number} -> ${w.destType}:${w.destId ?? ""}`,
+      );
+    }
+  } catch {
+    /* migrations may lag */
   }
 
   extensionsConf.push(
