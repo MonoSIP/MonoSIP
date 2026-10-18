@@ -40,9 +40,10 @@ EDGE_VOICES_MALE = {
 }
 
 PIPER_MAP = {
-    "en": ("en_US-lessac-medium", "en_US-lessac-medium"),
-    "en-US": ("en_US-lessac-medium", "en_US-lessac-medium"),
-    "en_us": ("en_US-lessac-medium", "en_US-lessac-medium"),
+    # EN: lessac-high (offline). TR: only medium exists upstream (fettah).
+    "en": ("en_US-lessac-high", "en_US-lessac-high"),
+    "en-US": ("en_US-lessac-high", "en_US-lessac-high"),
+    "en_us": ("en_US-lessac-high", "en_US-lessac-high"),
     "tr": ("tr_TR-fettah-medium", "tr_TR-fettah-medium"),
     "tr-TR": ("tr_TR-fettah-medium", "tr_TR-fettah-medium"),
     "tr_tr": ("tr_TR-fettah-medium", "tr_TR-fettah-medium"),
@@ -263,9 +264,9 @@ def voices():
             {
                 "language": "en",
                 "engine": "piper",
-                "id": "en_US-lessac-medium",
-                "name": "Lessac (offline fallback)",
-                "quality": "medium",
+                "id": "en_US-lessac-high",
+                "name": "Lessac high (offline fallback)",
+                "quality": "high",
             },
         ]
     )

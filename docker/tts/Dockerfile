@@ -8,18 +8,28 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Piper voice models (EN + TR) from rhasspy/piper-voices
+# Piper offline voices: prefer vendored docker/tts/voices (from fetch-voices.sh),
+# otherwise download at image build so remote deploys still get models.
 ENV VOICES_DIR=/voices
+COPY voices/ /tmp/voices/
 RUN mkdir -p /voices \
-  && cd /voices \
-  && curl -fsSL -o en_US-lessac-medium.onnx \
-    "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx" \
-  && curl -fsSL -o en_US-lessac-medium.onnx.json \
-    "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json" \
-  && curl -fsSL -o tr_TR-fettah-medium.onnx \
-    "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/tr/tr_TR/fettah/medium/tr_TR-fettah-medium.onnx" \
-  && curl -fsSL -o tr_TR-fettah-medium.onnx.json \
-    "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/tr/tr_TR/fettah/medium/tr_TR-fettah-medium.onnx.json"
+  && if [ -f /tmp/voices/en_US-lessac-high.onnx ] && [ -f /tmp/voices/tr_TR-fettah-medium.onnx ]; then \
+       cp -a /tmp/voices/. /voices/; \
+       echo "Using vendored Piper voices"; \
+     else \
+       echo "Vendored voices missing — downloading from Hugging Face"; \
+       cd /voices \
+       && curl -fsSL -o en_US-lessac-high.onnx \
+         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/high/en_US-lessac-high.onnx" \
+       && curl -fsSL -o en_US-lessac-high.onnx.json \
+         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/high/en_US-lessac-high.onnx.json" \
+       && curl -fsSL -o tr_TR-fettah-medium.onnx \
+         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/tr/tr_TR/fettah/medium/tr_TR-fettah-medium.onnx" \
+       && curl -fsSL -o tr_TR-fettah-medium.onnx.json \
+         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/tr/tr_TR/fettah/medium/tr_TR-fettah-medium.onnx.json"; \
+     fi \
+  && rm -rf /tmp/voices \
+  && ls -lah /voices
 
 COPY server.py .
 

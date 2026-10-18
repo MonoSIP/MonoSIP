@@ -20,6 +20,11 @@ docker/nginx/certs/*.key
 .playwright-mcp/
 apps/web/e2e/artifacts/
 
+# Piper voice weights (download via docker/tts/fetch-voices.sh; baked into TTS image)
+docker/tts/voices/*.onnx
+docker/tts/voices/*.onnx.json
+!docker/tts/voices/.gitkeep
+
 # AI / agent tooling (prompts, memories, session dumps)
 .wrongstack/
 .cursor/
