@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { lookup as dnsLookup } from "node:dns/promises";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -24,6 +25,19 @@ import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
 
 const execFileAsync = promisify(execFile);
+
+/** Public IPv4 for RTP ICE candidates (vault EXTERNAL_IP or DNS of PUBLIC_HOST). */
+async function resolveExternalIp(): Promise<string> {
+  if (config.externalIp) return config.externalIp;
+  const host = (config.publicHost || "").trim();
+  if (!host || host === "localhost" || host === "127.0.0.1") return "";
+  try {
+    const r = await dnsLookup(host, { family: 4 });
+    return r.address || "";
+  } catch {
+    return "";
+  }
+}
 
 async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true, mode: 0o755 });
@@ -150,7 +164,10 @@ export async function writeAsteriskConfig(): Promise<void> {
     /* defaults */
   }
 
-  const externalIp = config.externalIp;
+  const externalIp = await resolveExternalIp();
+  if (externalIp && !config.externalIp) {
+    console.warn(`[config] EXTERNAL_IP unset — using ${externalIp} from PUBLIC_HOST`);
+  }
   // VPS / real phones: rewrite Contact to the observed source (NAT).
   // Local Docker Desktop (Mac): keep advertised Contact when EXTERNAL_IP is unset.
   const rewriteContact = externalIp ? "yes" : "no";
@@ -287,17 +304,14 @@ export async function writeAsteriskConfig(): Promise<void> {
       "force_rport=yes",
       `rewrite_contact=${rewriteContact}`,
       "dtmf_mode=auto",
-      // WebRTC softphone (DTLS via webrtc=yes) + desk phones (UDP/TLS + SDES SRTP)
+      // Softphone is WebRTC (DTLS-SRTP). Do NOT set media_encryption=sdes here —
+      // that overrides webrtc=yes and browsers stay silent (no DTLS media).
       "webrtc=yes",
       "dtls_auto_generate_cert=yes",
-      // Offer SDES SRTP to desk phones (matches provisioning); allow clear RTP fallback.
-      // Browser softphone still negotiates DTLS-SRTP when webrtc=yes.
-      "media_encryption=sdes",
-      "media_encryption_optimistic=yes",
-      "use_avpf=yes",
-      "force_avp=yes",
-      "rtcp_mux=yes",
-      "ice_support=yes",
+      "media_encryption=dtls",
+      "media_use_received_transport=yes",
+      "rtp_timeout=60",
+      "rtp_timeout_hold=300",
       // Do not set transport= here: PJSIP accepts a single transport name only.
       // Omitting it lets each contact use the transport it registered on (UDP / WS / TLS).
       ...(sipAclName ? [`acl=${sipAclName}`] : []),

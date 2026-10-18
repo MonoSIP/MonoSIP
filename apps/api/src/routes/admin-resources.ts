@@ -2083,6 +2083,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     }
     let confHas101 = false;
     let confReadable = false;
+    let mediaEncryption = "";
+    let externalSignaling = "";
     let cliAuth = "";
     try {
       const { readFile } = await import("node:fs/promises");
@@ -2092,6 +2094,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       );
       confReadable = true;
       confHas101 = /\[101\][\s\S]*?type=auth/.test(conf);
+      mediaEncryption =
+        /media_encryption=(\S+)/.exec(conf)?.[1] ?? "(unset)";
+      externalSignaling =
+        /external_signaling_address=(\S+)/.exec(conf)?.[1] ?? "(unset)";
     } catch (e) {
       confReadable = false;
       ariEndpoints = ariEndpoints ?? { confError: (e as Error).message };
@@ -2115,6 +2121,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     return {
       confReadable,
       confHas101,
+      mediaEncryption,
+      externalSignaling,
+      externalIp: config.externalIp || "(unset)",
       ariEndpoint101,
       ariEndpointCount: Array.isArray(ariEndpoints) ? ariEndpoints.length : null,
       cliAuth,
