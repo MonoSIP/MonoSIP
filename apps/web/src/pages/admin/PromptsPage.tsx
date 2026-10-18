@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { voiceOptions } from "./flow/nodeMeta";
 
 type Prompt = {
   id: string;
@@ -48,6 +49,7 @@ export function PromptsPage() {
   const [name, setName] = useState("");
   const [ttsText, setTtsText] = useState("");
   const [language, setLanguage] = useState<"en" | "tr">("tr");
+  const [voice, setVoice] = useState("female");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [replaceId, setReplaceId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -133,6 +135,7 @@ export function PromptsPage() {
         name,
         language,
         ttsText,
+        voice,
         synthesize: !!ttsText.trim(),
       });
     },
@@ -221,15 +224,34 @@ export function PromptsPage() {
             onChange={(e) => setName(e.target.value)}
             required={!audioFile}
           />
-          <SelectField
-            label={t("prompts.language", { defaultValue: "Language" })}
-            icon={Languages}
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as "en" | "tr")}
-          >
-            <option value="tr">Türkçe</option>
-            <option value="en">English</option>
-          </SelectField>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <SelectField
+              label={t("prompts.language", { defaultValue: "Language" })}
+              icon={Languages}
+              value={language}
+              onChange={(e) => {
+                const lang = e.target.value as "en" | "tr";
+                setLanguage(lang);
+                // EMA Lightning is Turkish-only — fall back if it becomes invalid.
+                if (!voiceOptions(lang).some((o) => o.value === voice)) setVoice("female");
+              }}
+            >
+              <option value="tr">Türkçe</option>
+              <option value="en">English</option>
+            </SelectField>
+            <SelectField
+              label={t("prompts.voice", { defaultValue: "TTS model" })}
+              icon={AudioLines}
+              value={voice}
+              onChange={(e) => setVoice(e.target.value)}
+            >
+              {voiceOptions(language).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </SelectField>
+          </div>
           <TextAreaField
             label="TTS text"
             className="min-h-24"

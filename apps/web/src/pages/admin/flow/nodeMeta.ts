@@ -5,6 +5,26 @@ export const SPEECH_LANGS = [
   { code: "tr", label: "Türkçe" },
 ] as const;
 
+/**
+ * Selectable TTS voices/models. `female`/`male` map to Edge Neural (online, EN+TR);
+ * `ema-lightning` is the offline neural Turkish model (TR only). The value is sent as
+ * the node `gender` and routed to the matching engine by the TTS service.
+ */
+export const SPEECH_VOICES = [
+  { value: "female", label: "Female", langs: ["en", "tr"] },
+  { value: "male", label: "Male", langs: ["en", "tr"] },
+  { value: "ema-lightning", label: "EMA (TR)", langs: ["tr"] },
+] as const;
+
+/** Voice options valid for the given language (EMA Lightning is Turkish-only). */
+export function voiceOptions(language: string): { value: string; label: string }[] {
+  const lang = (language || "en").toLowerCase();
+  return SPEECH_VOICES.filter((v) => (v.langs as readonly string[]).includes(lang)).map((v) => ({
+    value: v.value,
+    label: v.label,
+  }));
+}
+
 export const DEFAULT_MENU_DIGITS = ["1", "2", "3", "4", "5", "0"];
 
 export function menuDigits(data: FlowNodeData | Record<string, unknown>): string[] {

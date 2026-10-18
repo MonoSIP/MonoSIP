@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""DSip TTS HTTP API — Edge Neural (high quality TR/EN) with Piper offline fallback."""
+"""DSip TTS HTTP API — Edge Neural (high quality TR/EN) with EMA Lightning (offline
+Turkish, neural) and Piper offline fallback."""
 
 from __future__ import annotations
 
 import audioop
 import asyncio
+import importlib.util
 import io
 import logging
 import os
@@ -18,8 +20,12 @@ from flask import Flask, jsonify, request, send_file
 VOICES_DIR = Path(os.environ.get("VOICES_DIR", "/voices"))
 HOST = os.environ.get("TTS_HOST", "0.0.0.0")
 PORT = int(os.environ.get("TTS_PORT", "5500"))
-# auto | edge | piper — auto prefers Edge Neural, falls back to Piper
+# auto | edge | ema | piper — auto prefers Edge Neural, then EMA Lightning (TR,
+# offline), then Piper offline.
 ENGINE = (os.environ.get("TTS_ENGINE") or "auto").strip().lower()
+# EMA Lightning: tiny (~8.6M param) offline neural Turkish TTS, native 8 kHz output.
+EMA_ENABLED = (os.environ.get("TTS_ENABLE_EMA") or "1").strip().lower() not in ("0", "false", "no")
+EMA_VOICE_ID = "ema-lightning"
 
 EDGE_VOICES = {
     "en": os.environ.get("TTS_EDGE_VOICE_EN", "en-US-JennyNeural"),
@@ -50,6 +56,7 @@ PIPER_MAP = {
 }
 
 _piper_cache: dict[str, object] = {}
+_ema_cache: dict[str, object] = {}
 log = logging.getLogger("tts")
 logging.basicConfig(level=logging.INFO)
 
@@ -167,6 +174,40 @@ def load_piper(lang: str):
     return voice_id, voice
 
 
+def ema_available() -> bool:
+    """Cheap check (no torch import) that EMA Lightning is installed."""
+    return EMA_ENABLED and importlib.util.find_spec("ema_lightning") is not None
+
+
+def load_ema():
+    if "ema" in _ema_cache:
+        return _ema_cache["ema"]
+    from ema_lightning import EMA  # heavy: pulls in torch + downloads ~34 MB weights
+
+    tts = EMA()
+    _ema_cache["ema"] = tts
+    return tts
+
+
+def synthesize_ema(text: str, length_scale: float) -> tuple[bytes, str]:
+    """EMA Lightning → 8 kHz mono 16-bit PCM WAV (Asterisk native). Turkish only."""
+    import numpy as np
+
+    tts = load_ema()
+    # length_scale > 1 = slower; EMA speed > 1 = faster → invert and clamp to its range.
+    speed = max(0.25, min(4.0, 1.0 / max(0.1, length_scale)))
+    speech = tts.say(text, sample_rate=8000, speed=speed)
+    audio = np.asarray(speech.audio, dtype=np.float32)
+    pcm = (np.clip(audio, -1.0, 1.0) * 32767.0).astype("<i2").tobytes()
+    out = io.BytesIO()
+    with wave.open(out, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(8000)
+        w.writeframes(pcm)
+    return out.getvalue(), EMA_VOICE_ID
+
+
 def synthesize_piper(text: str, lang: str, length_scale: float) -> tuple[bytes, str]:
     voice_id, voice = load_piper(lang)
     buf = io.BytesIO()
@@ -186,26 +227,47 @@ def synthesize_piper(text: str, lang: str, length_scale: float) -> tuple[bytes, 
     return resample_wav_8k_mono(buf.getvalue()), voice_id
 
 
-def synthesize_wav(text: str, lang: str, length_scale: float = 1.05) -> tuple[bytes, str, str]:
-    """Returns (wav8k, engine_name, voice_id)."""
+def synthesize_wav(
+    text: str, lang: str, length_scale: float = 1.05, engine: str = ""
+) -> tuple[bytes, str, str]:
+    """Returns (wav8k, engine_name, voice_id).
+
+    `engine` (per request) overrides the server default: edge | ema | piper. EMA
+    Lightning is Turkish-only, so it is used only when the language resolves to tr.
+    """
     text = text.strip()
-    prefer_edge = ENGINE in ("auto", "edge")
-    prefer_piper = ENGINE in ("auto", "piper")
+    want = (engine or ENGINE or "auto").strip().lower()
+    is_tr = lang_key(lang).startswith("tr")
 
-    if prefer_edge and ENGINE != "piper":
-        try:
-            wav, voice = synthesize_edge(text, lang, length_scale)
-            return wav, "edge", voice
-        except Exception as e:  # noqa: BLE001
-            log.warning("edge-tts failed (%s); falling back to piper", e)
-            if ENGINE == "edge":
-                raise
-
-    if prefer_piper or ENGINE == "piper":
+    # Explicit per-request engine selection.
+    if want == "ema":
+        if not is_tr:
+            raise RuntimeError("EMA Lightning supports Turkish only")
+        wav, voice = synthesize_ema(text, length_scale)
+        return wav, "ema", voice
+    if want == "edge":
+        wav, voice = synthesize_edge(text, lang, length_scale)
+        return wav, "edge", voice
+    if want == "piper":
         wav, voice = synthesize_piper(text, lang, length_scale)
         return wav, "piper", voice
 
-    raise RuntimeError("No TTS engine available")
+    # auto: Edge Neural (online, best) → EMA Lightning (TR, offline neural) → Piper.
+    try:
+        wav, voice = synthesize_edge(text, lang, length_scale)
+        return wav, "edge", voice
+    except Exception as e:  # noqa: BLE001
+        log.warning("edge-tts failed (%s); trying offline engines", e)
+
+    if is_tr and ema_available():
+        try:
+            wav, voice = synthesize_ema(text, length_scale)
+            return wav, "ema", voice
+        except Exception as e:  # noqa: BLE001
+            log.warning("EMA Lightning failed (%s); falling back to piper", e)
+
+    wav, voice = synthesize_piper(text, lang, length_scale)
+    return wav, "piper", voice
 
 
 @app.get("/health")
@@ -217,12 +279,14 @@ def health():
         {
             "ok": True,
             "engine": ENGINE,
-            "preferred": "edge-tts (Microsoft Neural) with Piper fallback"
+            "preferred": "edge-tts (Microsoft Neural) → EMA Lightning (TR) → Piper"
             if ENGINE == "auto"
             else ENGINE,
             "piperReady": piper_ok,
+            "emaReady": ema_available(),
             "voices": {
                 "edge": {"tr": EDGE_VOICES["tr"], "en": EDGE_VOICES["en"]},
+                "ema": {"tr": EMA_VOICE_ID},
                 "piper": {"tr": PIPER_MAP["tr"][0], "en": PIPER_MAP["en"][0]},
             },
         }
@@ -246,6 +310,14 @@ def voices():
                 "id": "tr-TR-AhmetNeural",
                 "name": "Ahmet Neural (Turkish male)",
                 "quality": "high",
+            },
+            {
+                "language": "tr",
+                "engine": "ema",
+                "id": EMA_VOICE_ID,
+                "name": "EMA Lightning (Turkish, offline neural)",
+                "quality": "high",
+                "offline": True,
             },
             {
                 "language": "en",
@@ -286,9 +358,14 @@ def synthesize():
     except (TypeError, ValueError):
         length_scale = 1.05
     length_scale = max(0.7, min(1.6, length_scale))
-    # Optional gender → male/female neural voice, or explicit voice id
+    # Optional engine override (edge | ema | piper) and gender/voice selection.
+    engine_req = (body.get("engine") or "").strip().lower()
     gender = (body.get("gender") or "").strip().lower()
     voice_override = (body.get("voice") or "").strip()
+    # A voice of "ema"/"ema-lightning" selects the EMA Lightning engine.
+    if voice_override.lower() in ("ema", EMA_VOICE_ID) or gender in ("ema", EMA_VOICE_ID):
+        engine_req = "ema"
+        voice_override = ""
     if not voice_override and gender in ("male", "erkek", "m"):
         key = lang_key(str(lang))
         voice_override = EDGE_VOICES_MALE.get(key) or EDGE_VOICES_MALE.get(
@@ -303,7 +380,9 @@ def synthesize():
         EDGE_VOICES["en-US"] = voice_override
         EDGE_VOICES["en_us"] = voice_override
     try:
-        wav, engine, voice = synthesize_wav(text, str(lang), length_scale=length_scale)
+        wav, engine, voice = synthesize_wav(
+            text, str(lang), length_scale=length_scale, engine=engine_req
+        )
     except FileNotFoundError as e:
         return jsonify({"error": str(e)}), 503
     except Exception as e:  # noqa: BLE001

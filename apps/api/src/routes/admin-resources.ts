@@ -761,9 +761,11 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         filePath: z.string().optional(),
         /** base64 audio (wav) — written under Asterisk sounds/dsip */
         audioBase64: z.string().optional(),
-        /** Generate WAV via Piper TTS from ttsText */
+        /** Generate WAV via TTS from ttsText */
         synthesize: z.boolean().optional(),
         lengthScale: z.number().min(0.7).max(1.6).optional(),
+        /** TTS voice/model: female | male (Edge) | ema-lightning (offline TR). */
+        voice: z.string().max(40).optional(),
       })
       .parse(req.body);
     let filePath = body.filePath ?? null;
@@ -778,6 +780,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         body.ttsText,
         body.language,
         body.lengthScale ?? 1.05,
+        body.voice || "female",
       );
       const written = await writePromptWav(id, wav);
       filePath = written.filePath;
@@ -789,6 +792,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         name: body.name,
         language: body.language,
         ttsText: body.ttsText,
+        voice: body.voice ?? null,
         filePath,
       })
       .returning();
@@ -803,6 +807,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         text: z.string().optional(),
         language: z.enum(["en", "tr"]).optional(),
         lengthScale: z.number().min(0.7).max(1.6).optional(),
+        voice: z.string().max(40).optional(),
       })
       .parse(req.body ?? {});
     const [row] = await db.select().from(prompts).where(eq(prompts.id, id));
@@ -810,9 +815,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const text = (body.text ?? row.ttsText ?? "").trim();
     if (!text) return reply.code(400).send({ error: "No text to synthesize" });
     const language = (body.language ?? (row.language === "tr" ? "tr" : "en")) as "en" | "tr";
+    const voice = body.voice ?? row.voice ?? "female";
     try {
       const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
-      const wav = await synthesizeSpeech(text, language, body.lengthScale ?? 1.05);
+      const wav = await synthesizeSpeech(text, language, body.lengthScale ?? 1.05, voice);
       const written = await writePromptWav(id, wav);
       await db
         .update(prompts)
@@ -820,9 +826,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
           filePath: written.filePath,
           ttsText: text,
           language,
+          voice,
         })
         .where(eq(prompts.id, id));
-      return { ok: true, filePath: written.filePath, media: written.media, language };
+      return { ok: true, filePath: written.filePath, media: written.media, language, voice };
     } catch (e) {
       return reply.code(503).send({ error: (e as Error).message });
     }

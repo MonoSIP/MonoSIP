@@ -275,6 +275,8 @@ export const prompts = pgTable("prompts", {
   language: varchar("language", { length: 8 }).notNull().default("en"),
   filePath: text("file_path"),
   ttsText: text("tts_text"),
+  /** TTS voice/model: female | male (Edge) | ema-lightning (offline TR). */
+  voice: varchar("voice", { length: 40 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

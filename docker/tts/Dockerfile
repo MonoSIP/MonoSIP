@@ -6,7 +6,17 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install the CPU-only PyTorch first (the default Linux wheel bundles ~1.5 GB of CUDA
+# that EMA Lightning does not need), then the rest. EMA runs ~6x real time on CPU.
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+  && pip install --no-cache-dir -r requirements.txt
+
+# EMA Lightning weights (~34 MB) download from Hugging Face on first use. Pre-fetch
+# them at build so the image works offline. HF_HOME keeps the cache in a known layer.
+ENV HF_HOME=/models/hf
+RUN mkdir -p /models/hf \
+  && python -c "from ema_lightning import EMA; EMA().say('Merhaba', sample_rate=8000)" \
+  && echo "EMA Lightning weights cached"
 
 # Piper offline voices: prefer vendored docker/tts/voices (from fetch-voices.sh),
 # otherwise download at image build so remote deploys still get models.
@@ -35,8 +45,9 @@ COPY server.py .
 
 ENV TTS_HOST=0.0.0.0
 ENV TTS_PORT=5500
-# auto = Edge Neural (best TR/EN) with Piper offline fallback
+# auto = Edge Neural (best TR/EN) → EMA Lightning (TR, offline) → Piper offline
 ENV TTS_ENGINE=auto
+ENV TTS_ENABLE_EMA=1
 ENV TTS_EDGE_VOICE_TR=tr-TR-EmelNeural
 ENV TTS_EDGE_VOICE_EN=en-US-JennyNeural
 EXPOSE 5500

@@ -43,6 +43,13 @@
       "when": 1792355518078,
       "tag": "0005_cdr_wait_sec",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792441918078,
+      "tag": "0006_prompt_voice",
+      "breakpoints": true
     }
   ]
 }

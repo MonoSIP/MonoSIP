@@ -48,8 +48,12 @@ services:
   tts:
     build:
       context: ./docker/tts
+    # EMA Lightning's normalizer-tr dep ships no linux/arm64 wheel, so pin amd64:
+    # native on amd64 hosts, emulated on Apple Silicon — consistent everywhere.
+    platform: linux/amd64
     environment:
       TTS_ENGINE: ${TTS_ENGINE:-auto}
+      TTS_ENABLE_EMA: ${TTS_ENABLE_EMA:-1}
       TTS_EDGE_VOICE_TR: ${TTS_EDGE_VOICE_TR:-tr-TR-EmelNeural}
       TTS_EDGE_VOICE_EN: ${TTS_EDGE_VOICE_EN:-en-US-JennyNeural}
     networks:

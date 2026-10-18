@@ -7,6 +7,7 @@ import {
   exitsForNode,
   menuDigits,
   nodeTitle,
+  voiceOptions,
 } from "./nodeMeta";
 import { ExitsHint, Field, SegmentedSelect, SettingsSection } from "./settingsUi";
 
@@ -375,10 +376,7 @@ function SpeechSettings({
             <SegmentedSelect
               aria-label="Voice"
               value={String(data.gender ?? data.voice ?? "female")}
-              options={[
-                { value: "female", label: "Female" },
-                { value: "male", label: "Male" },
-              ]}
+              options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
             />
           </Field>
@@ -428,10 +426,7 @@ function MenuSettings({
             <SegmentedSelect
               aria-label="Voice"
               value={String(data.gender ?? data.voice ?? "female")}
-              options={[
-                { value: "female", label: "Female" },
-                { value: "male", label: "Male" },
-              ]}
+              options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
             />
           </Field>
@@ -560,10 +555,7 @@ function GetKeySettings({
             <SegmentedSelect
               aria-label="Voice"
               value={String(data.gender ?? data.voice ?? "female")}
-              options={[
-                { value: "female", label: "Female" },
-                { value: "male", label: "Male" },
-              ]}
+              options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
             />
           </Field>
