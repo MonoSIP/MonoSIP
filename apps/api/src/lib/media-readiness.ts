@@ -67,7 +67,7 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
   };
 }
 
-/** Loud banner for NineDeploy / docker logs at boot. */
+/** Loud banner for NineDeploy / docker logs at boot (English). */
 export function formatMediaDeployBanner(m: MediaReadiness): string {
   if (!m.warnings.length) {
     return "[DSip] Softphone media: OK (RTP ports marked published or local lab).";
@@ -75,19 +75,18 @@ export function formatMediaDeployBanner(m: MediaReadiness): string {
   const lines = [
     "",
     "╔══════════════════════════════════════════════════════════════════════╗",
-    "║  DSip — Softphone SES için host UDP portları gerekli                 ║",
+    "║  DSip — Softphone AUDIO needs host UDP ports                         ║",
     "╠══════════════════════════════════════════════════════════════════════╣",
-    "║  NineDeploy → Servis → Ağ / Portlar                                  ║",
+    "║  NineDeploy → Service → Network / Ports                              ║",
     "║    UDP 10000-10100  →  container 10000-10100                         ║",
     "║  Vault env:                                                          ║",
-    "║    EXTERNAL_IP=<sunucu public IP>                                    ║",
-    "║    DSIP_RTP_PUBLISHED=1   (portları açtıktan sonra)                  ║",
+    "║    EXTERNAL_IP=<server public IPv4>                                  ║",
+    "║    DSIP_RTP_PUBLISHED=1   (after ports are open)                     ║",
     "║  Without this: calls connect but stay SILENT.                        ║",
     "╚══════════════════════════════════════════════════════════════════════╝",
     "",
   ];
   for (const w of m.warnings) {
-    lines.push(`[DSip] WARN ${w.code}: ${w.tr}`);
     lines.push(`[DSip] WARN ${w.code}: ${w.en}`);
   }
   if (m.externalIp) lines.push(`[DSip] EXTERNAL_IP effective: ${m.externalIp}`);

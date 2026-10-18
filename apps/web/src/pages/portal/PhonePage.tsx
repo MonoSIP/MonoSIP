@@ -19,7 +19,7 @@ type HealthMedia = {
 };
 
 export function PhonePage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const phoneRef = useRef<Softphone | null>(null);
   if (!phoneRef.current) phoneRef.current = new Softphone();
@@ -190,12 +190,11 @@ export function PhonePage() {
         ? `${t("portal.dialing")} ${timeLabel}`
         : `${t("portal.hangup")} ${timeLabel}`;
 
-  const bannerText = (() => {
-    if (noRtp) return t("portal.noRtp");
-    if (!mediaWarning) return null;
-    const lang = (i18n.language || "en").startsWith("tr") ? "tr" : "en";
-    return lang === "tr" ? mediaWarning.tr : mediaWarning.en;
-  })();
+  const bannerText = noRtp
+    ? t("portal.noRtp")
+    : mediaWarning
+      ? mediaWarning.en
+      : null;
 
   return (
     <div className="mx-auto max-w-md space-y-4">

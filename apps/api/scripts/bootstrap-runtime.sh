@@ -93,9 +93,9 @@ if [ -n "${PUBLIC_HOST:-}" ] && [ "$PUBLIC_HOST" != "localhost" ] && [ "$PUBLIC_
   if [ "${DSIP_RTP_PUBLISHED:-}" != "1" ] && [ "${DSIP_RTP_PUBLISHED:-}" != "true" ]; then
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════╗"
-    echo "║  DSip softphone SES: NineDeploy → Ağ/Portlar → UDP 10000-10100     ║"
-    echo "║  Sonra vault: EXTERNAL_IP=<public IP>  DSIP_RTP_PUBLISHED=1        ║"
-    echo "║  Yoksa çağrı bağlanır ama SES GELMEZ.                              ║"
+    echo "║  DSip softphone AUDIO: NineDeploy → Network/Ports → UDP 10000-10100║"
+    echo "║  Then vault: EXTERNAL_IP=<public IP>  DSIP_RTP_PUBLISHED=1         ║"
+    echo "║  Without this, calls connect but stay SILENT.                      ║"
     echo "╚══════════════════════════════════════════════════════════════════════╝"
     echo ""
   fi
