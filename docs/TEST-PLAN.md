@@ -1,6 +1,6 @@
 # DSip full product test plan
 
-Exhaustive checklist for verifying every in-scope feature and call path. Use this before a release, after major refactors, or when validating a new environment (lab Compose, NineDeploy, or VPS).
+Exhaustive checklist for verifying every in-scope feature and call path. Use this before a release, after major refactors, or when validating a new environment (lab Compose or VPS).
 
 Related docs: [FEATURES.md](FEATURES.md), [SCREENS.md](SCREENS.md), [FLOW-DESIGNER.md](FLOW-DESIGNER.md), [API.md](API.md), [USER-PORTAL.md](USER-PORTAL.md), [INSTALL.md](INSTALL.md), [SERVER-SECURITY.md](SERVER-SECURITY.md).
 
@@ -12,7 +12,7 @@ Related docs: [FEATURES.md](FEATURES.md), [SCREENS.md](SCREENS.md), [FLOW-DESIGN
 
 ### In scope
 
-- Admin panel (all routes), portal softphone, Asterisk telephony config, IVR designer + live ARI execution, recordings/CDR, dashboard/live ops, reports, integrations, settings/security/SSL, background jobs, Docker / NineDeploy / VPS install paths.
+- Admin panel (all routes), portal softphone, Asterisk telephony config, IVR designer + live ARI execution, recordings/CDR, dashboard/live ops, reports, integrations, settings/security/SSL, background jobs, Docker / VPS install paths.
 
 ### Out of scope (from FEATURES.md — do not test as product requirements)
 
@@ -495,8 +495,7 @@ Simulate alone is insufficient. Mark LIVE.
 | R-02 | Health + seed admin/portal | Logins work | MANUAL | |
 | R-03 | `docker compose down` (keep volumes) | Data persists on up | MANUAL | |
 | R-04 | Document `down -v` destroys data | Operator aware | MANUAL | |
-| R-05 | NineDeploy one-click (no DATABASE_URL) | Embedded Postgres under `/data`; secrets file | LIVE | |
-| R-06 | NineDeploy with managed Postgres | Uses `DATABASE_URL` | LIVE | |
+| R-06 | One-click image deploy with managed Postgres | Uses `DATABASE_URL` | LIVE | |
 | R-07 | Build context repo root (`apps/api/Dockerfile`) | Image builds | MANUAL | |
 | R-08 | SPA from API `WEB_DIST` | Domain root not 404 | LIVE | |
 | R-09 | VPS: EXTERNAL_IP, WSS, TURN, firewall script | Softphone off-site works | LIVE | |

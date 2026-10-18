@@ -45,7 +45,7 @@ docker compose down          # stop (keeps volumes)
 docker compose down -v       # stop AND delete DB/recordings volumes
 ```
 
-## NineDeploy / remote Docker build
+## Remote Docker build (PaaS)
 
 The API Dockerfile expects the **repository root** as build context (it needs `packages/shared` and `pnpm-workspace.yaml`):
 
@@ -53,20 +53,19 @@ The API Dockerfile expects the **repository root** as build context (it needs `p
 docker build -f apps/api/Dockerfile .
 ```
 
-A `.ninedeploy` manifest is in the repo root with `build.dockerfile: apps/api/Dockerfile`.  
-If the panel still builds with context `apps/api`, clear **baseDir** / subdirectory settings so context is `.` — otherwise `COPY` paths fail.
+If a build panel builds with context `apps/api`, clear **baseDir** / subdirectory settings so context is `.` — otherwise `COPY` paths fail.
 
-### NineDeploy (one-click)
+### One-click image deploy
 
-The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** (ARI/WSS bound to `127.0.0.1:8088` only; public HTTPS must hit container **port 3000**, softphone via `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — NineDeploy typically only exposes HTTPS→3000.
+The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** (ARI/WSS bound to `127.0.0.1:8088` only; public HTTPS must hit container **port 3000**, softphone via `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — a PaaS edge typically only exposes HTTPS→3000.
 
-Press **Deploy**. No panel env is required for a first boot:
+No env is required for a first boot:
 
-- If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres` (persists **only** if the NineDeploy **/data volume is persistent**)
+- If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres` (persists **only** if the **/data volume is persistent**)
 - Embedded **Asterisk** starts unless `ASTERISK_ARI_URL` points at another host (Compose sets `http://asterisk:8088`)
 - `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets` — **do not lose this file** or encrypted SIP secrets become unreadable
 - Asterisk dialplan/PJSIP config persists under `/data/asterisk`
-- `.ninedeploy` mounts persistent volume `/data` (~2.5 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
+- Mount a persistent volume at `/data` (~2.5 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
 - Boot **never wipes** an existing Postgres cluster on start failure (set `DSIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
 - Demo SIP trunk is **not** auto-seeded (set `DSIP_LAB_SEED=1` for lab only)
 - Optional: `DSIP_REQUIRE_PERSISTENT_DATA=1` aborts boot if secrets exist but Postgres data was wiped
@@ -80,7 +79,7 @@ PUBLIC_HOST=dsip.gatex.uk
 PUBLIC_URL=https://dsip.gatex.uk
 SIP_DOMAIN=dsip.gatex.uk
 SIP_WSS_URL=wss://dsip.gatex.uk/asterisk-ws
-EXTERNAL_IP=<public IPv4 of the NineDeploy host>
+EXTERNAL_IP=<public IPv4 of the host>
 ADMIN_PASSWORD=<strong password>
 ```
 
@@ -88,7 +87,7 @@ ADMIN_PASSWORD=<strong password>
 
 **Docker Compose:** nginx multiplexes TLS on `:443` by ALPN — browsers (HTTPS/WSS) vs TURNS (empty ALPN → coturn `:5349`). Set `TURN_SECRET` (shared with the API) and `EXTERNAL_IP`. Softphone fetches `/api/v1/ice-servers` automatically.
 
-**NineDeploy / Traefik:** ALPN mux is not available on the panel edge. Publish host **UDP 10000–10100** for RTP, set `EXTERNAL_IP`, then `DSIP_RTP_PUBLISHED=1`. Optionally set `DSIP_TURNS_ON_443=0` and skip `TURN_SECRET` (STUN-only). Deploy logs and `/api/v1/health.media` warn when RTP ports are missing.
+**PaaS edge without ALPN mux (e.g. Traefik):** publish host **UDP 10000–10100** for RTP, set `EXTERNAL_IP`, then `DSIP_RTP_PUBLISHED=1`. Optionally set `DSIP_TURNS_ON_443=0` and skip `TURN_SECRET` (STUN-only). Deploy logs and `/api/v1/health.media` warn when RTP ports are missing.
 
 **Website widgets:** Admin → Integrations → create a widget, copy the embed `<script src="https://…/widget.js" data-widget="w_…">`.
 
