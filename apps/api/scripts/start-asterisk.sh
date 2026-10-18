@@ -41,6 +41,12 @@ if [ -e /var/lib/asterisk/dsip ] && [ ! -L /var/lib/asterisk/dsip ]; then
 fi
 ln -sfn "$AST_CFG" /var/lib/asterisk/dsip
 
+# Asterisk drops to runuser=asterisk — it must be able to traverse /data and
+# re-read generated PJSIP includes on module reload (otherwise REGISTER → 401).
+chmod 755 "$DATA_DIR" 2>/dev/null || true
+chown -R asterisk:asterisk "$AST_CFG" 2>/dev/null || true
+chmod -R u+rwX,g+rX,o+rX "$AST_CFG" 2>/dev/null || true
+
 # MixMonitor path in dialplan ↔ API RECORDINGS_DIR
 mkdir -p "${RECORDINGS_DIR:-$DATA_DIR/recordings}"
 if [ -e /var/spool/asterisk/recording ] && [ ! -L /var/spool/asterisk/recording ]; then

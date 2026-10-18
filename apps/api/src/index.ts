@@ -83,6 +83,11 @@ async function main() {
   attachFlowRuntime();
   await ari.start();
 
+  // Sync PJSIP secrets + dialplan on boot (seed may have raced empty conf / bad perms).
+  void import("./asterisk/config-writer.js")
+    .then(({ writeAsteriskConfig }) => writeAsteriskConfig())
+    .catch((e) => console.warn("[boot] asterisk config:", (e as Error).message));
+
   const { startRetentionJob } = await import("./jobs/retention.js");
   startRetentionJob();
   // Drop legacy empty / 0s recording rows once at boot

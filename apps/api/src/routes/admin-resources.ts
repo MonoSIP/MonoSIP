@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import path from "node:path";
 import { and, desc, eq, gt, gte, inArray, like, lte, sql } from "drizzle-orm";
 import {
   BlacklistSchema,
@@ -2050,6 +2051,74 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const ok = await tryReloadAsterisk();
     return { ok, asterisk: ari.connected };
+  });
+
+  /** Diagnose softphone REGISTER: ARI endpoints + whether generated conf lists them. */
+  app.get("/api/v1/admin/system/asterisk-sip", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const auth = Buffer.from(
+      `${config.asterisk.ariUser}:${config.asterisk.ariPassword}`,
+    ).toString("base64");
+    let ariEndpoints: unknown = null;
+    let ariEndpoint101: unknown = null;
+    try {
+      const res = await fetch(`${config.asterisk.ariUrl}/ari/endpoints`, {
+        headers: { Authorization: `Basic ${auth}` },
+        signal: AbortSignal.timeout(3000),
+      });
+      ariEndpoints = res.ok ? await res.json() : { status: res.status };
+    } catch (e) {
+      ariEndpoints = { error: (e as Error).message };
+    }
+    try {
+      const res = await fetch(`${config.asterisk.ariUrl}/ari/endpoints/PJSIP/101`, {
+        headers: { Authorization: `Basic ${auth}` },
+        signal: AbortSignal.timeout(3000),
+      });
+      ariEndpoint101 = res.ok
+        ? await res.json()
+        : { status: res.status, body: await res.text() };
+    } catch (e) {
+      ariEndpoint101 = { error: (e as Error).message };
+    }
+    let confHas101 = false;
+    let confReadable = false;
+    let cliAuth = "";
+    try {
+      const { readFile } = await import("node:fs/promises");
+      const conf = await readFile(
+        path.join(config.asterisk.configDir, "pjsip_dsip.conf"),
+        "utf8",
+      );
+      confReadable = true;
+      confHas101 = /\[101\][\s\S]*?type=auth/.test(conf);
+    } catch (e) {
+      confReadable = false;
+      ariEndpoints = ariEndpoints ?? { confError: (e as Error).message };
+    }
+    try {
+      const { execFile } = await import("node:child_process");
+      const { promisify } = await import("node:util");
+      const exec = promisify(execFile);
+      const { stdout } = await exec("asterisk", ["-rx", "pjsip show auth 101"], {
+        timeout: 5000,
+      });
+      // Redact password line if present
+      cliAuth = stdout
+        .split("\n")
+        .filter((l) => !/password/i.test(l))
+        .join("\n")
+        .slice(0, 800);
+    } catch (e) {
+      cliAuth = (e as Error).message;
+    }
+    return {
+      confReadable,
+      confHas101,
+      ariEndpoint101,
+      ariEndpointCount: Array.isArray(ariEndpoints) ? ariEndpoints.length : null,
+      cliAuth,
+    };
   });
 
   async function buildBackup() {

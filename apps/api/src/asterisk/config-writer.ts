@@ -1,5 +1,7 @@
+import { execFile } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
@@ -18,11 +20,50 @@ import {
   flows,
   settings,
 } from "../db/schema.js";
-import { decrypt } from "../lib/crypto.js";
+import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
 
+const execFileAsync = promisify(execFile);
+
 async function ensureDir(dir: string) {
-  await mkdir(dir, { recursive: true });
+  await mkdir(dir, { recursive: true, mode: 0o755 });
+}
+
+/** Asterisk runuser must re-read includes after API writes (NineDeploy /data perms). */
+async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
+  try {
+    await execFileAsync("chmod", ["755", path.dirname(dir)]);
+  } catch {
+    /* ignore */
+  }
+  try {
+    await execFileAsync("chown", ["-R", "asterisk:asterisk", dir]);
+  } catch {
+    /* ignore — may already be readable */
+  }
+  try {
+    await execFileAsync("chmod", ["-R", "u+rwX,g+rX,o+rX", dir]);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Immediate CLI reload — do not wait for reload.flag watcher (up to ~4s). */
+export async function reloadAsteriskCli(): Promise<void> {
+  const cmds = [
+    "module reload acl",
+    "module reload res_pjsip.so",
+    "module reload app_queue.so",
+    "module reload res_musiconhold.so",
+    "dialplan reload",
+  ];
+  for (const c of cmds) {
+    try {
+      await execFileAsync("asterisk", ["-rx", c], { timeout: 8000 });
+    } catch {
+      /* watcher still has reload.flag as fallback */
+    }
+  }
 }
 
 /** Dialplan Playback() path for KVKK (sound under Asterisk sounds/). */
@@ -112,6 +153,13 @@ export async function writeAsteriskConfig(): Promise<void> {
     "protocol=ws",
     "bind=0.0.0.0",
   ];
+  // Browser softphone Via is WSS (TLS at edge); Asterisk still needs a wss transport object.
+  const transportWss = [
+    "[transport-wss]",
+    "type=transport",
+    "protocol=wss",
+    "bind=0.0.0.0",
+  ];
   // Desk-phone SIP over TLS (cert from entrypoint asterisk.pem)
   const transportTls = [
     "[transport-tls]",
@@ -123,13 +171,14 @@ export async function writeAsteriskConfig(): Promise<void> {
     "method=tlsv1_2",
   ];
   if (externalIp) {
-    for (const block of [transportUdp, transportWs, transportTls]) {
+    for (const block of [transportUdp, transportWs, transportWss, transportTls]) {
       block.push(`external_media_address=${externalIp}`);
       block.push(`external_signaling_address=${externalIp}`);
     }
     for (const net of config.localNets) {
       transportUdp.push(`local_net=${net}`);
       transportWs.push(`local_net=${net}`);
+      transportWss.push(`local_net=${net}`);
       transportTls.push(`local_net=${net}`);
     }
   }
@@ -140,10 +189,13 @@ export async function writeAsteriskConfig(): Promise<void> {
   try {
     const { loadSecuritySettings } = await import("../lib/security-settings.js");
     const sec = await loadSecuritySettings();
+    // WSS softphone arrives via Fastify proxy → Asterisk sees 127.0.0.1
+    const loopback = ["127.0.0.1", "127.0.0.1/32", "::1"];
     const allow = [
       ...new Set([
         ...(sec.sipIpAllowlist ?? []).map((s) => s.trim()).filter(Boolean),
         ...config.localNets,
+        ...loopback,
         ...trks.map((t) => t.host).filter(Boolean),
       ]),
     ];
@@ -156,7 +208,8 @@ export async function writeAsteriskConfig(): Promise<void> {
     } catch {
       /* ignore */
     }
-    const allDeny = [...new Set([...deny, ...banDeny])];
+    const loopbackDeny = new Set(["127.0.0.1", "127.0.0.1/32", "::1", "::1/128"]);
+    const allDeny = [...new Set([...deny, ...banDeny])].filter((d) => !loopbackDeny.has(d));
     const hasAllowlist = (sec.sipIpAllowlist ?? []).some((s) => s.trim());
     if (hasAllowlist || allDeny.length > 0) {
       sipAclName = "dsip_sip_acl";
@@ -180,16 +233,29 @@ export async function writeAsteriskConfig(): Promise<void> {
     "",
     ...transportWs,
     "",
+    ...transportWss,
+    "",
     ...transportTls,
     "",
   ];
 
   for (const ext of exts) {
-    let secret = "changeme";
+    let secret: string;
     try {
       secret = decrypt(ext.sipSecretEnc);
     } catch {
-      /* keep fallback */
+      // Stale ciphertext (ENCRYPTION_KEY rotated) — re-key so softphone + PJSIP stay in sync
+      secret = deriveSipPassword();
+      try {
+        await db
+          .update(extensions)
+          .set({ sipSecretEnc: encrypt(secret), updatedAt: new Date() })
+          .where(eq(extensions.id, ext.id));
+        console.warn(`[config] re-keyed SIP secret for extension ${ext.number}`);
+      } catch (e) {
+        console.warn(`[config] re-key failed for ${ext.number}:`, (e as Error).message);
+        secret = "changeme";
+      }
     }
     // Object names MUST match the SIP user (extension number) so REGISTER finds the AOR
     const id = ext.number;
@@ -850,15 +916,16 @@ export async function writeAsteriskConfig(): Promise<void> {
     mohConf.push("[default]", "mode=files", `directory=${path.join(mohRoot, "default")}`, "");
   }
 
-  await writeFile(path.join(dir, "pjsip_dsip.conf"), pjsip.join("\n"));
-  await writeFile(path.join(dir, "acl_dsip.conf"), namedAclConf.join("\n"));
-  await writeFile(path.join(dir, "queues_dsip.conf"), queuesConf.join("\n"));
-  await writeFile(path.join(dir, "extensions_dsip.conf"), extensionsConf.join("\n"));
-  await writeFile(path.join(dir, "musiconhold_dsip.conf"), mohConf.join("\n"));
-  await writeFile(
-    path.join(dir, "reload.flag"),
-    `${Date.now()}\n`,
-  );
+  const writeOpts = { mode: 0o644 } as const;
+  await writeFile(path.join(dir, "pjsip_dsip.conf"), pjsip.join("\n"), writeOpts);
+  await writeFile(path.join(dir, "acl_dsip.conf"), namedAclConf.join("\n"), writeOpts);
+  await writeFile(path.join(dir, "queues_dsip.conf"), queuesConf.join("\n"), writeOpts);
+  await writeFile(path.join(dir, "extensions_dsip.conf"), extensionsConf.join("\n"), writeOpts);
+  await writeFile(path.join(dir, "musiconhold_dsip.conf"), mohConf.join("\n"), writeOpts);
+  await writeFile(path.join(dir, "reload.flag"), `${Date.now()}\n`, writeOpts);
+
+  await ensureAsteriskCanReadConfig(dir);
+  await reloadAsteriskCli();
 
   // Keep dialplan DND checks in sync with Postgres
   try {
@@ -881,8 +948,6 @@ export async function writeAsteriskConfig(): Promise<void> {
 
 export async function tryReloadAsterisk(): Promise<boolean> {
   try {
-    const url = `${config.asterisk.ariUrl}/ari/asterisk/modules`;
-    // Soft reload via AMI-like ARI command is limited; write flag for sidecar / entrypoint
     await writeAsteriskConfig();
     const auth = Buffer.from(
       `${config.asterisk.ariUser}:${config.asterisk.ariPassword}`,
