@@ -31,20 +31,39 @@ async function ensureDir(dir: string) {
 
 /** Asterisk runuser must re-read includes after API writes (NineDeploy /data perms). */
 async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
+  const opts = { timeout: 4000 } as const;
+  // Parent /data must be traversable (volume often 0700).
   try {
-    await execFileAsync("chmod", ["755", path.dirname(dir)]);
+    await execFileAsync("chmod", ["755", path.dirname(dir)], opts);
   } catch {
     /* ignore */
   }
   try {
-    await execFileAsync("chown", ["-R", "asterisk:asterisk", dir]);
-  } catch {
-    /* ignore — may already be readable */
-  }
-  try {
-    await execFileAsync("chmod", ["-R", "u+rwX,g+rX,o+rX", dir]);
+    await execFileAsync("chmod", ["755", dir], opts);
   } catch {
     /* ignore */
+  }
+  // Only the generated conf files — never chown -R the whole tree (sounds hang seed).
+  const confFiles = [
+    "pjsip_dsip.conf",
+    "acl_dsip.conf",
+    "queues_dsip.conf",
+    "extensions_dsip.conf",
+    "musiconhold_dsip.conf",
+    "reload.flag",
+  ];
+  for (const name of confFiles) {
+    const fp = path.join(dir, name);
+    try {
+      await execFileAsync("chmod", ["644", fp], opts);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await execFileAsync("chown", ["asterisk:asterisk", fp], opts);
+    } catch {
+      /* world-readable 644 is enough if chown fails */
+    }
   }
 }
 
@@ -59,7 +78,7 @@ export async function reloadAsteriskCli(): Promise<void> {
   ];
   for (const c of cmds) {
     try {
-      await execFileAsync("asterisk", ["-rx", c], { timeout: 8000 });
+      await execFileAsync("asterisk", ["-rx", c], { timeout: 5000 });
     } catch {
       /* watcher still has reload.flag as fallback */
     }
