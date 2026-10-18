@@ -41,11 +41,12 @@ if [ -e /var/lib/asterisk/dsip ] && [ ! -L /var/lib/asterisk/dsip ]; then
 fi
 ln -sfn "$AST_CFG" /var/lib/asterisk/dsip
 
-# Asterisk drops to runuser=asterisk — it must traverse /data and read includes
-# on module reload (otherwise REGISTER always 401). Avoid chown -R (slow on volume).
+# Asterisk drops to runuser=asterisk — /data must be traversable and confs readable.
+# World-readable is enough; never chown -R (hangs NineDeploy volumes).
 chmod 755 "$DATA_DIR" "$AST_CFG" 2>/dev/null || true
-chmod 644 "$AST_CFG"/*.conf "$AST_CFG"/reload.flag 2>/dev/null || true
-chown asterisk:asterisk "$AST_CFG"/*.conf "$AST_CFG"/reload.flag 2>/dev/null || true
+chmod 644 "$AST_CFG"/pjsip_dsip.conf "$AST_CFG"/acl_dsip.conf \
+  "$AST_CFG"/queues_dsip.conf "$AST_CFG"/extensions_dsip.conf \
+  "$AST_CFG"/musiconhold_dsip.conf "$AST_CFG"/reload.flag 2>/dev/null || true
 
 # MixMonitor path in dialplan ↔ API RECORDINGS_DIR
 mkdir -p "${RECORDINGS_DIR:-$DATA_DIR/recordings}"

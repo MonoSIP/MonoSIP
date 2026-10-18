@@ -59,11 +59,6 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
     } catch {
       /* ignore */
     }
-    try {
-      await execFileAsync("chown", ["asterisk:asterisk", fp], opts);
-    } catch {
-      /* world-readable 644 is enough if chown fails */
-    }
   }
 }
 
@@ -944,7 +939,10 @@ export async function writeAsteriskConfig(): Promise<void> {
   await writeFile(path.join(dir, "reload.flag"), `${Date.now()}\n`, writeOpts);
 
   await ensureAsteriskCanReadConfig(dir);
-  await reloadAsteriskCli();
+  // CLI reload is opt-in (tryReloadAsterisk / boot) — seed must not block on it.
+  if (process.env.DSIP_ASTERISK_CLI_RELOAD !== "0") {
+    await reloadAsteriskCli();
+  }
 
   // Keep dialplan DND checks in sync with Postgres
   try {

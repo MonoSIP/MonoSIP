@@ -279,6 +279,7 @@ async function seed() {
   }
 
   try {
+    process.env.DSIP_ASTERISK_CLI_RELOAD = "0";
     await writeAsteriskConfig();
     console.log("Asterisk config written");
   } catch (e) {
