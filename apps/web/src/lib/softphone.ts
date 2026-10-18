@@ -117,10 +117,31 @@ export class Softphone {
   }
 
   private audioConstraints(): MediaTrackConstraints | boolean {
+    // Prefer plain deviceId string — `{ ideal: … }` throws OverconstrainedError
+    // ("Invalid constraint") on Safari and some Chromium embeds.
     if (this.preferredMicId) {
-      return { deviceId: { ideal: this.preferredMicId } };
+      return { deviceId: this.preferredMicId };
     }
     return true;
+  }
+
+  /** SIP.js getUserMedia constraints — always permissive; mic preference applied via replaceTrack. */
+  private sipMediaConstraints(): MediaStreamConstraints {
+    return { audio: true, video: false };
+  }
+
+  private clearPreferredMic() {
+    this.preferredMicId = "";
+    try {
+      const saved = JSON.parse(localStorage.getItem(AUDIO_DEVICES_KEY) ?? "{}") as Record<
+        string,
+        string
+      >;
+      saved.mic = "";
+      localStorage.setItem(AUDIO_DEVICES_KEY, JSON.stringify(saved));
+    } catch {
+      /* ignore */
+    }
   }
 
   private ensureAudioCtx(): AudioContext {
@@ -352,7 +373,8 @@ export class Softphone {
         keepAliveDebounce: 10,
       },
       sessionDescriptionHandlerFactoryOptions: {
-        constraints: { audio: this.audioConstraints(), video: false },
+        // Keep getUserMedia constraints minimal — device picks happen in setInputDevice.
+        constraints: this.sipMediaConstraints(),
         peerConnectionConfiguration: {
           iceServers,
         },
@@ -412,12 +434,11 @@ export class Softphone {
     await this.ensureMicAccess();
     const targetUri = UserAgent.makeURI(`sip:${cleaned}@${domain}`);
     if (!targetUri) throw new Error("Invalid target");
-    // Refresh constraints in case preferred mic changed
     const sdhOpts = (this.ua as unknown as {
       options?: { sessionDescriptionHandlerFactoryOptions?: { constraints?: unknown } };
     }).options?.sessionDescriptionHandlerFactoryOptions;
     if (sdhOpts) {
-      sdhOpts.constraints = { audio: this.audioConstraints(), video: false };
+      sdhOpts.constraints = this.sipMediaConstraints();
     }
     const inviter = new Inviter(this.ua, targetUri);
     this.session = inviter;
@@ -434,6 +455,9 @@ export class Softphone {
       this.onSession?.(null);
       throw this.friendlyMediaError(e);
     }
+    if (this.preferredMicId) {
+      await this.setInputDevice(this.preferredMicId).catch(() => undefined);
+    }
     // Unlock autoplay after user gesture
     void this.remoteAudio.play().catch(() => undefined);
     if (this.preferredSpeakerId) {
@@ -444,6 +468,12 @@ export class Softphone {
   async answer() {
     this.ensureAudioCtx();
     await this.ensureMicAccess();
+    if (this.ua) {
+      const sdhOpts = (this.ua as unknown as {
+        options?: { sessionDescriptionHandlerFactoryOptions?: { constraints?: unknown } };
+      }).options?.sessionDescriptionHandlerFactoryOptions;
+      if (sdhOpts) sdhOpts.constraints = this.sipMediaConstraints();
+    }
     if (this.session && "accept" in this.session) {
       try {
         await (
@@ -457,13 +487,16 @@ export class Softphone {
         ).accept({
           sessionDescriptionHandlerModifiers: [this.preferPcmuSdpModifier],
         });
+        if (this.preferredMicId) {
+          await this.setInputDevice(this.preferredMicId).catch(() => undefined);
+        }
       } catch (e) {
         throw this.friendlyMediaError(e);
       }
     }
   }
 
-  /** Probe mic with preferred device as ideal; fall back to default. */
+  /** Probe mic; fall back to system default on stale/invalid device constraints. */
   private async ensureMicAccess() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -471,24 +504,11 @@ export class Softphone {
       });
       stream.getTracks().forEach((t) => t.stop());
     } catch (e) {
-      // Stale device id — clear and retry default
-      if (this.preferredMicId) {
-        this.preferredMicId = "";
-        try {
-          const saved = JSON.parse(localStorage.getItem(AUDIO_DEVICES_KEY) ?? "{}") as Record<
-            string,
-            string
-          >;
-          saved.mic = "";
-          localStorage.setItem(AUDIO_DEVICES_KEY, JSON.stringify(saved));
-        } catch {
-          /* ignore */
-        }
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
-        if (stream) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
+      if (this.preferredMicId) this.clearPreferredMic();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
       }
       throw this.friendlyMediaError(e);
     }
@@ -504,6 +524,15 @@ export class Softphone {
     }
     if (name === "NotAllowedError" || /permission|denied/i.test(msg)) {
       return new Error("Mikrofon izni gerekli. Tarayıcı adres çubuğundan mikrofona izin verin.");
+    }
+    if (
+      name === "OverconstrainedError" ||
+      /overconstrained|invalid constraint/i.test(msg)
+    ) {
+      this.clearPreferredMic();
+      return new Error(
+        "Mikrofon ayarı bu tarayıcıda geçersiz. Ayarlar → Audio devices’ta «System default» seçip kaydedin, sonra tekrar deneyin.",
+      );
     }
     return e instanceof Error ? e : new Error(msg);
   }
@@ -743,11 +772,11 @@ export class Softphone {
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        audio: deviceId ? { deviceId: { ideal: deviceId } } : true,
+        audio: deviceId ? { deviceId } : true,
       });
     } catch {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.preferredMicId = "";
+      this.clearPreferredMic();
     }
     const track = stream.getAudioTracks()[0];
     if (!track) return;
