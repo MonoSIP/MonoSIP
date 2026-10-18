@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { blacklist, cdr, flows, missedCalls, settings } from "../db/schema.js";
 import {
@@ -196,6 +196,41 @@ describe("reports", () => {
     const res = await get("/api/v1/admin/reports/summary");
     expect(res.statusCode).toBe(200);
     expect(typeof res.json()).toBe("object");
+  });
+
+  it("summary SLA and queue avg wait use the stored wait time", async () => {
+    // Isolated day so other suites' rows never fall in range
+    const at = new Date("2001-02-03T10:00:00Z");
+    const range = "from=2001-02-03T00:00:00Z&to=2001-02-03T23:59:59Z";
+    const ids = ["sla-fast", "sla-slow", "sla-legacy", "sla-missed"];
+    const base = { startedAt: at, direction: "inbound", caller: "1000", queueNumber: "9001" } as const;
+    await db.insert(cdr).values([
+      // Long IVR before the queue: duration − billsec is 60, but the queue hold was 5s
+      { ...base, callId: ids[0], disposition: "ANSWERED", duration: 100, billsec: 40, waitSec: 5 },
+      { ...base, callId: ids[1], disposition: "ANSWERED", duration: 90, billsec: 30, waitSec: 45 },
+      // Row from before wait_sec existed → falls back to duration − billsec (10s)
+      { ...base, callId: ids[2], disposition: "ANSWERED", duration: 40, billsec: 30 },
+      { ...base, callId: ids[3], disposition: "NOANSWER", duration: 70, billsec: 0 },
+    ]);
+    try {
+      const sum = (await get(`/api/v1/admin/reports/summary?${range}`)).json() as {
+        answered: number;
+        slaAnswered: number;
+        slaPercent: number;
+      };
+      expect(sum.answered).toBe(3);
+      expect(sum.slaAnswered).toBe(2);
+      expect(sum.slaPercent).toBe(67);
+
+      const queues = (await get(`/api/v1/admin/reports/queues?${range}`)).json() as {
+        queue: string;
+        avgWait: number;
+      }[];
+      // (5 + 45 + 10) / 3 answered — unanswered rows do not count as waits
+      expect(queues.find((q) => q.queue === "9001")?.avgWait).toBe(20);
+    } finally {
+      await db.delete(cdr).where(inArray(cdr.callId, ids));
+    }
   });
 
   it("queues report is an array", async () => {

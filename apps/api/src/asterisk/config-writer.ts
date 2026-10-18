@@ -116,6 +116,21 @@ function internalPost(apiPath: string, jsonBody: string): string {
 }
 
 /** Prep flat channel vars for CDR / recording JSON (no nested () in System()). */
+/**
+ * After Queue(): agent extension, hold time (QEHOLDTIME) and talk time measured from
+ * queue entry (DSIP_QSTART) — the channel was answered long before for MOH/announces.
+ */
+function queueOutcomeLines(label: string): string[] {
+  return [
+    ` same => n,Set(DSIP_AGENT=\${CUT(MEMBERINTERFACE,/,2)})`,
+    ` same => n,Set(DSIP_QWAIT=)`,
+    ` same => n,GotoIf($["\${DSIP_AGENT}" = "" | "\${DSIP_QSTART}" = ""]?${label})`,
+    ` same => n,Set(DSIP_QWAIT=\${QEHOLDTIME})`,
+    ` same => n,Set(DSIP_BILL=$[\${EPOCH} - \${DSIP_QSTART} - \${QEHOLDTIME}])`,
+    ` same => n(${label}),NoOp(Queue outcome agent=\${DSIP_AGENT} wait=\${DSIP_QWAIT})`,
+  ];
+}
+
 function qosPrepLines(opts?: { dialedTime?: boolean; cdrDuration?: boolean }): string[] {
   const lines = [
     ` same => n,Set(DSIP_CID=\${CALLERID(num)})`,
@@ -505,6 +520,9 @@ export async function writeAsteriskConfig(): Promise<void> {
       `joinempty=${joinempty}`,
       "leavewhenempty=no",
       "ringinuse=no",
+      // QEHOLDTIME / MEMBERINTERFACE after a member answers → CDR wait_sec + agent
+      "setqueueentryvar=yes",
+      "setinterfacevar=yes",
       `musicclass=${mohClass}`,
       // Periodic in-queue: Asterisk ducks MOH, plays position + holdtime, resumes MOH
       // First announce is a single cached TTS sentence (Playback qpos/N) after MOH starts.
@@ -626,7 +644,7 @@ export async function writeAsteriskConfig(): Promise<void> {
     } else {
       const cdrPost = internalPost(
         "cdr",
-        `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"\${DSIP_CALLEE}","disposition":"\${DIALSTATUS}","billsec":\${DSIP_BILL},"duration":\${DSIP_DUR},"direction":"internal","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
+        `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"\${DSIP_CALLEE}","disposition":"\${DIALSTATUS}","billsec":\${DSIP_BILL},"duration":\${DSIP_DUR},"wait":"\${DSIP_WAIT}","direction":"internal","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
       );
       extensionsConf.push(
         // Distinctive ring: short caller = internal, longer = external (desk phones use Alert-Info).
@@ -638,6 +656,8 @@ export async function writeAsteriskConfig(): Promise<void> {
         ` same => n(alerte),Set(PJSIP_HEADER(add,Alert-Info)=<http://127.0.0.1>\\;info=external)`,
         ` same => n(dodial),Dial(${dialTarget},${ringSec},tT)`,
         ...qosPrepLines(),
+        // Ring time before answer (DIALEDTIME includes talk time)
+        ` same => n,Set(DSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${DSIP_DUR} - \${DSIP_BILL}]:)})`,
         ...(rec ? [` same => n,StopMixMonitor()`, ` same => n,${recRegister}`] : []),
         ` same => n,${cdrPost}`,
         ` same => n,Set(DSIP_CDR_DONE=1)`,
@@ -715,12 +735,25 @@ export async function writeAsteriskConfig(): Promise<void> {
     // Caller BYE during Dial aborts the dialplan — catch CDR here once.
     "exten => h,1,NoOp(Hangup handler CDR)",
     ` same => n,GotoIf($["\${DSIP_CDR_DONE}" = "1"]?cdrdone)`,
+    ` same => n,GotoIf($["\${DSIP_QUEUE}" != ""]?hqueue)`,
     ` same => n,GotoIf($["\${DSIP_CALLEE}" = ""]?cdrdone)`,
     ...qosPrepLines(),
+    ` same => n,Set(DSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER" | "\${DIALSTATUS}" = ""]?$[\${DSIP_DUR} - \${DSIP_BILL}]:)})`,
     ` same => n,Set(DSIP_DISP=\${IF($["\${DIALSTATUS}"=""]?ANSWER:\${DIALSTATUS})})`,
     ` same => n,${internalPost(
       "cdr",
-      `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"\${DSIP_CALLEE}","disposition":"\${DSIP_DISP}","billsec":\${DSIP_BILL},"duration":\${DSIP_DUR},"direction":"internal","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
+      `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"\${DSIP_CALLEE}","disposition":"\${DSIP_DISP}","billsec":\${DSIP_BILL},"duration":\${DSIP_DUR},"wait":"\${DSIP_WAIT}","direction":"internal","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
+    )}`,
+    " same => n,Goto(cdrdone)",
+    // Caller left a queue (abandoned while waiting, or hung up on the agent)
+    " same => n(hqueue),NoOp(Queue hangup CDR ${DSIP_QUEUE})",
+    " same => n,UnpauseQueueMember(${DSIP_QUEUE},PJSIP/${CALLERID(num)})",
+    ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
+    ...queueOutcomeLines("hqout"),
+    ` same => n,Set(DSIP_DISP=\${IF($["\${DSIP_AGENT}" = ""]?NOANSWER:ANSWER)})`,
+    ` same => n,${internalPost(
+      "cdr",
+      `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"\${DSIP_QUEUE}","disposition":"\${DSIP_DISP}","billsec":\${DSIP_BILL},"duration":\${DSIP_CDRDUR},"direction":"internal","queueNumber":"\${DSIP_QUEUE}","extension":"\${DSIP_AGENT}","wait":"\${DSIP_QWAIT}","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
     )}`,
     " same => n(cdrdone),NoOp(CDR done)",
     "",
@@ -794,11 +827,12 @@ export async function writeAsteriskConfig(): Promise<void> {
     const queueCdrLines = [
       ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
       ` same => n,Set(DSIP_DISP=\${IF($["\${QUEUESTATUS}"=""]?ANSWER:\${QUEUESTATUS})})`,
-      ` same => n,Set(DSIP_AGENT=\${CUT(MEMBERINTERFACE,/,2)})`,
+      ...queueOutcomeLines("qout"),
       ` same => n,${internalPost(
         "cdr",
-        `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"${q.number}","disposition":"\${DSIP_DISP}","billsec":\${DSIP_BILL},"duration":\${DSIP_CDRDUR},"direction":"internal","queueNumber":"${q.number}","extension":"\${DSIP_AGENT}","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
+        `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"${q.number}","disposition":"\${DSIP_DISP}","billsec":\${DSIP_BILL},"duration":\${DSIP_CDRDUR},"direction":"internal","queueNumber":"${q.number}","extension":"\${DSIP_AGENT}","wait":"\${DSIP_QWAIT}","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
       )}`,
+      ` same => n,Set(DSIP_CDR_DONE=1)`,
     ];
     // Queue-level MixMonitor (shared spool → recordings panel)
     const qRecFile = `/var/spool/asterisk/recording/\${UNIQUEID}-q${q.number}.wav`;
@@ -820,6 +854,9 @@ export async function writeAsteriskConfig(): Promise<void> {
     const queueHead = [
       `exten => ${q.number},1,NoOp(Queue ${q.name})`,
       ` same => n,Answer()`,
+      // Hangup handler `h` posts the CDR if the caller leaves before Queue() returns
+      ` same => n,Set(DSIP_QUEUE=${q.number})`,
+      ` same => n,Set(DSIP_QSTART=)`,
       ` same => n,Set(CHANNEL(language)=${qLang})`,
       ` same => n,Set(CHANNEL(musicclass)=${mohName})`,
       ` same => n,PauseQueueMember(${q.number},PJSIP/\${CALLERID(num)})`,
@@ -872,6 +909,7 @@ export async function writeAsteriskConfig(): Promise<void> {
         ` same => n,Playback(queue-callback-offer)`,
         ` same => n,Read(CALLBACK_OPT,silence/1,1,,,2,5)`,
         ` same => n,GotoIf($["\${CALLBACK_OPT}" = "1"]?cb)`,
+        ` same => n,Set(DSIP_QSTART=\${EPOCH})`,
         ` same => n,${queueApp}`,
         ...queueTail,
         ` same => n(cb),NoOp(Queue callback requested — keep place)`,
@@ -879,6 +917,8 @@ export async function writeAsteriskConfig(): Promise<void> {
         ` same => n,Set(DSIP_CID=\${CALLERID(num)})`,
         ` same => n,Set(DB(QCB/${q.number}/\${DSIP_CID})=\${EPOCH}|\${CBPLACE})`,
         ` same => n,${internalPost("queue-callback", `{"queue":"${q.number}","number":"\${DSIP_CID}","place":\${CBPLACE}}`)}`,
+        // Callback keeps the caller's place — not an abandoned call
+        ` same => n,Set(DSIP_CDR_DONE=1)`,
         ` same => n,StopMixMonitor()`,
         ` same => n,UnpauseQueueMember(${q.number},PJSIP/\${DSIP_CID})`,
         ` same => n,Playback(queue-callback-confirm)`,
@@ -888,6 +928,7 @@ export async function writeAsteriskConfig(): Promise<void> {
     } else {
       extensionsConf.push(
         ...queueHead,
+        ` same => n,Set(DSIP_QSTART=\${EPOCH})`,
         ` same => n,${queueApp}`,
         ...queueTail,
         "",
@@ -976,10 +1017,13 @@ export async function writeAsteriskConfig(): Promise<void> {
     "",
     // ARI continue: trunk_XXXXXXXX_<digits> → Dial(PJSIP/digits@trunk_XXXXXXXX)
     "[dsip-trunk-dial]",
-    "exten => _trunk_.,1,NoOp(Trunk dial ${EXTEN})",
+    // "[n]": a bare N in an Asterisk pattern means [2-9], so "_trunk_." never matched
+    "exten => _tru[n]k_.,1,NoOp(Trunk dial ${EXTEN})",
     " same => n,Set(TRUNK=${EXTEN:0:14})",
     " same => n,Set(NUM=${EXTEN:15})",
-    " same => n,Dial(PJSIP/${NUM}@${TRUNK},120)",
+    " same => n(dial),Dial(PJSIP/${NUM}@${TRUNK},120)",
+    // Provider failover: next trunk from DSIP_TRUNK_FALLBACK (set by ARI, '&'-separated)
+    ' same => n,GotoIf($[("${DIALSTATUS}" = "CHANUNAVAIL" | "${DIALSTATUS}" = "CONGESTION") & "${DSIP_TRUNK_FALLBACK}" != ""]?next)',
     // Finalize CDR with real talk time (Stasis left via continue — no ARI hangup event)
     ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
     ` same => n,${internalPost(
@@ -987,6 +1031,10 @@ export async function writeAsteriskConfig(): Promise<void> {
       `{"callId":"\${UNIQUEID}","caller":"\${DSIP_CID}","callee":"\${NUM}","disposition":"\${DIALSTATUS}","billsec":\${DSIP_BILL},"duration":\${DSIP_CDRDUR},"direction":"outbound","mos":"\${DSIP_MOS}","jitter":"\${DSIP_JIT}","packetLoss":"\${DSIP_LOSS}"}`,
     )}`,
     " same => n,Hangup()",
+    " same => n(next),Set(TRUNK=${CUT(DSIP_TRUNK_FALLBACK,&,1)})",
+    " same => n,Set(DSIP_TRUNK_FALLBACK=${CUT(DSIP_TRUNK_FALLBACK,&,2-)})",
+    " same => n,NoOp(Trunk failover ${DIALSTATUS} → ${TRUNK})",
+    " same => n,Goto(dial)",
     "",
   );
 

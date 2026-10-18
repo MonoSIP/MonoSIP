@@ -182,6 +182,29 @@ describe("POST /api/v1/internal/cdr", () => {
     expect(row?.packetLoss).toBeCloseTo(0.5, 5);
   });
 
+  it("stores the queue hold / ring time as wait_sec", async () => {
+    const id = callId();
+    callIds.push(id);
+    await postInternal("/api/v1/internal/cdr", {
+      callId: id,
+      disposition: "ANSWER",
+      billsec: 30,
+      duration: 95,
+      queueNumber: "300",
+      wait: "12",
+    });
+    const [row] = await db.select().from(cdr).where(eq(cdr.callId, id));
+    expect(row?.waitSec).toBe(12);
+  });
+
+  it("leaves wait_sec empty when the dialplan sends a blank wait (unanswered)", async () => {
+    const id = callId();
+    callIds.push(id);
+    await postInternal("/api/v1/internal/cdr", { callId: id, disposition: "NOANSWER", wait: "" });
+    const [row] = await db.select().from(cdr).where(eq(cdr.callId, id));
+    expect(row?.waitSec).toBeNull();
+  });
+
   it("rejects a missing callId", async () => {
     const res = await postInternal("/api/v1/internal/cdr", { disposition: "ANSWER" });
     expect(res.statusCode).toBe(400);

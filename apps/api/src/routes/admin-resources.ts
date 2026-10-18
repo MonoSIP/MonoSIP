@@ -987,6 +987,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         mos: z.union([z.coerce.number(), z.string()]).optional(),
         jitter: z.union([z.coerce.number(), z.string()]).optional(),
         packetLoss: z.union([z.coerce.number(), z.string()]).optional(),
+        /** Queue hold (QEHOLDTIME) or ring time; empty when unanswered. */
+        wait: z.union([z.number(), z.string()]).optional(),
       })
       .parse(req.body);
     // Map Asterisk DIALSTATUS / QUEUESTATUS → CDR disposition
@@ -1018,14 +1020,26 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       jitter: parseQos(body.jitter),
       packetLoss: parseQos(body.packetLoss),
     };
+    const waitSec = (() => {
+      if (body.wait === undefined || String(body.wait).trim() === "") return null;
+      const n = Number(body.wait);
+      return Number.isInteger(n) && n >= 0 ? n : null;
+    })();
     const applyQos = async () => {
-      if (qosPatch.mos == null && qosPatch.jitter == null && qosPatch.packetLoss == null) return;
+      if (
+        qosPatch.mos == null &&
+        qosPatch.jitter == null &&
+        qosPatch.packetLoss == null &&
+        waitSec == null
+      )
+        return;
       await db
         .update(cdr)
         .set({
           ...(qosPatch.mos != null ? { mos: qosPatch.mos } : {}),
           ...(qosPatch.jitter != null ? { jitter: qosPatch.jitter } : {}),
           ...(qosPatch.packetLoss != null ? { packetLoss: qosPatch.packetLoss } : {}),
+          ...(waitSec != null ? { waitSec } : {}),
         })
         .where(eq(cdr.callId, body.callId));
     };
@@ -1747,6 +1761,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   });
 
   // Reports
+  const SLA_SECONDS = 20;
+  const waitExpr = sql`coalesce(${cdr.waitSec}, ${cdr.duration} - ${cdr.billsec}, 0)`;
   app.get("/api/v1/admin/reports/summary", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const where = cdrRangeWhere(req.query as { from?: string; to?: string });
@@ -1757,8 +1773,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         missed: sql<number>`count(*) filter (where ${cdr.disposition} != 'ANSWERED')::int`,
         abandoned: sql<number>`count(*) filter (where ${cdr.disposition} in ('NOANSWER','BUSY','CANCEL') and ${cdr.queueNumber} is not null)::int`,
         avgDuration: sql<number>`coalesce(avg(${cdr.billsec}),0)::int`,
-        // SLA: answered within 20s (billsec proxy when wait not stored separately on non-queue)
-        slaAnswered: sql<number>`count(*) filter (where ${cdr.disposition} = 'ANSWERED' and coalesce(${cdr.duration} - ${cdr.billsec}, 0) <= 20)::int`,
+        // SLA: answered within 20s of queue entry / ringing (wait_sec from QEHOLDTIME or
+        // ring time). Rows from before wait_sec existed fall back to duration − billsec.
+        slaAnswered: sql<number>`count(*) filter (where ${cdr.disposition} = 'ANSWERED' and ${waitExpr} <= ${SLA_SECONDS})::int`,
       })
       .from(cdr)
       .where(where);
@@ -1781,7 +1798,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         total: sql<number>`count(*)::int`,
         answered: sql<number>`count(*) filter (where ${cdr.disposition} = 'ANSWERED')::int`,
         abandoned: sql<number>`count(*) filter (where ${cdr.disposition} != 'ANSWERED')::int`,
-        avgWait: sql<number>`coalesce(avg(${cdr.duration} - ${cdr.billsec}),0)::int`,
+        avgWait: sql<number>`coalesce(avg(${waitExpr}) filter (where ${cdr.disposition} = 'ANSWERED'),0)::int`,
       })
       .from(cdr)
       .where(where)

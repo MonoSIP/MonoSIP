@@ -301,6 +301,8 @@ export const cdr = pgTable(
     disposition: varchar("disposition", { length: 32 }),
     duration: integer("duration").default(0),
     billsec: integer("billsec").default(0),
+    /** Seconds the caller waited before an agent/extension answered (queue hold or ring time). */
+    waitSec: integer("wait_sec"),
     trunkId: uuid("trunk_id"),
     recordingId: uuid("recording_id"),
     dndFlag: boolean("dnd_flag").notNull().default(false),

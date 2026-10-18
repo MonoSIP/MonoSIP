@@ -157,6 +157,7 @@ import {
   attachFlowRuntime,
   executeFlowLoop,
   handleOutbound,
+  MEDIA_SETTLE_MS,
   resolveSpeechLang,
   runFlowOnChannel,
 } from "./flow-runtime.js";
@@ -559,10 +560,10 @@ describe("applyResolved", () => {
 describe("runFlowOnChannel", () => {
   it("answers the channel before entering the loop", async () => {
     const flow = flowOf([node("s", "start"), node("h", "hangup")], [edge("s", "h")]);
-    // runFlowOnChannel sleeps 600ms before the loop so WebRTC media settles;
+    // runFlowOnChannel sleeps MEDIA_SETTLE_MS before the loop so WebRTC media settles;
     // under fake timers that sleep only resolves once time is advanced.
     const running = runFlowOnChannel("ch-f", flow as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.answer).toHaveBeenCalledWith("ch-f");
   });
@@ -820,6 +821,26 @@ describe("handleOutbound", () => {
     );
     expect(cdrStart).toHaveBeenCalled();
   });
+
+  it("hands remaining route trunks to the dialplan for provider failover", async () => {
+    vi.mocked(resolveOutboundDial).mockResolvedValue({
+      trunkEndpoint: "trunk_abcdef12",
+      dialNumber: "05321112233",
+      routeId: "route-1",
+      fallbackEndpoints: ["trunk_22222222", "trunk_33333333"],
+    });
+    await handleOutbound("ch-o", "05321112233", "101");
+    expect(ari.setChannelVar).toHaveBeenCalledWith(
+      "ch-o",
+      "DSIP_TRUNK_FALLBACK",
+      "trunk_22222222&trunk_33333333",
+    );
+  });
+
+  it("sets no failover list when the route has a single trunk", async () => {
+    await handleOutbound("ch-o", "05321112233", "101");
+    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-o", "DSIP_TRUNK_FALLBACK", expect.anything());
+  });
 });
 
 describe("stasisStart — dsip-inbound branches", () => {
@@ -963,7 +984,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     ];
     dbState.tables["prompts"] = [{ id: "11111111-1111-1111-1111-111111111111", filePath: "/p.wav" }];
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:dsip/p1", 60_000);
   });
@@ -971,7 +992,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
   it("plays nothing when the announcement is disabled", async () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: false } }];
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.playAndWait).not.toHaveBeenCalled();
   });
@@ -979,7 +1000,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
   it("falls back to live TTS when no prompt is configured", async () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: true } }];
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(synthesizeSpeech).toHaveBeenCalled();
     expect(ari.playAndWait).toHaveBeenCalledWith(
@@ -992,7 +1013,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
   it("speaks the Turkish notice when the flow language is tr", async () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: true } }];
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101", language: "tr" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     // The KVKK TTS path calls synthesizeSpeech(text, lang) — two arguments.
 expect(synthesizeSpeech).toHaveBeenCalledWith("Bu gorusme kaydedilebilir.", "tr");
@@ -1005,7 +1026,7 @@ expect(synthesizeSpeech).toHaveBeenCalledWith("Bu gorusme kaydedilebilir.", "tr"
     dbState.tables["prompts"] = [{ id: "11111111-1111-1111-1111-111111111111", filePath: null }];
     vi.mocked(promptMediaUri).mockReturnValueOnce(null as never);
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(synthesizeSpeech).toHaveBeenCalled();
   });
@@ -1024,7 +1045,7 @@ describe("runFlowOnChannel — recording permission gate", () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: false } }];
     dbState.tables["extensions"] = [{ number: "101", recordingMode: "always", callPermissions: {} }];
     const running = runFlowOnChannel("ch-r", QUEUE_FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.record).toHaveBeenCalledWith("ch-r", "rec-chr");
   });
@@ -1033,7 +1054,7 @@ describe("runFlowOnChannel — recording permission gate", () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: false } }];
     dbState.tables["extensions"] = [{ number: "101", recordingMode: "off", callPermissions: {} }];
     const running = runFlowOnChannel("ch-r", QUEUE_FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.record).not.toHaveBeenCalled();
   });
@@ -1044,7 +1065,7 @@ describe("runFlowOnChannel — recording permission gate", () => {
       { number: "101", recordingMode: "always", callPermissions: { recording: false } },
     ];
     const running = runFlowOnChannel("ch-r", QUEUE_FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.record).not.toHaveBeenCalled();
   });
@@ -1053,7 +1074,7 @@ describe("runFlowOnChannel — recording permission gate", () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: false } }];
     dbState.tables["extensions"] = [];
     const running = runFlowOnChannel("ch-r", QUEUE_FLOW() as never, { caller: "999" });
-    await vi.advanceTimersByTimeAsync(700);
+    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.record).toHaveBeenCalled();
   });

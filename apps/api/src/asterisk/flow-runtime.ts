@@ -67,6 +67,9 @@ type PendingTransfer = {
 /** Resume flow after dsip-flow-dial returns to Stasis with dial-failed. */
 const pendingTransfers = new Map<string, PendingTransfer>();
 
+/** WebRTC ICE/RTP often not ready immediately after answer — early play becomes a short beep then silence. */
+export const MEDIA_SETTLE_MS = 1800;
+
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -160,8 +163,7 @@ export async function runFlowOnChannel(
   }
   if (!asSubflow) {
     await ari.answer(channelId);
-    // WebRTC ICE/RTP often not ready immediately — early play becomes a short beep then silence
-    await sleep(1800);
+    await sleep(MEDIA_SETTLE_MS);
   }
 
   // KVKK announcement — configured prompt, else short spoken notice (not a bare beep)
@@ -885,6 +887,10 @@ export async function handleOutbound(channelId: string, dialed: string, caller: 
   console.log(
     `[flow] outbound ${caller} → ${route.dialNumber}@${route.trunkEndpoint} (route=${route.routeId})`,
   );
+  // Provider failover: dsip-trunk-dial retries these on CHANUNAVAIL / CONGESTION
+  if (route.fallbackEndpoints?.length) {
+    await ari.setChannelVar(channelId, "DSIP_TRUNK_FALLBACK", route.fallbackEndpoints.join("&"));
+  }
   await rememberLastDial();
   // Dialplan: Dial(PJSIP/num@trunk) then /internal/cdr with real ANSWEREDTIME
   await cdrAnswered(channelId);

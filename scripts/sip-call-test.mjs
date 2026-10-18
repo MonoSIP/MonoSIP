@@ -3,6 +3,7 @@
  *   node sip-call-test.mjs <ext> <password> --answer
  *   node sip-call-test.mjs <ext> <password> <dialExt> [dtmfDigits]
  * Env: DTMF=12  (optional digits to send via SIP INFO after answer)
+ *      ANSWER_DELAY_MS=4000  (--answer: ring this long before 200 OK)
  */
 import dgram from "node:dgram";
 import crypto from "node:crypto";
@@ -314,9 +315,11 @@ socket.on("message", (buf) => {
       reply(msg, 100, "Trying");
       reply(msg, 180, "Ringing");
     } else {
-      console.log(`[${ext}] Incoming INVITE — answering`);
+      const delay = Number(process.env.ANSWER_DELAY_MS || 0);
+      console.log(`[${ext}] Incoming INVITE — answering${delay ? ` in ${delay}ms` : ""}`);
       reply(msg, 100, "Trying");
-      reply(msg, 200, "OK", { "Content-Type": "application/sdp" }, sdp());
+      if (delay) reply(msg, 180, "Ringing");
+      setTimeout(() => reply(msg, 200, "OK", { "Content-Type": "application/sdp" }, sdp()), delay);
     }
   } else if (msg.startsWith("ACK ")) {
     console.log(`[${ext}] ACK — call up`);

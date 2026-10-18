@@ -346,7 +346,13 @@ export async function checkExtensionOutbound(
 
 export async function resolveOutboundDial(
   dialed: string,
-): Promise<{ trunkEndpoint: string; dialNumber: string; routeId: string } | null> {
+): Promise<{
+  trunkEndpoint: string;
+  dialNumber: string;
+  routeId: string;
+  /** Remaining enabled trunks in route priority order — tried when the first is unavailable/congested. */
+  fallbackEndpoints: string[];
+} | null> {
   const routes = await db.select().from(outboundRoutes);
   const enabled = routes.filter((r) => r.enabled).sort((a, b) => a.pattern.length - b.pattern.length);
   // Prefer longest / most specific: sort by pattern length desc
@@ -357,11 +363,19 @@ export async function resolveOutboundDial(
     if (route.stripPrefix > 0) num = num.slice(route.stripPrefix);
     num = `${route.prepend ?? ""}${num}`;
     const trunkIds = (route.trunkIds as string[]) ?? [];
+    const endpoints: string[] = [];
     for (const tid of trunkIds) {
       const [t] = await db.select().from(trunks).where(eq(trunks.id, tid)).limit(1);
       if (!t?.enabled) continue;
-      const endpoint = `trunk_${t.id.slice(0, 8)}`;
-      return { trunkEndpoint: endpoint, dialNumber: num, routeId: route.id };
+      endpoints.push(`trunk_${t.id.slice(0, 8)}`);
+    }
+    if (endpoints.length > 0) {
+      return {
+        trunkEndpoint: endpoints[0],
+        dialNumber: num,
+        routeId: route.id,
+        fallbackEndpoints: endpoints.slice(1),
+      };
     }
   }
   // Fallback: first enabled trunk, dial as-is
@@ -371,6 +385,7 @@ export async function resolveOutboundDial(
     trunkEndpoint: `trunk_${t.id.slice(0, 8)}`,
     dialNumber: dialed.replace(/\D/g, "") || dialed,
     routeId: "fallback",
+    fallbackEndpoints: [],
   };
 }
 
