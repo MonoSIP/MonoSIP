@@ -202,10 +202,17 @@ EOF
         overlay_en_sounds 2>/dev/null || true
         asterisk -rx "module reload acl" 2>/dev/null || true
         asterisk -rx "reload acl" 2>/dev/null || true
+        # `module load` first revives any module that DECLINED at cold start (config
+        # was unreadable/empty before the API wrote it); `reload` then refreshes the
+        # already-running ones. A declined module is NOT reloadable, so without the
+        # load pbx_config/app_queue stay down and every internal call 404s.
+        asterisk -rx "module load res_pjsip.so" 2>/dev/null || true
         asterisk -rx "module reload res_pjsip.so" 2>/dev/null || true
+        asterisk -rx "module load app_queue.so" 2>/dev/null || true
         asterisk -rx "module reload app_queue.so" 2>/dev/null || true
         asterisk -rx "module reload res_musiconhold.so" 2>/dev/null || true
-        asterisk -rx "dialplan reload" 2>/dev/null || true
+        asterisk -rx "module load pbx_config.so" 2>/dev/null || true
+        asterisk -rx "module reload pbx_config.so" 2>/dev/null || true
         echo "DSip: Asterisk reloaded"
       fi
     fi

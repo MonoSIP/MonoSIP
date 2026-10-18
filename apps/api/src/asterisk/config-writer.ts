@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { lookup as dnsLookup } from "node:dns/promises";
-import { mkdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
@@ -47,17 +47,18 @@ async function ensureDir(dir: string) {
 
 /** Asterisk runuser must re-read includes after API writes (NineDeploy /data perms). */
 async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
-  const opts = { timeout: 4000 } as const;
-  // Parent /data must be traversable (volume often 0700).
-  try {
-    await execFileAsync("chmod", ["755", path.dirname(dir)], opts);
-  } catch {
-    /* ignore */
-  }
-  try {
-    await execFileAsync("chmod", ["755", dir], opts);
-  } catch {
-    /* ignore */
+  // In-process chmod (not spawned `chmod`): the API runs with umask 0077, so
+  // writeFile(mode 0o644) lands as 0o600 and the asterisk runuser cannot read the
+  // includes — pbx_config/app_queue then DECLINE and every internal call 404s.
+  // fs.chmod bypasses umask and, unlike a spawned binary, never times out under a
+  // busy boot (embedded PG + Asterisk + TTS), so the files reliably end up readable.
+  // Parent /data must be traversable (volume often 0700); the dirs stay 755, files 644.
+  for (const d of [path.dirname(dir), dir]) {
+    try {
+      await chmod(d, 0o755);
+    } catch {
+      /* ignore */
+    }
   }
   // Only the generated conf files — never chown -R the whole tree (sounds hang seed).
   const confFiles = [
@@ -69,9 +70,8 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
     "reload.flag",
   ];
   for (const name of confFiles) {
-    const fp = path.join(dir, name);
     try {
-      await execFileAsync("chmod", ["644", fp], opts);
+      await chmod(path.join(dir, name), 0o644);
     } catch {
       /* ignore */
     }
@@ -80,12 +80,20 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
 
 /** Immediate CLI reload — do not wait for reload.flag watcher (up to ~4s). */
 export async function reloadAsteriskCli(): Promise<void> {
+  // `module load` first: if a module DECLINED at cold start (config was briefly
+  // unreadable/empty before the API wrote it), only `load` revives it — `reload`
+  // and `dialplan reload` error out ("not properly initialized" / "No such command")
+  // and the dialplan stays empty, 404ing every call. `load` on an already-running
+  // module is a harmless no-op, so pairing load+reload covers both states.
   const cmds = [
     "module reload acl",
+    "module load res_pjsip.so",
     "module reload res_pjsip.so",
+    "module load app_queue.so",
     "module reload app_queue.so",
     "module reload res_musiconhold.so",
-    "dialplan reload",
+    "module load pbx_config.so",
+    "module reload pbx_config.so",
   ];
   for (const c of cmds) {
     try {
