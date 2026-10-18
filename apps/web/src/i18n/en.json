@@ -217,6 +217,10 @@
     "dnd": "Do not disturb",
     "connecting": "Connecting softphone…",
     "registered": "Registered",
-    "unregistered": "Not registered"
+    "unregistered": "Not registered",
+    "dialing": "Calling",
+    "ended": "Ended",
+    "callEnded": "Call ended ({{time}})",
+    "noRtp": "No call audio. Open host UDP 10000–10100 on this server (NineDeploy → Service → Network / Ports), set EXTERNAL_IP, then DSIP_RTP_PUBLISHED=1."
   }
 }

@@ -4,10 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Softphone } from "../../lib/softphone";
+import { Softphone, type CallPhase } from "../../lib/softphone";
+
+function formatCallTime(totalSec: number): string {
+  const s = Math.max(0, Math.floor(totalSec));
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+type HealthMedia = {
+  rtpPortsPublished?: boolean;
+  warnings?: Array<{ code: string; en: string; tr: string }>;
+};
 
 export function PhonePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [params] = useSearchParams();
   const phoneRef = useRef<Softphone | null>(null);
   if (!phoneRef.current) phoneRef.current = new Softphone();
@@ -17,12 +29,15 @@ export function PhonePage() {
   const [digits, setDigits] = useState("");
   const [domain, setDomain] = useState("localhost");
   const [inCall, setInCall] = useState(false);
+  const [callPhase, setCallPhase] = useState<CallPhase>("idle");
+  const [callSeconds, setCallSeconds] = useState(0);
   const [dnd, setDnd] = useState(false);
   const [muted, setMuted] = useState(false);
   const [held, setHeld] = useState(false);
   const [xferOpen, setXferOpen] = useState(false);
   const [xferTarget, setXferTarget] = useState("");
   const [detail, setDetail] = useState<string | undefined>();
+  const [noRtp, setNoRtp] = useState(false);
 
   const me = useQuery({
     queryKey: ["me"],
@@ -35,6 +50,16 @@ export function PhonePage() {
         "/api/v1/me/calls",
       ),
   });
+  const health = useQuery({
+    queryKey: ["health-media"],
+    queryFn: () =>
+      api.get<{ media?: HealthMedia }>("/api/v1/health"),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const mediaWarning = health.data?.media?.warnings?.[0];
+  const showMediaBanner = Boolean(mediaWarning) || noRtp;
 
   useEffect(() => {
     if (me.data) setDnd(!!me.data.dnd);
@@ -44,6 +69,12 @@ export function PhonePage() {
     const dial = params.get("dial");
     if (dial) setDigits(dial);
   }, [params]);
+
+  useEffect(() => {
+    if (callPhase !== "dialing" && callPhase !== "ringing" && callPhase !== "active") return;
+    const id = window.setInterval(() => setCallSeconds((s) => s + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [callPhase]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +92,21 @@ export function PhonePage() {
           setHeld(false);
         }
       }
+    };
+    phone.onCallPhase = (phase, info) => {
+      if (cancelled) return;
+      setCallPhase(phase);
+      if (info?.seconds != null) setCallSeconds(info.seconds);
+      if (phase === "ended") {
+        const dur = formatCallTime(info?.seconds ?? 0);
+        toast.message(t("portal.callEnded", { time: dur }));
+      }
+      if (phase === "idle" || phase === "dialing") setNoRtp(false);
+    };
+    phone.onMediaWarning = () => {
+      if (cancelled) return;
+      setNoRtp(true);
+      toast.error(t("portal.noRtp"));
     };
 
     void (async () => {
@@ -87,7 +133,14 @@ export function PhonePage() {
       cancelled = true;
       void phone.disconnect(true);
     };
-  }, [phone]);
+  }, [phone, t]);
+
+  const showCallUi =
+    inCall ||
+    callPhase === "dialing" ||
+    callPhase === "ringing" ||
+    callPhase === "active" ||
+    callPhase === "ended";
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -107,21 +160,20 @@ export function PhonePage() {
       } else if (e.key === "Backspace") {
         e.preventDefault();
         setDigits((v) => v.slice(0, -1));
-      } else if (e.key === "Enter" && !inCall && status === "registered" && digits) {
+      } else if (e.key === "Enter" && !showCallUi && status === "registered" && digits) {
         e.preventDefault();
         void phone.dial(digits, domain).catch((err) => toast.error(String(err)));
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // press uses latest inCall/digits via closure; rebind when those change
-  }, [digits, inCall, status, domain, phone]);
+  }, [digits, showCallUi, status, domain, phone]);
 
   function press(d: string) {
     phone.playDtmfTone(d);
-    if (inCall) {
+    if (showCallUi && callPhase !== "ended") {
       void phone.sendDtmf(d).catch(() => undefined);
-    } else {
+    } else if (!showCallUi) {
       setDigits((v) => v + d);
     }
   }
@@ -129,6 +181,21 @@ export function PhonePage() {
   function clearDigits() {
     setDigits("");
   }
+
+  const timeLabel = formatCallTime(callSeconds);
+  const primaryCallLabel =
+    callPhase === "ended"
+      ? `${t("portal.ended")} ${timeLabel}`
+      : callPhase === "dialing" || callPhase === "ringing"
+        ? `${t("portal.dialing")} ${timeLabel}`
+        : `${t("portal.hangup")} ${timeLabel}`;
+
+  const bannerText = (() => {
+    if (noRtp) return t("portal.noRtp");
+    if (!mediaWarning) return null;
+    const lang = (i18n.language || "en").startsWith("tr") ? "tr" : "en";
+    return lang === "tr" ? mediaWarning.tr : mediaWarning.en;
+  })();
 
   return (
     <div className="mx-auto max-w-md space-y-4">
@@ -142,6 +209,14 @@ export function PhonePage() {
               ? detail || "Error"
               : t("portal.unregistered")}
       </p>
+      {showMediaBanner && bannerText && (
+        <div
+          className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
+          role="status"
+        >
+          {bannerText}
+        </div>
+      )}
       <div className="card p-5">
         <div className="mb-4 flex items-center gap-2">
           <input
@@ -166,6 +241,14 @@ export function PhonePage() {
             ⌫
           </button>
         </div>
+        {showCallUi && (
+          <p
+            className="mb-3 text-center font-mono text-3xl tabular-nums tracking-wider text-[var(--text)]"
+            aria-live="polite"
+          >
+            {timeLabel}
+          </p>
+        )}
         <div className="mb-4 grid grid-cols-3 gap-2">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"].map((d) => (
             <button key={d} type="button" className="btn justify-center py-4 text-xl" onClick={() => press(d)}>
@@ -174,7 +257,7 @@ export function PhonePage() {
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          {!inCall ? (
+          {!showCallUi ? (
             <>
               <button
                 className="btn btn-primary flex-1 justify-center"
@@ -190,41 +273,51 @@ export function PhonePage() {
             </>
           ) : (
             <>
-              <button className="btn flex-1 justify-center" type="button" onClick={() => void phone.answer()}>
-                {t("portal.answer")}
-              </button>
+              {callPhase === "ringing" && (
+                <button className="btn flex-1 justify-center" type="button" onClick={() => void phone.answer()}>
+                  {t("portal.answer")}
+                </button>
+              )}
+              {callPhase !== "ended" && (
+                <>
+                  <button
+                    className={`btn flex-1 justify-center ${muted ? "btn-primary" : ""}`}
+                    type="button"
+                    onClick={() => {
+                      phone.setMute(!muted);
+                      setMuted(!muted);
+                    }}
+                  >
+                    Mute
+                  </button>
+                  <button
+                    className={`btn flex-1 justify-center ${held ? "btn-primary" : ""}`}
+                    type="button"
+                    onClick={() => {
+                      void phone.setHold(!held).then(() => setHeld(!held));
+                    }}
+                  >
+                    Hold
+                  </button>
+                  <button
+                    className="btn flex-1 justify-center"
+                    type="button"
+                    onClick={() => setXferOpen((v) => !v)}
+                  >
+                    Transfer
+                  </button>
+                </>
+              )}
               <button
-                className={`btn flex-1 justify-center ${muted ? "btn-primary" : ""}`}
+                className={`btn flex-1 justify-center font-mono ${
+                  callPhase === "ended" ? "btn-primary" : "btn-danger"
+                }`}
                 type="button"
-                onClick={() => {
-                  phone.setMute(!muted);
-                  setMuted(!muted);
-                }}
-              >
-                Mute
-              </button>
-              <button
-                className={`btn flex-1 justify-center ${held ? "btn-primary" : ""}`}
-                type="button"
-                onClick={() => {
-                  void phone.setHold(!held).then(() => setHeld(!held));
-                }}
-              >
-                Hold
-              </button>
-              <button
-                className="btn flex-1 justify-center"
-                type="button"
-                onClick={() => setXferOpen((v) => !v)}
-              >
-                Transfer
-              </button>
-              <button
-                className="btn btn-danger flex-1 justify-center"
-                type="button"
+                aria-label={t("portal.hangup")}
+                disabled={callPhase === "ended"}
                 onClick={() => void phone.hangup()}
               >
-                {t("portal.hangup")}
+                {primaryCallLabel}
               </button>
             </>
           )}
@@ -245,7 +338,7 @@ export function PhonePage() {
             {t("portal.dnd")}
           </button>
         </div>
-        {inCall && xferOpen && (
+        {showCallUi && xferOpen && callPhase !== "ended" && (
           <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--border)] pt-3">
             <input
               className="input flex-1 font-mono"
@@ -264,7 +357,9 @@ export function PhonePage() {
                     toast.success(`Transferred to ${xferTarget}`);
                     setXferOpen(false);
                     setXferTarget("");
+                    // Softphone also emits ended→idle; keep UI in sync for mocks.
                     setInCall(false);
+                    setCallPhase("idle");
                   })
                   .catch((e) => toast.error((e as Error).message));
               }}
@@ -295,6 +390,7 @@ export function PhonePage() {
                     setXferOpen(false);
                     setXferTarget("");
                     setInCall(false);
+                    setCallPhase("idle");
                   })
                   .catch((e) => toast.error((e as Error).message));
               }}

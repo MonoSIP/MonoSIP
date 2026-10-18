@@ -2678,11 +2678,14 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       dbOk = false;
     }
     const asteriskOk = await ari.health();
+    const { getMediaReadiness } = await import("../lib/media-readiness.js");
+    const media = await getMediaReadiness();
     return {
       ok: dbOk,
       db: dbOk,
       asterisk: asteriskOk,
       publicUrl: config.publicUrl,
+      media,
     };
   });
 }

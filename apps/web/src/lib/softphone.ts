@@ -10,6 +10,15 @@ import {
 
 export type SoftphoneStatus = "idle" | "connecting" | "registered" | "error";
 
+/** High-level call UI state for the dial pad. */
+export type CallPhase = "idle" | "dialing" | "ringing" | "active" | "ended";
+
+export type CallPhaseInfo = {
+  seconds: number;
+  peer?: string;
+  reason?: "local" | "remote" | "failed";
+};
+
 const DTMF_FREQ: Record<string, [number, number]> = {
   "1": [697, 1209],
   "2": [697, 1336],
@@ -35,11 +44,19 @@ const AUDIO_DEVICES_KEY = "dsip.audioDevices";
 export class Softphone {
   status: SoftphoneStatus = "idle";
   session: Session | null = null;
+  callPhase: CallPhase = "idle";
   private ua: UserAgent | null = null;
   private registerer: Registerer | null = null;
   private intentionalStop = false;
+  private callStartedAt: number | null = null;
+  private callPeer = "";
+  private mediaWatchTimer: ReturnType<typeof setTimeout> | null = null;
+  private rtpWarned = false;
   onStatus?: (s: SoftphoneStatus, detail?: string) => void;
   onSession?: (s: Session | null) => void;
+  onCallPhase?: (phase: CallPhase, info?: CallPhaseInfo) => void;
+  /** Fired when remote RTP never arrives (typical missing host UDP 10000–10100). */
+  onMediaWarning?: (code: "no_rtp") => void;
   private remoteAudio = document.createElement("audio");
   private audioCtx: AudioContext | null = null;
   private trackHandler: ((ev: RTCTrackEvent) => void) | null = null;
@@ -386,6 +403,13 @@ export class Softphone {
       onInvite: (invitation) => {
         // Incoming call (e.g. queue member ring)
         this.session = invitation;
+        const from =
+          invitation.remoteIdentity?.uri?.user ||
+          invitation.remoteIdentity?.displayName ||
+          "";
+        this.callPeer = String(from);
+        this.callStartedAt = null;
+        this.setCallPhase("ringing", { seconds: 0, peer: this.callPeer });
         this.onSession?.(invitation);
         invitation.stateChange.addListener((state) => this.handleState(state));
         this.startLocalRingback();
@@ -442,6 +466,10 @@ export class Softphone {
     }
     const inviter = new Inviter(this.ua, targetUri);
     this.session = inviter;
+    this.callPeer = cleaned;
+    this.callStartedAt = Date.now();
+    this.rtpWarned = false;
+    this.setCallPhase("dialing", { seconds: 0, peer: cleaned });
     this.onSession?.(inviter);
     inviter.stateChange.addListener((state) => this.handleState(state));
     this.startLocalRingback();
@@ -539,7 +567,15 @@ export class Softphone {
 
   async hangup() {
     this.stopLocalRingback();
-    if (!this.session) return;
+    this.clearMediaWatch();
+    if (!this.session) {
+      this.setCallPhase("idle");
+      return;
+    }
+    const seconds = this.callStartedAt
+      ? Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000))
+      : 0;
+    const peer = this.callPeer;
     switch (this.session.state) {
       case SessionState.Initial:
       case SessionState.Establishing:
@@ -554,7 +590,14 @@ export class Softphone {
         break;
     }
     this.session = null;
+    this.callStartedAt = null;
+    this.callPeer = "";
+    this.rtpWarned = false;
+    this.setCallPhase("ended", { seconds, peer, reason: "local" });
     this.onSession?.(null);
+    setTimeout(() => {
+      if (this.callPhase === "ended") this.setCallPhase("idle");
+    }, 2500);
   }
 
   private localMuted = false;
@@ -611,8 +654,19 @@ export class Softphone {
       throw new Error("Transfer not supported by this session");
     }
     await sess.refer(targetUri);
+    const seconds = this.callStartedAt
+      ? Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000))
+      : 0;
+    const peer = this.callPeer;
     this.session = null;
+    this.callStartedAt = null;
+    this.callPeer = "";
+    this.clearMediaWatch();
+    this.setCallPhase("ended", { seconds, peer, reason: "local" });
     this.onSession?.(null);
+    setTimeout(() => {
+      if (this.callPhase === "ended") this.setCallPhase("idle");
+    }, 2500);
   }
 
   /** Hold original call and dial consult target (attended transfer step 1). */
@@ -676,9 +730,20 @@ export class Softphone {
     } catch {
       /* ignore */
     }
+    const seconds = this.callStartedAt
+      ? Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000))
+      : 0;
+    const peer = this.callPeer;
     this.consultSession = null;
     this.session = null;
+    this.callStartedAt = null;
+    this.callPeer = "";
+    this.clearMediaWatch();
+    this.setCallPhase("ended", { seconds, peer, reason: "local" });
     this.onSession?.(null);
+    setTimeout(() => {
+      if (this.callPhase === "ended") this.setCallPhase("idle");
+    }, 2500);
   }
 
   async cancelConsult() {
@@ -817,15 +882,93 @@ export class Softphone {
     ) {
       this.attachRemoteMedia(this.session);
     }
+    if (state === SessionState.Establishing) {
+      if (this.callPhase === "idle" || this.callPhase === "ended") {
+        this.setCallPhase("dialing");
+      }
+    }
     if (state === SessionState.Established) {
       this.stopLocalRingback();
       void this.remoteAudio.play().catch(() => undefined);
+      if (!this.callStartedAt) this.callStartedAt = Date.now();
+      this.setCallPhase("active");
+      this.watchRemoteRtp();
     }
     if (state === SessionState.Terminated) {
       this.stopLocalRingback();
-      this.session = null;
-      this.onSession?.(null);
+      this.clearMediaWatch();
       this.remoteAudio.srcObject = null;
+      // hangup() already moved us to ended
+      if (this.callPhase === "ended" || this.callPhase === "idle") {
+        this.session = null;
+        return;
+      }
+      const seconds = this.callStartedAt
+        ? Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000))
+        : 0;
+      const peer = this.callPeer;
+      this.session = null;
+      this.callStartedAt = null;
+      this.callPeer = "";
+      this.rtpWarned = false;
+      this.setCallPhase("ended", { seconds, peer, reason: "remote" });
+      this.onSession?.(null);
+      setTimeout(() => {
+        if (this.callPhase === "ended") this.setCallPhase("idle");
+      }, 2500);
+    }
+  }
+
+  private setCallPhase(phase: CallPhase, info?: CallPhaseInfo) {
+    this.callPhase = phase;
+    const seconds =
+      info?.seconds ??
+      (this.callStartedAt
+        ? Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000))
+        : 0);
+    this.onCallPhase?.(phase, {
+      seconds,
+      peer: info?.peer ?? (this.callPeer || undefined),
+      reason: info?.reason,
+    });
+  }
+
+  private clearMediaWatch() {
+    if (this.mediaWatchTimer) {
+      clearTimeout(this.mediaWatchTimer);
+      this.mediaWatchTimer = null;
+    }
+  }
+
+  /** After answer, if no RTP packets arrive, warn about host UDP RTP ports. */
+  private watchRemoteRtp() {
+    this.clearMediaWatch();
+    this.mediaWatchTimer = setTimeout(() => {
+      void this.checkRemoteRtp();
+    }, 4000);
+  }
+
+  private async checkRemoteRtp() {
+    if (this.rtpWarned || this.callPhase !== "active" || !this.session) return;
+    const sdh = this.session.sessionDescriptionHandler as
+      | { peerConnection?: RTCPeerConnection }
+      | undefined;
+    const pc = sdh?.peerConnection;
+    if (!pc) return;
+    try {
+      const stats = await pc.getStats();
+      let inbound = 0;
+      stats.forEach((r) => {
+        if (r.type === "inbound-rtp" && (r as { kind?: string }).kind === "audio") {
+          inbound += Number((r as { packetsReceived?: number }).packetsReceived ?? 0);
+        }
+      });
+      if (inbound === 0) {
+        this.rtpWarned = true;
+        this.onMediaWarning?.("no_rtp");
+      }
+    } catch {
+      /* ignore */
     }
   }
 

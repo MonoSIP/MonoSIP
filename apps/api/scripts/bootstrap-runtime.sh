@@ -88,6 +88,19 @@ if [ -z "${EXTERNAL_IP:-}" ] && [ -n "${PUBLIC_HOST:-}" ]; then
   fi
 fi
 
+# Softphone audio = host UDP RTP. Users often skip this; shout early in deploy logs.
+if [ -n "${PUBLIC_HOST:-}" ] && [ "$PUBLIC_HOST" != "localhost" ] && [ "$PUBLIC_HOST" != "127.0.0.1" ]; then
+  if [ "${DSIP_RTP_PUBLISHED:-}" != "1" ] && [ "${DSIP_RTP_PUBLISHED:-}" != "true" ]; then
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════════════╗"
+    echo "║  DSip softphone SES: NineDeploy → Ağ/Portlar → UDP 10000-10100     ║"
+    echo "║  Sonra vault: EXTERNAL_IP=<public IP>  DSIP_RTP_PUBLISHED=1        ║"
+    echo "║  Yoksa çağrı bağlanır ama SES GELMEZ.                              ║"
+    echo "╚══════════════════════════════════════════════════════════════════════╝"
+    echo ""
+  fi
+fi
+
 # All-in-one defaults (Compose overrides with http://asterisk:8088)
 export ASTERISK_ARI_URL="${ASTERISK_ARI_URL:-http://127.0.0.1:8088}"
 export ASTERISK_AMI_HOST="${ASTERISK_AMI_HOST:-127.0.0.1}"

@@ -83,7 +83,13 @@ ADMIN_PASSWORD=<strong password>
 ```
 
 **Softphone audio (WebRTC):** SIP over WSS works through HTTPS, but media is UDP RTP.
-Publish host UDP **10000–10100** to the container (NineDeploy → service → network / ports) and set `EXTERNAL_IP` (or leave it empty so boot resolves it from `PUBLIC_HOST`). Without those, calls connect but stay silent.
+On every deploy, container logs print a clear banner if audio ports are missing — you do **not** need to know networking jargon.
+
+1. NineDeploy → **Service → Network / Ports** → publish **UDP 10000–10100** → container **10000–10100**
+2. Vault: `EXTERNAL_IP=<public IPv4>` (or leave empty so boot resolves it from `PUBLIC_HOST`)
+3. Vault: `DSIP_RTP_PUBLISHED=1` after the ports are open (hides the warning banner)
+
+Without those, calls connect but stay silent. Portal Phone also shows the same warning and detects “no RTP” during a live call.
 
 **Strongly recommended:** attach a managed Postgres and set `DATABASE_URL` (or `POSTGRES_URL`) in the vault — embedded Postgres is then skipped and survives image rebuilds/major PG upgrades without risk of an empty lab seed.
 

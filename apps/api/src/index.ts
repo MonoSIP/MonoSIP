@@ -147,6 +147,17 @@ async function main() {
 
   await app.listen({ port: config.port, host: "0.0.0.0" });
   app.log.info(`DSip API listening on :${config.port}`);
+
+  // NineDeploy logs: tell operators softphone needs host UDP RTP (no port-forward expertise assumed).
+  void import("./lib/media-readiness.js")
+    .then(async ({ getMediaReadiness, formatMediaDeployBanner }) => {
+      const media = await getMediaReadiness();
+      const banner = formatMediaDeployBanner(media);
+      for (const line of banner.split("\n")) {
+        if (line.length) console.log(line);
+      }
+    })
+    .catch((e) => console.warn("[media]", (e as Error).message));
 }
 
 main().catch((err) => {

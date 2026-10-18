@@ -20,6 +20,8 @@ const { SoftphoneMock } = vi.hoisted(() => {
     status = "idle";
     onStatus?: (s: string, d?: string) => void;
     onSession?: (s: unknown) => void;
+    onCallPhase?: (phase: string, info?: { seconds?: number }) => void;
+    onMediaWarning?: (code: string) => void;
 
     connect = vi.fn(async () => {});
     disconnect = vi.fn(async () => {});
@@ -92,6 +94,9 @@ function seedApi(dnd = false) {
       return { extension: "101", password: "pw", domain: "sip.example", displayName: "Ali" };
     }
     if (path === "/api/v1/me/calls") return [];
+    if (path === "/api/v1/health") {
+      return { ok: true, media: { rtpPortsPublished: true, warnings: [] } };
+    }
     return {};
   });
 }
@@ -181,11 +186,12 @@ describe("PhonePage DND guard", () => {
   });
 });
 /** Drive the page into a live call the way sip.js would. */
-async function enterCall() {
+async function enterCall(phase: "active" | "ringing" = "active") {
   renderPage();
   await waitFor(() => expect(SoftphoneMock.last.onSession).toBeTypeOf("function"));
   act(() => {
     SoftphoneMock.last.onSession!({ id: "s-1" });
+    SoftphoneMock.last.onCallPhase?.(phase, { seconds: 0 });
   });
   await screen.findByRole("button", { name: "Mute" });
 }
@@ -195,17 +201,30 @@ describe("PhonePage in-call controls", () => {
     await enterCall();
 
     expect(screen.queryByRole("button", { name: "portal.dial" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "portal.answer" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "portal.answer" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mute" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Hold" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Transfer" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "portal.hangup" })).toBeInTheDocument();
+    expect(screen.getByText("0:00")).toBeInTheDocument();
   });
 
   it("answers the ringing call", async () => {
-    await enterCall();
+    await enterCall("ringing");
     await userEvent.click(screen.getByRole("button", { name: "portal.answer" }));
     expect(SoftphoneMock.last.answer).toHaveBeenCalled();
+  });
+
+  it("shows ended feedback when the softphone reports call end", async () => {
+    await enterCall();
+    act(() => {
+      SoftphoneMock.last.onCallPhase?.("ended", { seconds: 12 });
+      SoftphoneMock.last.onSession!(null);
+    });
+    expect(await screen.findByText(/portal\.ended/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(toastMessage).toHaveBeenCalledWith("portal.callEnded"),
+    );
   });
 
   it("toggles mute both ways", async () => {
@@ -246,6 +265,7 @@ describe("PhonePage in-call controls", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Mute" })).toHaveClass("btn-primary"));
 
     act(() => {
+      SoftphoneMock.last.onCallPhase?.("idle");
       SoftphoneMock.last.onSession!(null);
     });
 
