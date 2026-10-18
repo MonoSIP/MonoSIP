@@ -311,10 +311,34 @@ export class Softphone {
     await this.disconnect(true);
     this.setStatus("connecting");
 
-    const uri = UserAgent.makeURI(`sip:${opts.extension}@${opts.domain}`);
+    // Vault/NineDeploy often leaves SIP domain as localhost — use the page host.
+    const domain =
+      !opts.domain ||
+      opts.domain === "localhost" ||
+      opts.domain === "127.0.0.1"
+        ? window.location.hostname
+        : opts.domain;
+
+    const uri = UserAgent.makeURI(`sip:${opts.extension}@${domain}`);
     if (!uri) throw new Error("Invalid SIP URI");
 
-    const wsServer = sipWsUrl();
+    const wsServer =
+      opts.websocketUrl &&
+      !opts.websocketUrl.includes("localhost") &&
+      !opts.websocketUrl.includes("127.0.0.1")
+        ? opts.websocketUrl
+        : sipWsUrl();
+
+    // STUN only by default — NineDeploy has no coturn on :3478; a dead TURN slows ICE.
+    const iceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+    const turnUrl = (import.meta.env.VITE_TURN_URL as string | undefined)?.trim();
+    if (turnUrl) {
+      iceServers.push({
+        urls: turnUrl,
+        username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) || "dsip",
+        credential: (import.meta.env.VITE_TURN_CREDENTIAL as string | undefined) || "turnpass",
+      });
+    }
 
     this.ua = new UserAgent({
       uri,
@@ -330,14 +354,7 @@ export class Softphone {
       sessionDescriptionHandlerFactoryOptions: {
         constraints: { audio: this.audioConstraints(), video: false },
         peerConnectionConfiguration: {
-          iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            {
-              urls: `turn:${window.location.hostname}:3478`,
-              username: "dsip",
-              credential: "turnpass",
-            },
-          ],
+          iceServers,
         },
       },
       logLevel: "warn",

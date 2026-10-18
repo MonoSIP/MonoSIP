@@ -47,11 +47,29 @@ export async function portalRoutes(app: FastifyInstance) {
     } catch {
       return reply.code(500).send({ error: "SIP secret unavailable" });
     }
+    // Prefer live public identity (adopted from Host when vault left localhost).
+    const hostHdr = req.headers["x-forwarded-host"];
+    const hostRaw = (Array.isArray(hostHdr) ? hostHdr[0] : hostHdr) || req.hostname;
+    const host = String(hostRaw)
+      .split(",")[0]
+      ?.trim()
+      .split(":")[0];
+    const domain =
+      config.sipDomain && config.sipDomain !== "localhost"
+        ? config.sipDomain
+        : host || config.sipDomain;
+    const websocketUrl =
+      config.sipWssUrl && !config.sipWssUrl.includes("localhost")
+        ? config.sipWssUrl
+        : host
+          ? `wss://${host}/asterisk-ws`
+          : config.sipWssUrl;
+
     return {
       extension: ext.number,
       password,
-      domain: config.sipDomain,
-      websocketUrl: config.sipWssUrl,
+      domain,
+      websocketUrl,
       displayName: ext.name,
       expiresIn: 300,
     };

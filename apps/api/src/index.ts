@@ -51,6 +51,11 @@ async function main() {
   });
 
   app.addHook("onRequest", async (req, reply) => {
+    const { adoptPublicIdentityFromHost } = await import("./lib/public-identity.js");
+    const xfHost = req.headers["x-forwarded-host"];
+    const forwarded = Array.isArray(xfHost) ? xfHost[0] : xfHost;
+    adoptPublicIdentityFromHost(forwarded || req.hostname);
+
     const { enforceAdminIpAccess } = await import("./lib/admin-ip-guard.js");
     const ok = await enforceAdminIpAccess(req, reply);
     if (!ok) return;
