@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { History, PhoneCall } from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard } from "../../components/ui";
 
 type Tab = "all" | "inbound" | "outbound" | "missed";
 
@@ -59,25 +61,28 @@ export function MyCallsPage() {
   ];
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-semibold">{t("nav.myCalls")}</h1>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tabs.map((x) => (
-          <button
-            key={x.id}
-            type="button"
-            className={`btn ${tab === x.id ? "btn-primary" : ""}`}
-            onClick={() => setTab(x.id)}
-          >
-            {x.label}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        icon={PhoneCall}
+        title={t("nav.myCalls")}
+        tone="blue"
+        actions={
+          <>
+            {tabs.map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                className={`btn ${tab === x.id ? "btn-primary" : ""}`}
+                onClick={() => setTab(x.id)}
+              >
+                {x.label}
+              </button>
+            ))}
+          </>
+        }
+      />
       {tab === "missed" && (missed.data ?? []).length > 0 && (
-        <div className="card mb-4 overflow-auto">
-          <div className="border-b border-[var(--border)] px-4 py-2 text-sm font-medium">
-            Pending missed
-          </div>
+        <SectionCard title="Pending missed" icon={History} tone="blue" className="overflow-auto !p-0">
           <table className="table">
             <thead>
               <tr>
@@ -106,9 +111,9 @@ export function MyCallsPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </SectionCard>
       )}
-      <div className="card overflow-auto">
+      <SectionCard title="Call history" icon={History} tone="blue" className="overflow-auto !p-0">
         <table className="table">
           <thead>
             <tr>
@@ -150,7 +155,7 @@ export function MyCallsPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
     </div>
   );
 }

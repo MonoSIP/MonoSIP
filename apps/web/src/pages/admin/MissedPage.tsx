@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { List, PhoneMissed } from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard } from "../../components/ui";
 
 export function MissedPage() {
   const { t } = useTranslation();
@@ -27,78 +29,89 @@ export function MissedPage() {
     return m.status === "returned";
   });
 
+  const tabButtons = (
+    <>
+      {(
+        [
+          ["pending", "Bekliyor"],
+          ["returned", "Dönüldü"],
+          ["all", "All"],
+        ] as const
+      ).map(([k, label]) => (
+        <button
+          key={k}
+          type="button"
+          className={`btn ${tab === k ? "btn-primary" : ""}`}
+          onClick={() => setTab(k)}
+        >
+          {label}
+        </button>
+      ))}
+    </>
+  );
+
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-semibold">{t("nav.missed")}</h1>
-      <div className="mb-4 flex gap-2">
-        {(
-          [
-            ["pending", "Bekliyor"],
-            ["returned", "Dönüldü"],
-            ["all", "All"],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            className={`btn ${tab === k ? "btn-primary" : ""}`}
-            onClick={() => setTab(k)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="card overflow-auto">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{t("cdr.caller")}</th>
-              <th>Target</th>
-              <th>Time</th>
-              <th>{t("common.status")}</th>
-              <th>{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
+    <div className="space-y-6">
+      <PageHeader
+        icon={PhoneMissed}
+        title={t("nav.missed")}
+        tone="coral"
+        description="Track missed calls and mark follow-up status"
+        actions={tabButtons}
+      />
+      <SectionCard title="Missed calls" icon={List} tone="coral" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={5}>—</td>
+                <th>{t("cdr.caller")}</th>
+                <th>Target</th>
+                <th>Time</th>
+                <th>{t("common.status")}</th>
+                <th>{t("common.actions")}</th>
               </tr>
-            ) : (
-              rows.map((m) => (
-                <tr key={m.id}>
-                  <td className="font-mono">{m.number}</td>
-                  <td>{m.target}</td>
-                  <td>{new Date(m.at).toLocaleString()}</td>
-                  <td>
-                    <span className="badge">{m.status}</span>
-                  </td>
-                  <td className="flex gap-1">
-                    {m.status !== "returned" && (
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={() => mark.mutate({ id: m.id, status: "returned" })}
-                      >
-                        Dönüldü
-                      </button>
-                    )}
-                    {m.status === "pending" && (
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={() => mark.mutate({ id: m.id, status: "ignored" })}
-                      >
-                        Ignore
-                      </button>
-                    )}
-                  </td>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>—</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                rows.map((m) => (
+                  <tr key={m.id}>
+                    <td className="font-mono">{m.number}</td>
+                    <td>{m.target}</td>
+                    <td>{new Date(m.at).toLocaleString()}</td>
+                    <td>
+                      <span className="badge">{m.status}</span>
+                    </td>
+                    <td className="flex gap-1">
+                      {m.status !== "returned" && (
+                        <button
+                          className="btn"
+                          type="button"
+                          onClick={() => mark.mutate({ id: m.id, status: "returned" })}
+                        >
+                          Dönüldü
+                        </button>
+                      )}
+                      {m.status === "pending" && (
+                        <button
+                          className="btn"
+                          type="button"
+                          onClick={() => mark.mutate({ id: m.id, status: "ignored" })}
+                        >
+                          Ignore
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

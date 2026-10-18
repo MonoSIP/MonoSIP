@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { Cable, Link2, Plus } from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Trunk = {
   id: string;
@@ -177,122 +179,101 @@ export function TrunksPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("trunks.title")}</h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">{t("trunks.blurb")}</p>
-      </div>
+      <PageHeader
+        icon={Cable}
+        title={t("trunks.title")}
+        tone="coral"
+        description={t("trunks.blurb")}
+      />
 
-      <form
-        className="card space-y-4 p-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate();
-        }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-medium">
-            {editingId ? t("trunks.edit") : t("trunks.addProvider")}
-          </h2>
-          {editingId ? (
+      <SectionCard
+        title={editingId ? t("trunks.edit") : t("trunks.addProvider")}
+        icon={Plus}
+        tone="cyan"
+        actions={
+          editingId ? (
             <button className="btn" type="button" onClick={cancelEdit}>
               {t("common.cancel")}
             </button>
-          ) : null}
-        </div>
-
+          ) : null
+        }
+      >
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.mutate();
+          }}
+        >
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.name")}</span>
-            <input
-              className="input"
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              placeholder="Netgsm / Turkcell / Custom"
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.host")}</span>
-            <input
-              className="input font-mono"
-              value={form.host}
-              onChange={(e) => set("host", e.target.value)}
-              placeholder="sip.provider.example"
-              required
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.port")}</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              max={65535}
-              value={form.port}
-              onChange={(e) => set("port", Number(e.target.value) || 5060)}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.transport")}</span>
-            <select
-              className="input"
-              value={form.transport}
-              onChange={(e) => set("transport", e.target.value as TrunkForm["transport"])}
-            >
-              <option value="udp">UDP</option>
-              <option value="tcp">TCP</option>
-              <option value="tls">TLS</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.authType")}</span>
-            <select
-              className="input"
-              value={form.authType}
-              onChange={(e) => set("authType", e.target.value as TrunkForm["authType"])}
-            >
-              <option value="userpass">{t("trunks.authUserpass")}</option>
-              <option value="ip">{t("trunks.authIp")}</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.maxChannels")}</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              max={100}
-              value={form.maxChannels}
-              onChange={(e) => set("maxChannels", Number(e.target.value) || 1)}
-            />
-          </label>
+          <TextField
+            label={t("trunks.name")}
+            value={form.name}
+            onChange={(e) => set("name", e.target.value)}
+            placeholder="Netgsm / Turkcell / Custom"
+            required
+          />
+          <TextField
+            label={t("trunks.host")}
+            className="font-mono"
+            value={form.host}
+            onChange={(e) => set("host", e.target.value)}
+            placeholder="sip.provider.example"
+            required
+          />
+          <TextField
+            label={t("trunks.port")}
+            type="number"
+            min={1}
+            max={65535}
+            value={form.port}
+            onChange={(e) => set("port", Number(e.target.value) || 5060)}
+          />
+          <SelectField
+            label={t("trunks.transport")}
+            value={form.transport}
+            onChange={(e) => set("transport", e.target.value as TrunkForm["transport"])}
+          >
+            <option value="udp">UDP</option>
+            <option value="tcp">TCP</option>
+            <option value="tls">TLS</option>
+          </SelectField>
+          <SelectField
+            label={t("trunks.authType")}
+            value={form.authType}
+            onChange={(e) => set("authType", e.target.value as TrunkForm["authType"])}
+          >
+            <option value="userpass">{t("trunks.authUserpass")}</option>
+            <option value="ip">{t("trunks.authIp")}</option>
+          </SelectField>
+          <TextField
+            label={t("trunks.maxChannels")}
+            type="number"
+            min={1}
+            max={100}
+            value={form.maxChannels}
+            onChange={(e) => set("maxChannels", Number(e.target.value) || 1)}
+          />
         </div>
 
         {form.authType === "userpass" ? (
           <div className="grid gap-3 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.username")}</span>
-              <input
-                className="input font-mono"
-                value={form.username}
-                onChange={(e) => set("username", e.target.value)}
-                autoComplete="off"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-sm text-[var(--text-muted)]">
-                {t("trunks.secret")}
-                {editingId ? ` (${t("trunks.secretKeep")})` : ""}
-              </span>
-              <input
-                className="input font-mono"
-                type="password"
-                value={form.secret}
-                onChange={(e) => set("secret", e.target.value)}
-                autoComplete="new-password"
-                required={!editingId}
-              />
-            </label>
+            <TextField
+              label={t("trunks.username")}
+              className="font-mono"
+              value={form.username}
+              onChange={(e) => set("username", e.target.value)}
+              autoComplete="off"
+            />
+            <TextField
+              label={`${t("trunks.secret")}${editingId ? ` (${t("trunks.secretKeep")})` : ""}`}
+              className="font-mono"
+              type="password"
+              value={form.secret}
+              onChange={(e) => set("secret", e.target.value)}
+              autoComplete="new-password"
+              required={!editingId}
+            />
             <label className="flex items-center gap-2 text-sm md:col-span-2">
               <input
                 type="checkbox"
@@ -307,42 +288,34 @@ export function TrunksPage() {
         )}
 
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.fromDomain")}</span>
-            <input
-              className="input font-mono"
-              value={form.fromDomain}
-              onChange={(e) => set("fromDomain", e.target.value)}
-              placeholder="realm.example (optional)"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.outboundProxy")}</span>
-            <input
-              className="input font-mono"
-              value={form.outboundProxy}
-              onChange={(e) => set("outboundProxy", e.target.value)}
-              placeholder="proxy.example:5060"
-            />
-          </label>
-          <label className="block md:col-span-2">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.codecs")}</span>
-            <input
-              className="input font-mono"
-              value={form.codecs}
-              onChange={(e) => set("codecs", e.target.value)}
-              placeholder="ulaw,alaw,g722"
-            />
-          </label>
-          <label className="block md:col-span-2">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("trunks.notes")}</span>
-            <textarea
-              className="input min-h-[4.5rem]"
-              value={form.notes}
-              onChange={(e) => set("notes", e.target.value)}
-              placeholder={t("trunks.notesPlaceholder")}
-            />
-          </label>
+          <TextField
+            label={t("trunks.fromDomain")}
+            className="font-mono"
+            value={form.fromDomain}
+            onChange={(e) => set("fromDomain", e.target.value)}
+            placeholder="realm.example (optional)"
+          />
+          <TextField
+            label={t("trunks.outboundProxy")}
+            className="font-mono"
+            value={form.outboundProxy}
+            onChange={(e) => set("outboundProxy", e.target.value)}
+            placeholder="proxy.example:5060"
+          />
+          <TextField
+            label={t("trunks.codecs")}
+            className="font-mono md:col-span-2"
+            value={form.codecs}
+            onChange={(e) => set("codecs", e.target.value)}
+            placeholder="ulaw,alaw,g722"
+          />
+          <TextAreaField
+            label={t("trunks.notes")}
+            className="md:col-span-2 min-h-[4.5rem]"
+            value={form.notes}
+            onChange={(e) => set("notes", e.target.value)}
+            placeholder={t("trunks.notesPlaceholder")}
+          />
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -355,13 +328,16 @@ export function TrunksPage() {
 
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-primary" type="submit" disabled={save.isPending}>
+            <Plus size={16} />
             {editingId ? t("common.save") : t("trunks.add")}
           </button>
           <Link className="btn" to="/routes">
+            <Link2 size={16} />
             {t("trunks.manageDids")}
           </Link>
         </div>
-      </form>
+        </form>
+      </SectionCard>
 
       {didsByNote.length ? (
         <p className="text-sm text-[var(--text-muted)]">
@@ -373,7 +349,7 @@ export function TrunksPage() {
         <p className="text-sm text-[var(--text-muted)]">{t("trunks.noDids")}</p>
       )}
 
-      <div className="card overflow-auto">
+      <SectionCard title="Trunk list" icon={Cable} tone="blue" className="overflow-auto !space-y-0">
         <table className="table">
           <thead>
             <tr>
@@ -433,7 +409,7 @@ export function TrunksPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
     </div>
   );
 }

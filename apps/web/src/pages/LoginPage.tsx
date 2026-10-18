@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { KeyRound, Mail, Phone, Shield, Smartphone } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
+import { AppBrand } from "../components/AppBrand";
+import { TextField } from "../components/ui";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -51,76 +54,74 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-full place-items-center p-4">
-      <form onSubmit={submit} className="card w-full max-w-md p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">{t("app.name")}</h1>
-          <p className="text-[var(--text-muted)]">{t("app.tagline")}</p>
-        </div>
-        <div className="mb-4 flex gap-2">
+    <div className="login-shell">
+      <form onSubmit={submit} className="card relative z-10 w-full max-w-md p-8">
+        <AppBrand className="mb-6" subtitle={t("app.tagline")} asHeading />
+        <div className="segmented mb-5">
           <button
             type="button"
-            className={`btn flex-1 ${mode === "admin" ? "btn-primary" : ""}`}
+            className={`btn ${mode === "admin" ? "btn-primary" : ""}`}
             onClick={() => {
               setMode("admin");
               setPassword("Admin123!");
               setNeedTotp(false);
             }}
           >
+            <Shield size={16} />
             {t("auth.adminLogin")}
           </button>
           <button
             type="button"
-            className={`btn flex-1 ${mode === "portal" ? "btn-primary" : ""}`}
+            className={`btn ${mode === "portal" ? "btn-primary" : ""}`}
             onClick={() => {
               setMode("portal");
               setPassword("portal101");
               setNeedTotp(false);
             }}
           >
+            <Phone size={16} />
             {t("auth.portalLogin")}
           </button>
         </div>
         {mode === "admin" ? (
-          <label className="mb-3 block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("auth.email")}</span>
-            <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-        ) : (
-          <label className="mb-3 block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("auth.extension")}</span>
-            <input
-              className="input"
-              value={extension}
-              onChange={(e) => setExtension(e.target.value)}
-            />
-          </label>
-        )}
-        <label className="mb-3 block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("auth.password")}</span>
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+          <TextField
+            label={t("auth.email")}
+            icon={Mail}
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-        </label>
-        {(needTotp || mode === "admin") && (
-          <label className="mb-6 block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">
-              {t("auth.totp", { defaultValue: "Authenticator code (if enabled)" })}
-            </span>
-            <input
-              className="input"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value)}
-              placeholder="000000"
-            />
-          </label>
+        ) : (
+          <TextField
+            label={t("auth.extension")}
+            icon={Smartphone}
+            inputMode="numeric"
+            autoComplete="username"
+            value={extension}
+            onChange={(e) => setExtension(e.target.value)}
+          />
         )}
-        <button className="btn btn-primary w-full justify-center" disabled={loading}>
+        <TextField
+          label={t("auth.password")}
+          icon={KeyRound}
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {(needTotp || mode === "admin") && (
+          <TextField
+            label={t("auth.totp", { defaultValue: "Authenticator code (if enabled)" })}
+            icon={Shield}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value)}
+            placeholder="000000"
+          />
+        )}
+        <button className="btn btn-primary mt-2 w-full justify-center" disabled={loading}>
           {loading ? t("common.loading") : t("auth.signIn")}
         </button>
       </form>

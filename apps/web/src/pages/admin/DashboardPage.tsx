@@ -2,7 +2,17 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {
+  Clock3,
+  LayoutDashboard,
+  PhoneCall,
+  PhoneMissed,
+  PhoneOutgoing,
+  Trash2,
+  Tv,
+} from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, StatTile } from "../../components/ui";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -101,53 +111,74 @@ export function DashboardPage() {
 
   return (
     <div className={tv ? "fixed inset-0 z-50 overflow-auto bg-[var(--bg)] p-8" : ""}>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("dashboard.title")}</h1>
-          <p className="text-[var(--text-muted)]">
+      <PageHeader
+        icon={LayoutDashboard}
+        title={t("dashboard.title")}
+        tone="cyan"
+        description={
+          <>
             Asterisk:{" "}
             <span className={health.data?.asterisk ? "badge badge-ok" : "badge badge-err"}>
               {health.data?.asterisk ? t("dashboard.connected") : t("dashboard.disconnected")}
             </span>{" "}
             · WS: {wsNote}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-            Spy listener
-            <select
-              className="input w-auto min-w-[8rem]"
-              value={listenerExt}
-              onChange={(e) => setListenerExt(e.target.value)}
-            >
-              {(extensions.data ?? []).map((e) => (
-                <option key={e.id} value={e.number}>
-                  {e.number} — {e.name}
-                </option>
-              ))}
-              {(extensions.data ?? []).length === 0 && <option value={listenerExt}>{listenerExt}</option>}
-            </select>
-          </label>
-          <button className="btn" type="button" onClick={() => void cleanupSnoops()}>
-            Clear stuck spy
-          </button>
-          <button className="btn" type="button" onClick={() => setTv((v) => !v)}>
-            {tv ? "Exit TV" : "TV mode"}
-          </button>
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+              Spy listener
+              <select
+                className="input w-auto min-w-[8rem]"
+                value={listenerExt}
+                onChange={(e) => setListenerExt(e.target.value)}
+              >
+                {(extensions.data ?? []).map((e) => (
+                  <option key={e.id} value={e.number}>
+                    {e.number} — {e.name}
+                  </option>
+                ))}
+                {(extensions.data ?? []).length === 0 && (
+                  <option value={listenerExt}>{listenerExt}</option>
+                )}
+              </select>
+            </label>
+            <button className="btn" type="button" onClick={() => void cleanupSnoops()}>
+              <Trash2 size={16} />
+              Clear stuck spy
+            </button>
+            <button className="btn" type="button" onClick={() => setTv((v) => !v)}>
+              <Tv size={16} />
+              {tv ? "Exit TV" : "TV mode"}
+            </button>
+          </>
+        }
+      />
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: t("dashboard.activeCalls"), value: live.data?.calls.length ?? 0 },
-          { label: t("reports.answered"), value: summary.data?.answered ?? 0 },
-          { label: t("reports.missed"), value: summary.data?.missed ?? 0 },
-          { label: t("reports.avgTalk"), value: `${summary.data?.avgDuration ?? 0}s` },
-        ].map((c) => (
-          <div key={c.label} className="card p-5">
-            <div className="text-sm text-[var(--text-muted)]">{c.label}</div>
-            <div className="mt-2 text-3xl font-semibold">{c.value}</div>
-          </div>
-        ))}
+        <StatTile
+          icon={PhoneCall}
+          label={t("dashboard.activeCalls")}
+          value={live.data?.calls.length ?? 0}
+          tone="cyan"
+        />
+        <StatTile
+          icon={PhoneOutgoing}
+          label={t("reports.answered")}
+          value={summary.data?.answered ?? 0}
+          tone="success"
+        />
+        <StatTile
+          icon={PhoneMissed}
+          label={t("reports.missed")}
+          value={summary.data?.missed ?? 0}
+          tone="danger"
+        />
+        <StatTile
+          icon={Clock3}
+          label={t("reports.avgTalk")}
+          value={`${summary.data?.avgDuration ?? 0}s`}
+          tone="blue"
+        />
       </div>
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <div className="card overflow-hidden">

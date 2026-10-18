@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Cpu, List, Network, QrCode, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = { id: string; number: string; name: string };
 type Dev = {
@@ -54,88 +56,114 @@ export function DevicesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Devices / Softphone QR</h1>
-      <form
-        className="card flex flex-wrap gap-3 p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <select
-          className="input"
-          value={extensionId}
-          onChange={(e) => setExtensionId(e.target.value)}
-          required
+      <PageHeader
+        icon={QrCode}
+        title="Devices / Softphone QR"
+        tone="blue"
+        description="Provision desk phones and generate SIP QR codes for mobile softphones"
+      />
+      <SectionCard title="Add device" icon={Smartphone} tone="blue">
+        <form
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
         >
-          <option value="">Extension…</option>
-          {exts.data?.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.number} — {e.name}
-            </option>
-          ))}
-        </select>
-        <input className="input" value={model} onChange={(e) => setModel(e.target.value)} placeholder="Model" />
-        <input
-          className="input font-mono"
-          value={mac}
-          onChange={(e) => setMac(e.target.value)}
-          placeholder="MAC (aa:bb:…)"
-        />
-        <select className="input" value={profile} onChange={(e) => setProfile(e.target.value)}>
-          {PROFILES.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <button className="btn btn-primary" type="submit">
-          Add device
-        </button>
-      </form>
-      {qr && <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />}
-      <div className="card overflow-auto">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Extension</th>
-              <th>Model</th>
-              <th>MAC</th>
-              <th>Profile</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {devices.data?.map((d) => {
-              const ext = exts.data?.find((e) => e.id === d.extensionId);
-              return (
-                <tr key={d.id}>
-                  <td className="font-mono">{ext?.number ?? d.extensionId.slice(0, 8)}</td>
-                  <td>{d.model ?? "—"}</td>
-                  <td className="font-mono text-xs">{d.mac ?? "—"}</td>
-                  <td>{d.provisioningProfile ?? "—"}</td>
-                  <td className="flex gap-2">
-                    <button className="btn" type="button" onClick={() => void showQr(d.id)}>
-                      QR
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      type="button"
-                      onClick={() =>
-                        void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
-                          qc.invalidateQueries({ queryKey: ["devices"] }),
-                        )
-                      }
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+          <SelectField
+            label="Extension"
+            icon={Smartphone}
+            value={extensionId}
+            onChange={(e) => setExtensionId(e.target.value)}
+            required
+          >
+            <option value="">Extension…</option>
+            {exts.data?.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.number} — {e.name}
+              </option>
+            ))}
+          </SelectField>
+          <TextField
+            label="Model"
+            icon={Cpu}
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder="Model"
+          />
+          <TextField
+            label="MAC"
+            icon={Network}
+            className="font-mono"
+            value={mac}
+            onChange={(e) => setMac(e.target.value)}
+            placeholder="MAC (aa:bb:…)"
+          />
+          <SelectField
+            label="Provisioning profile"
+            value={profile}
+            onChange={(e) => setProfile(e.target.value)}
+          >
+            {PROFILES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </SelectField>
+          <button className="btn btn-primary mb-[0.85rem] w-fit" type="submit">
+            Add device
+          </button>
+        </form>
+      </SectionCard>
+      {qr && (
+        <SectionCard title="SIP QR" icon={QrCode} tone="cyan">
+          <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />
+        </SectionCard>
+      )}
+      <SectionCard title="Devices" icon={List} tone="cyan" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Extension</th>
+                <th>Model</th>
+                <th>MAC</th>
+                <th>Profile</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {devices.data?.map((d) => {
+                const ext = exts.data?.find((e) => e.id === d.extensionId);
+                return (
+                  <tr key={d.id}>
+                    <td className="font-mono">{ext?.number ?? d.extensionId.slice(0, 8)}</td>
+                    <td>{d.model ?? "—"}</td>
+                    <td className="font-mono text-xs">{d.mac ?? "—"}</td>
+                    <td>{d.provisioningProfile ?? "—"}</td>
+                    <td className="flex gap-2">
+                      <button className="btn" type="button" onClick={() => void showQr(d.id)}>
+                        QR
+                      </button>
+                      <button
+                        className="btn btn-danger"
+                        type="button"
+                        onClick={() =>
+                          void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
+                            qc.invalidateQueries({ queryKey: ["devices"] }),
+                          )
+                        }
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

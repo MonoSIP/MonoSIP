@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { BellRing, Hash, List, Tag, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = { id: string; number: string; name: string };
 type Group = {
@@ -73,95 +75,112 @@ export function RingGroupsPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-semibold">{t("nav.ringGroups")}</h1>
-      <form
-        className="card mb-6 space-y-3 p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (editId) save.mutate();
-          else create.mutate();
-        }}
+    <div className="space-y-6">
+      <PageHeader
+        icon={UsersRound}
+        title={t("nav.ringGroups")}
+        tone="cyan"
+        description="Ring multiple extensions together with ringall or linear strategy"
+      />
+      <SectionCard
+        title={editId ? t("common.save") : t("common.create")}
+        icon={BellRing}
+        tone="cyan"
       >
-        <div className="flex flex-wrap gap-3">
-          <input
-            className="input max-w-[140px]"
-            value={number}
-            onChange={(e) => setNumber(e.target.value)}
-            placeholder={t("extensions.number")}
-            disabled={!!editId}
-            required
-          />
-          <input
-            className="input max-w-xs"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("extensions.name")}
-            required
-          />
-          <select className="input" value={strategy} onChange={(e) => setStrategy(e.target.value)}>
-            <option value="ringall">ringall</option>
-            <option value="linear">linear</option>
-          </select>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {exts.data?.map((e) => (
-            <label key={e.id} className="flex items-center gap-1 rounded border border-[var(--border)] px-2 py-1 text-sm">
-              <input type="checkbox" checked={memberIds.includes(e.id)} onChange={() => toggle(e.id)} />
-              {e.number}
-            </label>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <button className="btn btn-primary" type="submit">
-            {editId ? t("common.save") : t("common.create")}
-          </button>
-          {editId && (
-            <button className="btn" type="button" onClick={reset}>
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-      <div className="card overflow-auto">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{t("extensions.number")}</th>
-              <th>{t("extensions.name")}</th>
-              <th>Strategy</th>
-              <th>Members</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {list.data?.map((g) => (
-              <tr key={g.id}>
-                <td className="font-mono">{g.number}</td>
-                <td>{g.name}</td>
-                <td>{g.strategy}</td>
-                <td>{g.memberIds?.length ?? 0}</td>
-                <td className="flex gap-1">
-                  <button className="btn" type="button" onClick={() => startEdit(g)}>
-                    Edit
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    type="button"
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
-                        qc.invalidateQueries({ queryKey: ["ring-groups"] }),
-                      )
-                    }
-                  >
-                    {t("common.delete")}
-                  </button>
-                </td>
-              </tr>
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (editId) save.mutate();
+            else create.mutate();
+          }}
+        >
+          <div className="flex flex-wrap gap-3">
+            <TextField
+              label={t("extensions.number")}
+              icon={Hash}
+              className="max-w-[140px]"
+              placeholder={t("extensions.number")}
+              value={number}
+              onChange={(e) => setNumber(e.target.value)}
+              disabled={!!editId}
+              required
+            />
+            <TextField
+              label={t("extensions.name")}
+              icon={Tag}
+              className="max-w-xs"
+              placeholder={t("extensions.name")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <SelectField label="Strategy" value={strategy} onChange={(e) => setStrategy(e.target.value)}>
+              <option value="ringall">ringall</option>
+              <option value="linear">linear</option>
+            </SelectField>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {exts.data?.map((e) => (
+              <label key={e.id} className="flex items-center gap-1 rounded border border-[var(--border)] px-2 py-1 text-sm">
+                <input type="checkbox" checked={memberIds.includes(e.id)} onChange={() => toggle(e.id)} />
+                {e.number}
+              </label>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn btn-primary" type="submit">
+              {editId ? t("common.save") : t("common.create")}
+            </button>
+            {editId && (
+              <button className="btn" type="button" onClick={reset}>
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      </SectionCard>
+      <SectionCard title="Ring groups" icon={List} tone="blue" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("extensions.number")}</th>
+                <th>{t("extensions.name")}</th>
+                <th>Strategy</th>
+                <th>Members</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {list.data?.map((g) => (
+                <tr key={g.id}>
+                  <td className="font-mono">{g.number}</td>
+                  <td>{g.name}</td>
+                  <td>{g.strategy}</td>
+                  <td>{g.memberIds?.length ?? 0}</td>
+                  <td className="flex gap-1">
+                    <button className="btn" type="button" onClick={() => startEdit(g)}>
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      type="button"
+                      onClick={() =>
+                        void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
+                          qc.invalidateQueries({ queryKey: ["ring-groups"] }),
+                        )
+                      }
+                    >
+                      {t("common.delete")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

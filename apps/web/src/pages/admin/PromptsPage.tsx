@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pause, Play, Upload } from "lucide-react";
+import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Prompt = {
   id: string;
@@ -171,6 +172,17 @@ export function PromptsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const ttsBadge = (
+    <span className="text-sm text-[var(--text-muted)]">
+      Piper TTS:{" "}
+      <span className={ttsStatus.data?.ok ? "badge badge-ok" : "badge badge-err"}>
+        {ttsStatus.data?.ok
+          ? t("prompts.ttsReady", { defaultValue: "ready (EN + TR)" })
+          : ttsStatus.data?.error ?? t("prompts.ttsOffline", { defaultValue: "offline" })}
+      </span>
+    </span>
+  );
+
   return (
     <div className="space-y-6">
       <audio
@@ -181,105 +193,103 @@ export function PromptsPage() {
         onPause={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}
       />
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("nav.prompts")}</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          Piper TTS:{" "}
-          <span className={ttsStatus.data?.ok ? "badge badge-ok" : "badge badge-err"}>
-            {ttsStatus.data?.ok
-              ? t("prompts.ttsReady", { defaultValue: "ready (EN + TR)" })
-              : ttsStatus.data?.error ?? t("prompts.ttsOffline", { defaultValue: "offline" })}
-          </span>
-        </p>
-      </div>
+      <PageHeader
+        icon={Mic}
+        title={t("nav.prompts")}
+        tone="coral"
+        description="IVR prompts — upload WAV or generate with Piper TTS"
+        actions={ttsBadge}
+      />
 
-      <form
-        className="card grid gap-3 p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!name.trim() && !audioFile) {
-            toast.error(t("prompts.nameRequired", { defaultValue: "Name is required" }));
-            return;
-          }
-          create.mutate();
-        }}
-      >
-        <input
-          className="input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t("prompts.name", { defaultValue: "Name" })}
-          required={!audioFile}
-        />
-        <label className="block text-sm text-[var(--text-muted)]">
-          {t("prompts.language", { defaultValue: "Language" })}
-          <select
-            className="input mt-1"
+      <SectionCard title={t("common.create", { defaultValue: "Create prompt" })} icon={AudioLines} tone="coral">
+        <form
+          className="grid gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!name.trim() && !audioFile) {
+              toast.error(t("prompts.nameRequired", { defaultValue: "Name is required" }));
+              return;
+            }
+            create.mutate();
+          }}
+        >
+          <TextField
+            label={t("prompts.name", { defaultValue: "Name" })}
+            icon={Tag}
+            placeholder={t("prompts.name")}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={!audioFile}
+          />
+          <SelectField
+            label={t("prompts.language", { defaultValue: "Language" })}
+            icon={Languages}
             value={language}
             onChange={(e) => setLanguage(e.target.value as "en" | "tr")}
           >
             <option value="tr">Türkçe</option>
             <option value="en">English</option>
-          </select>
-        </label>
-        <textarea
-          className="input min-h-24"
-          value={ttsText}
-          onChange={(e) => setTtsText(e.target.value)}
-          placeholder={t("prompts.ttsPlaceholder", {
-            defaultValue: "Optional TTS text — or upload a WAV below",
-          })}
-        />
-
-        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-soft)] p-4">
-          <div className="mb-2 text-sm font-medium">
-            {t("prompts.uploadTitle", { defaultValue: "Audio file upload" })}
-          </div>
-          <p className="mb-3 text-xs text-[var(--text-muted)]">
-            {t("prompts.uploadHint", {
-              defaultValue: "WAV recommended (mono, 8–22 kHz). Max 25 MB. Used directly in IVR.",
+          </SelectField>
+          <TextAreaField
+            label="TTS text"
+            className="min-h-24"
+            value={ttsText}
+            onChange={(e) => setTtsText(e.target.value)}
+            placeholder={t("prompts.ttsPlaceholder", {
+              defaultValue: "Optional TTS text — or upload a WAV below",
             })}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".wav,.ulaw,.alaw,.gsm,audio/wav,audio/x-wav,audio/*"
-              className="block w-full max-w-md text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[var(--bg)]"
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                setAudioFile(f);
-                if (f && !name.trim()) setName(f.name.replace(/\.[^.]+$/, ""));
-              }}
-            />
-            {audioFile && (
-              <span className="text-sm text-[var(--text-muted)]">
-                {audioFile.name} ({Math.round(audioFile.size / 1024)} KB)
-                <button
-                  type="button"
-                  className="btn ml-2"
-                  onClick={() => {
-                    setAudioFile(null);
-                    if (fileRef.current) fileRef.current.value = "";
-                  }}
-                >
-                  {t("common.clear", { defaultValue: "Clear" })}
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
+          />
 
-        <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary w-fit" type="submit" disabled={create.isPending}>
-            {audioFile
-              ? t("prompts.createWithUpload", { defaultValue: "Create with audio file" })
-              : ttsText.trim()
-                ? t("prompts.createAndSpeak", { defaultValue: "Create + generate TTS" })
-                : t("common.create")}
-          </button>
-        </div>
-      </form>
+          <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-soft)] p-4">
+            <div className="mb-2 text-sm font-medium">
+              {t("prompts.uploadTitle", { defaultValue: "Audio file upload" })}
+            </div>
+            <p className="mb-3 text-xs text-[var(--text-muted)]">
+              {t("prompts.uploadHint", {
+                defaultValue: "WAV recommended (mono, 8–22 kHz). Max 25 MB. Used directly in IVR.",
+              })}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".wav,.ulaw,.alaw,.gsm,audio/wav,audio/x-wav,audio/*"
+                className="block w-full max-w-md text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--accent)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[var(--bg)]"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setAudioFile(f);
+                  if (f && !name.trim()) setName(f.name.replace(/\.[^.]+$/, ""));
+                }}
+              />
+              {audioFile && (
+                <span className="text-sm text-[var(--text-muted)]">
+                  {audioFile.name} ({Math.round(audioFile.size / 1024)} KB)
+                  <button
+                    type="button"
+                    className="btn ml-2"
+                    onClick={() => {
+                      setAudioFile(null);
+                      if (fileRef.current) fileRef.current.value = "";
+                    }}
+                  >
+                    {t("common.clear", { defaultValue: "Clear" })}
+                  </button>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button className="btn btn-primary w-fit" type="submit" disabled={create.isPending}>
+              {audioFile
+                ? t("prompts.createWithUpload", { defaultValue: "Create with audio file" })
+                : ttsText.trim()
+                  ? t("prompts.createAndSpeak", { defaultValue: "Create + generate TTS" })
+                  : t("common.create")}
+            </button>
+          </div>
+        </form>
+      </SectionCard>
 
       <input
         ref={replaceRef}
@@ -292,78 +302,80 @@ export function PromptsPage() {
         }}
       />
 
-      <div className="card overflow-auto">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Lang</th>
-              <th>TTS</th>
-              <th>File</th>
-              <th>Id</th>
-              <th>{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(list.data ?? []).length === 0 ? (
+      <SectionCard title="All prompts" icon={List} tone="blue" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={6}>—</td>
+                <th>Name</th>
+                <th>Lang</th>
+                <th>TTS</th>
+                <th>File</th>
+                <th>Id</th>
+                <th>{t("common.actions")}</th>
               </tr>
-            ) : (
-              list.data?.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.name}</td>
-                  <td>{p.language}</td>
-                  <td className="max-w-md truncate">{p.ttsText}</td>
-                  <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
-                  <td className="font-mono text-xs" title={p.id}>
-                    {p.id.slice(0, 8)}…
-                  </td>
-                  <td>
-                    <div className="flex flex-wrap gap-2">
-                      {p.filePath && (
-                        <button
-                          className={`btn ${playingId === p.id && isPlaying ? "btn-primary" : ""}`}
-                          type="button"
-                          onClick={() => void playPrompt(p.id)}
-                        >
-                          {playingId === p.id && isPlaying ? (
-                            <Pause size={16} />
-                          ) : (
-                            <Play size={16} />
-                          )}
-                          {playingId === p.id && isPlaying
-                            ? t("prompts.pause", { defaultValue: "Pause" })
-                            : t("prompts.play", { defaultValue: "Play" })}
-                        </button>
-                      )}
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={() => {
-                          setReplaceId(p.id);
-                          replaceRef.current?.click();
-                        }}
-                      >
-                        <Upload size={16} />
-                        {t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
-                      </button>
-                      <button
-                        className="btn"
-                        type="button"
-                        disabled={!p.ttsText || synthesize.isPending}
-                        onClick={() => synthesize.mutate(p.id)}
-                      >
-                        {t("prompts.generate", { defaultValue: "Generate TTS" })}
-                      </button>
-                    </div>
-                  </td>
+            </thead>
+            <tbody>
+              {(list.data ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={6}>—</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                list.data?.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.name}</td>
+                    <td>{p.language}</td>
+                    <td className="max-w-md truncate">{p.ttsText}</td>
+                    <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
+                    <td className="font-mono text-xs" title={p.id}>
+                      {p.id.slice(0, 8)}…
+                    </td>
+                    <td>
+                      <div className="flex flex-wrap gap-2">
+                        {p.filePath && (
+                          <button
+                            className={`btn ${playingId === p.id && isPlaying ? "btn-primary" : ""}`}
+                            type="button"
+                            onClick={() => void playPrompt(p.id)}
+                          >
+                            {playingId === p.id && isPlaying ? (
+                              <Pause size={16} />
+                            ) : (
+                              <Play size={16} />
+                            )}
+                            {playingId === p.id && isPlaying
+                              ? t("prompts.pause", { defaultValue: "Pause" })
+                              : t("prompts.play", { defaultValue: "Play" })}
+                          </button>
+                        )}
+                        <button
+                          className="btn"
+                          type="button"
+                          onClick={() => {
+                            setReplaceId(p.id);
+                            replaceRef.current?.click();
+                          }}
+                        >
+                          <Upload size={16} />
+                          {t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
+                        </button>
+                        <button
+                          className="btn"
+                          type="button"
+                          disabled={!p.ttsText || synthesize.isPending}
+                          onClick={() => synthesize.mutate(p.id)}
+                        >
+                          {t("prompts.generate", { defaultValue: "Generate TTS" })}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

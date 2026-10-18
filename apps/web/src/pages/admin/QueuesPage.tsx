@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Headphones, ListOrdered, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = { id: string; number: string; name: string };
 type Member = { extensionId: string; penalty: number; paused?: boolean };
@@ -193,86 +195,93 @@ export function QueuesPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold">{t("queues.title")}</h1>
-      <form
-        className="card mb-6 space-y-3 p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (editId) saveEdit.mutate();
-          else create.mutate();
-        }}
+      <PageHeader
+        icon={Headphones}
+        title={t("queues.title")}
+        tone="blue"
+        description="Call queues, agents, and overflow destinations"
+      />
+      <SectionCard
+        title={editId ? t("common.edit", { defaultValue: "Edit" }) : t("common.create")}
+        icon={Plus}
+        tone="cyan"
+        className="mb-6"
       >
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (editId) saveEdit.mutate();
+            else create.mutate();
+          }}
+        >
         <div className="flex flex-wrap gap-3">
-          <input
-            className="input max-w-[140px]"
+          <TextField
+            label={t("extensions.number")}
+            className="max-w-[140px]"
             placeholder={t("extensions.number")}
             value={number}
             onChange={(e) => setNumber(e.target.value)}
             disabled={!!editId}
             required
           />
-          <input
-            className="input max-w-xs"
+          <TextField
+            label={t("extensions.name")}
+            className="max-w-xs"
             placeholder={t("extensions.name")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
-          <select className="input max-w-[10rem]" value={strategy} onChange={(e) => setStrategy(e.target.value)}>
+          <SelectField
+            label={t("queues.strategy")}
+            className="max-w-[10rem]"
+            value={strategy}
+            onChange={(e) => setStrategy(e.target.value)}
+          >
             {STRATEGIES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
-          </select>
-          <label className="text-sm text-[var(--text-muted)]">
-            Max wait (s)
-            <input
-              className="input mt-1 w-24"
-              type="number"
-              value={maxWait}
-              onChange={(e) => setMaxWait(Number(e.target.value))}
-            />
-          </label>
-          <label className="text-sm text-[var(--text-muted)]">
-            Max callers
-            <input
-              className="input mt-1 w-24"
-              type="number"
-              min={0}
-              value={maxCallers}
-              onChange={(e) => setMaxCallers(Number(e.target.value))}
-            />
-          </label>
-          <label className="text-sm text-[var(--text-muted)]">
-            Agent ring (s)
-            <input
-              className="input mt-1 w-24"
-              type="number"
-              value={memberTimeout}
-              onChange={(e) => setMemberTimeout(Number(e.target.value))}
-            />
-          </label>
-          <label className="text-sm text-[var(--text-muted)]">
-            Wrap-up (s)
-            <input
-              className="input mt-1 w-24"
-              type="number"
-              value={wrapup}
-              onChange={(e) => setWrapup(Number(e.target.value))}
-            />
-          </label>
-          <label className="text-sm text-[var(--text-muted)]">
-            MOH class
-            <select className="input mt-1" value={mohId} onChange={(e) => setMohId(e.target.value)}>
-              <option value="">default</option>
-              {(moh.data ?? []).map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          </SelectField>
+          <TextField
+            label="Max wait (s)"
+            className="w-24"
+            type="number"
+            value={maxWait}
+            onChange={(e) => setMaxWait(Number(e.target.value))}
+          />
+          <TextField
+            label="Max callers"
+            className="w-24"
+            type="number"
+            min={0}
+            value={maxCallers}
+            onChange={(e) => setMaxCallers(Number(e.target.value))}
+          />
+          <TextField
+            label="Agent ring (s)"
+            className="w-24"
+            type="number"
+            value={memberTimeout}
+            onChange={(e) => setMemberTimeout(Number(e.target.value))}
+          />
+          <TextField
+            label="Wrap-up (s)"
+            className="w-24"
+            type="number"
+            value={wrapup}
+            onChange={(e) => setWrapup(Number(e.target.value))}
+          />
+          <SelectField label="MOH class" value={mohId} onChange={(e) => setMohId(e.target.value)}>
+            <option value="">default</option>
+            {(moh.data ?? []).map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </SelectField>
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2">
@@ -371,6 +380,7 @@ export function QueuesPage() {
         </div>
         <div className="flex gap-2">
           <button className="btn btn-primary" type="submit">
+            <Plus size={16} />
             {editId ? t("common.save") : t("common.create")}
           </button>
           {editId && (
@@ -379,8 +389,9 @@ export function QueuesPage() {
             </button>
           )}
         </div>
-      </form>
-      <div className="card overflow-auto">
+        </form>
+      </SectionCard>
+      <SectionCard title="Queue list" icon={ListOrdered} tone="blue" className="overflow-auto !space-y-0">
         <table className="table">
           <thead>
             <tr>
@@ -428,7 +439,7 @@ export function QueuesPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { MapPin, Route } from "lucide-react";
 import { api } from "../lib/api";
+import { SelectField, TextField } from "./ui";
 
 const DEST_TYPES = [
   { value: "extension", label: "Extension" },
@@ -50,14 +52,12 @@ export function DestPicker({ destType, destId, onChange, className }: Props) {
 
   const options: Array<{ value: string; label: string }> = (() => {
     if (destType === "extension" || destType === "voicemail") {
-      // Dialplan / ARI dial PJSIP/<number> — always store extension number
       return (exts.data ?? []).map((e) => ({
         value: e.number,
         label: `${e.number} — ${e.name}`,
       }));
     }
     if (destType === "queue") {
-      // Queue dialplan uses queue number as extension
       return (queues.data ?? []).map((q) => ({ value: q.number, label: `${q.number} — ${q.name}` }));
     }
     if (destType === "ring_group") {
@@ -77,49 +77,42 @@ export function DestPicker({ destType, destId, onChange, className }: Props) {
 
   return (
     <div className={`grid w-full gap-2 sm:grid-cols-2 ${className ?? ""}`}>
-      <label className="block text-xs text-[var(--text-muted)]">
-        <span className="font-medium text-[var(--text)]">Type</span>
-        <select
-          className="input mt-1 w-full"
-          value={destType}
-          onChange={(e) => onChange(e.target.value, e.target.value === "hangup" ? null : destId)}
+      <SelectField
+        label="Type"
+        icon={Route}
+        value={destType}
+        onChange={(e) => onChange(e.target.value, e.target.value === "hangup" ? null : destId)}
+      >
+        {DEST_TYPES.map((d) => (
+          <option key={d.value} value={d.value}>
+            {d.label}
+          </option>
+        ))}
+      </SelectField>
+      {needsId && useSelect && (
+        <SelectField
+          label="Target"
+          icon={MapPin}
+          value={destId ?? ""}
+          onChange={(e) => onChange(destType, e.target.value || null)}
         >
-          {DEST_TYPES.map((d) => (
-            <option key={d.value} value={d.value}>
-              {d.label}
+          <option value="">— select —</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
             </option>
           ))}
-        </select>
-      </label>
-      {needsId && useSelect && (
-        <label className="block text-xs text-[var(--text-muted)]">
-          <span className="font-medium text-[var(--text)]">Target</span>
-          <select
-            className="input mt-1 w-full"
-            value={destId ?? ""}
-            onChange={(e) => onChange(destType, e.target.value || null)}
-          >
-            <option value="">— select —</option>
-            {options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        </SelectField>
       )}
       {needsId && !useSelect && (
-        <label className="block text-xs text-[var(--text-muted)]">
-          <span className="font-medium text-[var(--text)]">
-            {destType === "external" ? "Number" : "Target"}
-          </span>
-          <input
-            className="input mt-1 w-full font-mono"
-            value={destId ?? ""}
-            onChange={(e) => onChange(destType, e.target.value || null)}
-            placeholder={destType === "external" ? "+90555…" : "id"}
-          />
-        </label>
+        <TextField
+          label={destType === "external" ? "Number" : "Target"}
+          icon={MapPin}
+          className="font-mono"
+          value={destId ?? ""}
+          onChange={(e) => onChange(destType, e.target.value || null)}
+          placeholder={destType === "external" ? "+90555…" : "id"}
+        />
       )}
     </div>
   );

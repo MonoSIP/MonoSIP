@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Download, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Ext = {
   id: string;
@@ -202,113 +204,111 @@ export function ExtensionsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("extensions.title")}</h1>
-        <div className="flex gap-2">
-          <button className="btn" type="button" onClick={() => void exportCsv()}>
-            Export CSV
+      <PageHeader
+        icon={Users}
+        title={t("extensions.title")}
+        tone="blue"
+        description="Desk phones, softphones, and portal accounts"
+        actions={
+          <div className="flex gap-2">
+            <button className="btn" type="button" onClick={() => void exportCsv()}>
+              <Download size={16} />
+              Export CSV
+            </button>
+            <label className="btn cursor-pointer">
+              <Upload size={16} />
+              Import CSV
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void importCsv(f);
+                }}
+              />
+            </label>
+          </div>
+        }
+      />
+      <SectionCard title="Add extension" icon={UserPlus} tone="cyan" className="mb-6">
+        <form
+          className="grid gap-3 sm:grid-cols-4 sm:items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
+          <TextField
+            label={t("extensions.number")}
+            value={number}
+            onChange={(e) => setNumber(e.target.value)}
+            required
+          />
+          <TextField
+            label={t("extensions.name")}
+            className="sm:col-span-2"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <button className="btn btn-primary mb-[0.85rem] justify-center" type="submit">
+            <UserPlus size={16} />
+            {t("extensions.add")}
           </button>
-          <label className="btn cursor-pointer">
-            Import CSV
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void importCsv(f);
-              }}
-            />
-          </label>
-        </div>
-      </div>
-      <form
-        className="card mb-6 grid gap-3 p-4 sm:grid-cols-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          create.mutate();
-        }}
-      >
-        <input
-          className="input"
-          placeholder={t("extensions.number")}
-          value={number}
-          onChange={(e) => setNumber(e.target.value)}
-          required
-        />
-        <input
-          className="input sm:col-span-2"
-          placeholder={t("extensions.name")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <button className="btn btn-primary justify-center" type="submit">
-          {t("extensions.add")}
-        </button>
-      </form>
+        </form>
+      </SectionCard>
 
       {edit && (
-        <div className="card mb-6 space-y-3 p-4">
-          <h2 className="font-medium">
-            Edit {edit.number}
-          </h2>
+        <SectionCard title={`Edit ${edit.number}`} icon={Users} tone="coral" className="mb-6">
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm text-[var(--text-muted)]">
-              Name
-              <input className="input mt-1 w-full" value={editName} onChange={(e) => setEditName(e.target.value)} />
-            </label>
-            <label className="text-sm text-[var(--text-muted)]">
-              Recording
-              <select className="input mt-1 w-full" value={editRecording} onChange={(e) => setEditRecording(e.target.value)}>
-                <option value="off">off</option>
-                <option value="always">always</option>
-                <option value="external">external only</option>
-              </select>
-            </label>
+            <TextField label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            <SelectField
+              label="Recording"
+              value={editRecording}
+              onChange={(e) => setEditRecording(e.target.value)}
+            >
+              <option value="off">off</option>
+              <option value="always">always</option>
+              <option value="external">external only</option>
+            </SelectField>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={editPortal} onChange={(e) => setEditPortal(e.target.checked)} />
               Portal enabled
             </label>
-            <label className="text-sm text-[var(--text-muted)]">
-              Secretary of (boss extension id)
-              <select className="input mt-1 w-full" value={editBoss} onChange={(e) => setEditBoss(e.target.value)}>
-                <option value="">— none —</option>
-                {list.data
-                  ?.filter((x) => x.id !== edit.id)
-                  .map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.number} — {x.name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label className="text-sm text-[var(--text-muted)] sm:col-span-2">
-              Outbound CLI
-              <input className="input mt-1 w-full font-mono" value={cli} onChange={(e) => setCli(e.target.value)} />
-            </label>
-            <label className="text-sm text-[var(--text-muted)]">
-              Daily spend limit (min, empty=global)
-              <input
-                className="input mt-1 w-full font-mono"
-                type="number"
-                min={0}
-                value={spendDaily}
-                onChange={(e) => setSpendDaily(e.target.value)}
-                placeholder="—"
-              />
-            </label>
-            <label className="text-sm text-[var(--text-muted)]">
-              Monthly spend limit (min)
-              <input
-                className="input mt-1 w-full font-mono"
-                type="number"
-                min={0}
-                value={spendMonthly}
-                onChange={(e) => setSpendMonthly(e.target.value)}
-                placeholder="—"
-              />
-            </label>
+            <SelectField label="Secretary of" value={editBoss} onChange={(e) => setEditBoss(e.target.value)}>
+              <option value="">— none —</option>
+              {list.data
+                ?.filter((x) => x.id !== edit.id)
+                .map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.number} — {x.name}
+                  </option>
+                ))}
+            </SelectField>
+            <TextField
+              className="sm:col-span-2"
+              label="Outbound CLI"
+              value={cli}
+              onChange={(e) => setCli(e.target.value)}
+            />
+            <TextField
+              label="Daily spend limit (min)"
+              hint="Empty = global default"
+              type="number"
+              min={0}
+              value={spendDaily}
+              onChange={(e) => setSpendDaily(e.target.value)}
+              placeholder="—"
+            />
+            <TextField
+              label="Monthly spend limit (min)"
+              type="number"
+              min={0}
+              value={spendMonthly}
+              onChange={(e) => setSpendMonthly(e.target.value)}
+              placeholder="—"
+            />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -423,10 +423,10 @@ export function ExtensionsPage() {
               {t("common.cancel", { defaultValue: "Cancel" })}
             </button>
           </div>
-        </div>
+        </SectionCard>
       )}
 
-      <div className="card overflow-auto">
+      <SectionCard title="Extensions" icon={Users} tone="blue" className="overflow-auto">
         <table className="table">
           <thead>
             <tr>
@@ -466,7 +466,7 @@ export function ExtensionsPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
     </div>
   );
 }

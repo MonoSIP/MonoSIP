@@ -8,11 +8,11 @@ import { usePortalLive } from "../hooks/usePortalLive";
 import { AppBrand } from "../components/AppBrand";
 
 const links = [
-  { to: "/", icon: Phone, key: "phone", end: true },
-  { to: "/directory", icon: BookUser, key: "directory" },
-  { to: "/calls", icon: History, key: "myCalls" },
-  { to: "/recordings", icon: FileAudio, key: "myRecordings" },
-  { to: "/settings", icon: Settings, key: "mySettings" },
+  { to: "/", icon: Phone, key: "phone", end: true, tone: "var(--accent)" },
+  { to: "/directory", icon: BookUser, key: "directory", tone: "var(--accent-3)" },
+  { to: "/calls", icon: History, key: "myCalls", tone: "var(--warning)" },
+  { to: "/recordings", icon: FileAudio, key: "myRecordings", tone: "var(--violet-line)" },
+  { to: "/settings", icon: Settings, key: "mySettings", tone: "var(--text-muted)" },
 ];
 
 export function PortalLayout() {
@@ -34,19 +34,22 @@ export function PortalLayout() {
 
   return (
     <div className="flex min-h-full flex-col md:flex-row">
-      <aside className="hidden w-56 shrink-0 border-r border-[var(--border)] p-4 md:block">
+      <aside className="aside-panel hidden w-56 shrink-0 p-4 md:block">
         <AppBrand
           subtitle={actor?.type === "extension" ? `${actor.number} · ${actor.name}` : ""}
         />
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-0.5">
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               end={l.end}
+              style={{ ["--tone" as string]: l.tone }}
               className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
             >
-              <l.icon size={18} />
+              <span className="nav-ico">
+                <l.icon size={16} strokeWidth={2.25} />
+              </span>
               {t(`nav.${l.key}`)}
             </NavLink>
           ))}
@@ -76,17 +79,21 @@ export function PortalLayout() {
       <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
         <Outlet />
       </main>
-      <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-[var(--border)] bg-[var(--bg-elevated)] p-2 md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--bg-elevated)_94%,transparent)] p-2 backdrop-blur-md md:hidden">
         {links.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
             end={l.end}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-2 py-1 text-xs ${isActive ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}`
+              `flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition ${
+                isActive
+                  ? "bg-[color-mix(in_oklab,var(--accent)_16%,transparent)] text-[var(--accent)]"
+                  : "text-[var(--text-muted)]"
+              }`
             }
           >
-            <l.icon size={18} />
+            <l.icon size={18} strokeWidth={2.25} />
             {t(`nav.${l.key}`)}
           </NavLink>
         ))}

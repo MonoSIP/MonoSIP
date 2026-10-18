@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Ban, Plus, Route, Signpost } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Inbound = {
   id: string;
@@ -146,22 +148,20 @@ export function RoutesPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">{t("routes.title")}</h1>
-      <section className="card p-4">
-        <h2 className="mb-3 font-medium">{t("routes.inbound")}</h2>
+      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description="Inbound DIDs, outbound patterns, and blacklist" />
+      <SectionCard title={t("routes.inbound")} icon={Signpost} tone="cyan">
         <form
-          className="mb-3 grid gap-2 sm:grid-cols-6"
+          className="mb-3 grid gap-2 sm:grid-cols-6 sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
             saveInbound.mutate();
           }}
         >
-          <input className="input" value={did} onChange={(e) => setDid(e.target.value)} placeholder="DID" />
-          <input
-            className="input"
+          <TextField label="DID" value={did} onChange={(e) => setDid(e.target.value)} />
+          <TextField
+            label="Caller pattern"
             value={callerPattern}
             onChange={(e) => setCallerPattern(e.target.value)}
-            placeholder="Caller pattern"
           />
           <DestPicker
             destType={destType}
@@ -171,14 +171,15 @@ export function RoutesPage() {
               setDestId(id ?? "");
             }}
           />
-          <input
-            className="input"
+          <TextField
+            label="Priority"
             type="number"
             value={priority}
             onChange={(e) => setPriority(Number(e.target.value))}
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 pb-[0.85rem]">
             <button className="btn btn-primary" type="submit">
+              <Plus size={16} />
               {editInboundId ? t("common.save") : t("common.create")}
             </button>
             {editInboundId ? (
@@ -227,38 +228,44 @@ export function RoutesPage() {
             ))}
           </tbody>
         </table>
-      </section>
-      <section className="card p-4">
-        <h2 className="mb-3 font-medium">{t("routes.outbound")}</h2>
+      </SectionCard>
+      <SectionCard title={t("routes.outbound")} icon={Route} tone="blue">
         <form
-          className="mb-3 grid gap-2 sm:grid-cols-6"
+          className="mb-3 grid gap-2 sm:grid-cols-6 sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
             saveOutbound.mutate();
           }}
         >
-          <input className="input" value={obName} onChange={(e) => setObName(e.target.value)} placeholder="Name" required />
-          <input className="input font-mono" value={obPattern} onChange={(e) => setObPattern(e.target.value)} placeholder="Pattern" required />
-          <select className="input" value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
+          <TextField label="Name" value={obName} onChange={(e) => setObName(e.target.value)} required />
+          <TextField
+            label="Pattern"
+            className="font-mono"
+            value={obPattern}
+            onChange={(e) => setObPattern(e.target.value)}
+            required
+          />
+          <SelectField label="Trunk" value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
             <option value="">Trunk…</option>
             {(trunks.data ?? []).map((tr) => (
               <option key={tr.id} value={tr.id}>
                 {tr.name}
               </option>
             ))}
-          </select>
-          <select className="input" value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
+          </SelectField>
+          <SelectField label="Permission" value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
             <option value="localFixed">localFixed</option>
             <option value="mobile">mobile</option>
             <option value="short444">short444</option>
             <option value="international">international</option>
-          </select>
-          <label className="flex items-center gap-2 text-sm">
+          </SelectField>
+          <label className="flex items-center gap-2 pb-[0.85rem] text-sm">
             <input type="checkbox" checked={obEnabled} onChange={(e) => setObEnabled(e.target.checked)} />
             {t("common.enabled")}
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 pb-[0.85rem]">
             <button className="btn btn-primary" type="submit">
+              <Plus size={16} />
               {editOutboundId ? t("common.save") : t("common.create")}
             </button>
             {editOutboundId ? (
@@ -313,11 +320,10 @@ export function RoutesPage() {
             )}
           </tbody>
         </table>
-      </section>
-      <section className="card p-4">
-        <h2 className="mb-3 font-medium">{t("routes.blacklist")}</h2>
+      </SectionCard>
+      <SectionCard title={t("routes.blacklist")} icon={Ban} tone="coral">
         <form
-          className="mb-3 flex flex-wrap gap-2"
+          className="mb-3 flex flex-wrap items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
@@ -333,14 +339,15 @@ export function RoutesPage() {
               });
           }}
         >
-          <input className="input" name="pattern" placeholder="Pattern" required />
-          <select className="input" name="direction" defaultValue="both">
+          <TextField label="Pattern" name="pattern" required />
+          <SelectField label="Direction" name="direction" defaultValue="both">
             <option value="inbound">inbound</option>
             <option value="outbound">outbound</option>
             <option value="both">both</option>
-          </select>
-          <input className="input" name="note" placeholder="Note" />
-          <button className="btn btn-primary" type="submit">
+          </SelectField>
+          <TextField label="Note" name="note" />
+          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+            <Plus size={16} />
             {t("common.create")}
           </button>
         </form>
@@ -376,7 +383,7 @@ export function RoutesPage() {
             ))}
           </tbody>
         </table>
-      </section>
+      </SectionCard>
     </div>
   );
 }

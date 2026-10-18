@@ -116,7 +116,7 @@ describe("portal smoke tests", () => {
     renderPage(<DirectoryPage />);
 
     expect(await screen.findByRole("heading", { name: "nav.directory" })).toBeInTheDocument();
-    const ali = (await screen.findByText("Ali")).closest("div.card") as HTMLElement;
+    const ali = (await screen.findByText("Ali")).closest("div.rounded-md") as HTMLElement;
     await userEvent.click(within(ali).getByRole("button", { name: "portal.dial" }));
     expect(navigate).toHaveBeenCalledWith("/?dial=101");
   });
@@ -129,7 +129,7 @@ describe("portal smoke tests", () => {
     renderPage(<DirectoryPage />);
 
     await screen.findByText("Veli");
-    const card = screen.getByText("Veli").closest("div.card") as HTMLElement;
+    const card = screen.getByText("Veli").closest("div.rounded-md") as HTMLElement;
     expect(within(card).getByRole("button", { name: "portal.dial" })).toBeDisabled();
   });
 

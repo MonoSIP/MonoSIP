@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { CalendarClock, CalendarDays, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
+import { PageHeader, SectionCard, TextField } from "../../components/ui";
 
 type Range = {
   id?: string;
@@ -246,26 +248,32 @@ export function SchedulesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("schedules.title")}</h1>
-        <form
-          className="flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            create.mutate();
-          }}
-        >
-          <input
-            className="input"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder={t("schedules.newName", { defaultValue: "New schedule name" })}
-          />
-          <button className="btn btn-primary" type="submit">
-            {t("common.create")}
-          </button>
-        </form>
-      </div>
+      <PageHeader
+        icon={CalendarClock}
+        title={t("schedules.title")}
+        tone="cyan"
+        description="Open hours, overrides, and holiday routing"
+        actions={
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              create.mutate();
+            }}
+          >
+            <TextField
+              label={t("schedules.newName", { defaultValue: "New schedule name" })}
+              placeholder={t("schedules.newName")}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <button className="btn btn-primary mb-[0.85rem]" type="submit">
+              <Plus size={16} />
+              {t("common.create")}
+            </button>
+          </form>
+        }
+      />
 
       {!list.data?.length ? (
         <p className="text-[var(--text-muted)]">
@@ -287,23 +295,21 @@ export function SchedulesPage() {
       )}
 
       {selected && (
-        <div className="card space-y-6 p-5">
+        <SectionCard title="Schedule details" icon={CalendarDays} tone="blue" className="space-y-6">
           <ScheduleNowStatus scheduleId={selected.id} />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
-              <label className="block text-sm text-[var(--text-muted)]">
-                {t("schedules.name", { defaultValue: "Name" })}
-                <input className="input mt-1 w-full" value={name} onChange={(e) => setName(e.target.value)} />
-              </label>
-              <label className="block text-sm text-[var(--text-muted)]">
-                {t("schedules.timezone", { defaultValue: "Timezone" })}
-                <input
-                  className="input mt-1 w-full"
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  placeholder="Europe/Istanbul"
-                />
-              </label>
+              <TextField
+                label={t("schedules.name", { defaultValue: "Name" })}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <TextField
+                label={t("schedules.timezone", { defaultValue: "Timezone" })}
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                placeholder="Europe/Istanbul"
+              />
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex flex-wrap gap-2">
@@ -566,7 +572,7 @@ export function SchedulesPage() {
               {t("common.delete")}
             </button>
           </div>
-        </div>
+        </SectionCard>
       )}
     </div>
   );

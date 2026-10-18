@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import {
+  BarChart3,
+  CalendarRange,
+  Gauge,
+  Hash,
+  ListOrdered,
+  Phone,
+  Radio,
+} from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, TextField } from "../../components/ui";
 
 export function ReportsPage() {
   const { t } = useTranslation();
@@ -64,154 +74,181 @@ export function ReportsPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">{t("reports.title")}</h1>
-      <div className="flex flex-wrap gap-2">
-        <input className="input" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input className="input" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {[
-          ["Total", summary.data?.total ?? 0],
-          [t("reports.answered"), summary.data?.answered ?? 0],
-          [t("reports.missed"), summary.data?.missed ?? 0],
-          ["Abandoned", summary.data?.abandoned ?? 0],
-          ["SLA ≤20s", `${summary.data?.slaPercent ?? 0}%`],
-          [t("reports.avgTalk"), `${summary.data?.avgDuration ?? 0}s`],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="card p-4">
-            <div className="text-sm text-[var(--text-muted)]">{label}</div>
-            <div className="mt-1 text-2xl font-semibold">{value}</div>
-          </div>
-        ))}
-      </div>
-      <div className="grid gap-4 sm:grid-cols-4">
-        {(quality.data?.total ?? 0) === 0 ? (
-          <div className="card col-span-full p-4 text-sm text-[var(--text-muted)]">
-            Voice quality (MOS/jitter/loss) has no samples yet — make answered calls so dialplan can post RTP QoS
-            this lab build.
-          </div>
-        ) : (
-          [
-            ["MOS avg", (quality.data?.avgMos ?? 0).toFixed(2)],
-            ["Jitter avg", (quality.data?.avgJitter ?? 0).toFixed(1)],
-            ["Loss %", (quality.data?.avgLoss ?? 0).toFixed(2)],
-            ["Quality samples", quality.data?.total ?? 0],
+    <div className="space-y-6">
+      <PageHeader
+        icon={BarChart3}
+        title={t("reports.title")}
+        tone="cyan"
+        description="Call volume, queues, IVR, and voice quality for the selected range"
+      />
+      <SectionCard title="Date range" icon={CalendarRange} tone="cyan">
+        <div className="flex flex-wrap gap-3">
+          <TextField
+            label="From"
+            type="datetime-local"
+            icon={CalendarRange}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
+          <TextField
+            label="To"
+            type="datetime-local"
+            icon={CalendarRange}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
+        </div>
+      </SectionCard>
+      <SectionCard title="Summary" icon={Phone} tone="cyan">
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            ["Total", summary.data?.total ?? 0],
+            [t("reports.answered"), summary.data?.answered ?? 0],
+            [t("reports.missed"), summary.data?.missed ?? 0],
+            ["Abandoned", summary.data?.abandoned ?? 0],
+            ["SLA ≤20s", `${summary.data?.slaPercent ?? 0}%`],
+            [t("reports.avgTalk"), `${summary.data?.avgDuration ?? 0}s`],
           ].map(([label, value]) => (
-            <div key={String(label)} className="card p-4">
+            <div key={String(label)} className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] p-4">
               <div className="text-sm text-[var(--text-muted)]">{label}</div>
               <div className="mt-1 text-2xl font-semibold">{value}</div>
             </div>
-          ))
-        )}
-      </div>
-      <div className="card overflow-auto">
-        <div className="border-b border-[var(--border)] px-4 py-3 font-medium">By queue</div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Queue</th>
-              <th>Calls</th>
-              <th>Answered</th>
-              <th>Abandoned</th>
-              <th>Avg wait</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(byQueue.data ?? []).filter((r) => r.queue).length === 0 ? (
+          ))}
+        </div>
+      </SectionCard>
+      <SectionCard title="Voice quality" icon={Gauge} tone="blue">
+        <div className="grid gap-4 sm:grid-cols-4">
+          {(quality.data?.total ?? 0) === 0 ? (
+            <p className="col-span-full text-sm text-[var(--text-muted)]">
+              Voice quality (MOS/jitter/loss) has no samples yet — make answered calls so dialplan can post RTP QoS
+              this lab build.
+            </p>
+          ) : (
+            [
+              ["MOS avg", (quality.data?.avgMos ?? 0).toFixed(2)],
+              ["Jitter avg", (quality.data?.avgJitter ?? 0).toFixed(1)],
+              ["Loss %", (quality.data?.avgLoss ?? 0).toFixed(2)],
+              ["Quality samples", quality.data?.total ?? 0],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] p-4">
+                <div className="text-sm text-[var(--text-muted)]">{label}</div>
+                <div className="mt-1 text-2xl font-semibold">{value}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </SectionCard>
+      <SectionCard title="By queue" icon={ListOrdered} tone="cyan" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={5}>—</td>
+                <th>Queue</th>
+                <th>Calls</th>
+                <th>Answered</th>
+                <th>Abandoned</th>
+                <th>Avg wait</th>
               </tr>
-            ) : (
-              (byQueue.data ?? [])
-                .filter((r) => r.queue)
+            </thead>
+            <tbody>
+              {(byQueue.data ?? []).filter((r) => r.queue).length === 0 ? (
+                <tr>
+                  <td colSpan={5}>—</td>
+                </tr>
+              ) : (
+                (byQueue.data ?? [])
+                  .filter((r) => r.queue)
+                  .map((r) => (
+                    <tr key={String(r.queue)}>
+                      <td className="font-mono">{r.queue}</td>
+                      <td>{r.total}</td>
+                      <td>{r.answered ?? "—"}</td>
+                      <td>{r.abandoned ?? "—"}</td>
+                      <td>{r.avgWait}s</td>
+                    </tr>
+                  ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+      <SectionCard title="By extension" icon={Hash} tone="blue" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("extensions.number")}</th>
+                <th>Calls</th>
+                <th>Talk</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(byExt.data ?? [])
+                .filter((r) => r.extension)
                 .map((r) => (
-                  <tr key={String(r.queue)}>
-                    <td className="font-mono">{r.queue}</td>
+                  <tr key={r.extension}>
+                    <td className="font-mono">{r.extension}</td>
                     <td>{r.total}</td>
-                    <td>{r.answered ?? "—"}</td>
-                    <td>{r.abandoned ?? "—"}</td>
-                    <td>{r.avgWait}s</td>
+                    <td>{r.talk}s</td>
                   </tr>
-                ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      <div className="card overflow-auto">
-        <div className="border-b border-[var(--border)] px-4 py-3 font-medium">By extension</div>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{t("extensions.number")}</th>
-              <th>Calls</th>
-              <th>Talk</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(byExt.data ?? [])
-              .filter((r) => r.extension)
-              .map((r) => (
-                <tr key={r.extension}>
-                  <td className="font-mono">{r.extension}</td>
-                  <td>{r.total}</td>
-                  <td>{r.talk}s</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="card overflow-auto">
-          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">IVR DTMF</div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Digit</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(ivr.data?.items ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={2}>—</td>
-                </tr>
-              ) : (
-                ivr.data?.items.map((r) => (
-                  <tr key={r.digit}>
-                    <td className="font-mono">{r.digit}</td>
-                    <td>{r.count}</td>
-                  </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
         </div>
-        <div className="card overflow-auto">
-          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">IVR hangup location</div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Where</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(ivr.data?.hangups ?? []).length === 0 ? (
+      </SectionCard>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SectionCard title="IVR DTMF" icon={Radio} tone="coral" className="!p-0 overflow-hidden">
+          <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+            <table className="table">
+              <thead>
                 <tr>
-                  <td colSpan={2}>—</td>
+                  <th>Digit</th>
+                  <th>Count</th>
                 </tr>
-              ) : (
-                (ivr.data?.hangups ?? []).map((r) => (
-                  <tr key={r.where}>
-                    <td className="font-mono text-sm">{r.where}</td>
-                    <td>{r.count}</td>
+              </thead>
+              <tbody>
+                {(ivr.data?.items ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={2}>—</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  ivr.data?.items.map((r) => (
+                    <tr key={r.digit}>
+                      <td className="font-mono">{r.digit}</td>
+                      <td>{r.count}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+        <SectionCard title="IVR hangup location" icon={Radio} tone="coral" className="!p-0 overflow-hidden">
+          <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Where</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(ivr.data?.hangups ?? []).length === 0 ? (
+                  <tr>
+                    <td colSpan={2}>—</td>
+                  </tr>
+                ) : (
+                  (ivr.data?.hangups ?? []).map((r) => (
+                    <tr key={r.where}>
+                      <td className="font-mono text-sm">{r.where}</td>
+                      <td>{r.count}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
       </div>
     </div>
   );

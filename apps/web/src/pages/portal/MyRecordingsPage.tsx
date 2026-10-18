@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
 import { toast } from "sonner";
+import { Disc, FileAudio } from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard } from "../../components/ui";
 
 export function MyRecordingsPage() {
   const { t } = useTranslation();
@@ -60,9 +62,9 @@ export function MyRecordingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">{t("nav.myRecordings")}</h1>
+      <PageHeader icon={FileAudio} title={t("nav.myRecordings")} tone="coral" />
       {playingId && (
-        <div className="card space-y-2 p-4">
+        <SectionCard title="Playback" icon={Disc} tone="coral">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm text-[var(--text-muted)]">
               {loadError ?? (isPlaying ? "Playing…" : "Ready")}
@@ -87,27 +89,32 @@ export function MyRecordingsPage() {
             </div>
           </div>
           <div ref={waveRef} />
-        </div>
+        </SectionCard>
       )}
-      <div className="space-y-3">
-        {(list.data ?? []).length === 0 ? (
-          <div className="card p-4 text-[var(--text-muted)]">—</div>
-        ) : (
-          list.data?.map((r) => (
-            <div key={r.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
-              <div>
-                <div className="font-mono text-sm">{r.callId}</div>
-                <div className="text-xs text-[var(--text-muted)]">
-                  {new Date(r.createdAt).toLocaleString()} · {r.duration}s
+      <SectionCard title="Recordings" icon={FileAudio} tone="coral">
+        <div className="space-y-3">
+          {(list.data ?? []).length === 0 ? (
+            <p className="text-[var(--text-muted)]">—</p>
+          ) : (
+            list.data?.map((r) => (
+              <div
+                key={r.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3"
+              >
+                <div>
+                  <div className="font-mono text-sm">{r.callId}</div>
+                  <div className="text-xs text-[var(--text-muted)]">
+                    {new Date(r.createdAt).toLocaleString()} · {r.duration}s
+                  </div>
                 </div>
+                <button className="btn" type="button" onClick={() => setPlayingId(r.id)}>
+                  Play
+                </button>
               </div>
-              <button className="btn" type="button" onClick={() => setPlayingId(r.id)}>
-                Play
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      </SectionCard>
     </div>
   );
 }

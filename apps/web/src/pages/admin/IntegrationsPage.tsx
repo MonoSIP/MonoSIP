@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Copy, KeyRound, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
+import { PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
 
 const ALL_PERMS = ["cdr", "originate", "recordings"] as const;
 
@@ -108,19 +110,29 @@ export function IntegrationsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">{t("nav.integrations")}</h1>
-      <section className="card p-4">
-        <h2 className="mb-3 font-medium">Webhooks</h2>
+    <div className="space-y-6">
+      <PageHeader
+        icon={Webhook}
+        title={t("nav.integrations")}
+        tone="blue"
+        description="Webhooks, API keys, and website call widgets"
+      />
+      <SectionCard title="Webhooks" icon={Webhook} tone="coral">
         <form
-          className="mb-3 flex gap-2"
+          className="mb-3 flex flex-wrap items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             addHook.mutate();
           }}
         >
-          <input className="input" value={url} onChange={(e) => setUrl(e.target.value)} />
-          <button className="btn btn-primary" type="submit">
+          <TextField
+            className="min-w-[16rem] flex-1"
+            label="Webhook URL"
+            icon={Webhook}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button className="btn btn-primary mb-[0.85rem]" type="submit">
             {t("common.create")}
           </button>
         </form>
@@ -151,12 +163,11 @@ export function IntegrationsPage() {
             </li>
           ))}
         </ul>
-      </section>
-      <section className="card space-y-3 p-4">
-        <h2 className="mb-1 font-medium">Website call widgets</h2>
+      </SectionCard>
+      <SectionCard title="Website call widgets" icon={Globe} tone="cyan">
         <p className="text-sm text-[var(--text-muted)]">
           Embed a “Call us” button on any site. Visitors talk over WebRTC or leave a number for
-          call-back. Softphone audio uses TURNS on port 443 when Compose nginx + coturn are running.
+          call-back.
         </p>
         <form
           className="grid gap-2 sm:grid-cols-2"
@@ -165,16 +176,9 @@ export function IntegrationsPage() {
             addWidget.mutate();
           }}
         >
-          <input
-            className="input"
-            placeholder="Name"
-            value={wName}
-            onChange={(e) => setWName(e.target.value)}
-            required
-          />
-          <input
-            className="input font-mono"
-            placeholder="Virtual DID (e.g. 7001)"
+          <TextField label="Name" value={wName} onChange={(e) => setWName(e.target.value)} required />
+          <TextField
+            label="Virtual DID"
             value={wNumber}
             onChange={(e) => setWNumber(e.target.value.replace(/\D/g, ""))}
             required
@@ -189,9 +193,10 @@ export function IntegrationsPage() {
               }}
             />
           </div>
-          <textarea
-            className="input sm:col-span-2 min-h-[64px]"
-            placeholder="Allowed websites (one host per line, e.g. www.example.com or *.example.com). Empty = any."
+          <TextAreaField
+            className="sm:col-span-2"
+            label="Allowed websites"
+            hint="One host per line (www.example.com or *.example.com). Empty = any."
             value={wOrigins}
             onChange={(e) => setWOrigins(e.target.value)}
           />
@@ -199,12 +204,12 @@ export function IntegrationsPage() {
             <input type="checkbox" checked={wCallback} onChange={(e) => setWCallback(e.target.checked)} />
             Enable call-back form
           </label>
-          <input
-            className="input font-mono"
-            placeholder="Call-back prefixes (05,90)"
+          <TextField
+            label="Call-back prefixes"
             value={wPrefixes}
             onChange={(e) => setWPrefixes(e.target.value)}
             disabled={!wCallback}
+            hint="e.g. 05,90"
           />
           <button className="btn btn-primary sm:col-span-2" type="submit" disabled={addWidget.isPending}>
             Create widget
@@ -214,7 +219,7 @@ export function IntegrationsPage() {
           {(widgets.data ?? []).map((w) => {
             const embed = `<script src="${window.location.origin}/widget.js" data-widget="${w.publicKey}" async></script>`;
             return (
-              <li key={w.id} className="rounded border border-[var(--border)] p-3 text-sm">
+              <li key={w.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <span>
                     <strong>{w.name}</strong> · DID {w.number} ·{" "}
@@ -231,10 +236,11 @@ export function IntegrationsPage() {
                       })
                     }
                   >
+                    <Trash2 size={14} />
                     Delete
                   </button>
                 </div>
-                <code className="block break-all rounded bg-[var(--bg-muted)] p-2 text-xs">{embed}</code>
+                <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">{embed}</code>
                 <button
                   className="btn mt-2"
                   type="button"
@@ -243,15 +249,15 @@ export function IntegrationsPage() {
                     toast.success("Embed code copied");
                   }}
                 >
+                  <Copy size={14} />
                   Copy embed
                 </button>
               </li>
             );
           })}
         </ul>
-      </section>
-      <section className="card space-y-3 p-4">
-        <h2 className="font-medium">API keys</h2>
+      </SectionCard>
+      <SectionCard title="API keys" icon={KeyRound} tone="blue">
         <form
           className="flex flex-wrap gap-2"
           onSubmit={(e) => {
@@ -259,16 +265,22 @@ export function IntegrationsPage() {
             addKey.mutate();
           }}
         >
-          <input className="input max-w-xs" value={keyName} onChange={(e) => setKeyName(e.target.value)} />
-          <div className="flex flex-wrap items-center gap-2 text-sm">
+          <TextField
+            className="max-w-xs"
+            label="Key name"
+            icon={KeyRound}
+            value={keyName}
+            onChange={(e) => setKeyName(e.target.value)}
+          />
+          <div className="flex flex-wrap items-center gap-2 self-end text-sm">
             {ALL_PERMS.map((p) => (
-              <label key={p} className="flex items-center gap-1">
+              <label key={p} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1">
                 <input type="checkbox" checked={perms.includes(p)} onChange={() => togglePerm(p)} />
                 {p}
               </label>
             ))}
           </div>
-          <button className="btn btn-primary" type="submit">
+          <button className="btn btn-primary self-end" type="submit">
             {t("common.create")}
           </button>
         </form>
@@ -276,7 +288,7 @@ export function IntegrationsPage() {
           {keys.data?.map((k) => {
             const kp = (k.permissions ?? []) as string[];
             return (
-              <li key={k.id} className="rounded border border-[var(--border)] p-3 text-sm">
+              <li key={k.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <span className="font-mono">
                     {k.name} · {k.keyPrefix}…
@@ -290,12 +302,13 @@ export function IntegrationsPage() {
                       )
                     }
                   >
+                    <Trash2 size={14} />
                     Revoke
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ALL_PERMS.map((p) => (
-                    <label key={p} className="flex items-center gap-1">
+                    <label key={p} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1">
                       <input
                         type="checkbox"
                         checked={kp.includes(p)}
@@ -312,7 +325,7 @@ export function IntegrationsPage() {
             );
           })}
         </ul>
-      </section>
+      </SectionCard>
     </div>
   );
 }

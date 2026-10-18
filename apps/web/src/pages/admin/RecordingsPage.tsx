@@ -3,8 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
+import { ClipboardList, Disc, FileAudio } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard } from "../../components/ui";
 
 type Rec = {
   id: string;
@@ -80,86 +82,98 @@ export function RecordingsPage() {
   }, [playingId]);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">{t("nav.recordings")}</h1>
+    <div className="space-y-6">
+      <PageHeader
+        icon={Disc}
+        title={t("nav.recordings")}
+        tone="coral"
+        description="Listen, download, and review access logs for stored call recordings"
+      />
       {playingId && (
-        <div className="card space-y-2 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm text-[var(--text-muted)]">
-              {loadError
-                ? loadError
-                : isPlaying
-                  ? `Playing ${playingId.slice(0, 8)}…`
-                  : `Loaded ${playingId.slice(0, 8)}`}
-            </span>
-            <div className="flex gap-2">
-              <button
-                className="btn btn-primary"
-                type="button"
-                disabled={!!loadError}
-                onClick={() => {
-                  const ws = wsRef.current;
-                  if (!ws) return;
-                  if (ws.isPlaying()) ws.pause();
-                  else void ws.play();
-                }}
-              >
-                {isPlaying ? "Pause" : "Play"}
-              </button>
-              <button className="btn" type="button" onClick={() => setPlayingId(null)}>
-                Close
-              </button>
+        <SectionCard title="Player" icon={FileAudio} tone="coral">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm text-[var(--text-muted)]">
+                {loadError
+                  ? loadError
+                  : isPlaying
+                    ? `Playing ${playingId.slice(0, 8)}…`
+                    : `Loaded ${playingId.slice(0, 8)}`}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  disabled={!!loadError}
+                  onClick={() => {
+                    const ws = wsRef.current;
+                    if (!ws) return;
+                    if (ws.isPlaying()) ws.pause();
+                    else void ws.play();
+                  }}
+                >
+                  {isPlaying ? "Pause" : "Play"}
+                </button>
+                <button className="btn" type="button" onClick={() => setPlayingId(null)}>
+                  Close
+                </button>
+              </div>
             </div>
+            <div ref={waveRef} />
           </div>
-          <div ref={waveRef} />
-        </div>
+        </SectionCard>
       )}
-      <div className="card overflow-auto">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Call</th>
-              <th>{t("cdr.duration")}</th>
-              <th>Created</th>
-              <th>{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(list.data ?? []).length === 0 ? (
+      <SectionCard title="Recordings" icon={Disc} tone="blue" className="!p-0 overflow-hidden">
+        <div className="overflow-auto px-4 pb-4 md:px-5 md:pb-5">
+          <table className="table">
+            <thead>
               <tr>
-                <td colSpan={4}>—</td>
+                <th>Call</th>
+                <th>{t("cdr.duration")}</th>
+                <th>Created</th>
+                <th>{t("common.actions")}</th>
               </tr>
-            ) : (
-              list.data?.map((r) => (
-                <tr key={r.id}>
-                  <td className="font-mono text-sm">{r.callId}</td>
-                  <td>{r.duration}s</td>
-                  <td>{new Date(r.createdAt).toLocaleString()}</td>
-                  <td className="flex flex-wrap gap-2">
-                    <button className="btn" type="button" onClick={() => setPlayingId(r.id)}>
-                      Play
-                    </button>
-                    <a className="btn" href={`/api/v1/admin/recordings/${r.id}/download`}>
-                      Download
-                    </a>
-                    <button className="btn" type="button" onClick={() => setAccessId(r.id)}>
-                      Access log
-                    </button>
-                  </td>
+            </thead>
+            <tbody>
+              {(list.data ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={4}>—</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                list.data?.map((r) => (
+                  <tr key={r.id}>
+                    <td className="font-mono text-sm">{r.callId}</td>
+                    <td>{r.duration}s</td>
+                    <td>{new Date(r.createdAt).toLocaleString()}</td>
+                    <td className="flex flex-wrap gap-2">
+                      <button className="btn" type="button" onClick={() => setPlayingId(r.id)}>
+                        Play
+                      </button>
+                      <a className="btn" href={`/api/v1/admin/recordings/${r.id}/download`}>
+                        Download
+                      </a>
+                      <button className="btn" type="button" onClick={() => setAccessId(r.id)}>
+                        Access log
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
       {accessId && (
-        <div className="card p-4">
-          <div className="mb-2 flex justify-between">
-            <h2 className="font-medium">Access log</h2>
+        <SectionCard
+          title="Access log"
+          icon={ClipboardList}
+          tone="coral"
+          actions={
             <button className="btn" type="button" onClick={() => setAccessId(null)}>
               Close
             </button>
-          </div>
+          }
+        >
           <ul className="space-y-1 text-sm">
             {(access.data ?? []).length === 0 ? (
               <li className="text-[var(--text-muted)]">—</li>
@@ -171,7 +185,7 @@ export function RecordingsPage() {
               ))
             )}
           </ul>
-        </div>
+        </SectionCard>
       )}
     </div>
   );

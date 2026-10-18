@@ -3,8 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { History, Phone } from "lucide-react";
 import { api } from "../../lib/api";
 import { Softphone, type CallPhase } from "../../lib/softphone";
+import { PageHeader, SectionCard } from "../../components/ui";
 
 function formatCallTime(totalSec: number): string {
   const s = Math.max(0, Math.floor(totalSec));
@@ -198,16 +200,20 @@ export function PhonePage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <h1 className="mb-2 text-2xl font-semibold">{t("nav.phone")}</h1>
-      <p className="mb-2 text-sm text-[var(--text-muted)]">
-        {status === "registered"
-          ? t("portal.registered")
-          : status === "connecting"
-            ? t("portal.connecting")
-            : status === "error"
-              ? detail || "Error"
-              : t("portal.unregistered")}
-      </p>
+      <PageHeader
+        icon={Phone}
+        title={t("nav.phone")}
+        tone="cyan"
+        description={
+          status === "registered"
+            ? t("portal.registered")
+            : status === "connecting"
+              ? t("portal.connecting")
+              : status === "error"
+                ? detail || "Error"
+                : t("portal.unregistered")
+        }
+      />
       {showMediaBanner && bannerText && (
         <div
           className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
@@ -414,8 +420,7 @@ export function PhonePage() {
           </div>
         )}
       </div>
-      <div className="card p-4">
-        <h2 className="mb-2 text-sm font-medium text-[var(--text-muted)]">Recent calls</h2>
+      <SectionCard title="Recent calls" icon={History} tone="blue">
         <ul className="space-y-1 text-sm">
           {(recent.data ?? []).slice(0, 8).length === 0 ? (
             <li className="text-[var(--text-muted)]">—</li>
@@ -439,7 +444,7 @@ export function PhonePage() {
             })
           )}
         </ul>
-      </div>
+      </SectionCard>
     </div>
   );
 }

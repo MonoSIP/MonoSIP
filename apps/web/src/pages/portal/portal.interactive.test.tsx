@@ -52,8 +52,7 @@ function renderPage(ui: React.ReactElement) {
 
 /** The three forwarding selects, scoped past the audio-device selects above them. */
 function fwdSelects() {
-  const card = screen.getByRole("heading", { name: "Call forwarding" })
-    .parentElement as HTMLElement;
+  const card = screen.getByRole("heading", { name: "Call forwarding" }).closest("section") as HTMLElement;
   return within(card).getAllByRole("combobox");
 }
 

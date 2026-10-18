@@ -2,7 +2,18 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {
+  Building2,
+  Globe,
+  Mail,
+  RefreshCw,
+  ScrollText,
+  Settings,
+  Shield,
+  ShieldCheck,
+} from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Settings = {
   companyName?: string;
@@ -264,35 +275,28 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold">{t("settings.title")}</h1>
-      <div className="card space-y-4 p-5">
-        <h2 className="font-medium">{t("settings.hostnameSection")}</h2>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.hostname")}</span>
-          <input
-            className="input font-mono"
-            value={hostname}
-            onChange={(e) => setHostname(e.target.value)}
-            placeholder="pbx.example.com"
-            autoComplete="off"
-          />
-        </label>
+      <PageHeader icon={Settings} title={t("settings.title")} tone="coral" description="Company, security, mail, and system options" />
+      <SectionCard title={t("settings.hostnameSection")} icon={Globe} tone="cyan" className="space-y-4">
+        <TextField
+          label={t("settings.hostname")}
+          value={hostname}
+          onChange={(e) => setHostname(e.target.value)}
+          placeholder="pbx.example.com"
+          autoComplete="off"
+        />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={autoSsl} onChange={(e) => setAutoSsl(e.target.checked)} />
           {t("settings.autoSsl")}
         </label>
         <p className="text-xs text-[var(--text-muted)]">{t("settings.autoSslHint")}</p>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.sslEmail")}</span>
-          <input
-            className="input"
-            type="email"
-            value={sslEmail}
-            onChange={(e) => setSslEmail(e.target.value)}
-            placeholder="admin@example.com"
-            disabled={!autoSsl}
-          />
-        </label>
+        <TextField
+          label={t("settings.sslEmail")}
+          type="email"
+          value={sslEmail}
+          onChange={(e) => setSslEmail(e.target.value)}
+          placeholder="admin@example.com"
+          disabled={!autoSsl}
+        />
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span
             className={`badge ${
@@ -337,72 +341,68 @@ export function SettingsPage() {
         >
           {t("settings.sslRenewNow")}
         </button>
-      </div>
-      <div className="card space-y-4 p-5">
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.company")}</span>
-          <input className="input" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.retention")}</span>
-          <input className="input" type="number" value={retention} onChange={(e) => setRetention(Number(e.target.value))} />
-        </label>
+      </SectionCard>
+      <SectionCard title={t("settings.company")} icon={Building2} tone="blue" className="space-y-4">
+        <TextField label={t("settings.company")} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+        <TextField
+          label={t("settings.retention")}
+          type="number"
+          value={retention}
+          onChange={(e) => setRetention(Number(e.target.value))}
+        />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={kvkk} onChange={(e) => setKvkk(e.target.checked)} />
           KVKK announcement
         </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">KVKK prompt</span>
-          <select
-            className="input"
-            value={kvkkPromptId}
-            onChange={(e) => setKvkkPromptId(e.target.value)}
-          >
-            <option value="">Beep (default)</option>
-            {(prompts.data ?? []).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">
-            Allowed countries (ISO, comma — e.g. TR,DE or ALL)
-          </span>
-          <input className="input" value={countries} onChange={(e) => setCountries(e.target.value)} />
-        </label>
+        <SelectField label="KVKK prompt" value={kvkkPromptId} onChange={(e) => setKvkkPromptId(e.target.value)}>
+          <option value="">Beep (default)</option>
+          {(prompts.data ?? []).map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </SelectField>
+        <TextField
+          label="Allowed countries (ISO, comma — e.g. TR,DE or ALL)"
+          value={countries}
+          onChange={(e) => setCountries(e.target.value)}
+        />
         <div className="grid grid-cols-2 gap-3">
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">Daily limit (min)</span>
-            <input className="input" type="number" value={daily} onChange={(e) => setDaily(Number(e.target.value))} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">Monthly limit (min)</span>
-            <input className="input" type="number" value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} />
-          </label>
+          <TextField
+            label="Daily limit (min)"
+            type="number"
+            value={daily}
+            onChange={(e) => setDaily(Number(e.target.value))}
+          />
+          <TextField
+            label="Monthly limit (min)"
+            type="number"
+            value={monthly}
+            onChange={(e) => setMonthly(Number(e.target.value))}
+          />
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={blockAnon} onChange={(e) => setBlockAnon(e.target.checked)} />
           Block anonymous inbound
         </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">Max outbound calls / hour / extension</span>
-          <input className="input" type="number" value={maxPerHour} onChange={(e) => setMaxPerHour(Number(e.target.value))} />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">Recording archive path (local/NAS mount)</span>
-          <input className="input" value={archivePath} onChange={(e) => setArchivePath(e.target.value)} placeholder="/data/archive" />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">Recording archive SFTP</span>
-          <input
-            className="input font-mono text-sm"
-            value={archiveSftp}
-            onChange={(e) => setArchiveSftp(e.target.value)}
-            placeholder="sftp://user:pass@host:22/recordings"
-          />
-        </label>
+        <TextField
+          label="Max outbound calls / hour / extension"
+          type="number"
+          value={maxPerHour}
+          onChange={(e) => setMaxPerHour(Number(e.target.value))}
+        />
+        <TextField
+          label="Recording archive path (local/NAS mount)"
+          value={archivePath}
+          onChange={(e) => setArchivePath(e.target.value)}
+          placeholder="/data/archive"
+        />
+        <TextField
+          label="Recording archive SFTP"
+          value={archiveSftp}
+          onChange={(e) => setArchiveSftp(e.target.value)}
+          placeholder="sftp://user:pass@host:22/recordings"
+        />
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
             {t("common.save")}
@@ -437,84 +437,61 @@ export function SettingsPage() {
             Test SFTP
           </button>
         </div>
-      </div>
+      </SectionCard>
 
-      <div className="card space-y-4 p-5">
-        <h2 className="font-semibold">Security / IP</h2>
+      <SectionCard title="Security / IP" icon={Shield} tone="cyan" className="space-y-4">
         <p className="text-xs text-[var(--text-muted)]">
           Your IP: <code className="font-mono">{secStatus.data?.clientIp ?? "…"}</code>
           {" · "}
           {secStatus.data?.fail2banHint}
         </p>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">
-            Admin IP allowlist (comma/CIDR, empty=all — applies to all admin API)
-          </span>
-          <textarea
-            className="input font-mono text-sm"
-            rows={2}
-            value={ipAllow}
-            onChange={(e) => setIpAllow(e.target.value)}
-            placeholder="10.0.0.0/8,192.168.1.10"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">
-            Portal IP allowlist (empty=open for remote softphones)
-          </span>
-          <textarea
-            className="input font-mono text-sm"
-            rows={2}
-            value={portalIpAllow}
-            onChange={(e) => setPortalIpAllow(e.target.value)}
-            placeholder=""
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">
-            SIP IP allowlist (empty=open; when set, only these + LOCAL_NETS + trunks may REGISTER)
-          </span>
-          <textarea
-            className="input font-mono text-sm"
-            rows={2}
-            value={sipIpAllow}
-            onChange={(e) => setSipIpAllow(e.target.value)}
-            placeholder="203.0.113.0/24"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">SIP IP denylist</span>
-          <textarea
-            className="input font-mono text-sm"
-            rows={2}
-            value={sipIpDeny}
-            onChange={(e) => setSipIpDeny(e.target.value)}
-            placeholder=""
-          />
-        </label>
+        <TextAreaField
+          label="Admin IP allowlist (comma/CIDR, empty=all — applies to all admin API)"
+          className="font-mono text-sm"
+          rows={2}
+          value={ipAllow}
+          onChange={(e) => setIpAllow(e.target.value)}
+          placeholder="10.0.0.0/8,192.168.1.10"
+        />
+        <TextAreaField
+          label="Portal IP allowlist (empty=open for remote softphones)"
+          className="font-mono text-sm"
+          rows={2}
+          value={portalIpAllow}
+          onChange={(e) => setPortalIpAllow(e.target.value)}
+        />
+        <TextAreaField
+          label="SIP IP allowlist (empty=open; when set, only these + LOCAL_NETS + trunks may REGISTER)"
+          className="font-mono text-sm"
+          rows={2}
+          value={sipIpAllow}
+          onChange={(e) => setSipIpAllow(e.target.value)}
+          placeholder="203.0.113.0/24"
+        />
+        <TextAreaField
+          label="SIP IP denylist"
+          className="font-mono text-sm"
+          rows={2}
+          value={sipIpDeny}
+          onChange={(e) => setSipIpDeny(e.target.value)}
+        />
         <div className="grid grid-cols-2 gap-3">
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">Login max retries</span>
-            <input
-              className="input"
-              type="number"
-              min={3}
-              max={50}
-              value={loginMaxRetry}
-              onChange={(e) => setLoginMaxRetry(Number(e.target.value))}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-[var(--text-muted)]">Login ban (minutes)</span>
-            <input
-              className="input"
-              type="number"
-              min={1}
-              max={1440}
-              value={loginBanMin}
-              onChange={(e) => setLoginBanMin(Number(e.target.value))}
-            />
-          </label>
+          <TextField
+            label="Login max retries"
+            type="number"
+            min={3}
+            max={50}
+            value={loginMaxRetry}
+            onChange={(e) => setLoginMaxRetry(Number(e.target.value))}
+          />
+          <TextField
+            label="Login ban (minutes)"
+            type="number"
+            min={1}
+            max={1440}
+            value={loginBanMin}
+            onChange={(e) => setLoginBanMin(Number(e.target.value))}
+          />
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
@@ -541,16 +518,16 @@ export function SettingsPage() {
         </div>
 
         <h3 className="pt-2 text-sm font-medium">Active bans</h3>
-        <div className="flex flex-wrap gap-2">
-          <input
-            className="input max-w-[12rem] font-mono text-sm"
-            placeholder="IP to ban"
+        <div className="flex flex-wrap items-end gap-2">
+          <TextField
+            label="IP to ban"
+            className="max-w-[12rem] font-mono text-sm"
             value={banIp}
             onChange={(e) => setBanIp(e.target.value)}
           />
-          <input
-            className="input max-w-[14rem] text-sm"
-            placeholder="Reason"
+          <TextField
+            label="Reason"
+            className="max-w-[14rem] text-sm"
             value={banReason}
             onChange={(e) => setBanReason(e.target.value)}
           />
@@ -628,10 +605,9 @@ export function SettingsPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
 
-      <div className="card space-y-3 p-5">
-        <h2 className="font-semibold">SMTP / daily reports</h2>
+      <SectionCard title="SMTP / daily reports" icon={Mail} tone="blue" className="space-y-3">
         {!smtpHost || !smtpTo ? (
           <p className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
             SMTP incomplete — daily/monthly reports stay log-only until host and smtpTo are set.
@@ -640,28 +616,40 @@ export function SettingsPage() {
           <p className="text-xs text-[var(--text-muted)]">Reports will be emailed when the nightly job runs.</p>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
-          <input className="input" placeholder="smtpHost" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
-          <input className="input" type="number" placeholder="smtpPort" value={smtpPort} onChange={(e) => setSmtpPort(Number(e.target.value))} />
-          <input className="input" placeholder="smtpUser" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} />
-          <input className="input" type="password" placeholder="smtpPassword" value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} />
-          <input className="input" placeholder="smtpTo" value={smtpTo} onChange={(e) => setSmtpTo(e.target.value)} />
-          <input className="input" placeholder="emailFrom" value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
+          <TextField label="smtpHost" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
+          <TextField
+            label="smtpPort"
+            type="number"
+            value={smtpPort}
+            onChange={(e) => setSmtpPort(Number(e.target.value))}
+          />
+          <TextField label="smtpUser" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} />
+          <TextField
+            label="smtpPassword"
+            type="password"
+            value={smtpPassword}
+            onChange={(e) => setSmtpPassword(e.target.value)}
+          />
+          <TextField label="smtpTo" value={smtpTo} onChange={(e) => setSmtpTo(e.target.value)} />
+          <TextField label="emailFrom" value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
         </div>
         <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
           {t("common.save")}
         </button>
-      </div>
+      </SectionCard>
 
-      <div className="card space-y-4 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="font-semibold">{t("settings.totpTitle")}</h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">{t("settings.totpBlurb")}</p>
-          </div>
+      <SectionCard
+        title={t("settings.totpTitle")}
+        icon={ShieldCheck}
+        tone="coral"
+        className="space-y-4"
+        actions={
           <span className={`badge ${totpStatus.data?.enabled ? "badge-ok" : ""}`}>
             {totpStatus.data?.enabled ? t("settings.totpOn") : t("settings.totpOff")}
           </span>
-        </div>
+        }
+      >
+        <p className="text-sm text-[var(--text-muted)]">{t("settings.totpBlurb")}</p>
 
         {!qr && (
           <div className="flex flex-wrap gap-2">
@@ -712,18 +700,16 @@ export function SettingsPage() {
                 </div>
               ) : null}
               <div className="flex flex-wrap items-end gap-2 pt-1">
-                <label className="block">
-                  <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.totpCode")}</span>
-                  <input
-                    className="input max-w-[10rem] font-mono tracking-widest"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={8}
-                    value={totpCode}
-                    onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
-                    placeholder="000000"
-                  />
-                </label>
+                <TextField
+                  label={t("settings.totpCode")}
+                  className="max-w-[10rem] font-mono tracking-widest"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={8}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
+                  placeholder="000000"
+                />
                 <button
                   className="btn btn-primary"
                   type="button"
@@ -751,18 +737,16 @@ export function SettingsPage() {
 
         {totpStatus.data?.enabled && !qr ? (
           <div className="flex flex-wrap items-end gap-2 border-t border-[var(--border)] pt-4">
-            <label className="block">
-              <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("settings.totpCode")}</span>
-              <input
-                className="input max-w-[10rem] font-mono tracking-widest"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={8}
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
-                placeholder="000000"
-              />
-            </label>
+            <TextField
+              label={t("settings.totpCode")}
+              className="max-w-[10rem] font-mono tracking-widest"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={8}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
+              placeholder="000000"
+            />
             <button
               className="btn btn-danger"
               type="button"
@@ -772,10 +756,11 @@ export function SettingsPage() {
             </button>
           </div>
         ) : null}
-      </div>
+      </SectionCard>
 
       <div className="flex flex-wrap gap-3">
         <button className="btn" type="button" onClick={() => reload.mutate()}>
+          <RefreshCw size={16} />
           {t("settings.reload")}
         </button>
         <button className="btn" type="button" onClick={() => void downloadBackup()}>
@@ -795,8 +780,7 @@ export function SettingsPage() {
         </label>
       </div>
 
-      <div className="card overflow-auto p-5">
-        <h2 className="mb-3 font-semibold">Audit log</h2>
+      <SectionCard title="Audit log" icon={ScrollText} tone="cyan" className="overflow-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[var(--text-muted)]">
@@ -815,7 +799,7 @@ export function SettingsPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
     </div>
   );
 }

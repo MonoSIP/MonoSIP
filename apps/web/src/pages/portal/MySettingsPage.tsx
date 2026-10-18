@@ -2,7 +2,16 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import {
+  KeyRound,
+  Mic,
+  PhoneForwarded,
+  UserCog,
+  Voicemail,
+  Volume2,
+} from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Fwd = {
   id?: string;
@@ -150,9 +159,9 @@ export function MySettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <h1 className="text-2xl font-semibold">{t("nav.mySettings")}</h1>
-      <div className="card space-y-3 p-4">
+    <div className="mx-auto max-w-lg space-y-4">
+      <PageHeader icon={UserCog} title={t("nav.mySettings")} tone="cyan" />
+      <SectionCard title={t("portal.dnd")} icon={UserCog} tone="cyan">
         <button
           className={`btn ${dnd ? "btn-primary" : ""}`}
           type="button"
@@ -170,15 +179,13 @@ export function MySettingsPage() {
         >
           {t("portal.dnd")}: {dnd ? "ON" : "OFF"}
         </button>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-muted)]">{t("auth.password")}</span>
-          <input
-            className="input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
+        <TextField
+          label={t("auth.password")}
+          icon={KeyRound}
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
         <button
           className="btn btn-primary"
           type="button"
@@ -187,50 +194,39 @@ export function MySettingsPage() {
         >
           {t("common.save")}
         </button>
-      </div>
+      </SectionCard>
 
-      <div className="card space-y-3 p-4">
-        <h2 className="font-medium">Audio devices</h2>
-        <label className="block text-sm text-[var(--text-muted)]">
-          Microphone
-          <select className="input mt-1 w-full" value={micId} onChange={(e) => setMicId(e.target.value)}>
-            <option value="">System default</option>
-            {inputs.map((d) => (
-              <option key={d.deviceId} value={d.deviceId}>
-                {d.label || d.deviceId.slice(0, 8)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm text-[var(--text-muted)]">
-          Speaker
-          <select className="input mt-1 w-full" value={speakerId} onChange={(e) => setSpeakerId(e.target.value)}>
-            <option value="">System default</option>
-            {outputs.map((d) => (
-              <option key={d.deviceId} value={d.deviceId}>
-                {d.label || d.deviceId.slice(0, 8)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm text-[var(--text-muted)]">
-          Ringtone output
-          <select className="input mt-1 w-full" value={ringId} onChange={(e) => setRingId(e.target.value)}>
-            <option value="">Same as speaker</option>
-            {outputs.map((d) => (
-              <option key={d.deviceId} value={d.deviceId}>
-                {d.label || d.deviceId.slice(0, 8)}
-              </option>
-            ))}
-          </select>
-        </label>
+      <SectionCard title="Audio devices" icon={Mic} tone="cyan">
+        <SelectField label="Microphone" icon={Mic} value={micId} onChange={(e) => setMicId(e.target.value)}>
+          <option value="">System default</option>
+          {inputs.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || d.deviceId.slice(0, 8)}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField label="Speaker" icon={Volume2} value={speakerId} onChange={(e) => setSpeakerId(e.target.value)}>
+          <option value="">System default</option>
+          {outputs.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || d.deviceId.slice(0, 8)}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField label="Ringtone output" icon={Volume2} value={ringId} onChange={(e) => setRingId(e.target.value)}>
+          <option value="">Same as speaker</option>
+          {outputs.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || d.deviceId.slice(0, 8)}
+            </option>
+          ))}
+        </SelectField>
         <button className="btn btn-primary" type="button" onClick={saveDevices}>
           Save devices
         </button>
-      </div>
+      </SectionCard>
 
-      <div className="card space-y-4 p-4">
-        <h2 className="font-medium">Call forwarding</h2>
+      <SectionCard title="Call forwarding" icon={PhoneForwarded} tone="cyan">
         {fwds.map((fwd) => (
           <div key={fwd.condition} className="space-y-2 rounded border border-[var(--border)] p-3">
             <div className="text-sm font-medium capitalize">
@@ -242,8 +238,8 @@ export function MySettingsPage() {
                     ? "Busy"
                     : fwd.condition}
             </div>
-            <select
-              className="input"
+            <SelectField
+              label="Destination"
               value={fwd.destType}
               onChange={(e) =>
                 patchFwd(fwd.condition, {
@@ -256,35 +252,31 @@ export function MySettingsPage() {
               <option value="extension">Extension</option>
               <option value="hangup">Hangup</option>
               {me.data?.mobileForwardAllowed && <option value="external">Mobile / external</option>}
-            </select>
+            </SelectField>
             {(fwd.destType === "extension" || fwd.destType === "external") && (
-              <input
-                className="input"
+              <TextField
+                label={fwd.destType === "external" ? "Mobile number" : "Extension number"}
                 placeholder={fwd.destType === "external" ? "Mobile number" : "Extension number"}
                 value={fwd.destId ?? ""}
                 onChange={(e) => patchFwd(fwd.condition, { destId: e.target.value })}
               />
             )}
             {fwd.condition === "noanswer" && (
-              <label className="block text-xs text-[var(--text-muted)]">
-                Ring seconds
-                <input
-                  className="input mt-1"
-                  type="number"
-                  value={fwd.ringSeconds}
-                  onChange={(e) => patchFwd(fwd.condition, { ringSeconds: Number(e.target.value) })}
-                />
-              </label>
+              <TextField
+                label="Ring seconds"
+                type="number"
+                value={String(fwd.ringSeconds)}
+                onChange={(e) => patchFwd(fwd.condition, { ringSeconds: Number(e.target.value) })}
+              />
             )}
           </div>
         ))}
         <button className="btn btn-primary" type="button" onClick={() => saveFwd.mutate()}>
           Save forwarding
         </button>
-      </div>
+      </SectionCard>
 
-      <div className="card p-4">
-        <h2 className="mb-3 font-medium">Voicemail</h2>
+      <SectionCard title="Voicemail" icon={Voicemail} tone="cyan">
         <ul className="space-y-2">
           {(vm.data ?? []).length === 0 ? (
             <li className="text-[var(--text-muted)]">—</li>
@@ -340,7 +332,7 @@ export function MySettingsPage() {
             ))
           )}
         </ul>
-      </div>
+      </SectionCard>
     </div>
   );
 }

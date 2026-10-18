@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Download, Filter, History } from "lucide-react";
 import { api } from "../../lib/api";
+import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type CdrRow = {
   id: string;
@@ -54,39 +56,47 @@ export function CdrPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("cdr.title")}</h1>
-        <a className="btn" href={exportHref}>
-          {t("common.export")}
-        </a>
-      </div>
-      <form
-        className="card flex flex-wrap gap-2 p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void list.refetch();
-        }}
-      >
-        <input className="input" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input className="input" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
-        <input
-          className="input"
-          placeholder={t("cdr.caller")}
-          value={caller}
-          onChange={(e) => setCaller(e.target.value)}
-        />
-        <select className="input" value={disposition} onChange={(e) => setDisposition(e.target.value)}>
-          <option value="">All dispositions</option>
-          <option value="ANSWERED">ANSWERED</option>
-          <option value="NOANSWER">NOANSWER</option>
-          <option value="BUSY">BUSY</option>
-          <option value="FAILED">FAILED</option>
-        </select>
-        <button className="btn btn-primary" type="submit">
-          Filter
-        </button>
-      </form>
-      <div className="card overflow-auto">
+      <PageHeader
+        icon={History}
+        title={t("cdr.title")}
+        tone="blue"
+        description="Call detail records and quality metrics"
+        actions={
+          <a className="btn" href={exportHref}>
+            <Download size={16} />
+            {t("common.export")}
+          </a>
+        }
+      />
+      <SectionCard title="Filters" icon={Filter} tone="cyan">
+        <form
+          className="flex flex-wrap items-end gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void list.refetch();
+          }}
+        >
+          <TextField label="From" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <TextField label="To" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
+          <TextField
+            label={t("cdr.caller")}
+            value={caller}
+            onChange={(e) => setCaller(e.target.value)}
+          />
+          <SelectField label={t("cdr.disposition")} value={disposition} onChange={(e) => setDisposition(e.target.value)}>
+            <option value="">All dispositions</option>
+            <option value="ANSWERED">ANSWERED</option>
+            <option value="NOANSWER">NOANSWER</option>
+            <option value="BUSY">BUSY</option>
+            <option value="FAILED">FAILED</option>
+          </SelectField>
+          <button className="btn btn-primary mb-[0.85rem]" type="submit">
+            <Filter size={16} />
+            Filter
+          </button>
+        </form>
+      </SectionCard>
+      <SectionCard title="Call log" icon={History} tone="blue" className="overflow-auto !space-y-0">
         <table className="table">
           <thead>
             <tr>
@@ -145,15 +155,18 @@ export function CdrPage() {
             )}
           </tbody>
         </table>
-      </div>
+      </SectionCard>
       {timelineId && (
-        <div className="card space-y-2 p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-medium">Call timeline</h2>
+        <SectionCard
+          title="Call timeline"
+          icon={History}
+          tone="coral"
+          actions={
             <button className="btn" type="button" onClick={() => setTimelineId(null)}>
               Close
             </button>
-          </div>
+          }
+        >
           {(timeline.data?.events ?? []).length === 0 ? (
             <p className="text-sm text-[var(--text-muted)]">No IVR/flow events for this call.</p>
           ) : (
@@ -166,7 +179,7 @@ export function CdrPage() {
               ))}
             </ol>
           )}
-        </div>
+        </SectionCard>
       )}
     </div>
   );
