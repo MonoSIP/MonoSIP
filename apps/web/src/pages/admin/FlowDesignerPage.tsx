@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ReactFlow,
@@ -19,7 +19,15 @@ import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { FlowCanvasActionsProvider, flowNodeTypes, type FlowNodeData } from "./flow/FlowNodes";
 import { NodeSettings } from "./flow/NodeSettings";
-import { defaultDataForType, menuDigits, modalMaxWidth, nodeBlurb, nodeTitle } from "./flow/nodeMeta";
+import {
+  defaultDataForType,
+  menuDigits,
+  modalMaxWidth,
+  nodeBlurb,
+  nodeColor,
+  nodeShortTitle,
+  nodeTitle,
+} from "./flow/nodeMeta";
 
 const palette = [
   "announce",
@@ -456,13 +464,28 @@ export function FlowDesignerPage() {
 
       <div className="flex min-h-0 flex-1 gap-3 px-4 pb-4 md:px-8 md:pb-6">
         {!mobileView && (
-        <div className="card w-40 shrink-0 space-y-2 overflow-auto p-3">
-          <div className="text-xs font-semibold uppercase text-[var(--text-muted)]">Nodes</div>
-          {palette.map((p) => (
-            <button key={p} type="button" className="btn w-full justify-start text-sm" onClick={() => addNode(p)}>
-              {nodeTitle(p)}
-            </button>
-          ))}
+        <div className="card w-44 shrink-0 overflow-hidden p-2.5">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            Nodes
+          </div>
+          <div className="flex flex-col gap-1">
+            {palette.map((p) => {
+              const color = nodeColor(p);
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  title={nodeTitle(p)}
+                  onClick={() => addNode(p)}
+                  className="flow-palette-chip"
+                  style={{ ["--chip-color" as string]: color } as CSSProperties}
+                >
+                  <span className="flow-palette-dot" aria-hidden />
+                  {nodeShortTitle(p)}
+                </button>
+              );
+            })}
+          </div>
         </div>
         )}
 
@@ -491,7 +514,7 @@ export function FlowDesignerPage() {
           </FlowCanvasActionsProvider>
         </div>
 
-        <div className="card w-56 shrink-0 space-y-3 overflow-auto p-3">
+        <div className="card flex w-56 shrink-0 flex-col overflow-hidden p-3">
             <div className="mb-1 text-xs font-semibold uppercase text-[var(--text-muted)]">Test call</div>
             <label className="mb-1 block text-xs text-[var(--text-muted)]">
               Caller
@@ -525,7 +548,7 @@ export function FlowDesignerPage() {
               Run simulation
             </button>
             {simSteps.length > 0 && (
-              <ol className="mt-2 space-y-1 text-xs text-[var(--text)]">
+              <ol className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto text-xs text-[var(--text)]">
                 {simSteps.map((s, i) => (
                   <li key={`${i}-${s}`} className="rounded bg-[var(--bg-soft)] px-2 py-1">
                     {i + 1}. {s}

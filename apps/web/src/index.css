@@ -315,6 +315,8 @@ textarea.input {
   display: flex;
   flex-direction: column;
   gap: 0;
+  /* Clip flush tables so square thead/tbody never stick out past card radius */
+  overflow: hidden;
 }
 .section-card-head {
   display: flex;
@@ -340,6 +342,7 @@ textarea.input {
 .section-card-body-flush {
   padding: 0;
   overflow: auto;
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 .section-card-body-flush .table {
   margin: 0;
@@ -347,6 +350,15 @@ textarea.input {
 .section-card-flush .section-card-head {
   border-bottom: 1px solid color-mix(in oklab, var(--border) 85%, transparent);
   padding-bottom: 0.85rem;
+}
+/* Empty / short tables: round the last visible row into the card corners */
+.section-card-body-flush .table tbody tr:last-child td:first-child,
+.section-card-body-flush .table:not(:has(tbody tr)) thead th:first-child {
+  border-bottom-left-radius: var(--radius);
+}
+.section-card-body-flush .table tbody tr:last-child td:last-child,
+.section-card-body-flush .table:not(:has(tbody tr)) thead th:last-child {
+  border-bottom-right-radius: var(--radius);
 }
 
 /* Single-row action / form toolbars */
@@ -605,6 +617,42 @@ html.light .brand-mark {
 }
 .segmented .btn.btn-primary {
   box-shadow: 0 4px 14px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+
+/* IVR designer — colored add-node chips (one per row) */
+.flow-palette-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 9px;
+  border: 1px solid color-mix(in oklab, var(--chip-color) 35%, var(--border));
+  background: color-mix(in oklab, var(--chip-color) 12%, var(--bg-elevated));
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+.flow-palette-chip:hover {
+  background: color-mix(in oklab, var(--chip-color) 22%, var(--bg-elevated));
+  border-color: color-mix(in oklab, var(--chip-color) 55%, var(--border));
+  transform: translateY(-1px);
+}
+.flow-palette-chip:active {
+  transform: none;
+}
+.flow-palette-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--chip-color);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--chip-color) 25%, transparent);
 }
 
 /* React Flow zoom controls — match app theme */

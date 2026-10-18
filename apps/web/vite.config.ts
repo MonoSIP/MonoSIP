@@ -19,8 +19,18 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": "http://localhost:3000",
-      "/ws": { target: "ws://localhost:3000", ws: true },
+      // Local stack is usually nginx on :443; fall back to direct API if mapped.
+      "/api": {
+        target: process.env.VITE_API_PROXY ?? "https://localhost",
+        secure: false,
+        changeOrigin: true,
+      },
+      "/ws": {
+        target: process.env.VITE_WS_PROXY ?? "wss://localhost",
+        ws: true,
+        secure: false,
+        changeOrigin: true,
+      },
     },
   },
   build: {

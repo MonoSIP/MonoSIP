@@ -133,6 +133,52 @@ export function nodeTitle(flowType: string): string {
   return titles[flowType] ?? flowType;
 }
 
+/** Compact label for the add-node palette. */
+export function nodeShortTitle(flowType: string): string {
+  const titles: Record<string, string> = {
+    start: "Start",
+    announce: "Announce",
+    tts: "TTS",
+    menu: "Menu",
+    get_key: "Get key",
+    api: "API",
+    condition: "If",
+    set_var: "Set var",
+    language: "Lang",
+    time_condition: "Schedule",
+    directory: "Directory",
+    subflow: "Subflow",
+    transfer: "Transfer",
+    queue: "Queue",
+    voicemail: "Voicemail",
+    hangup: "Hangup",
+  };
+  return titles[flowType] ?? flowType;
+}
+
+/** Accent color shared by palette chips and canvas nodes. */
+export function nodeColor(flowType: string): string {
+  const colors: Record<string, string> = {
+    start: "#64748b",
+    announce: "#0d9488",
+    tts: "#0284c7",
+    menu: "#ea580c",
+    get_key: "#d97706",
+    api: "#4f46e5",
+    condition: "#7c3aed",
+    set_var: "#65a30d",
+    language: "#db2777",
+    time_condition: "#ca8a04",
+    directory: "#2563eb",
+    subflow: "#9333ea",
+    transfer: "#059669",
+    queue: "#0f766e",
+    voicemail: "#e11d48",
+    hangup: "#dc2626",
+  };
+  return colors[flowType] ?? "#64748b";
+}
+
 /** One-line purpose shown under the modal title. */
 export function nodeBlurb(flowType: string): string {
   const blurbs: Record<string, string> = {

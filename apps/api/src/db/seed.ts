@@ -49,6 +49,7 @@ async function seed() {
     securityLoginMaxRetry: 8,
     securityLoginBanMinutes: 15,
     allowedCountries: ["TR"],
+    blockedCountries: [] as string[],
     dailySpendLimitMinutes: 1000,
     monthlySpendLimitMinutes: 20000,
   };

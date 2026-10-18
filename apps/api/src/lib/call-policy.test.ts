@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyNumber,
   countryFromDialed,
+  evaluateCountryPolicy,
   isAnonymousCaller,
   isEmergencyNumber,
   matchDialPattern,
@@ -57,5 +58,23 @@ describe("matchDialPattern", () => {
     expect(matchDialPattern("101", "_XXX")).toBe(true);
     expect(matchDialPattern("212*", "212*")).toBe(true);
     expect(matchDialPattern("999", "212")).toBe(false);
+  });
+});
+
+describe("evaluateCountryPolicy", () => {
+  it("allows only listed countries", () => {
+    const s = { allowedCountries: ["TR", "DE"], blockedCountries: [] };
+    expect(evaluateCountryPolicy("+905321112233", s).ok).toBe(true);
+    expect(evaluateCountryPolicy("+4915112345678", s).ok).toBe(true);
+    expect(evaluateCountryPolicy("+33123456789", s)).toEqual({ ok: false, reason: "country" });
+  });
+
+  it("blocks listed countries even when allowlist is ALL", () => {
+    const s = { allowedCountries: ["ALL"], blockedCountries: ["IR", "SY"] };
+    expect(evaluateCountryPolicy("+33123456789", s).ok).toBe(true);
+    expect(evaluateCountryPolicy("+989121234567", s)).toEqual({
+      ok: false,
+      reason: "country-blocked",
+    });
   });
 });

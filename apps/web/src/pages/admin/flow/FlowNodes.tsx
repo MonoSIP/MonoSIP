@@ -1,7 +1,7 @@
-import { createContext, memo, useContext, type ReactNode } from "react";
+import { createContext, memo, useContext, type CSSProperties, type ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Pencil, Trash2 } from "lucide-react";
-import { exitsForNode, menuDigits } from "./nodeMeta";
+import { exitsForNode, menuDigits, nodeColor } from "./nodeMeta";
 
 export type FlowNodeData = {
   label?: string;
@@ -74,6 +74,7 @@ function subtitle(data: FlowNodeData): string {
 export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps) {
   const d = data as FlowNodeData;
   const type = d.flowType || "announce";
+  const color = nodeColor(type);
   const outs = exitsForNode(type, d);
   const detail = subtitle(d);
   const actions = useContext(FlowCanvasActionsCtx);
@@ -81,16 +82,22 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
 
   return (
     <div
-      className={`relative min-w-[140px] rounded-xl border px-3 py-2 pr-8 shadow-sm ${
-        selected
-          ? "border-[var(--accent)] bg-[color-mix(in_oklab,var(--accent)_18%,var(--bg-elevated))]"
-          : "border-[var(--border)] bg-[var(--bg-elevated)]"
-      }`}
+      style={
+        {
+          ["--node-color" as string]: color,
+          borderColor: selected ? color : `color-mix(in oklab, ${color} 45%, var(--border))`,
+          background: selected
+            ? `color-mix(in oklab, ${color} 16%, var(--bg-elevated))`
+            : `color-mix(in oklab, ${color} 7%, var(--bg-elevated))`,
+          boxShadow: selected ? `0 0 0 1px ${color}` : undefined,
+        } as CSSProperties
+      }
+      className="relative min-w-[140px] rounded-xl border-l-[3px] border px-3 py-2 pr-8 shadow-sm"
     >
       <div className="nodrag nopan absolute right-1 top-1 flex flex-col gap-0.5">
         <button
           type="button"
-          className="rounded-md p-1 text-[var(--text-muted)] hover:bg-[color-mix(in_oklab,var(--accent)_18%,transparent)] hover:text-[var(--accent)]"
+          className="rounded-md p-1 text-[var(--text-muted)] hover:bg-[color-mix(in_oklab,var(--node-color)_18%,transparent)] hover:text-[var(--node-color)]"
           title="Edit settings"
           aria-label="Edit node settings"
           onClick={(e) => {
@@ -119,10 +126,10 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
         <Handle
           type="target"
           position={Position.Left}
-          className="!h-2.5 !w-2.5 !border-[var(--border)] !bg-[var(--accent)]"
+          className="!h-2.5 !w-2.5 !border-white !bg-[var(--node-color)]"
         />
       )}
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--node-color)]">
         {type}
       </div>
       <div className="text-sm font-medium text-[var(--text)]">{d.label || type}</div>
@@ -136,7 +143,7 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
           type="source"
           position={Position.Right}
           style={{ top: `${((i + 1) / (outs.length + 1)) * 100}%` }}
-          className="!h-2.5 !w-2.5 !border-[var(--border)] !bg-[var(--accent)]"
+          className="!h-2.5 !w-2.5 !border-white !bg-[var(--node-color)]"
           title={exitId}
         />
       ))}

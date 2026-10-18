@@ -21,6 +21,7 @@ type Settings = {
   kvkkAnnouncementEnabled?: boolean;
   kvkkPromptId?: string | null;
   allowedCountries?: string[];
+  blockedCountries?: string[];
   dailySpendLimitMinutes?: number;
   monthlySpendLimitMinutes?: number;
   smtpHost?: string | null;
@@ -75,6 +76,7 @@ export function SettingsPage() {
   const [kvkk, setKvkk] = useState(true);
   const [kvkkPromptId, setKvkkPromptId] = useState("");
   const [countries, setCountries] = useState("TR");
+  const [blockedCountries, setBlockedCountries] = useState("");
   const [daily, setDaily] = useState(1000);
   const [monthly, setMonthly] = useState(20000);
   const [smtpHost, setSmtpHost] = useState("");
@@ -148,6 +150,7 @@ export function SettingsPage() {
       setKvkk(settings.data.kvkkAnnouncementEnabled ?? true);
       setKvkkPromptId(settings.data.kvkkPromptId ?? "");
       setCountries((settings.data.allowedCountries ?? ["TR"]).join(","));
+      setBlockedCountries((settings.data.blockedCountries ?? []).join(","));
       setDaily(settings.data.dailySpendLimitMinutes ?? 1000);
       setMonthly(settings.data.monthlySpendLimitMinutes ?? 20000);
       setSmtpHost(settings.data.smtpHost ?? "");
@@ -186,6 +189,10 @@ export function SettingsPage() {
         kvkkAnnouncementEnabled: kvkk,
         kvkkPromptId: kvkkPromptId || null,
         allowedCountries: countries.split(",").map((s) => s.trim()).filter(Boolean),
+        blockedCountries: blockedCountries
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
         dailySpendLimitMinutes: daily,
         monthlySpendLimitMinutes: monthly,
         smtpHost: smtpHost || null,
@@ -367,6 +374,14 @@ export function SettingsPage() {
           value={countries}
           onChange={(e) => setCountries(e.target.value)}
         />
+        <TextField
+          label="Blocked countries (ISO, comma — e.g. IR,SY)"
+          value={blockedCountries}
+          onChange={(e) => setBlockedCountries(e.target.value)}
+        />
+        <p className="text-xs text-[var(--text-muted)]">
+          Prefer the chip picker on SIP providers for country allow/block.
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Daily limit (min)"
@@ -790,13 +805,21 @@ export function SettingsPage() {
             </tr>
           </thead>
           <tbody>
-            {audit.data?.slice(0, 40).map((a) => (
-              <tr key={a.id} className="border-t border-[var(--border)]">
-                <td className="py-1">{new Date(a.at).toLocaleString()}</td>
-                <td>{a.action}</td>
-                <td className="font-mono text-xs">{a.objectId ?? "—"}</td>
+            {(audit.data ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-[var(--text-muted)]">
+                  No audit events yet.
+                </td>
               </tr>
-            ))}
+            ) : (
+              audit.data?.slice(0, 40).map((a) => (
+                <tr key={a.id}>
+                  <td>{new Date(a.at).toLocaleString()}</td>
+                  <td>{a.action}</td>
+                  <td className="font-mono text-xs">{a.objectId ?? "—"}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </SectionCard>

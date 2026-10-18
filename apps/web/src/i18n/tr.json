@@ -23,7 +23,8 @@
     "import": "İçe aktar",
     "back": "Geri",
     "yes": "Evet",
-    "no": "Hayır"
+    "no": "Hayır",
+    "add": "Ekle"
   },
   "auth": {
     "adminLogin": "Yönetici girişi",
@@ -44,6 +45,7 @@
     "flows": "IVR",
     "trunks": "SIP sağlayıcıları",
     "routes": "Rotalar",
+    "blacklist": "Bloklanan numaralar",
     "prompts": "Sesler",
     "moh": "Bekleme müziği",
     "devices": "Cihazlar",
@@ -107,13 +109,38 @@
     "status": "Durum",
     "manageDids": "Gelen DID’leri yönet",
     "didSummary": "{{count}} gelen DID tanımlı",
-    "noDids": "Henüz gelen DID yok — hat ayaktayken Rotalar’dan ekleyin."
+    "noDids": "Henüz gelen DID yok — hat ayaktayken Rotalar’dan ekleyin.",
+    "dialPolicy": "Çağrı izni / ülkeler",
+    "dialPolicyHint": "Uluslararası giden aramalarda yalnızca seçili ülkelere izin verin; engellenen ülkeler her zaman reddedilir. Dahili arama izinleri Dahililer sayfasındadır.",
+    "allowAllIntl": "Tüm uluslararası ülkelere izin ver (ALL)",
+    "allowedCountries": "İzin verilen ülkeler",
+    "allowedCountriesHint": "Sadece işaretli ülke kodlarına uluslararası arama yapılır. Boş bırakılırsa kayıtta TR kullanılır.",
+    "blockedCountries": "Bloklanan ülkeler",
+    "blockedCountriesHint": "Bu ülkeler izin listesinde olsa bile engellenir.",
+    "extraIso": "Ek ISO kodu",
+    "saveDialPolicy": "Ülke ayarlarını kaydet"
   },
   "routes": {
     "title": "Rotalar",
     "inbound": "Gelen",
     "outbound": "Giden",
-    "blacklist": "Kara liste"
+    "blacklist": "Kara liste",
+    "blacklistMoved": "Numara bloklama, menüdeki Bloklanan numaralar sayfasına taşındı."
+  },
+  "blacklist": {
+    "title": "Bloklanan numaralar",
+    "blurb": "Gelen veya giden çağrıları tam numara veya joker (*) ile engelleyin. Eşleştirme ülke kodlu formlarla yapılır (örn. 0532… ve 90532…).",
+    "add": "Blok ekle",
+    "list": "Blok listesi",
+    "pattern": "Kalıp",
+    "patternHint": "* jokeridir: *123* içinde 123 geçen tüm numaraları engeller. Numara hem çevrildiği gibi hem ülke kodlu halde kontrol edilir.",
+    "direction": "Yön",
+    "dirBoth": "Gelen + giden",
+    "dirInbound": "Sadece gelen",
+    "dirOutbound": "Sadece giden",
+    "note": "Not",
+    "notePlaceholder": "İsteğe bağlı açıklama",
+    "empty": "Henüz blok kalıbı yok."
   },
   "queues": {
     "title": "Kuyruklar",

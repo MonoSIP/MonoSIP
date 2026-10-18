@@ -180,7 +180,10 @@ export const SettingsSchema = z.object({
   sipIpDenylist: z.array(z.string()).default([]),
   securityLoginMaxRetry: z.number().int().min(3).max(50).default(8),
   securityLoginBanMinutes: z.number().int().min(1).max(1440).default(15),
+  /** ISO country codes allowed for international outbound (e.g. TR,DE). Use ALL/INTL for unrestricted. */
   allowedCountries: z.array(z.string()).default(["TR"]),
+  /** ISO country codes always blocked for international outbound (checked before allowlist). */
+  blockedCountries: z.array(z.string()).default([]),
   dailySpendLimitMinutes: z.number().int().default(1000),
   monthlySpendLimitMinutes: z.number().int().default(20000),
   blockAnonymousInbound: z.boolean().default(true),

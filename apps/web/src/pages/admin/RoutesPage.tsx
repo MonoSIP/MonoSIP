@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
@@ -56,14 +57,6 @@ export function RoutesPage() {
     queryFn: () =>
       api.get<Array<{ id: string; name: string }>>("/api/v1/admin/trunks"),
   });
-  const blacklist = useQuery({
-    queryKey: ["blacklist"],
-    queryFn: () =>
-      api.get<Array<{ id: string; pattern: string; direction: string; note: string | null }>>(
-        "/api/v1/admin/blacklist",
-      ),
-  });
-
   function resetInbound() {
     setEditInboundId(null);
     setDid("default");
@@ -148,7 +141,7 @@ export function RoutesPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description="Inbound DIDs, outbound patterns, and blacklist" />
+      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description="Inbound DIDs and outbound patterns" />
       <SectionCard title={t("routes.inbound")} icon={Signpost} tone="cyan">
         <form
           className="mb-3 grid gap-2 sm:grid-cols-6 sm:items-end"
@@ -320,66 +313,11 @@ export function RoutesPage() {
         </table>
       </SectionCard>
       <SectionCard title={t("routes.blacklist")} icon={Ban} tone="coral">
-        <form
-          className="toolbar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            void api
-              .post("/api/v1/admin/blacklist", {
-                pattern: String(fd.get("pattern") ?? ""),
-                direction: String(fd.get("direction") ?? "both"),
-                note: String(fd.get("note") ?? "") || null,
-              })
-              .then(() => {
-                e.currentTarget.reset();
-                void qc.invalidateQueries({ queryKey: ["blacklist"] });
-              });
-          }}
-        >
-          <TextField label="Pattern" name="pattern" required />
-          <SelectField label="Direction" name="direction" defaultValue="both">
-            <option value="inbound">inbound</option>
-            <option value="outbound">outbound</option>
-            <option value="both">both</option>
-          </SelectField>
-          <TextField label="Note" name="note" />
-          <button className="btn btn-primary" type="submit">
-            <Plus size={16} />
-            {t("common.create")}
-          </button>
-        </form>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Pattern</th>
-              <th>Direction</th>
-              <th className="col-grow">Note</th>
-              <th className="col-actions">{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {blacklist.data?.map((b) => (
-              <tr key={b.id}>
-                <td className="font-mono">{b.pattern}</td>
-                <td>{b.direction}</td>
-                <td className="col-grow">{b.note ?? "—"}</td>
-                <td className="col-actions">
-                  <IconBtn
-                    icon={Trash2}
-                    label={t("common.delete")}
-                    danger
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/blacklist/${b.id}`).then(() =>
-                        qc.invalidateQueries({ queryKey: ["blacklist"] }),
-                      )
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <p className="mb-3 text-sm text-[var(--text-muted)]">{t("routes.blacklistMoved")}</p>
+        <Link className="btn btn-primary" to="/blacklist">
+          <Ban size={16} />
+          {t("nav.blacklist")}
+        </Link>
       </SectionCard>
     </div>
   );

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { destForScheduleStatus, matchBlacklistPattern, resolveExtensionNumber } from "./routing.js";
+import {
+  blacklistNumberCandidates,
+  destForScheduleStatus,
+  matchBlacklistPattern,
+  resolveExtensionNumber,
+} from "./routing.js";
 
 /**
  * Pure-logic coverage for asterisk/routing.ts. The DB-backed exports
@@ -41,10 +46,36 @@ describe("matchBlacklistPattern", () => {
     expect(matchBlacklistPattern("05321112233", "*2111*")).toBe(true);
   });
 
+  it("supports *contains* wildcards like *123*", () => {
+    expect(matchBlacklistPattern("05321112233", "*111*")).toBe(true);
+    expect(matchBlacklistPattern("05321112233", "*123*")).toBe(false);
+    expect(matchBlacklistPattern("+905321112233", "*123*")).toBe(false);
+    expect(matchBlacklistPattern("+905321112233", "*532111*")).toBe(true);
+  });
+
+  it("matches with full country code forms", () => {
+    // Dialed nationally, pattern uses CC 90.
+    expect(matchBlacklistPattern("05321112233", "*90532*")).toBe(true);
+    expect(matchBlacklistPattern("05321112233", "905321112233")).toBe(true);
+    expect(matchBlacklistPattern("+905321112233", "0532*")).toBe(true);
+    expect(matchBlacklistPattern("00905321112233", "*905321112233*")).toBe(true);
+  });
+
   it("escapes regex metacharacters even in a wildcard pattern", () => {
     // Without escaping, "." would match any character and this would match.
     expect(matchBlacklistPattern("05321112233", "0532.11*")).toBe(false);
     expect(matchBlacklistPattern("05321112233", "0532*")).toBe(true);
+  });
+});
+
+describe("blacklistNumberCandidates", () => {
+  it("adds TR country-code twin forms", () => {
+    expect(blacklistNumberCandidates("05321112233")).toEqual(
+      expect.arrayContaining(["05321112233", "905321112233"]),
+    );
+    expect(blacklistNumberCandidates("+90 532 111 22 33")).toEqual(
+      expect.arrayContaining(["905321112233", "05321112233"]),
+    );
   });
 });
 

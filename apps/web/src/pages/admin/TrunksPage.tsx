@@ -1,11 +1,34 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Cable, Link2, Pencil, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
+import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { DIAL_COUNTRIES } from "../../lib/dialCountries";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+
+type DialSettings = {
+  allowedCountries?: string[];
+  blockedCountries?: string[];
+};
+
+function normalizeIsoList(codes: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of codes) {
+    const c = raw.trim().toUpperCase();
+    if (!c || seen.has(c)) continue;
+    seen.add(c);
+    out.push(c);
+  }
+  return out;
+}
+
+function toggleCode(list: string[], code: string): string[] {
+  const c = code.toUpperCase();
+  return list.includes(c) ? list.filter((x) => x !== c) : [...list, c];
+}
 
 type Trunk = {
   id: string;
@@ -116,6 +139,11 @@ export function TrunksPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState<TrunkForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [allowedCountries, setAllowedCountries] = useState<string[]>(["TR"]);
+  const [blockedCountries, setBlockedCountries] = useState<string[]>([]);
+  const [allowExtra, setAllowExtra] = useState("");
+  const [blockExtra, setBlockExtra] = useState("");
+  const [allowAllIntl, setAllowAllIntl] = useState(false);
 
   const list = useQuery({
     queryKey: ["trunks"],
@@ -124,6 +152,36 @@ export function TrunksPage() {
   const inbound = useQuery({
     queryKey: ["routes-inbound"],
     queryFn: () => api.get<InboundRoute[]>("/api/v1/admin/routes/inbound"),
+  });
+  const dialSettings = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => api.get<DialSettings>("/api/v1/admin/settings"),
+  });
+
+  useEffect(() => {
+    if (!dialSettings.data) return;
+    const allowed = normalizeIsoList(dialSettings.data.allowedCountries ?? ["TR"]);
+    const all = allowed.includes("ALL") || allowed.includes("INTL");
+    setAllowAllIntl(all);
+    setAllowedCountries(all ? allowed.filter((c) => c !== "ALL" && c !== "INTL") : allowed);
+    setBlockedCountries(normalizeIsoList(dialSettings.data.blockedCountries ?? []));
+  }, [dialSettings.data]);
+
+  const saveDialPolicy = useMutation({
+    mutationFn: () => {
+      const allowed = allowAllIntl
+        ? ["ALL"]
+        : normalizeIsoList(allowedCountries);
+      return api.patch("/api/v1/admin/settings", {
+        allowedCountries: allowed.length ? allowed : ["TR"],
+        blockedCountries: normalizeIsoList(blockedCountries),
+      });
+    },
+    onSuccess: () => {
+      toast.success(t("common.save"));
+      void qc.invalidateQueries({ queryKey: ["settings"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const didsByNote = useMemo(() => {
@@ -348,6 +406,118 @@ export function TrunksPage() {
       ) : (
         <p className="text-sm text-[var(--text-muted)]">{t("trunks.noDids")}</p>
       )}
+
+      <SectionCard title={t("trunks.dialPolicy")} icon={ShieldBan} tone="coral" className="space-y-4">
+        <p className="text-sm text-[var(--text-muted)]">{t("trunks.dialPolicyHint")}</p>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={allowAllIntl}
+            onChange={(e) => setAllowAllIntl(e.target.checked)}
+          />
+          {t("trunks.allowAllIntl")}
+        </label>
+
+        {!allowAllIntl && (
+          <div className="space-y-2">
+            <div className="text-sm font-medium">{t("trunks.allowedCountries")}</div>
+            <p className="text-xs text-[var(--text-muted)]">{t("trunks.allowedCountriesHint")}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {DIAL_COUNTRIES.map((c) => {
+                const on = allowedCountries.includes(c.code);
+                return (
+                  <button
+                    key={`allow-${c.code}`}
+                    type="button"
+                    className={`btn text-xs ${on ? "btn-primary" : ""}`}
+                    aria-pressed={on}
+                    onClick={() => setAllowedCountries((list) => toggleCode(list, c.code))}
+                  >
+                    {c.code}
+                    <span className="opacity-70">{c.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="toolbar">
+              <TextField
+                label={t("trunks.extraIso")}
+                className="font-mono w-[7.5rem]"
+                value={allowExtra}
+                onChange={(e) => setAllowExtra(e.target.value.toUpperCase())}
+                placeholder="ISO"
+                maxLength={3}
+              />
+              <button
+                className="btn"
+                type="button"
+                onClick={() => {
+                  const codes = normalizeIsoList(allowExtra.split(/[,\s]+/));
+                  if (!codes.length) return;
+                  setAllowedCountries((list) => normalizeIsoList([...list, ...codes]));
+                  setAllowExtra("");
+                }}
+              >
+                {t("common.add")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium">{t("trunks.blockedCountries")}</div>
+          <p className="text-xs text-[var(--text-muted)]">{t("trunks.blockedCountriesHint")}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {DIAL_COUNTRIES.map((c) => {
+              const on = blockedCountries.includes(c.code);
+              return (
+                <button
+                  key={`block-${c.code}`}
+                  type="button"
+                  className={`btn text-xs ${on ? "btn-danger" : ""}`}
+                  aria-pressed={on}
+                  onClick={() => setBlockedCountries((list) => toggleCode(list, c.code))}
+                >
+                  {c.code}
+                  <span className="opacity-70">{c.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="toolbar">
+            <TextField
+              label={t("trunks.extraIso")}
+              className="font-mono w-[7.5rem]"
+              value={blockExtra}
+              onChange={(e) => setBlockExtra(e.target.value.toUpperCase())}
+              placeholder="ISO"
+              maxLength={3}
+            />
+            <button
+              className="btn"
+              type="button"
+              onClick={() => {
+                const codes = normalizeIsoList(blockExtra.split(/[,\s]+/));
+                if (!codes.length) return;
+                setBlockedCountries((list) => normalizeIsoList([...list, ...codes]));
+                setBlockExtra("");
+              }}
+            >
+              {t("common.add")}
+            </button>
+          </div>
+        </div>
+
+        <button
+          className="btn btn-primary"
+          type="button"
+          disabled={saveDialPolicy.isPending}
+          onClick={() => saveDialPolicy.mutate()}
+        >
+          {t("trunks.saveDialPolicy")}
+        </button>
+      </SectionCard>
 
       <SectionCard title="Trunk list" icon={Cable} tone="blue" flush>
         <table className="table">

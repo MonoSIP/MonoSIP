@@ -23,7 +23,8 @@
     "import": "Import",
     "back": "Back",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "add": "Add"
   },
   "auth": {
     "adminLogin": "Admin sign in",
@@ -44,6 +45,7 @@
     "flows": "IVR",
     "trunks": "SIP providers",
     "routes": "Routes",
+    "blacklist": "Blocked numbers",
     "prompts": "Prompts",
     "moh": "Music on hold",
     "devices": "Devices",
@@ -107,13 +109,38 @@
     "status": "Status",
     "manageDids": "Manage inbound DIDs",
     "didSummary": "{{count}} inbound DID(s) configured",
-    "noDids": "No inbound DIDs yet — add them under Routes after the trunk is up."
+    "noDids": "No inbound DIDs yet — add them under Routes after the trunk is up.",
+    "dialPolicy": "Call permission / countries",
+    "dialPolicyHint": "Restrict international outbound to selected countries; blocked countries are always denied. Per-extension dial rights live on Extensions.",
+    "allowAllIntl": "Allow all international countries (ALL)",
+    "allowedCountries": "Allowed countries",
+    "allowedCountriesHint": "International calls are permitted only to these ISO codes. Empty save falls back to TR.",
+    "blockedCountries": "Blocked countries",
+    "blockedCountriesHint": "These countries are denied even if listed under allowed or ALL.",
+    "extraIso": "Extra ISO code",
+    "saveDialPolicy": "Save country settings"
   },
   "routes": {
     "title": "Routes",
     "inbound": "Inbound",
     "outbound": "Outbound",
-    "blacklist": "Blacklist"
+    "blacklist": "Blacklist",
+    "blacklistMoved": "Number blocking moved to Blocked numbers in the menu."
+  },
+  "blacklist": {
+    "title": "Blocked numbers",
+    "blurb": "Block inbound or outbound calls by exact number or wildcard. Matching uses full country-code forms (e.g. 0532… and 90532…).",
+    "add": "Add block",
+    "list": "Block list",
+    "pattern": "Pattern",
+    "patternHint": "Use * as wildcard: *123* blocks any number containing 123. Patterns are matched against dialed digits and country-code equivalents.",
+    "direction": "Direction",
+    "dirBoth": "Inbound + outbound",
+    "dirInbound": "Inbound only",
+    "dirOutbound": "Outbound only",
+    "note": "Note",
+    "notePlaceholder": "Optional reason",
+    "empty": "No blocked patterns yet."
   },
   "queues": {
     "title": "Queues",

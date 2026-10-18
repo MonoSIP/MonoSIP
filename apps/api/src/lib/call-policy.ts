@@ -110,6 +110,26 @@ export function isAnonymousCaller(caller: string): boolean {
 
 export type NumberClass = "localFixed" | "mobile" | "short444" | "international" | "internal" | "emergency";
 
+/** Pure country allow/block check for international dials (exported for unit tests). */
+export function evaluateCountryPolicy(
+  dialed: string,
+  settings: Pick<Settings, "allowedCountries" | "blockedCountries">,
+): { ok: true } | { ok: false; reason: string } {
+  const iso = countryFromDialed(dialed);
+  const blocked = (settings.blockedCountries ?? []).map((c) => c.toUpperCase());
+  if (iso && blocked.includes(iso)) {
+    return { ok: false, reason: "country-blocked" };
+  }
+  const allowed = (settings.allowedCountries ?? ["TR"]).map((c) => c.toUpperCase());
+  if (allowed.includes("ALL") || allowed.includes("INTL")) {
+    return { ok: true };
+  }
+  if (!iso || !allowed.includes(iso)) {
+    return { ok: false, reason: "country" };
+  }
+  return { ok: true };
+}
+
 export function classifyNumber(dialed: string): NumberClass {
   const n = dialed.replace(/\D/g, "");
   if (isEmergencyNumber(n)) return "emergency";
@@ -182,12 +202,9 @@ export async function checkExtensionOutbound(
   if (cls === "short444" && !perms.short444) return { ok: false, reason: "no-short444" };
   if (cls === "localFixed" && !perms.localFixed) return { ok: false, reason: "no-local" };
 
-  const allowed = (settings.allowedCountries ?? ["TR"]).map((c) => c.toUpperCase());
-  if (cls === "international" && !allowed.includes("ALL") && !allowed.includes("INTL")) {
-    const iso = countryFromDialed(dialed);
-    if (!iso || !allowed.includes(iso)) {
-      return { ok: false, reason: "country" };
-    }
+  if (cls === "international") {
+    const countryCheck = evaluateCountryPolicy(dialed, settings);
+    if (!countryCheck.ok) return countryCheck;
   }
 
   const maxPerHour = settings.maxOutboundPerHour ?? 60;

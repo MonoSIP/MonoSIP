@@ -35,27 +35,66 @@ export function resolveExtensionNumber(
   return byNum?.number ?? null;
 }
 
+/**
+ * Digit forms used for blacklist matching, including TR national ↔ country-code.
+ * Example: 05321112233 → also 905321112233 so patterns like *90532* / 90532* match.
+ */
+export function blacklistNumberCandidates(number: string): string[] {
+  const raw = number.trim();
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (!d) return [];
+  const out = new Set<string>([d]);
+  // TR domestic 0XXXXXXXXXX → E.164 without +
+  if (d.startsWith("0") && d.length >= 10 && d.length <= 11) {
+    out.add(`90${d.slice(1)}`);
+  }
+  // TR E.164 → domestic with leading 0
+  if (d.startsWith("90") && d.length >= 12 && d.length <= 13) {
+    out.add(`0${d.slice(2)}`);
+  }
+  return [...out];
+}
+
+/**
+ * Strip phone separators for digit-form matching, but keep wildcards and
+ * other literals (e.g. ".") so metacharacters stay escaped and do not glue digits.
+ */
+function blacklistPatternDigits(pattern: string): string {
+  return pattern.replace(/[\s\-()/+]/g, "");
+}
+
+function blacklistGlobToRegExp(pattern: string): RegExp {
+  return new RegExp(
+    `^${pattern
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*")
+      .replace(/\?/g, ".")}$`,
+  );
+}
+
 export function matchBlacklistPattern(number: string, pattern: string): boolean {
-  const n = number.replace(/\D/g, "");
   const p = pattern.trim();
   if (!p) return false;
+  const candidates = blacklistNumberCandidates(number);
+  if (!candidates.length) return false;
+
   if (p.includes("*") || p.includes("?")) {
-    const re = new RegExp(
-      "^" +
-        p
-          .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-          .replace(/\*/g, ".*")
-          .replace(/\?/g, ".") +
-        "$",
-    );
-    return re.test(number) || re.test(n);
+    const pDigits = blacklistPatternDigits(p);
+    if (pDigits) {
+      const re = blacklistGlobToRegExp(pDigits);
+      if (candidates.some((c) => re.test(c))) return true;
+    }
+    const reRaw = blacklistGlobToRegExp(p);
+    return reRaw.test(number) || candidates.some((c) => reRaw.test(c));
   }
+
   // Only compare against the digit-stripped form when the pattern actually has
   // digits: "abc".replace(/\D/g,"") === "" and "anything".includes("") is true,
   // which would otherwise blacklist every caller.
   const digits = p.replace(/\D/g, "");
   if (!digits) return false;
-  return number.includes(p) || n.includes(digits);
+  return candidates.some((c) => c.includes(digits)) || number.includes(p);
 }
 
 export async function isBlacklisted(

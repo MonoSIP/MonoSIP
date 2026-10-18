@@ -2,6 +2,7 @@ import { NavLink, Outlet, useMatch, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Activity,
+  Ban,
   Cable,
   CalendarClock,
   FileAudio,
@@ -36,6 +37,7 @@ const links = [
   { to: "/flows", icon: Workflow, key: "flows", tone: "var(--violet-line)" },
   { to: "/trunks", icon: Cable, key: "trunks", tone: "var(--accent)" },
   { to: "/routes", icon: GitBranch, key: "routes", tone: "var(--accent-3)" },
+  { to: "/blacklist", icon: Ban, key: "blacklist", tone: "var(--danger)" },
   { to: "/prompts", icon: FileAudio, key: "prompts", tone: "var(--success)" },
   { to: "/moh", icon: Music, key: "moh", tone: "var(--accent-2)" },
   { to: "/devices", icon: Smartphone, key: "devices", tone: "var(--info)" },

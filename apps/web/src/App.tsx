@@ -17,6 +17,7 @@ const DashboardPage = lazyNamed(() => import("./pages/admin/DashboardPage"), "Da
 const ExtensionsPage = lazyNamed(() => import("./pages/admin/ExtensionsPage"), "ExtensionsPage");
 const TrunksPage = lazyNamed(() => import("./pages/admin/TrunksPage"), "TrunksPage");
 const RoutesPage = lazyNamed(() => import("./pages/admin/RoutesPage"), "RoutesPage");
+const BlacklistPage = lazyNamed(() => import("./pages/admin/BlacklistPage"), "BlacklistPage");
 const QueuesPage = lazyNamed(() => import("./pages/admin/QueuesPage"), "QueuesPage");
 const RingGroupsPage = lazyNamed(() => import("./pages/admin/RingGroupsPage"), "RingGroupsPage");
 const SchedulesPage = lazyNamed(() => import("./pages/admin/SchedulesPage"), "SchedulesPage");
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="flows/:id" element={<FlowDesignerPage />} />
             <Route path="trunks" element={<TrunksPage />} />
             <Route path="routes" element={<RoutesPage />} />
+            <Route path="blacklist" element={<BlacklistPage />} />
             <Route path="prompts" element={<PromptsPage />} />
             <Route path="moh" element={<MohPage />} />
             <Route path="recordings" element={<RecordingsPage />} />
