@@ -1,0 +1,52 @@
+version: "1"
+
+runtime:
+  type: node
+  version: "24"
+
+# Monorepo: Docker build context MUST be the repository root.
+build:
+  dockerfile: "apps/api/Dockerfile"
+
+run:
+  port: 3000
+  healthcheck: "/api/v1/health"
+  restart: unless-stopped
+
+# Persist DB (embedded) + Asterisk config + uploads + secrets across redeploys.
+# If trunks/settings vanish on every Deploy, the panel is not attaching this volume —
+# confirm in NineDeploy UI that /data is a persistent disk (not ephemeral), or set
+# DATABASE_URL to managed Postgres. Optional vault: DSIP_REQUIRE_PERSISTENT_DATA=1
+# refuses boot when secrets exist but the Postgres cluster was wiped.
+volume:
+  mount: "/data"
+  backups:
+    schedule: "0 3 * * *"
+    retention: 14
+
+# Softphone audio (WebRTC RTP) — publish these in the NineDeploy UI if the
+# platform does not map them from this file:
+#   UDP 10000-10100 → container 10000-10100
+# Then set vault env DSIP_RTP_PUBLISHED=1 (and EXTERNAL_IP). Deploy logs +
+# /api/v1/health.media warn until that is done.
+
+resources:
+  # Embedded Postgres + Asterisk + Node + ffmpeg
+  memMb: 2560
+  cpuShares: 1024
+
+env:
+  aliases:
+    POSTGRES_URL: DATABASE_URL
+    POSTGRES_PRIVATE_URL: DATABASE_URL
+
+watch:
+  paths:
+    - "apps/api/**"
+    - "apps/web/**"
+    - "packages/shared/**"
+    - "docker/asterisk/**"
+    - "package.json"
+    - "pnpm-workspace.yaml"
+    - "pnpm-lock.yaml"
+    - "apps/api/Dockerfile"
