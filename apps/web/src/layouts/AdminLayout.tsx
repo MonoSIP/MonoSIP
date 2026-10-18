@@ -67,52 +67,55 @@ export function AdminLayout() {
 
   return (
     <div className={`flex ${flowDesigner ? "h-full overflow-hidden" : "min-h-full"}`}>
-      <aside className="aside-panel hidden w-64 shrink-0 p-4 md:flex md:flex-col">
-        <AppBrand subtitle={t("app.tagline")} />
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-auto">
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.end}
-              style={{ ["--tone" as string]: l.tone }}
-              className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+      {/* Hide admin nav in flow designer — fixed-height layout was forcing a sidebar scrollbar */}
+      {!flowDesigner && (
+        <aside className="aside-panel hidden w-64 shrink-0 p-4 md:flex md:flex-col">
+          <AppBrand subtitle={t("app.tagline")} />
+          <nav className="flex flex-1 flex-col gap-0.5 overflow-auto">
+            {links.map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                end={l.end}
+                style={{ ["--tone" as string]: l.tone }}
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+              >
+                <span className="nav-ico">
+                  <l.icon size={16} strokeWidth={2.25} />
+                </span>
+                {t(`nav.${l.key}`)}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="mt-4 flex gap-2">
+            <button className="btn flex-1" onClick={toggleTheme} type="button">
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {t("common.theme")}
+            </button>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => {
+                const next = i18n.language === "en" ? "tr" : "en";
+                localStorage.setItem("dsip_locale", next);
+                void i18n.changeLanguage(next);
+              }}
             >
-              <span className="nav-ico">
-                <l.icon size={16} strokeWidth={2.25} />
-              </span>
-              {t(`nav.${l.key}`)}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="mt-4 flex gap-2">
-          <button className="btn flex-1" onClick={toggleTheme} type="button">
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            {t("common.theme")}
-          </button>
-          <button
-            className="btn"
-            type="button"
-            onClick={() => {
-              const next = i18n.language === "en" ? "tr" : "en";
-              localStorage.setItem("dsip_locale", next);
-              void i18n.changeLanguage(next);
-            }}
-          >
-            {i18n.language.toUpperCase()}
-          </button>
-          <button
-            className="btn"
-            type="button"
-            onClick={() => void logout()}
-            title={t("auth.logout", { defaultValue: "Logout" })}
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
-      </aside>
+              {i18n.language.toUpperCase()}
+            </button>
+            <button
+              className="btn"
+              type="button"
+              onClick={() => void logout()}
+              title={t("auth.logout", { defaultValue: "Logout" })}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+        </aside>
+      )}
       <main
-        className={`flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
+        className={`flex-1 ${flowDesigner ? "min-h-0 overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
       >
         {!flowDesigner && (
           <div className="mb-4 flex items-center justify-between gap-2 md:hidden">

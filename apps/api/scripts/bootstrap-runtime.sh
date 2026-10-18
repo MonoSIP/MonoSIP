@@ -5,16 +5,38 @@ set -e
 
 DATA_DIR="${DSIP_DATA_DIR:-/data}"
 SECRETS_FILE="$DATA_DIR/.dsip-secrets"
+PERSIST_MARKER="$DATA_DIR/.dsip-persistent"
 PGDATA="$DATA_DIR/postgres"
 PGLOG="$PGDATA/server.log"
 # Tiny shared memory profile — NineDeploy/Docker often leave /dev/shm at 64MB.
 PG_OPTS="-c listen_addresses=127.0.0.1 -c port=5432 -c unix_socket_directories=/var/run/postgresql -c logging_collector=off -c shared_buffers=32MB -c max_connections=40 -c work_mem=1MB -c maintenance_work_mem=16MB -c wal_buffers=1MB -c min_wal_size=32MB -c max_wal_size=64MB -c dynamic_shared_memory_type=posix"
+
+HAD_SECRETS=0
+HAD_PG=0
+[ -f "$SECRETS_FILE" ] && HAD_SECRETS=1
+[ -s "$PGDATA/PG_VERSION" ] && HAD_PG=1
 
 mkdir -p "$DATA_DIR/recordings" "$DATA_DIR/uploads" "$DATA_DIR/asterisk" "$PGDATA" /var/run/postgresql
 
 # NineDeploy volumes may be owned by a non-root UID — reclaim postgres data dir every boot.
 chown -R postgres:postgres "$PGDATA" /var/run/postgresql 2>/dev/null || true
 chmod 700 "$PGDATA" 2>/dev/null || true
+
+echo "DSip data dir: $DATA_DIR (secrets=$HAD_SECRETS pg_cluster=$HAD_PG)"
+if [ "$HAD_SECRETS" = "1" ] && [ "$HAD_PG" = "0" ]; then
+  echo "╔══════════════════════════════════════════════════════════════════════╗"
+  echo "║  DATA LOSS RISK: secrets file exists but Postgres cluster is gone  ║"
+  echo "║  /data volume may not be mounted persistently across deploys.      ║"
+  echo "║  Fix: ensure NineDeploy volume → /data, or set DATABASE_URL.       ║"
+  echo "╚══════════════════════════════════════════════════════════════════════╝"
+  if [ "${DSIP_REQUIRE_PERSISTENT_DATA:-}" = "1" ]; then
+    echo "FATAL: DSIP_REQUIRE_PERSISTENT_DATA=1 — refusing to init empty DB over existing secrets"
+    return 1
+  fi
+fi
+if [ "$HAD_SECRETS" = "0" ] && [ "$HAD_PG" = "0" ] && [ -f "$PERSIST_MARKER" ]; then
+  echo "WARN: persistence marker found but secrets+Postgres missing — volume was wiped"
+fi
 
 # --- Secrets (persist across redeploys via volume) ---
 if [ -f "$SECRETS_FILE" ]; then
@@ -222,4 +244,10 @@ su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 
   || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE DATABASE dsip OWNER dsip;\""
 
 export DATABASE_URL="postgresql://dsip:dsip@127.0.0.1:5432/dsip"
-echo "Embedded Postgres ready"
+# Marker proves /data survived at least one previous boot (helps spot volume wipes).
+if [ ! -f "$PERSIST_MARKER" ]; then
+  echo "first_boot=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$PERSIST_MARKER" 2>/dev/null || true
+  echo "Embedded Postgres ready (fresh cluster — lab seed may create defaults)"
+else
+  echo "Embedded Postgres ready (existing /data volume)"
+fi

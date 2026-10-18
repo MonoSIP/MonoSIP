@@ -270,8 +270,11 @@ async function seed() {
     }
   }
 
+  // Demo trunk only when explicitly requested — never re-create after a volume wipe
+  // in a way that looks like "we replaced your SIP provider".
+  const labSeed = process.env.DSIP_LAB_SEED === "1" || process.env.DSIP_LAB_SEED === "true";
   const existingTrunk = await db.select().from(trunks).limit(1);
-  if (!existingTrunk.length) {
+  if (labSeed && !existingTrunk.length) {
     await db.insert(trunks).values({
       name: "Example SIP Provider (disabled)",
       host: "sip.example.com",
@@ -283,6 +286,9 @@ async function seed() {
       enabled: false,
       status: "disabled",
     });
+    console.log("Lab seed: example SIP trunk inserted (DSIP_LAB_SEED=1)");
+  } else if (!existingTrunk.length) {
+    console.log("No SIP trunks yet — add one in Admin → SIP providers (demo trunk not auto-seeded)");
   }
 
   const existingInbound = await db.select().from(inboundRoutes).limit(1);

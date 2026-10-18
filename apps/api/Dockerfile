@@ -28,10 +28,11 @@ USER root
 ARG TARGETARCH
 ARG NODE_VERSION=24.11.0
 
+# Pin major Postgres so image rebuilds do not silently break /data/postgres clusters.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl openssl ffmpeg python3 \
     espeak-ng \
-    postgresql postgresql-client \
+    postgresql-17 postgresql-client-17 \
     xz-utils \
   && NODE_ARCH="$TARGETARCH" \
   && if [ "$NODE_ARCH" = "amd64" ]; then NODE_ARCH=x64; fi \
@@ -46,7 +47,10 @@ COPY --from=builder /app /app
 # DSip Asterisk conf (same as docker/asterisk sidecar)
 COPY docker/asterisk/conf/ /etc/asterisk/
 
-RUN mkdir -p /var/lib/asterisk/dsip /data/asterisk /data/recordings /data/uploads \
+# Do NOT create /data in the image layer — NineDeploy mounts a persistent volume at
+# /data. Pre-creating /data in the image can leave an empty overlay that looks like a
+# "DB reset" on every redeploy when the volume is not (or is incorrectly) attached.
+RUN mkdir -p /var/lib/asterisk/dsip \
   && cp /app/apps/api/docker-entrypoint.sh /entrypoint.sh \
   && chmod +x /entrypoint.sh \
        /app/apps/api/scripts/bootstrap-runtime.sh \
