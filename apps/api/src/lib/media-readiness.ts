@@ -46,8 +46,8 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
   if (embedded && isPublic && !rtpPortsPublished) {
     warnings.push({
       code: "rtp_udp_ports",
-      en: "Softphone audio needs host UDP ports 10000–10100 published to this container. In NineDeploy: Service → Network / Ports → add UDP 10000-10100, then set env DSIP_RTP_PUBLISHED=1.",
-      tr: "Softphone sesi için sunucuda UDP 10000–10100 portlarının bu konteynere açılması gerekir. NineDeploy: Servis → Ağ / Portlar → UDP 10000-10100 ekleyin, ardından env DSIP_RTP_PUBLISHED=1 yapın.",
+      en: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env DSIP_RTP_PUBLISHED=1.",
+      tr: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env DSIP_RTP_PUBLISHED=1.",
     });
   }
   if (isPublic && !externalIp) {
@@ -77,11 +77,9 @@ export function formatMediaDeployBanner(m: MediaReadiness): string {
     "╔══════════════════════════════════════════════════════════════════════╗",
     "║  DSip — Softphone AUDIO needs host UDP ports                         ║",
     "╠══════════════════════════════════════════════════════════════════════╣",
-    "║  NineDeploy → Service → Network / Ports                              ║",
-    "║    UDP 10000-10100  →  container 10000-10100                         ║",
-    "║  Vault env:                                                          ║",
-    "║    EXTERNAL_IP=<server public IPv4>                                  ║",
-    "║    DSIP_RTP_PUBLISHED=1   (after ports are open)                     ║",
+    "║  Publish UDP 10000-10100 to this container                            ║",
+    "║  Env: EXTERNAL_IP=<server public IPv4>                               ║",
+    "║       DSIP_RTP_PUBLISHED=1   (after ports are open)                  ║",
     "║  Without this: calls connect but stay SILENT.                        ║",
     "╚══════════════════════════════════════════════════════════════════════╝",
     "",
