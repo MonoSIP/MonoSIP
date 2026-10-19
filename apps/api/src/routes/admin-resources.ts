@@ -31,6 +31,7 @@ import {
   mohClasses,
   outboundRoutes,
   prompts,
+  ttsCache,
   queueMembers,
   queues,
   recordingAccessLog,
@@ -742,7 +743,31 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   // Prompts / MOH / TTS
   app.get("/api/v1/admin/prompts", async (req, reply) => {
     if (!(await admin(req, reply))) return;
-    return db.select().from(prompts);
+    const promptRows = await db.select().from(prompts).orderBy(desc(prompts.createdAt));
+    const cacheRows = await db.select().from(ttsCache).orderBy(desc(ttsCache.createdAt));
+    const manual = promptRows.map((p) => ({
+      source: "prompt" as const,
+      id: p.id,
+      name: p.name,
+      language: p.language,
+      ttsText: p.ttsText,
+      filePath: p.filePath,
+      voice: p.voice,
+      createdAt: p.createdAt,
+      expiresAt: null as string | null,
+    }));
+    const cached = cacheRows.map((c) => ({
+      source: "cache" as const,
+      id: c.id,
+      name: c.text.length > 80 ? `${c.text.slice(0, 77)}…` : c.text,
+      language: c.language,
+      ttsText: c.text,
+      filePath: c.filePath,
+      voice: c.voice,
+      createdAt: c.createdAt,
+      expiresAt: c.expiresAt,
+    }));
+    return [...manual, ...cached];
   });
 
   app.get("/api/v1/admin/tts/status", async (req, reply) => {
@@ -933,13 +958,18 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/prompts/:id/stream", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const { id } = req.params as { id: string };
-    const [row] = await db.select().from(prompts).where(eq(prompts.id, id));
-    if (!row?.filePath) return reply.code(404).send({ error: "No audio" });
+    const [promptRow] = await db.select().from(prompts).where(eq(prompts.id, id));
+    let filePath = promptRow?.filePath ?? null;
+    if (!filePath) {
+      const [cacheRow] = await db.select().from(ttsCache).where(eq(ttsCache.id, id));
+      filePath = cacheRow?.filePath ?? null;
+    }
+    if (!filePath) return reply.code(404).send({ error: "No audio" });
     const { createReadStream, existsSync } = await import("node:fs");
-    if (!existsSync(row.filePath)) return reply.code(404).send({ error: "File missing" });
-    const ext = row.filePath.split(".").pop()?.toLowerCase() ?? "wav";
+    if (!existsSync(filePath)) return reply.code(404).send({ error: "File missing" });
+    const ext = filePath.split(".").pop()?.toLowerCase() ?? "wav";
     reply.header("content-type", ext === "wav" ? "audio/wav" : "application/octet-stream");
-    return reply.send(createReadStream(row.filePath));
+    return reply.send(createReadStream(filePath));
   });
 
   app.delete("/api/v1/admin/prompts/:id", async (req, reply) => {
@@ -947,16 +977,30 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!actor) return;
     const { id } = req.params as { id: string };
     const [row] = await db.select().from(prompts).where(eq(prompts.id, id));
-    if (!row) return reply.code(404).send({ error: "Not found" });
-    if (row.filePath) {
-      const { unlink } = await import("node:fs/promises");
-      await unlink(row.filePath).catch(() => undefined);
+    if (row) {
+      if (row.filePath) {
+        const { unlink } = await import("node:fs/promises");
+        await unlink(row.filePath).catch(() => undefined);
+      }
+      await db.delete(prompts).where(eq(prompts.id, id));
+      await writeAudit({
+        actor: actor as never,
+        action: "prompt.delete",
+        objectType: "prompt",
+        objectId: id,
+        ip: req.ip,
+      });
+      return { ok: true };
     }
-    await db.delete(prompts).where(eq(prompts.id, id));
+    const [cacheRow] = await db.select().from(ttsCache).where(eq(ttsCache.id, id));
+    if (!cacheRow) return reply.code(404).send({ error: "Not found" });
+    const { unlink } = await import("node:fs/promises");
+    await unlink(cacheRow.filePath).catch(() => undefined);
+    await db.delete(ttsCache).where(eq(ttsCache.id, id));
     await writeAudit({
       actor: actor as never,
-      action: "prompt.delete",
-      objectType: "prompt",
+      action: "tts_cache.delete",
+      objectType: "tts_cache",
       objectId: id,
       ip: req.ip,
     });

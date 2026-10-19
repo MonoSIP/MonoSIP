@@ -24,6 +24,7 @@ type Settings = {
   kvkkPromptId?: string | null;
   ttsVoice?: string;
   ttsVoiceApplyAll?: boolean;
+  ttsCacheRetentionDays?: number;
   allowedCountries?: string[];
   blockedCountries?: string[];
   dailySpendLimitMinutes?: number;
@@ -81,6 +82,7 @@ export function SettingsPage() {
   const [kvkkPromptId, setKvkkPromptId] = useState("");
   const [ttsVoice, setTtsVoice] = useState("female");
   const [ttsVoiceApplyAll, setTtsVoiceApplyAll] = useState(true);
+  const [ttsCacheRetentionDays, setTtsCacheRetentionDays] = useState(7);
   const [countries, setCountries] = useState("TR");
   const [blockedCountries, setBlockedCountries] = useState("");
   const [daily, setDaily] = useState(1000);
@@ -129,7 +131,7 @@ export function SettingsPage() {
   const prompts = useQuery({
     queryKey: ["prompts"],
     queryFn: () =>
-      api.get<Array<{ id: string; name: string }>>("/api/v1/admin/prompts"),
+      api.get<Array<{ id: string; name: string; source?: string }>>("/api/v1/admin/prompts"),
   });
   const bans = useQuery({
     queryKey: ["security-bans"],
@@ -157,6 +159,7 @@ export function SettingsPage() {
       setKvkkPromptId(settings.data.kvkkPromptId ?? "");
       setTtsVoice(settings.data.ttsVoice ?? "female");
       setTtsVoiceApplyAll(settings.data.ttsVoiceApplyAll !== false);
+      setTtsCacheRetentionDays(settings.data.ttsCacheRetentionDays ?? 7);
       setCountries((settings.data.allowedCountries ?? ["TR"]).join(","));
       setBlockedCountries((settings.data.blockedCountries ?? []).join(","));
       setDaily(settings.data.dailySpendLimitMinutes ?? 1000);
@@ -198,6 +201,7 @@ export function SettingsPage() {
         kvkkPromptId: kvkkPromptId || null,
         ttsVoice,
         ttsVoiceApplyAll,
+        ttsCacheRetentionDays,
         allowedCountries: countries.split(",").map((s) => s.trim()).filter(Boolean),
         blockedCountries: blockedCountries
           .split(",")
@@ -373,11 +377,13 @@ export function SettingsPage() {
         </label>
         <SelectField label="KVKK prompt" value={kvkkPromptId} onChange={(e) => setKvkkPromptId(e.target.value)}>
           <option value="">Beep (default)</option>
-          {(prompts.data ?? []).map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
+          {(prompts.data ?? [])
+            .filter((p) => p.source !== "cache")
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
         </SelectField>
         <SelectField
           label="IVR TTS model"
@@ -407,6 +413,20 @@ export function SettingsPage() {
         <p className="text-xs text-[var(--text-muted)]">
           When enabled, live IVR speech uses this model without editing flow nodes. EMA is
           Turkish-only; Kokoro is English-only.
+        </p>
+        <TextField
+          label="TTS cache retention (days)"
+          type="number"
+          min={1}
+          max={90}
+          value={String(ttsCacheRetentionDays)}
+          onChange={(e) =>
+            setTtsCacheRetentionDays(Math.min(90, Math.max(1, Number(e.target.value) || 7)))
+          }
+        />
+        <p className="text-xs text-[var(--text-muted)]">
+          Dynamic IVR speech (announce/menu) is cached as WAV and listed under Prompts. Entries
+          auto-delete after this many days.
         </p>
         <TextField
           label="Allowed countries (ISO, comma — e.g. TR,DE or ALL)"

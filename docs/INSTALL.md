@@ -79,9 +79,10 @@ No env is required for a first boot:
 - `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets` — **do not lose this file** or encrypted SIP secrets become unreadable
 - Asterisk dialplan/PJSIP config persists under `/data/asterisk`
 - Mount a persistent volume at `/data` (~2.5 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
+- **NineDeploy:** set Service → Volume mount path to `/data` in the UI (the `.ninedeploy` `volume.mount` entry only configures backups — it does **not** attach the disk). Without this, every Deploy recreates an empty `/data` on the overlay and all settings/trunks vanish
 - Boot **never wipes** an existing Postgres cluster on start failure (set `DSIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
 - Demo SIP trunk is **not** auto-seeded (set `DSIP_LAB_SEED=1` for lab only)
-- Optional: `DSIP_REQUIRE_PERSISTENT_DATA=1` aborts boot if secrets exist but Postgres data was wiped
+- With `PUBLIC_HOST` set (or `DSIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `DSIP_ALLOW_EPHEMERAL_DATA=1`
 
 Default admin (change after login): `admin@example.com` / `Admin123!`
 

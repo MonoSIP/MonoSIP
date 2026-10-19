@@ -14,10 +14,14 @@ run:
   restart: unless-stopped
 
 # Persist DB (embedded) + Asterisk config + uploads + secrets across redeploys.
-# If trunks/settings vanish on every Deploy, the panel is not attaching this volume —
-# confirm in NineDeploy UI that /data is a persistent disk (not ephemeral), or set
-# DATABASE_URL to managed Postgres. Optional vault: DSIP_REQUIRE_PERSISTENT_DATA=1
-# refuses boot when secrets exist but the Postgres cluster was wiped.
+#
+# REQUIRED (NineDeploy UI — this YAML alone does NOT attach storage):
+#   Service → Volumes / Persistent disk → Mount path = /data
+#   (creates volume nd-svc-<slug>-data). Without that, every Deploy wipes
+#   Postgres/settings/trunks because /data lives on the container overlay.
+# Or set DATABASE_URL to managed Postgres.
+# Optional vault: DSIP_REQUIRE_PERSISTENT_DATA=1 — also auto-fatal when
+# PUBLIC_HOST is set and /data is not a mount (see bootstrap-runtime.sh).
 volume:
   mount: "/data"
   backups:

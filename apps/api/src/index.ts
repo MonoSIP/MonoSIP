@@ -116,6 +116,11 @@ async function main() {
     .then(({ ensureQueueAnnounceSounds }) => ensureQueueAnnounceSounds())
     .catch((e) => console.warn("[queue-tts]", (e as Error).message));
 
+  // Drop expired live IVR TTS cache rows (+ WAV files)
+  void import("./lib/tts.js")
+    .then(({ purgeExpiredTtsCache }) => purgeExpiredTtsCache(true))
+    .catch((e) => console.warn("[tts-cache]", (e as Error).message));
+
   // NineDeploy / single-container: serve the Vite SPA next to the API.
   const webDist =
     process.env.WEB_DIST?.trim() ||

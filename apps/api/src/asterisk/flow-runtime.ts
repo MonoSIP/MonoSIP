@@ -68,7 +68,7 @@ type PendingTransfer = {
 const pendingTransfers = new Map<string, PendingTransfer>();
 
 /** WebRTC ICE/RTP often not ready immediately after answer — early play becomes a short beep then silence. */
-export const MEDIA_SETTLE_MS = 1800;
+export const MEDIA_SETTLE_MS = 900;
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -104,10 +104,9 @@ async function playSpeech(
   gender: string = "female",
 ): Promise<void> {
   try {
-    const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
-    const wav = await synthesizeSpeech(text, lang, 1.05, gender);
-    const tmpId = `say-${channelId.replace(/\W/g, "").slice(0, 20)}-${Date.now().toString(36)}`;
-    const { media } = await writePromptWav(tmpId, wav);
+    const { ensureSpeechMedia } = await import("../lib/tts.js");
+    const { media, cached, ms } = await ensureSpeechMedia(text, lang, 1.05, gender);
+    console.log(`[flow] ${channelId} tts ${cached ? "cache" : "synth"} ${ms}ms`);
     await ari.playAndWait(channelId, media, 60_000);
   } catch (e) {
     console.warn(`[flow] playSpeech failed`, (e as Error).message);
@@ -208,14 +207,19 @@ export async function runFlowOnChannel(
       }
       if (!played) {
         try {
-          const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
+          const { ensureSpeechMedia } = await import("../lib/tts.js");
           const lang = vars.language === "tr" ? "tr" : "en";
           const text =
             lang === "tr"
               ? "Bu gorusme kaydedilebilir."
               : "This call may be recorded.";
-          const wav = await synthesizeSpeech(text, lang, 1.05, vars.__ttsVoice);
-          const { media } = await writePromptWav(`kvkk-${channelId.replace(/\W/g, "").slice(0, 20)}`, wav);
+          const { media, cached, ms } = await ensureSpeechMedia(
+            text,
+            lang,
+            1.05,
+            vars.__ttsVoice,
+          );
+          console.log(`[flow] ${channelId} kvkk-tts ${cached ? "cache" : "synth"} ${ms}ms`);
           await ari.playAndWait(channelId, media, 60_000);
           played = true;
         } catch (e) {
@@ -323,12 +327,11 @@ export async function executeFlowLoop(
         }
         if (!played && text) {
           try {
-            const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
+            const { ensureSpeechMedia } = await import("../lib/tts.js");
             const lang = resolveSpeechLang(data, vars);
             const gender = resolveTtsVoice(data, vars);
-            const wav = await synthesizeSpeech(text, lang, 1.05, gender);
-            const tmpId = `live-${channelId.replace(/\W/g, "").slice(0, 24)}`;
-            const { media } = await writePromptWav(tmpId, wav);
+            const { media, cached, ms } = await ensureSpeechMedia(text, lang, 1.05, gender);
+            console.log(`[flow] ${channelId} live-tts ${cached ? "cache" : "synth"} ${ms}ms`);
             await ari.playAndWait(channelId, media, 60_000);
             played = true;
           } catch (e) {
@@ -348,28 +351,44 @@ export async function executeFlowLoop(
         const retries = Math.max(0, Math.min(5, Number(data.retries ?? 2) || 0));
         const lang = resolveSpeechLang(data, vars);
         const gender = resolveTtsVoice(data, vars);
+        // Synthesize once (cached); retries must not pay Edge/EMA latency again.
+        let menuMedia: string | null = null;
+        try {
+          const { ensureSpeechMedia } = await import("../lib/tts.js");
+          const { media, cached, ms } = await ensureSpeechMedia(prompt, lang, 1.05, gender);
+          console.log(`[flow] ${channelId} menu-tts ${cached ? "cache" : "synth"} ${ms}ms`);
+          menuMedia = media;
+        } catch (e) {
+          console.warn(`[flow] menu prompt failed`, (e as Error).message);
+        }
         let attempt = 0;
         let chosen: string | null = null;
         while (attempt <= retries) {
           let collected = "";
           try {
-            const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
-            const wav = await synthesizeSpeech(prompt, lang, 1.05, gender);
-            const tmpId = `menu-${channelId.replace(/\W/g, "").slice(0, 24)}-${attempt}`;
-            const { media } = await writePromptWav(tmpId, wav);
-            if (maxDigits <= 1) {
-              collected = (await ari.playCollectDtmf(channelId, media, timeoutMs)) ?? "";
+            if (menuMedia) {
+              if (maxDigits <= 1) {
+                collected = (await ari.playCollectDtmf(channelId, menuMedia, timeoutMs)) ?? "";
+              } else {
+                await ari.playAndWait(channelId, menuMedia, 60_000).catch(() => undefined);
+                collected = await ari.waitDtmfDigits(channelId, {
+                  maxDigits,
+                  firstTimeoutMs: timeoutMs,
+                  interDigitMs: 2500,
+                });
+              }
             } else {
-              await ari.playAndWait(channelId, media, 60_000).catch(() => undefined);
-              collected = await ari.waitDtmfDigits(channelId, {
-                maxDigits,
-                firstTimeoutMs: timeoutMs,
-                interDigitMs: 2500,
-              });
+              await ari.playAndWait(channelId, "sound:beep", 2000).catch(() => sleep(300));
+              collected =
+                maxDigits <= 1
+                  ? ((await ari.waitDtmf(channelId, timeoutMs)) ?? "")
+                  : await ari.waitDtmfDigits(channelId, {
+                      maxDigits,
+                      firstTimeoutMs: timeoutMs,
+                    });
             }
           } catch (e) {
-            console.warn(`[flow] menu prompt failed`, (e as Error).message);
-            await ari.playAndWait(channelId, "sound:beep", 2000).catch(() => sleep(300));
+            console.warn(`[flow] menu collect failed`, (e as Error).message);
             collected =
               maxDigits <= 1
                 ? ((await ari.waitDtmf(channelId, timeoutMs)) ?? "")
@@ -431,10 +450,9 @@ export async function executeFlowLoop(
         console.log(`[flow] ${channelId} get_key → $${varName} max=${maxDigits}`);
         if (prompt) {
           try {
-            const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
-            const wav = await synthesizeSpeech(prompt, lang, 1.05, gender);
-            const tmpId = `key-${channelId.replace(/\W/g, "").slice(0, 24)}`;
-            const { media } = await writePromptWav(tmpId, wav);
+            const { ensureSpeechMedia } = await import("../lib/tts.js");
+            const { media, cached, ms } = await ensureSpeechMedia(prompt, lang, 1.05, gender);
+            console.log(`[flow] ${channelId} get_key-tts ${cached ? "cache" : "synth"} ${ms}ms`);
             await ari.playAndWait(channelId, media, 60_000).catch(() => undefined);
           } catch (e) {
             console.warn(`[flow] get_key prompt failed`, (e as Error).message);

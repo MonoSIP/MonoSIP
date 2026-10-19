@@ -7,13 +7,26 @@ import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { voiceOptions } from "./flow/nodeMeta";
 
-type Prompt = {
+type PromptRow = {
+  source: "prompt" | "cache";
   id: string;
   name: string;
   language: string;
   ttsText: string | null;
   filePath: string | null;
+  voice?: string | null;
+  createdAt?: string | null;
+  expiresAt?: string | null;
 };
+
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return "—";
+  }
+}
 
 async function uploadPromptFile(opts: {
   file: File;
@@ -52,7 +65,7 @@ export function PromptsPage() {
   const [voice, setVoice] = useState("female");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [replaceId, setReplaceId] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Prompt | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PromptRow | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -111,7 +124,7 @@ export function PromptsPage() {
 
   const list = useQuery({
     queryKey: ["prompts"],
-    queryFn: () => api.get<Prompt[]>("/api/v1/admin/prompts"),
+    queryFn: () => api.get<PromptRow[]>("/api/v1/admin/prompts"),
   });
   const ttsStatus = useQuery({
     queryKey: ["tts-status"],
@@ -345,29 +358,43 @@ export function PromptsPage() {
         <table className="table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Name / text</th>
+                <th>Type</th>
                 <th>Lang</th>
-                <th>TTS</th>
+                <th>Created</th>
+                <th>Expires</th>
                 <th>File</th>
-                <th>Id</th>
                 <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {(list.data ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={6}>—</td>
+                  <td colSpan={7}>—</td>
                 </tr>
               ) : (
-                list.data?.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td>{p.language}</td>
-                    <td className="max-w-md truncate">{p.ttsText}</td>
-                    <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
-                    <td className="font-mono text-xs" title={p.id}>
-                      {p.id.slice(0, 8)}…
+                list.data?.map((p) => {
+                  const isCache = p.source === "cache";
+                  return (
+                  <tr key={`${p.source}-${p.id}`}>
+                    <td className="max-w-xs truncate" title={p.ttsText ?? p.name}>
+                      {p.name}
                     </td>
+                    <td>
+                      <span className={`badge ${isCache ? "badge-ok" : ""}`}>
+                        {isCache
+                          ? t("prompts.typeCache", { defaultValue: "Cache" })
+                          : t("prompts.typePrompt", { defaultValue: "Prompt" })}
+                      </span>
+                    </td>
+                    <td>{p.language}</td>
+                    <td className="whitespace-nowrap text-xs text-[var(--text-muted)]">
+                      {fmtDate(p.createdAt)}
+                    </td>
+                    <td className="whitespace-nowrap text-xs text-[var(--text-muted)]">
+                      {isCache ? fmtDate(p.expiresAt) : "—"}
+                    </td>
+                    <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
                     <td className="col-actions">
                       <div className="btn-icon-row">
                         {p.filePath && (
@@ -382,20 +409,24 @@ export function PromptsPage() {
                             onClick={() => void playPrompt(p.id)}
                           />
                         )}
-                        <IconBtn
-                          icon={Upload}
-                          label={t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
-                          onClick={() => {
-                            setReplaceId(p.id);
-                            replaceRef.current?.click();
-                          }}
-                        />
-                        <IconBtn
-                          icon={Wand2}
-                          label={t("prompts.generate", { defaultValue: "Generate TTS" })}
-                          disabled={!p.ttsText || synthesize.isPending}
-                          onClick={() => synthesize.mutate(p.id)}
-                        />
+                        {!isCache && (
+                          <>
+                            <IconBtn
+                              icon={Upload}
+                              label={t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
+                              onClick={() => {
+                                setReplaceId(p.id);
+                                replaceRef.current?.click();
+                              }}
+                            />
+                            <IconBtn
+                              icon={Wand2}
+                              label={t("prompts.generate", { defaultValue: "Generate TTS" })}
+                              disabled={!p.ttsText || synthesize.isPending}
+                              onClick={() => synthesize.mutate(p.id)}
+                            />
+                          </>
+                        )}
                         <IconBtn
                           icon={Trash2}
                           label={t("common.delete", { defaultValue: "Delete" })}
@@ -406,7 +437,8 @@ export function PromptsPage() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -425,7 +457,9 @@ export function PromptsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 id="prompt-delete-title" className="text-lg font-semibold">
-              {t("prompts.deleteTitle", { defaultValue: "Delete prompt?" })}
+              {pendingDelete.source === "cache"
+                ? t("prompts.deleteCacheTitle", { defaultValue: "Delete cache entry?" })
+                : t("prompts.deleteTitle", { defaultValue: "Delete prompt?" })}
             </h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               {t("prompts.deleteConfirm", {

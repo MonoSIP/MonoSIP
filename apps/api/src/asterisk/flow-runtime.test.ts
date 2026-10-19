@@ -146,6 +146,11 @@ vi.mock("../lib/tts.js", () => ({
     filePath: `/tmp/${id}.wav`,
     media: `sound:dsip/${id}`,
   })),
+  ensureSpeechMedia: vi.fn(async () => ({
+    media: "sound:dsip/cached",
+    cached: false,
+    ms: 1,
+  })),
   promptMediaUri: vi.fn(() => "sound:dsip/p1"),
 }));
 
@@ -169,7 +174,7 @@ import {
   resolveOutboundDial,
 } from "../lib/call-policy.js";
 import { evaluateScheduleStatus } from "./routing.js";
-import { promptMediaUri, synthesizeSpeech } from "../lib/tts.js";
+import { ensureSpeechMedia, promptMediaUri, synthesizeSpeech } from "../lib/tts.js";
 import { decrypt } from "../lib/crypto.js";
 
 // ---------------------------------------------------------------- fixtures
@@ -1002,12 +1007,8 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
-    expect(synthesizeSpeech).toHaveBeenCalled();
-    expect(ari.playAndWait).toHaveBeenCalledWith(
-      "ch-k",
-      "sound:dsip/kvkk-chk",
-      60_000,
-    );
+    expect(ensureSpeechMedia).toHaveBeenCalled();
+    expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:dsip/cached", 60_000);
   });
 
   it("speaks the Turkish notice when the flow language is tr", async () => {
@@ -1016,7 +1017,12 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     // KVKK TTS uses Settings ttsVoice (default female).
-    expect(synthesizeSpeech).toHaveBeenCalledWith("Bu gorusme kaydedilebilir.", "tr", 1.05, "female");
+    expect(ensureSpeechMedia).toHaveBeenCalledWith(
+      "Bu gorusme kaydedilebilir.",
+      "tr",
+      1.05,
+      "female",
+    );
   });
 
   it("falls back to TTS when the configured prompt has no media", async () => {
@@ -1028,7 +1034,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
-    expect(synthesizeSpeech).toHaveBeenCalled();
+    expect(ensureSpeechMedia).toHaveBeenCalled();
   });
 });
 
@@ -1278,7 +1284,7 @@ describe("executeFlowLoop — menu retry and exit digits", () => {
   });
 
   it("falls back to waitDtmf when the prompt itself fails", async () => {
-    vi.mocked(synthesizeSpeech).mockRejectedValueOnce(new Error("tts down"));
+    vi.mocked(ensureSpeechMedia).mockRejectedValueOnce(new Error("tts down"));
     vi.mocked(ari.waitDtmf).mockResolvedValue("5");
     const flow = flowOf([node("m", "menu", {}), node("h", "hangup")], [edge("m", "h", "5")]);
     const { vars } = await runLoop(node("m", "menu", {}), flow);
@@ -1287,7 +1293,7 @@ describe("executeFlowLoop — menu retry and exit digits", () => {
   });
 
   it("uses waitDtmfDigits for the multi-digit prompt-failure fallback", async () => {
-    vi.mocked(synthesizeSpeech).mockRejectedValueOnce(new Error("tts down"));
+    vi.mocked(ensureSpeechMedia).mockRejectedValueOnce(new Error("tts down"));
     vi.mocked(ari.waitDtmfDigits).mockResolvedValue("77");
     const flow = flowOf([node("m", "menu", { maxDigits: 3 }), node("h", "hangup")], [
       edge("m", "h", "77"),

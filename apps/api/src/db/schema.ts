@@ -280,6 +280,19 @@ export const prompts = pgTable("prompts", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Content-addressed live IVR TTS cache (dynamic announce/menu text). */
+export const ttsCache = pgTable("tts_cache", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cacheKey: varchar("cache_key", { length: 40 }).notNull().unique(),
+  text: text("text").notNull(),
+  language: varchar("language", { length: 8 }).notNull().default("en"),
+  voice: varchar("voice", { length: 40 }).notNull().default("female"),
+  lengthScale: varchar("length_scale", { length: 16 }).notNull().default("1.05"),
+  filePath: text("file_path").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
 export const mohClasses = pgTable("moh_classes", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),

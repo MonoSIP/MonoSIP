@@ -11,6 +11,36 @@ PGLOG="$PGDATA/server.log"
 # Tiny shared memory profile — NineDeploy/Docker often leave /dev/shm at 64MB.
 PG_OPTS="-c listen_addresses=127.0.0.1 -c port=5432 -c unix_socket_directories=/var/run/postgresql -c logging_collector=off -c shared_buffers=32MB -c max_connections=40 -c work_mem=1MB -c maintenance_work_mem=16MB -c wal_buffers=1MB -c min_wal_size=32MB -c max_wal_size=64MB -c dynamic_shared_memory_type=posix"
 
+# /data must be a real volume/bind mount. If it sits on the container overlay,
+# every redeploy wipes Postgres, secrets, trunks, and recordings.
+data_is_persistent_mount() {
+  grep -q " ${DATA_DIR} " /proc/mounts 2>/dev/null
+}
+
+if ! data_is_persistent_mount; then
+  echo ""
+  echo "╔══════════════════════════════════════════════════════════════════════╗"
+  echo "║  FATAL RISK: ${DATA_DIR} is NOT a Docker volume — data will vanish ║"
+  echo "║  on every rebuild/redeploy (settings, extensions, trunks, CDR).    ║"
+  echo "║  Fix (NineDeploy): Service → Volume → mount path ${DATA_DIR}       ║"
+  echo "║  Fix (docker):     -v dsip-data:${DATA_DIR}                        ║"
+  echo "╚══════════════════════════════════════════════════════════════════════╝"
+  echo ""
+  # Production hosts must not boot on ephemeral storage (silent wipe).
+  # Local/dev: set DSIP_ALLOW_EPHEMERAL_DATA=1 to skip this check.
+  if [ "${DSIP_REQUIRE_PERSISTENT_DATA:-}" = "1" ] || [ "${DSIP_REQUIRE_PERSISTENT_DATA:-}" = "true" ]; then
+    echo "FATAL: DSIP_REQUIRE_PERSISTENT_DATA=1 and ${DATA_DIR} is not a mount"
+    return 1
+  fi
+  if [ -n "${PUBLIC_HOST:-}" ] && [ "$PUBLIC_HOST" != "localhost" ] && [ "$PUBLIC_HOST" != "127.0.0.1" ]; then
+    if [ "${DSIP_ALLOW_EPHEMERAL_DATA:-}" != "1" ] && [ "${DSIP_ALLOW_EPHEMERAL_DATA:-}" != "true" ]; then
+      echo "FATAL: PUBLIC_HOST=${PUBLIC_HOST} requires a persistent volume at ${DATA_DIR}"
+      echo "  (set DSIP_ALLOW_EPHEMERAL_DATA=1 only for disposable lab deploys)"
+      return 1
+    fi
+  fi
+fi
+
 HAD_SECRETS=0
 HAD_PG=0
 [ -f "$SECRETS_FILE" ] && HAD_SECRETS=1

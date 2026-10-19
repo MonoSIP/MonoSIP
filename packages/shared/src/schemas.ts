@@ -178,6 +178,8 @@ export const SettingsSchema = z.object({
   ttsVoice: z.string().max(40).default("female"),
   /** When true, all IVR live TTS uses ttsVoice (ignore per-node voice). */
   ttsVoiceApplyAll: z.boolean().default(true),
+  /** How long dynamic IVR TTS WAV cache entries are kept (days). */
+  ttsCacheRetentionDays: z.number().int().min(1).max(90).default(7),
   adminIpAllowlist: z.array(z.string()).default([]),
   /** Empty = open (remote softphones). Non-empty = portal login only from these CIDRs. */
   portalIpAllowlist: z.array(z.string()).default([]),

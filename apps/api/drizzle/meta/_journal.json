@@ -50,6 +50,13 @@
       "when": 1792441918078,
       "tag": "0006_prompt_voice",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792473600000,
+      "tag": "0007_tts_cache",
+      "breakpoints": true
     }
   ]
 }

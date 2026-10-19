@@ -1,11 +1,19 @@
+import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { eq, lt } from "drizzle-orm";
+import { SettingsSchema } from "@dsip/shared";
 import { config } from "../config.js";
+import { db } from "../db/client.js";
+import { settings, ttsCache } from "../db/schema.js";
 
 const execFileAsync = promisify(execFile);
+
+let lastPurgeAt = 0;
+const PURGE_INTERVAL_MS = 5 * 60_000;
 
 export type TtsLanguage = "en" | "tr";
 
@@ -118,6 +126,167 @@ export async function synthesizeSpeech(
     throw new Error(`${name} TTS unavailable: TTS_URL unset`);
   }
   return synthesizeWithEspeak(text, lang);
+}
+
+/** Content-addressed cache id for live IVR speech (stable across calls/retries). */
+export function speechCacheId(
+  text: string,
+  language: TtsLanguage,
+  lengthScale: number,
+  genderOrVoice: string,
+): string {
+  const digest = createHash("sha1")
+    .update(`${language}|${lengthScale}|${genderOrVoice}|${text}`)
+    .digest("hex")
+    .slice(0, 24);
+  return `c-${digest}`;
+}
+
+async function ttsCacheRetentionDays(): Promise<number> {
+  try {
+    const [row] = await db.select().from(settings).limit(1);
+    const parsed = SettingsSchema.partial().safeParse(row?.data ?? {});
+    const days = parsed.success ? parsed.data.ttsCacheRetentionDays : undefined;
+    if (typeof days === "number" && days >= 1 && days <= 90) return days;
+  } catch {
+    /* defaults */
+  }
+  return 7;
+}
+
+function expiresFromNow(retentionDays: number): Date {
+  return new Date(Date.now() + retentionDays * 24 * 60 * 60 * 1000);
+}
+
+/** Delete expired TTS cache rows and their WAV files. Throttled to every 5 minutes. */
+export async function purgeExpiredTtsCache(force = false): Promise<number> {
+  const now = Date.now();
+  if (!force && now - lastPurgeAt < PURGE_INTERVAL_MS) return 0;
+  lastPurgeAt = now;
+  try {
+    const expired = await db.select().from(ttsCache).where(lt(ttsCache.expiresAt, new Date()));
+    for (const row of expired) {
+      await unlink(row.filePath).catch(() => undefined);
+      await db.delete(ttsCache).where(eq(ttsCache.id, row.id)).catch(() => undefined);
+    }
+    return expired.length;
+  } catch (e) {
+    console.warn("[tts] purge failed:", (e as Error).message);
+    return 0;
+  }
+}
+
+/**
+ * Synthesize once and reuse the WAV on disk (+ DB metadata / expiry).
+ * Live IVR was re-synthesizing on every announce/menu (~8–16s); cache makes hits instant.
+ */
+export async function ensureSpeechMedia(
+  text: string,
+  language: TtsLanguage = "en",
+  lengthScale = 1.05,
+  genderOrVoice: string = "female",
+): Promise<{ media: string; cached: boolean; ms: number }> {
+  const trimmed = text.trim();
+  if (!trimmed) throw new Error("empty TTS text");
+  void purgeExpiredTtsCache();
+
+  const cacheKey = speechCacheId(trimmed, language, lengthScale, genderOrVoice);
+  const voice = genderOrVoice.trim() || "female";
+  const scaleStr = String(lengthScale);
+  const t0 = Date.now();
+  const now = new Date();
+
+  try {
+    const [row] = await db.select().from(ttsCache).where(eq(ttsCache.cacheKey, cacheKey)).limit(1);
+    if (row && row.expiresAt > now) {
+      try {
+        await access(row.filePath);
+        return { media: `sound:dsip/${cacheKey}`, cached: true, ms: Date.now() - t0 };
+      } catch {
+        /* file missing — fall through to resynth */
+      }
+    }
+  } catch (e) {
+    console.warn("[tts] cache lookup failed:", (e as Error).message);
+  }
+
+  // Orphan file from pre-DB cache: adopt into DB without resynth
+  const soundsDir = path.join(config.asterisk.configDir, "sounds", "dsip");
+  const filePath = path.join(soundsDir, `${cacheKey}.wav`);
+  const retentionDays = await ttsCacheRetentionDays();
+  const expiresAt = expiresFromNow(retentionDays);
+  try {
+    await access(filePath);
+    await upsertTtsCacheRow({
+      cacheKey,
+      text: trimmed,
+      language,
+      voice,
+      lengthScale: scaleStr,
+      filePath,
+      expiresAt,
+    });
+    return { media: `sound:dsip/${cacheKey}`, cached: true, ms: Date.now() - t0 };
+  } catch {
+    /* miss */
+  }
+
+  const wav = await synthesizeSpeech(trimmed, language, lengthScale, genderOrVoice);
+  const written = await writePromptWav(cacheKey, wav);
+  await upsertTtsCacheRow({
+    cacheKey,
+    text: trimmed,
+    language,
+    voice,
+    lengthScale: scaleStr,
+    filePath: written.filePath,
+    expiresAt,
+  });
+  return { media: written.media, cached: false, ms: Date.now() - t0 };
+}
+
+async function upsertTtsCacheRow(opts: {
+  cacheKey: string;
+  text: string;
+  language: string;
+  voice: string;
+  lengthScale: string;
+  filePath: string;
+  expiresAt: Date;
+}): Promise<void> {
+  try {
+    const [existing] = await db
+      .select()
+      .from(ttsCache)
+      .where(eq(ttsCache.cacheKey, opts.cacheKey))
+      .limit(1);
+    if (existing) {
+      await db
+        .update(ttsCache)
+        .set({
+          text: opts.text,
+          language: opts.language,
+          voice: opts.voice,
+          lengthScale: opts.lengthScale,
+          filePath: opts.filePath,
+          createdAt: new Date(),
+          expiresAt: opts.expiresAt,
+        })
+        .where(eq(ttsCache.id, existing.id));
+    } else {
+      await db.insert(ttsCache).values({
+        cacheKey: opts.cacheKey,
+        text: opts.text,
+        language: opts.language,
+        voice: opts.voice,
+        lengthScale: opts.lengthScale,
+        filePath: opts.filePath,
+        expiresAt: opts.expiresAt,
+      });
+    }
+  } catch (e) {
+    console.warn("[tts] cache upsert failed:", (e as Error).message);
+  }
 }
 
 /**
