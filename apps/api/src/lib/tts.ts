@@ -59,6 +59,11 @@ async function synthesizeWithEspeak(text: string, language: TtsLanguage): Promis
   }
 }
 
+function isEmaVoice(v: string): boolean {
+  const g = v.toLowerCase();
+  return g === "ema" || g === "ema-lightning";
+}
+
 export async function synthesizeSpeech(
   text: string,
   language: TtsLanguage = "en",
@@ -66,11 +71,16 @@ export async function synthesizeSpeech(
   genderOrVoice: string = "female",
 ): Promise<Buffer> {
   const g = genderOrVoice.toLowerCase();
+  // EMA Lightning is Turkish-only — force lang so a mismatched UI choice
+  // does not 500 inside the TTS service and then fall through to espeak.
+  const lang: TtsLanguage = isEmaVoice(g) ? "tr" : language;
   let voice: string | undefined;
-  if (g === "male" || g === "erkek") {
-    voice = language === "tr" ? "tr-TR-AhmetNeural" : "en-US-GuyNeural";
+  if (isEmaVoice(g)) {
+    voice = "ema-lightning";
+  } else if (g === "male" || g === "erkek") {
+    voice = lang === "tr" ? "tr-TR-AhmetNeural" : "en-US-GuyNeural";
   } else if (g === "female" || g === "kadin" || g === "kadın") {
-    voice = language === "tr" ? "tr-TR-EmelNeural" : "en-US-JennyNeural";
+    voice = lang === "tr" ? "tr-TR-EmelNeural" : "en-US-JennyNeural";
   } else if (genderOrVoice.includes("-")) {
     voice = genderOrVoice;
   }
@@ -79,17 +89,24 @@ export async function synthesizeSpeech(
       const res = await fetch(`${config.ttsUrl}/synthesize`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, language, lengthScale, voice, gender: g }),
+        body: JSON.stringify({ text, language: lang, lengthScale, voice, gender: g }),
         signal: AbortSignal.timeout(60_000),
       });
       if (res.ok) return Buffer.from(await res.arrayBuffer());
       const err = (await res.json().catch(() => ({}))) as { error?: string };
       console.warn("[tts] remote failed:", err.error ?? res.status);
+      if (isEmaVoice(g)) {
+        // Explicit neural voice: never silently degrade to robotic espeak.
+        throw new Error(err.error ?? `TTS failed (${res.status})`);
+      }
     } catch (e) {
+      if (isEmaVoice(g)) throw e;
       console.warn("[tts] remote unreachable:", (e as Error).message);
     }
+  } else if (isEmaVoice(g)) {
+    throw new Error("EMA TTS unavailable: TTS_URL unset");
   }
-  return synthesizeWithEspeak(text, language);
+  return synthesizeWithEspeak(text, lang);
 }
 
 /**
