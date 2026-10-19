@@ -5,7 +5,20 @@ import { useStore } from "./store";
 
 function lazyNamed<M extends Record<string, unknown>>(loader: () => Promise<M>, exportName: keyof M & string) {
   return lazy(async () => {
-    const mod = await loader();
+    let mod: M;
+    try {
+      mod = await loader();
+    } catch (err) {
+      // After a redeploy the old chunk hashes are gone: reload once to pick up the new build.
+      const key = "dsip:chunk-reload";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return new Promise<never>(() => {});
+      }
+      throw err;
+    }
+    sessionStorage.removeItem("dsip:chunk-reload");
     return { default: mod[exportName] as React.ComponentType };
   });
 }

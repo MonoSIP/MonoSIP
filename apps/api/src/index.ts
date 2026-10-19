@@ -129,11 +129,23 @@ async function main() {
     await app.register(fastifyStatic, {
       root: webDist,
       wildcard: false,
+      setHeaders: (res, filePath) => {
+        // Hashed Vite chunks never change; index.html must always be revalidated
+        // so a redeploy doesn't leave tabs pointing at deleted chunk hashes.
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        } else if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "no-cache");
+        }
+      },
     });
     app.setNotFoundHandler((req, reply) => {
       const u = (req.url.split("?")[0] ?? "").replace(/\/+$/, "") || "/";
       if (
         req.method === "GET" &&
+        // Missing files (e.g. stale chunk hashes after a deploy) must 404, not get index.html.
+        !u.startsWith("/assets/") &&
+        !/\.[a-z0-9]+$/i.test(u) &&
         !u.startsWith("/api") &&
         !u.startsWith("/ws") &&
         !u.startsWith("/asterisk-ws") &&
