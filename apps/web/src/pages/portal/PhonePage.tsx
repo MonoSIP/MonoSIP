@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { History, Phone } from "lucide-react";
 import { api } from "../../lib/api";
+import { callPeer } from "../../lib/call-peer";
 import { Softphone, type CallPhase } from "../../lib/softphone";
 import { PageHeader, SectionCard } from "../../components/ui";
 
@@ -426,15 +427,15 @@ export function PhonePage() {
             <li className="text-[var(--text-muted)]">—</li>
           ) : (
             (recent.data ?? []).slice(0, 8).map((c) => {
-              const peer = c.direction === "outbound" ? c.callee : c.caller;
+              const peer = callPeer(c, me.data?.number);
               return (
                 <li key={c.id} className="flex items-center justify-between gap-2">
                   <button
                     type="button"
                     className="font-mono text-left hover:underline"
-                    onClick={() => setDigits(peer ?? "")}
+                    onClick={() => setDigits(peer)}
                   >
-                    {peer ?? "—"}
+                    {peer || "—"}
                   </button>
                   <span className="text-xs text-[var(--text-muted)]">
                     {new Date(c.startedAt).toLocaleString()}

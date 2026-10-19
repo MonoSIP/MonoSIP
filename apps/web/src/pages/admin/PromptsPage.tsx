@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Upload, Wand2 } from "lucide-react";
+import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Trash2, Upload, Wand2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
@@ -52,6 +52,7 @@ export function PromptsPage() {
   const [voice, setVoice] = useState("female");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [replaceId, setReplaceId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Prompt | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -170,6 +171,22 @@ export function PromptsPage() {
       toast.success(t("prompts.uploaded", { defaultValue: "Audio uploaded" }));
       setReplaceId(null);
       if (replaceRef.current) replaceRef.current.value = "";
+      void qc.invalidateQueries({ queryKey: ["prompts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/v1/admin/prompts/${id}`),
+    onSuccess: (_data, id) => {
+      toast.success(t("prompts.deleted", { defaultValue: "Prompt deleted" }));
+      if (playingId === id) {
+        audioRef.current?.pause();
+        clearBlob();
+        setPlayingId(null);
+        setIsPlaying(false);
+      }
+      setPendingDelete(null);
       void qc.invalidateQueries({ queryKey: ["prompts"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -379,6 +396,13 @@ export function PromptsPage() {
                           disabled={!p.ttsText || synthesize.isPending}
                           onClick={() => synthesize.mutate(p.id)}
                         />
+                        <IconBtn
+                          icon={Trash2}
+                          label={t("common.delete", { defaultValue: "Delete" })}
+                          danger
+                          disabled={remove.isPending}
+                          onClick={() => setPendingDelete(p)}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -387,6 +411,51 @@ export function PromptsPage() {
             </tbody>
           </table>
       </SectionCard>
+
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prompt-delete-title"
+          onClick={() => !remove.isPending && setPendingDelete(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--bg)] p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="prompt-delete-title" className="text-lg font-semibold">
+              {t("prompts.deleteTitle", { defaultValue: "Delete prompt?" })}
+            </h2>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              {t("prompts.deleteConfirm", {
+                name: pendingDelete.name,
+                defaultValue: `Delete “${pendingDelete.name}”? The audio file will be removed. This cannot be undone.`,
+              })}
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="btn"
+                type="button"
+                disabled={remove.isPending}
+                onClick={() => setPendingDelete(null)}
+              >
+                {t("common.cancel", { defaultValue: "Cancel" })}
+              </button>
+              <button
+                className="btn btn-danger"
+                type="button"
+                disabled={remove.isPending}
+                onClick={() => remove.mutate(pendingDelete.id)}
+              >
+                {remove.isPending
+                  ? t("common.deleting", { defaultValue: "Deleting…" })
+                  : t("common.delete", { defaultValue: "Delete" })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

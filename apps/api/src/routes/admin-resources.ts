@@ -942,6 +942,27 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     return reply.send(createReadStream(row.filePath));
   });
 
+  app.delete("/api/v1/admin/prompts/:id", async (req, reply) => {
+    const actor = await admin(req, reply);
+    if (!actor) return;
+    const { id } = req.params as { id: string };
+    const [row] = await db.select().from(prompts).where(eq(prompts.id, id));
+    if (!row) return reply.code(404).send({ error: "Not found" });
+    if (row.filePath) {
+      const { unlink } = await import("node:fs/promises");
+      await unlink(row.filePath).catch(() => undefined);
+    }
+    await db.delete(prompts).where(eq(prompts.id, id));
+    await writeAudit({
+      actor: actor as never,
+      action: "prompt.delete",
+      objectType: "prompt",
+      objectId: id,
+      ip: req.ip,
+    });
+    return { ok: true };
+  });
+
   app.post("/api/v1/internal/queue-callback", async (req, reply) => {
     const { requireInternalSecret } = await import("../lib/internal-auth.js");
     if (!requireInternalSecret(req, reply)) return;

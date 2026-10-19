@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { History, PhoneCall } from "lucide-react";
 import { api } from "../../lib/api";
+import { callPeer } from "../../lib/call-peer";
 import { PageHeader, SectionCard } from "../../components/ui";
 
 type Tab = "all" | "inbound" | "outbound" | "missed";
@@ -12,6 +13,11 @@ export function MyCallsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("all");
+
+  const me = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.get<{ number: string }>("/api/v1/me"),
+  });
 
   const list = useQuery({
     queryKey: ["my-calls"],
@@ -41,10 +47,6 @@ export function MyCallsPage() {
         }>
       >("/api/v1/me/missed-calls"),
   });
-
-  function peer(c: { direction: string; caller: string; callee: string }) {
-    return c.direction === "outbound" ? c.callee : c.caller;
-  }
 
   const filtered = (list.data ?? []).filter((c) => {
     if (tab === "inbound") return c.direction === "inbound";
@@ -131,7 +133,7 @@ export function MyCallsPage() {
               </tr>
             ) : (
               filtered.map((c) => {
-                const num = peer(c);
+                const num = callPeer(c, me.data?.number);
                 return (
                   <tr key={c.id}>
                     <td>{new Date(c.startedAt).toLocaleString()}</td>
