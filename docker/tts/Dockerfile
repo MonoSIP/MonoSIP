@@ -1,7 +1,7 @@
 FROM python:3.11-slim-bookworm
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl ca-certificates ffmpeg \
+  && apt-get install -y --no-install-recommends curl ca-certificates ffmpeg espeak-ng \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -18,38 +18,27 @@ RUN mkdir -p /models/hf \
   && python -c "from ema_lightning import EMA; EMA().say('Merhaba', sample_rate=8000)" \
   && echo "EMA Lightning weights cached"
 
-# Piper offline voices: prefer vendored docker/tts/voices (from fetch-voices.sh),
-# otherwise download at image build so remote deploys still get models.
-ENV VOICES_DIR=/voices
-COPY voices/ /tmp/voices/
-RUN mkdir -p /voices \
-  && if [ -f /tmp/voices/en_US-lessac-high.onnx ] && [ -f /tmp/voices/tr_TR-fettah-medium.onnx ]; then \
-       cp -a /tmp/voices/. /voices/; \
-       echo "Using vendored Piper voices"; \
-     else \
-       echo "Vendored voices missing — downloading from Hugging Face"; \
-       cd /voices \
-       && curl -fsSL -o en_US-lessac-high.onnx \
-         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/high/en_US-lessac-high.onnx" \
-       && curl -fsSL -o en_US-lessac-high.onnx.json \
-         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/high/en_US-lessac-high.onnx.json" \
-       && curl -fsSL -o tr_TR-fettah-medium.onnx \
-         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/tr/tr_TR/fettah/medium/tr_TR-fettah-medium.onnx" \
-       && curl -fsSL -o tr_TR-fettah-medium.onnx.json \
-         "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/tr/tr_TR/fettah/medium/tr_TR-fettah-medium.onnx.json"; \
-     fi \
-  && rm -rf /tmp/voices \
-  && ls -lah /voices
+# Kokoro-82M ONNX (English neural, ~80 MB int8) — offline counterpart to EMA for EN.
+ENV KOKORO_DIR=/models/kokoro
+RUN mkdir -p /models/kokoro \
+  && curl -fsSL -o /models/kokoro/kokoro-v1.0.int8.onnx \
+    "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx" \
+  && curl -fsSL -o /models/kokoro/voices-v1.0.bin \
+    "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin" \
+  && python -c "from kokoro_onnx import Kokoro; k=Kokoro('/models/kokoro/kokoro-v1.0.int8.onnx','/models/kokoro/voices-v1.0.bin'); k.create('Hello from Kokoro.', voice='af_heart', speed=1.0, lang='en-us'); print('Kokoro ready')" \
+  && echo "Kokoro ONNX weights cached"
 
 COPY server.py .
 
 ENV TTS_HOST=0.0.0.0
 ENV TTS_PORT=5500
-# auto = Edge Neural (best TR/EN) → EMA Lightning (TR, offline) → Piper offline
+# auto = Edge Neural (best) → EMA (TR) / Kokoro (EN) offline neural
 ENV TTS_ENGINE=auto
 ENV TTS_ENABLE_EMA=1
+ENV TTS_ENABLE_KOKORO=1
 ENV TTS_EDGE_VOICE_TR=tr-TR-EmelNeural
 ENV TTS_EDGE_VOICE_EN=en-US-JennyNeural
+ENV TTS_KOKORO_VOICE=af_heart
 EXPOSE 5500
 
 CMD ["gunicorn", "-b", "0.0.0.0:5500", "-w", "1", "--timeout", "120", "server:app"]

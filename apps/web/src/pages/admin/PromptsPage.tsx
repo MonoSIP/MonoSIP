@@ -157,7 +157,7 @@ export function PromptsPage() {
   const synthesize = useMutation({
     mutationFn: (id: string) => api.post(`/api/v1/admin/prompts/${id}/synthesize`, {}),
     onSuccess: () => {
-      toast.success(t("prompts.synthesized", { defaultValue: "TTS audio generated (Piper)" }));
+      toast.success(t("prompts.synthesized", { defaultValue: "TTS audio generated" }));
       void qc.invalidateQueries({ queryKey: ["prompts"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -177,7 +177,7 @@ export function PromptsPage() {
 
   const ttsBadge = (
     <span className="text-sm text-[var(--text-muted)]">
-      Piper TTS:{" "}
+      TTS:{" "}
       <span className={ttsStatus.data?.ok ? "badge badge-ok" : "badge badge-err"}>
         {ttsStatus.data?.ok
           ? t("prompts.ttsReady", { defaultValue: "ready (EN + TR)" })
@@ -200,7 +200,7 @@ export function PromptsPage() {
         icon={Mic}
         title={t("nav.prompts")}
         tone="coral"
-        description="IVR prompts — upload WAV or generate with Piper TTS"
+        description="IVR prompts — upload WAV or generate with TTS"
         actions={ttsBadge}
       />
 
@@ -232,7 +232,7 @@ export function PromptsPage() {
               onChange={(e) => {
                 const lang = e.target.value as "en" | "tr";
                 setLanguage(lang);
-                // EMA Lightning is Turkish-only — fall back if it becomes invalid.
+                // EMA=TR-only, Kokoro=EN-only — fall back if voice becomes invalid.
                 if (!voiceOptions(lang).some((o) => o.value === voice)) setVoice("female");
               }}
             >
@@ -245,7 +245,7 @@ export function PromptsPage() {
               value={voice}
               onChange={(e) => setVoice(e.target.value)}
             >
-              {voiceOptions(language).map((o) => (
+              {voiceOptions(language, { includeDefault: false }).map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>

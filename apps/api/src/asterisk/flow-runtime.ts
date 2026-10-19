@@ -85,6 +85,18 @@ export function resolveSpeechLang(
   return vars.language === "tr" ? "tr" : "en";
 }
 
+/** Resolve TTS voice from Settings + optional per-node override. */
+function resolveTtsVoice(
+  data: Record<string, unknown> | undefined,
+  vars: Record<string, string>,
+): string {
+  const settingsVoice = (vars.__ttsVoice || "female").trim() || "female";
+  if (vars.__ttsApplyAll !== "0") return settingsVoice;
+  const raw = String(data?.gender ?? data?.voice ?? "default").trim();
+  if (!raw || raw === "default") return settingsVoice;
+  return raw;
+}
+
 async function playSpeech(
   channelId: string,
   text: string,
@@ -166,10 +178,14 @@ export async function runFlowOnChannel(
     await sleep(MEDIA_SETTLE_MS);
   }
 
-  // KVKK announcement — configured prompt, else short spoken notice (not a bare beep)
+  // Load IVR TTS prefs once (Settings → ttsVoice); nodes may override unless apply-all.
   try {
     const [row] = await db.select().from(settings).limit(1);
     const s = SettingsSchema.parse(row?.data ?? {});
+    vars.__ttsVoice = (s.ttsVoice || "female").trim() || "female";
+    vars.__ttsApplyAll = s.ttsVoiceApplyAll === false ? "0" : "1";
+
+    // KVKK announcement — configured prompt, else short spoken notice (not a bare beep)
     if (s.kvkkAnnouncementEnabled) {
       console.log(`[flow] ${channelId} KVKK announcement`);
       let played = false;
@@ -198,7 +214,7 @@ export async function runFlowOnChannel(
             lang === "tr"
               ? "Bu gorusme kaydedilebilir."
               : "This call may be recorded.";
-          const wav = await synthesizeSpeech(text, lang);
+          const wav = await synthesizeSpeech(text, lang, 1.05, vars.__ttsVoice);
           const { media } = await writePromptWav(`kvkk-${channelId.replace(/\W/g, "").slice(0, 20)}`, wav);
           await ari.playAndWait(channelId, media, 60_000);
           played = true;
@@ -208,7 +224,8 @@ export async function runFlowOnChannel(
       }
     }
   } catch {
-    /* ignore */
+    vars.__ttsVoice = vars.__ttsVoice || "female";
+    vars.__ttsApplyAll = vars.__ttsApplyAll || "1";
   }
 
   // Defer channel recording until after IVR audio — early MixMonitor/record breaks WebRTC playback
@@ -308,7 +325,7 @@ export async function executeFlowLoop(
           try {
             const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
             const lang = resolveSpeechLang(data, vars);
-            const gender = String(data.gender ?? data.voice ?? "female");
+            const gender = resolveTtsVoice(data, vars);
             const wav = await synthesizeSpeech(text, lang, 1.05, gender);
             const tmpId = `live-${channelId.replace(/\W/g, "").slice(0, 24)}`;
             const { media } = await writePromptWav(tmpId, wav);
@@ -330,7 +347,7 @@ export async function executeFlowLoop(
         const maxDigits = Math.max(1, Math.min(12, Number(data.maxDigits ?? 1) || 1));
         const retries = Math.max(0, Math.min(5, Number(data.retries ?? 2) || 0));
         const lang = resolveSpeechLang(data, vars);
-        const gender = String(data.gender ?? data.voice ?? "female");
+        const gender = resolveTtsVoice(data, vars);
         let attempt = 0;
         let chosen: string | null = null;
         while (attempt <= retries) {
@@ -379,6 +396,7 @@ export async function executeFlowLoop(
             channelId,
             lang === "tr" ? "Gecersiz tus. Lutfen tekrar deneyin." : "Invalid entry. Please try again.",
             lang,
+            gender,
           ).catch(() => undefined);
         }
         handle = chosen ?? "timeout";
@@ -409,7 +427,7 @@ export async function executeFlowLoop(
         const maxDigits = Math.max(1, Math.min(24, Number(data.maxDigits ?? 4) || 4));
         const minDigits = Math.max(0, Math.min(maxDigits, Number(data.minDigits ?? 1) || 1));
         const lang = resolveSpeechLang(data, vars);
-        const gender = String(data.gender ?? data.voice ?? "female");
+        const gender = resolveTtsVoice(data, vars);
         console.log(`[flow] ${channelId} get_key → $${varName} max=${maxDigits}`);
         if (prompt) {
           try {
@@ -420,7 +438,7 @@ export async function executeFlowLoop(
             await ari.playAndWait(channelId, media, 60_000).catch(() => undefined);
           } catch (e) {
             console.warn(`[flow] get_key prompt failed`, (e as Error).message);
-            await playSpeech(channelId, prompt, lang).catch(() => undefined);
+            await playSpeech(channelId, prompt, lang, gender).catch(() => undefined);
           }
         }
         ari.clearDtmfBuffer(channelId);
@@ -606,6 +624,7 @@ export async function executeFlowLoop(
             ? "Aradiginiz kisinin soyadini tuslayin, sonra diyez basin."
             : "Enter the last name on your keypad, then press pound.",
           lang,
+          vars.__ttsVoice || "female",
         );
         ari.clearDtmfBuffer(channelId);
         const digits = await ari.waitDtmfDigits(channelId, {
@@ -625,6 +644,7 @@ export async function executeFlowLoop(
                 ? `${hit.name}, baglaniyor.`
                 : `Connecting to ${hit.name}.`,
               lang,
+              vars.__ttsVoice || "female",
             );
             await ari.redirect(channelId, hit.number, "from-internal");
             return "left";
@@ -635,6 +655,7 @@ export async function executeFlowLoop(
           channelId,
           lang === "tr" ? "Eslesme bulunamadi." : "No match found.",
           lang,
+          vars.__ttsVoice || "female",
         );
         break;
       }
@@ -678,6 +699,7 @@ export async function executeFlowLoop(
               ? "Kendinize aktarim yapilamaz. Ana menuye donuluyor."
               : "You cannot transfer to yourself. Returning to the main menu.",
             lang,
+            vars.__ttsVoice || "female",
           );
           handle = "chanunavail";
           if (menuNode && !nextNode(flow, node.id, handle)) {
@@ -696,6 +718,7 @@ export async function executeFlowLoop(
                 ? `Dahili ${dest} kayitli degil.`
                 : `Extension ${dest} is not registered.`,
               lang,
+              vars.__ttsVoice || "female",
             );
             handle = "chanunavail";
             if (menuNode && !nextNode(flow, node.id, handle)) {
@@ -708,6 +731,7 @@ export async function executeFlowLoop(
             channelId,
             lang === "tr" ? `Dahili ${dest} araniyor.` : `Calling extension ${dest}.`,
             lang,
+            vars.__ttsVoice || "female",
           );
           // Dial in dialplan; on failure Stasis resumes with dial-failed + DIALSTATUS
           pendingTransfers.set(channelId, {
@@ -726,6 +750,7 @@ export async function executeFlowLoop(
           channelId,
           lang === "tr" ? "Aktariliyor." : "Transferring.",
           lang,
+          vars.__ttsVoice || "female",
         );
         const resolved = await resolveDestination({ destType, destId: dest });
         await applyResolved(channelId, resolved, vars);

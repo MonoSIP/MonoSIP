@@ -70,7 +70,7 @@ hints); it is **not** required to build or run anywhere else.
 
 ### One-click image deploy
 
-The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** (ARI/WSS bound to `127.0.0.1:8088` only; public HTTPS must hit container **port 3000**, softphone via `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — a PaaS edge typically only exposes HTTPS→3000.
+The API image is **all-in-one**: Node API + web SPA + embedded Postgres + **Asterisk** + **TTS** (Edge / EMA / Kokoro on `127.0.0.1:5500`; ARI/WSS on `127.0.0.1:8088` only; public HTTPS must hit container **port 3000**, softphone via `/asterisk-ws`). Desk-phone UDP SIP usually needs a VPS with published `5060`/RTP — a PaaS edge typically only exposes HTTPS→3000.
 
 No env is required for a first boot:
 

@@ -171,6 +171,13 @@ export const SettingsSchema = z.object({
   recordingRetentionMonths: z.number().int().min(1).max(84).default(12),
   kvkkAnnouncementEnabled: z.boolean().default(true),
   kvkkPromptId: z.string().uuid().optional().nullable(),
+  /**
+   * Default TTS voice/model for live IVR speech: female | male | ema-lightning | kokoro.
+   * Used when a node has no voice or voice is "default", and always when ttsVoiceApplyAll.
+   */
+  ttsVoice: z.string().max(40).default("female"),
+  /** When true, all IVR live TTS uses ttsVoice (ignore per-node voice). */
+  ttsVoiceApplyAll: z.boolean().default(true),
   adminIpAllowlist: z.array(z.string()).default([]),
   /** Empty = open (remote softphones). Non-empty = portal login only from these CIDRs. */
   portalIpAllowlist: z.array(z.string()).default([]),

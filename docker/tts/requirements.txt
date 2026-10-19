@@ -1,5 +1,8 @@
 flask==3.1.0
-piper-tts==1.2.0
 gunicorn==23.0.0
 edge-tts==7.3.1
 ema-lightning==1.1.2
+kokoro-onnx==0.4.9
+soundfile==0.13.1
+# Python 3.13+ removed stdlib audioop; keep resample working on all-in-one image.
+audioop-lts==0.2.1; python_version>="3.13"

@@ -80,13 +80,13 @@ Execute in order before deep sections. Abort smoke on critical Fail.
 
 | ID | Steps | Expected | Type | Result |
 | --- | --- | --- | --- | --- |
-| A-01 | `docker compose ps` | postgres, asterisk, api, web, nginx, coturn, tts healthy/up | MANUAL | |
+| A-01 | `docker compose ps` | postgres, asterisk, api, web, nginx, coturn healthy/up (TTS embedded in api) | MANUAL | |
 | A-02 | `GET /api/v1/health` | `{ ok, db, … }` — document asterisk flag if false | MANUAL | |
 | A-03 | Open https://localhost | SPA loads; no asset 404 | MANUAL | |
 | A-04 | Browser DevTools → WS `/ws` after admin login | Connects; live events possible | MANUAL | |
 | A-05 | Softphone WSS `/asterisk-ws` | Upgrade succeeds when registered | LIVE | |
 | A-06 | Asterisk: `pjsip show endpoints` (compose exec) | Seed extensions present | MANUAL | |
-| A-07 | TTS health via admin Prompts / TTS status | Piper (or fallback) reachable | MANUAL | |
+| A-07 | TTS health via admin Prompts / TTS status | TTS service reachable (Edge/EMA/Kokoro) | MANUAL | |
 | A-08 | Restart api only; volumes persist | Settings/extensions still present | MANUAL | |
 | A-09 | Fail api with bad `DATABASE_URL` (isolated) | Health fails; clear logs | MANUAL | |
 | A-10 | nginx serves TLS; HTTP→HTTPS or ACME path as configured | No mixed-content on panel | MANUAL | |

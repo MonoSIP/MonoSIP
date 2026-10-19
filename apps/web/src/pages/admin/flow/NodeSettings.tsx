@@ -372,10 +372,10 @@ function SpeechSettings({
               onChange={(v) => patch({ language: v })}
             />
           </Field>
-          <Field label="Voice">
+          <Field label="Voice" hint="System default = Admin → Settings → IVR TTS">
             <SegmentedSelect
               aria-label="Voice"
-              value={String(data.gender ?? data.voice ?? "female")}
+              value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
             />
@@ -422,10 +422,10 @@ function MenuSettings({
               onChange={(v) => patch({ language: v })}
             />
           </Field>
-          <Field label="Voice">
+          <Field label="Voice" hint="System default = Admin → Settings → IVR TTS">
             <SegmentedSelect
               aria-label="Voice"
-              value={String(data.gender ?? data.voice ?? "female")}
+              value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
             />
@@ -551,10 +551,10 @@ function GetKeySettings({
               onChange={(v) => patch({ language: v })}
             />
           </Field>
-          <Field label="Voice">
+          <Field label="Voice" hint="System default = Admin → Settings → IVR TTS">
             <SegmentedSelect
               aria-label="Voice"
-              value={String(data.gender ?? data.voice ?? "female")}
+              value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
             />

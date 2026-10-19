@@ -47,6 +47,12 @@ chmod 755 "$DATA_DIR" "$AST_CFG" 2>/dev/null || true
 chmod 644 "$AST_CFG"/pjsip_dsip.conf "$AST_CFG"/acl_dsip.conf \
   "$AST_CFG"/queues_dsip.conf "$AST_CFG"/extensions_dsip.conf \
   "$AST_CFG"/musiconhold_dsip.conf "$AST_CFG"/reload.flag 2>/dev/null || true
+# Prompt WAVs are written by the API (often as root with umask 077). Asterisk must read them.
+chmod 755 "$AST_CFG"/sounds "$AST_CFG"/sounds/dsip \
+  "$AST_CFG"/sounds/en "$AST_CFG"/sounds/tr \
+  "$AST_CFG"/moh "$AST_CFG"/voicemail 2>/dev/null || true
+find "$AST_CFG"/sounds "$AST_CFG"/moh -type f \( -name '*.wav' -o -name '*.ulaw' -o -name '*.sln*' \) \
+  -exec chmod 644 {} + 2>/dev/null || true
 
 # MixMonitor path in dialplan ↔ API RECORDINGS_DIR
 mkdir -p "${RECORDINGS_DIR:-$DATA_DIR/recordings}"

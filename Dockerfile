@@ -32,9 +32,10 @@ ARG TARGETARCH
 ARG NODE_VERSION=24.11.0
 
 # Pin major Postgres so image rebuilds do not silently break /data/postgres clusters.
+# python3-pip + libsndfile: embedded TTS (Edge / EMA / Kokoro) — no sidecar.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl openssl ffmpeg python3 \
-    espeak-ng \
+    ca-certificates curl openssl ffmpeg python3 python3-pip python3-venv \
+    espeak-ng libsndfile1 \
     postgresql-17 postgresql-client-17 \
     xz-utils \
   && NODE_ARCH="$TARGETARCH" \
@@ -50,6 +51,32 @@ COPY --from=builder /app /app
 # DSip Asterisk conf (same as docker/asterisk sidecar)
 COPY docker/asterisk/conf/ /etc/asterisk/
 
+# Embedded TTS sources (server + deps). Models are baked below so offline synth works
+# on first boot without Hugging Face / GitHub at runtime.
+COPY docker/tts/requirements.txt /app/docker/tts/requirements.txt
+COPY docker/tts/server.py /app/docker/tts/server.py
+ENV HF_HOME=/models/hf \
+    KOKORO_DIR=/models/kokoro \
+    TTS_ENGINE=auto \
+    TTS_ENABLE_EMA=1 \
+    TTS_ENABLE_KOKORO=1 \
+    TTS_KOKORO_VOICE=af_heart \
+    TTS_URL=http://127.0.0.1:5500 \
+    TTS_EMBEDDED=1
+# CPU torch first (default Linux wheel pulls CUDA). EMA's normalizer-tr is amd64-only;
+# build/deploy the all-in-one image on linux/amd64 for production (NineDeploy VPS).
+RUN pip3 install --no-cache-dir --break-system-packages \
+      torch --index-url https://download.pytorch.org/whl/cpu \
+  && pip3 install --no-cache-dir --break-system-packages -r /app/docker/tts/requirements.txt \
+  && mkdir -p /models/hf /models/kokoro \
+  && python3 -c "from ema_lightning import EMA; EMA().say('Merhaba', sample_rate=8000)" \
+  && curl -fsSL -o /models/kokoro/kokoro-v1.0.int8.onnx \
+       "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx" \
+  && curl -fsSL -o /models/kokoro/voices-v1.0.bin \
+       "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin" \
+  && python3 -c "from kokoro_onnx import Kokoro; k=Kokoro('/models/kokoro/kokoro-v1.0.int8.onnx','/models/kokoro/voices-v1.0.bin'); k.create('Hello.', voice='af_heart', speed=1.0, lang='en-us'); print('Kokoro ready')" \
+  && echo "Embedded TTS (EMA + Kokoro) cached"
+
 # Do NOT create /data in the image layer — NineDeploy mounts a persistent volume at
 # /data. Pre-creating /data in the image can leave an empty overlay that looks like a
 # "DB reset" on every redeploy when the volume is not (or is incorrectly) attached.
@@ -57,7 +84,8 @@ RUN mkdir -p /var/lib/asterisk/dsip \
   && cp /app/apps/api/docker-entrypoint.sh /entrypoint.sh \
   && chmod +x /entrypoint.sh \
        /app/apps/api/scripts/bootstrap-runtime.sh \
-       /app/apps/api/scripts/start-asterisk.sh
+       /app/apps/api/scripts/start-asterisk.sh \
+       /app/apps/api/scripts/start-tts.sh
 
 WORKDIR /app/apps/api
 ENV WEB_DIST=/app/apps/web/dist \

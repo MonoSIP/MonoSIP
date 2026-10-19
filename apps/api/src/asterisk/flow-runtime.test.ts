@@ -1015,8 +1015,8 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101", language: "tr" });
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
-    // The KVKK TTS path calls synthesizeSpeech(text, lang) — two arguments.
-expect(synthesizeSpeech).toHaveBeenCalledWith("Bu gorusme kaydedilebilir.", "tr");
+    // KVKK TTS uses Settings ttsVoice (default female).
+    expect(synthesizeSpeech).toHaveBeenCalledWith("Bu gorusme kaydedilebilir.", "tr", 1.05, "female");
   });
 
   it("falls back to TTS when the configured prompt has no media", async () => {

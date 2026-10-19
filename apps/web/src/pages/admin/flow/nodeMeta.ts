@@ -7,22 +7,29 @@ export const SPEECH_LANGS = [
 
 /**
  * Selectable TTS voices/models. `female`/`male` map to Edge Neural (online, EN+TR);
- * `ema-lightning` is the offline neural Turkish model (TR only). The value is sent as
- * the node `gender` and routed to the matching engine by the TTS service.
+ * `ema-lightning` is offline neural Turkish (TR only); `kokoro` is offline neural
+ * English (EN only). The value is sent as the node `gender` and routed by TTS.
+ * `default` follows Admin → Settings → IVR TTS model (no per-node override).
  */
 export const SPEECH_VOICES = [
   { value: "female", label: "Female", langs: ["en", "tr"] },
   { value: "male", label: "Male", langs: ["en", "tr"] },
   { value: "ema-lightning", label: "EMA (TR)", langs: ["tr"] },
+  { value: "kokoro", label: "Kokoro (EN)", langs: ["en"] },
 ] as const;
 
-/** Voice options valid for the given language (EMA Lightning is Turkish-only). */
-export function voiceOptions(language: string): { value: string; label: string }[] {
+/** Voice options valid for the given language (EMA=TR-only, Kokoro=EN-only). */
+export function voiceOptions(
+  language: string,
+  opts?: { includeDefault?: boolean },
+): { value: string; label: string }[] {
   const lang = (language || "en").toLowerCase();
-  return SPEECH_VOICES.filter((v) => (v.langs as readonly string[]).includes(lang)).map((v) => ({
+  const list = SPEECH_VOICES.filter((v) => (v.langs as readonly string[]).includes(lang)).map((v) => ({
     value: v.value,
     label: v.label,
   }));
+  if (opts?.includeDefault === false) return list;
+  return [{ value: "default", label: "System default" }, ...list];
 }
 
 export const DEFAULT_MENU_DIGITS = ["1", "2", "3", "4", "5", "0"];
@@ -75,12 +82,12 @@ export function defaultDataForType(type: string): Partial<FlowNodeData> {
   switch (type) {
     case "announce":
     case "tts":
-      return { text: "Welcome", language: "en", gender: "female" };
+      return { text: "Welcome", language: "en", gender: "default" };
     case "menu":
       return {
         prompt: "Press 1 or 2",
         language: "en",
-        gender: "female",
+        gender: "default",
         maxDigits: 1,
         retries: 2,
         timeoutMs: 12000,
@@ -105,7 +112,7 @@ export function defaultDataForType(type: string): Partial<FlowNodeData> {
         name: "pin",
         prompt: "Please enter your code, then press pound.",
         language: "en",
-        gender: "female",
+        gender: "default",
         maxDigits: 4,
         minDigits: 1,
         timeoutMs: 12000,

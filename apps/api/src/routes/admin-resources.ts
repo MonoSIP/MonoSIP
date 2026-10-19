@@ -739,7 +739,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     }
   });
 
-  // Prompts / MOH / Piper TTS
+  // Prompts / MOH / TTS
   app.get("/api/v1/admin/prompts", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     return db.select().from(prompts);
@@ -764,7 +764,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         /** Generate WAV via TTS from ttsText */
         synthesize: z.boolean().optional(),
         lengthScale: z.number().min(0.7).max(1.6).optional(),
-        /** TTS voice/model: female | male (Edge) | ema-lightning (offline TR). */
+        /** TTS voice/model: female | male (Edge) | ema-lightning (TR) | kokoro (EN). */
         voice: z.string().max(40).optional(),
       })
       .parse(req.body);

@@ -16,6 +16,10 @@ cd /app/apps/api
 # shellcheck disable=SC1091
 . /app/apps/api/scripts/start-asterisk.sh
 
+# Embedded TTS (Edge / EMA / Kokoro) on 127.0.0.1:5500 — no sidecar required.
+# shellcheck disable=SC1091
+. /app/apps/api/scripts/start-tts.sh
+
 echo "Waiting for postgres..."
 i=0
 ok=0

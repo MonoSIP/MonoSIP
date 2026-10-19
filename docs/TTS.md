@@ -1,52 +1,50 @@
-# TTS (Edge Neural + Piper fallback)
+# TTS (embedded in the main image)
 
-DSip generates IVR / prompt audio with **Microsoft Edge Neural TTS** (`edge-tts`) by default — clearer than Piper for many languages. **Piper** remains the offline fallback.
+DSip generates IVR / prompt audio **inside the all-in-one container** — no sidecar and no
+extra network dependency. Engines: **Microsoft Edge Neural** (online), **EMA Lightning**
+(Turkish offline), **Kokoro-82M** (English offline).
 
 ## Engines
 
 | Engine | Quality | Needs internet | Notes |
 | --- | --- | --- | --- |
 | **edge** (default via `auto`) | High — e.g. `tr-TR-EmelNeural` / `en-US-JennyNeural` | Yes (at generate time) | Free unofficial Edge voices |
-| **piper** | Offline — EN `lessac-high`, TR `fettah-medium` | No | MIT; used when Edge cannot reach Microsoft |
+| **ema** | High neural (TR) | No | EMA Lightning; Settings / Prompts: `ema-lightning` |
+| **kokoro** | High neural (EN) | No | Kokoro-82M ONNX; Settings / Prompts: `kokoro` |
+
+Weights for EMA + Kokoro are baked into the root `Dockerfile` at build time.
 
 ## Voices
 
-| Language | Preferred (Edge) | Offline (Piper) |
+| Language | Preferred (Edge) | Offline neural |
 | --- | --- | --- |
-| Turkish | `tr-TR-EmelNeural` | `tr_TR-fettah-medium` (only quality published upstream) |
-| English | `en-US-JennyNeural` | `en_US-lessac-high` |
-
-Offline models are vendored into the image from `docker/tts/voices/` when present (`./docker/tts/fetch-voices.sh`), otherwise downloaded during `docker compose build tts`.
-
-Male Turkish: set `TTS_EDGE_VOICE_TR=tr-TR-AhmetNeural` in `.env`.
+| Turkish | `tr-TR-EmelNeural` | `ema-lightning` |
+| English | `en-US-JennyNeural` | `kokoro` (`af_heart`) |
 
 ## Config
 
 ```env
-TTS_ENGINE=auto          # auto | edge | piper
-TTS_EDGE_VOICE_TR=tr-TR-EmelNeural
-TTS_EDGE_VOICE_EN=en-US-JennyNeural
-TTS_URL=http://tts:5500
+TTS_URL=http://127.0.0.1:5500
+TTS_EMBEDDED=1
+TTS_ENGINE=auto          # auto | edge | ema | kokoro
+TTS_ENABLE_EMA=1
+TTS_ENABLE_KOKORO=1
+TTS_KOKORO_VOICE=af_heart
 ```
 
-- `auto`: try Edge, fall back to Piper if network/API fails
-- `edge`: Edge only (fails if offline)
-- `piper`: offline only
-
-## Usage
-
-1. `docker compose up --build -d tts api`
-2. Admin → **Prompts** → enter text → **Create + generate TTS** (or **Generate TTS**)
-3. Prefer **pre-generated** prompts in flows (live TTS adds latency)
+- Entrypoint starts gunicorn on `127.0.0.1:5500` (`apps/api/scripts/start-tts.sh`).
+- `TTS_EMBEDDED=0` skips the local process (only if you point `TTS_URL` elsewhere).
 
 ## Health
 
 ```bash
-docker compose exec tts curl -fsS http://127.0.0.1:5500/health
+# All-in-one / compose api container
+docker exec <container> curl -fsS http://127.0.0.1:5500/health
 ```
 
 ## Notes
 
-- Edge synthesis needs outbound HTTPS from the `tts` container (local “nice” voice). If the VPS blocks Microsoft speech endpoints, you hear Piper instead — rebuild `tts` so the image includes `en_US-lessac-high` + `tr_TR-fettah-medium`.
+- Offline TR/EN works with no outbound network after the image is built.
+- Edge needs outbound HTTPS when selected (or when `auto` reaches Microsoft).
 - Output is always 8 kHz mono WAV for Asterisk.
-- Air-gapped VPS: run `./docker/tts/fetch-voices.sh` on a machine with Hugging Face access, copy `docker/tts/voices/*.onnx*` onto the VPS, then `docker compose build tts`, or set `TTS_ENGINE=piper`.
+- Optional standalone image remains at `docker/tts/` for debugging only.

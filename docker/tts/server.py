@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """DSip TTS HTTP API — Edge Neural (high quality TR/EN) with EMA Lightning (offline
-Turkish, neural) and Piper offline fallback."""
+Turkish neural) and Kokoro-82M (offline English neural)."""
 
 from __future__ import annotations
 
-import audioop
 import asyncio
 import importlib.util
 import io
@@ -15,17 +14,29 @@ import tempfile
 import wave
 from pathlib import Path
 
+try:
+    import audioop  # stdlib through Python 3.12
+except ModuleNotFoundError:  # Python 3.13+
+    import audioop_lts as audioop  # type: ignore[no-redef]
+
 from flask import Flask, jsonify, request, send_file
 
-VOICES_DIR = Path(os.environ.get("VOICES_DIR", "/voices"))
 HOST = os.environ.get("TTS_HOST", "0.0.0.0")
 PORT = int(os.environ.get("TTS_PORT", "5500"))
-# auto | edge | ema | piper — auto prefers Edge Neural, then EMA Lightning (TR,
-# offline), then Piper offline.
+# auto | edge | ema | kokoro — auto prefers Edge Neural, then EMA (TR) / Kokoro (EN).
 ENGINE = (os.environ.get("TTS_ENGINE") or "auto").strip().lower()
 # EMA Lightning: tiny (~8.6M param) offline neural Turkish TTS, native 8 kHz output.
 EMA_ENABLED = (os.environ.get("TTS_ENABLE_EMA") or "1").strip().lower() not in ("0", "false", "no")
 EMA_VOICE_ID = "ema-lightning"
+# Kokoro-82M ONNX: high-quality offline English neural TTS (~80 MB int8).
+KOKORO_ENABLED = (os.environ.get("TTS_ENABLE_KOKORO") or "1").strip().lower() not in (
+    "0",
+    "false",
+    "no",
+)
+KOKORO_VOICE_ID = "kokoro"
+KOKORO_DIR = Path(os.environ.get("KOKORO_DIR", "/models/kokoro"))
+KOKORO_SPEAKER = (os.environ.get("TTS_KOKORO_VOICE") or "af_heart").strip() or "af_heart"
 
 EDGE_VOICES = {
     "en": os.environ.get("TTS_EDGE_VOICE_EN", "en-US-JennyNeural"),
@@ -45,18 +56,8 @@ EDGE_VOICES_MALE = {
     "tr_tr": os.environ.get("TTS_EDGE_VOICE_TR_MALE", "tr-TR-AhmetNeural"),
 }
 
-PIPER_MAP = {
-    # EN: lessac-high (offline). TR: only medium exists upstream (fettah).
-    "en": ("en_US-lessac-high", "en_US-lessac-high"),
-    "en-US": ("en_US-lessac-high", "en_US-lessac-high"),
-    "en_us": ("en_US-lessac-high", "en_US-lessac-high"),
-    "tr": ("tr_TR-fettah-medium", "tr_TR-fettah-medium"),
-    "tr-TR": ("tr_TR-fettah-medium", "tr_TR-fettah-medium"),
-    "tr_tr": ("tr_TR-fettah-medium", "tr_TR-fettah-medium"),
-}
-
-_piper_cache: dict[str, object] = {}
 _ema_cache: dict[str, object] = {}
+_kokoro_cache: dict[str, object] = {}
 log = logging.getLogger("tts")
 logging.basicConfig(level=logging.INFO)
 
@@ -65,7 +66,7 @@ app = Flask(__name__)
 
 def lang_key(lang: str) -> str:
     key = (lang or "en").strip()
-    if key in EDGE_VOICES or key in PIPER_MAP:
+    if key in EDGE_VOICES:
         return key
     base = key.split("-")[0].split("_")[0].lower()
     return base if base in ("en", "tr") else "en"
@@ -157,23 +158,6 @@ def synthesize_edge(text: str, lang: str, length_scale: float) -> tuple[bytes, s
     return asyncio.run(synthesize_edge_async(text, lang, length_scale))
 
 
-def load_piper(lang: str):
-    from piper import PiperVoice
-
-    key = lang_key(lang)
-    entry = PIPER_MAP.get(key) or PIPER_MAP["en"]
-    voice_id, stem = entry
-    if voice_id in _piper_cache:
-        return voice_id, _piper_cache[voice_id]
-    onnx = VOICES_DIR / f"{stem}.onnx"
-    cfg = VOICES_DIR / f"{stem}.onnx.json"
-    if not onnx.is_file():
-        raise FileNotFoundError(f"Piper voice missing: {onnx}")
-    voice = PiperVoice.load(str(onnx), config_path=str(cfg) if cfg.is_file() else None)
-    _piper_cache[voice_id] = voice
-    return voice_id, voice
-
-
 def ema_available() -> bool:
     """Cheap check (no torch import) that EMA Lightning is installed."""
     return EMA_ENABLED and importlib.util.find_spec("ema_lightning") is not None
@@ -208,23 +192,52 @@ def synthesize_ema(text: str, length_scale: float) -> tuple[bytes, str]:
     return out.getvalue(), EMA_VOICE_ID
 
 
-def synthesize_piper(text: str, lang: str, length_scale: float) -> tuple[bytes, str]:
-    voice_id, voice = load_piper(lang)
+def kokoro_available() -> bool:
+    if not KOKORO_ENABLED:
+        return False
+    if importlib.util.find_spec("kokoro_onnx") is None:
+        return False
+    onnx = KOKORO_DIR / "kokoro-v1.0.int8.onnx"
+    voices = KOKORO_DIR / "voices-v1.0.bin"
+    if not onnx.is_file():
+        onnx = KOKORO_DIR / "kokoro-v1.0.onnx"
+    return onnx.is_file() and voices.is_file()
+
+
+def load_kokoro():
+    if "kokoro" in _kokoro_cache:
+        return _kokoro_cache["kokoro"]
+    from kokoro_onnx import Kokoro
+
+    onnx = KOKORO_DIR / "kokoro-v1.0.int8.onnx"
+    if not onnx.is_file():
+        onnx = KOKORO_DIR / "kokoro-v1.0.onnx"
+    voices = KOKORO_DIR / "voices-v1.0.bin"
+    if not onnx.is_file() or not voices.is_file():
+        raise FileNotFoundError(f"Kokoro model missing under {KOKORO_DIR}")
+    tts = Kokoro(str(onnx), str(voices))
+    _kokoro_cache["kokoro"] = tts
+    return tts
+
+
+def synthesize_kokoro(text: str, length_scale: float, speaker: str = "") -> tuple[bytes, str]:
+    """Kokoro-82M ONNX → 8 kHz mono WAV. English (en-us)."""
+    import numpy as np
+
+    tts = load_kokoro()
+    # length_scale > 1 = slower; Kokoro speed > 1 = faster.
+    speed = max(0.5, min(2.0, 1.0 / max(0.1, length_scale)))
+    voice_name = (speaker or KOKORO_SPEAKER).strip() or "af_heart"
+    samples, sample_rate = tts.create(text, voice=voice_name, speed=speed, lang="en-us")
+    audio = np.asarray(samples, dtype=np.float32)
+    pcm = (np.clip(audio, -1.0, 1.0) * 32767.0).astype("<i2").tobytes()
     buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        try:
-            voice.synthesize(text, wf, length_scale=length_scale)
-        except TypeError:
-            try:
-                voice.synthesize(text, wf)
-            except TypeError:
-                sample_rate = getattr(getattr(voice, "config", None), "sample_rate", 22050)
-                wf.setnchannels(1)
-                wf.setsampwidth(2)
-                wf.setframerate(sample_rate)
-                for chunk in voice.synthesize(text):
-                    wf.writeframes(chunk.audio_int16_bytes)
-    return resample_wav_8k_mono(buf.getvalue()), voice_id
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(int(sample_rate))
+        w.writeframes(pcm)
+    return resample_wav_8k_mono(buf.getvalue()), KOKORO_VOICE_ID
 
 
 def synthesize_wav(
@@ -232,12 +245,16 @@ def synthesize_wav(
 ) -> tuple[bytes, str, str]:
     """Returns (wav8k, engine_name, voice_id).
 
-    `engine` (per request) overrides the server default: edge | ema | piper. EMA
-    Lightning is Turkish-only, so it is used only when the language resolves to tr.
+    `engine` (per request) overrides the server default: edge | ema | kokoro.
+    EMA is Turkish-only; Kokoro is English-only.
     """
     text = text.strip()
     want = (engine or ENGINE or "auto").strip().lower()
     is_tr = lang_key(lang).startswith("tr")
+    is_en = not is_tr  # current API only serves en/tr
+
+    if want == "piper":
+        raise RuntimeError("Piper TTS has been removed; use edge, ema, or kokoro")
 
     # Explicit per-request engine selection.
     if want == "ema":
@@ -245,14 +262,16 @@ def synthesize_wav(
             raise RuntimeError("EMA Lightning supports Turkish only")
         wav, voice = synthesize_ema(text, length_scale)
         return wav, "ema", voice
+    if want == "kokoro":
+        if not is_en:
+            raise RuntimeError("Kokoro supports English only")
+        wav, voice = synthesize_kokoro(text, length_scale)
+        return wav, "kokoro", voice
     if want == "edge":
         wav, voice = synthesize_edge(text, lang, length_scale)
         return wav, "edge", voice
-    if want == "piper":
-        wav, voice = synthesize_piper(text, lang, length_scale)
-        return wav, "piper", voice
 
-    # auto: Edge Neural (online, best) → EMA Lightning (TR, offline neural) → Piper.
+    # auto: Edge Neural (online) → EMA (TR) / Kokoro (EN) offline neural.
     try:
         wav, voice = synthesize_edge(text, lang, length_scale)
         return wav, "edge", voice
@@ -264,30 +283,36 @@ def synthesize_wav(
             wav, voice = synthesize_ema(text, length_scale)
             return wav, "ema", voice
         except Exception as e:  # noqa: BLE001
-            log.warning("EMA Lightning failed (%s); falling back to piper", e)
+            log.warning("EMA Lightning failed (%s)", e)
+            raise RuntimeError(f"TTS failed: edge and EMA unavailable ({e})") from e
 
-    wav, voice = synthesize_piper(text, lang, length_scale)
-    return wav, "piper", voice
+    if is_en and kokoro_available():
+        try:
+            wav, voice = synthesize_kokoro(text, length_scale)
+            return wav, "kokoro", voice
+        except Exception as e:  # noqa: BLE001
+            log.warning("Kokoro failed (%s)", e)
+            raise RuntimeError(f"TTS failed: edge and Kokoro unavailable ({e})") from e
+
+    engine_hint = "EMA" if is_tr else "Kokoro"
+    raise RuntimeError(f"TTS failed: edge unavailable and {engine_hint} not ready")
 
 
 @app.get("/health")
 def health():
-    piper_ok = all(
-        (VOICES_DIR / f"{stem}.onnx").is_file() for _, stem in (PIPER_MAP["en"], PIPER_MAP["tr"])
-    )
     return jsonify(
         {
             "ok": True,
             "engine": ENGINE,
-            "preferred": "edge-tts (Microsoft Neural) → EMA Lightning (TR) → Piper"
+            "preferred": "edge-tts → EMA (TR) / Kokoro (EN)"
             if ENGINE == "auto"
             else ENGINE,
-            "piperReady": piper_ok,
             "emaReady": ema_available(),
+            "kokoroReady": kokoro_available(),
             "voices": {
                 "edge": {"tr": EDGE_VOICES["tr"], "en": EDGE_VOICES["en"]},
                 "ema": {"tr": EMA_VOICE_ID},
-                "piper": {"tr": PIPER_MAP["tr"][0], "en": PIPER_MAP["en"][0]},
+                "kokoro": {"en": KOKORO_VOICE_ID, "speaker": KOKORO_SPEAKER},
             },
         }
     )
@@ -327,18 +352,12 @@ def voices():
                 "quality": "high",
             },
             {
-                "language": "tr",
-                "engine": "piper",
-                "id": "tr_TR-fettah-medium",
-                "name": "Fettah (offline fallback)",
-                "quality": "medium",
-            },
-            {
                 "language": "en",
-                "engine": "piper",
-                "id": "en_US-lessac-high",
-                "name": "Lessac high (offline fallback)",
+                "engine": "kokoro",
+                "id": KOKORO_VOICE_ID,
+                "name": f"Kokoro-82M ({KOKORO_SPEAKER}, offline neural English)",
                 "quality": "high",
+                "offline": True,
             },
         ]
     )
@@ -358,13 +377,20 @@ def synthesize():
     except (TypeError, ValueError):
         length_scale = 1.05
     length_scale = max(0.7, min(1.6, length_scale))
-    # Optional engine override (edge | ema | piper) and gender/voice selection.
+    # Optional engine override (edge | ema | kokoro) and gender/voice selection.
     engine_req = (body.get("engine") or "").strip().lower()
     gender = (body.get("gender") or "").strip().lower()
     voice_override = (body.get("voice") or "").strip()
     # A voice of "ema"/"ema-lightning" selects the EMA Lightning engine.
     if voice_override.lower() in ("ema", EMA_VOICE_ID) or gender in ("ema", EMA_VOICE_ID):
         engine_req = "ema"
+        voice_override = ""
+    # A voice of "kokoro" selects the Kokoro-82M English engine.
+    if voice_override.lower() in ("kokoro", KOKORO_VOICE_ID) or gender in (
+        "kokoro",
+        KOKORO_VOICE_ID,
+    ):
+        engine_req = "kokoro"
         voice_override = ""
     if not voice_override and gender in ("male", "erkek", "m"):
         key = lang_key(str(lang))

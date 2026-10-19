@@ -16,9 +16,10 @@
        │                     ┌─────────────┼─────────────┐
        │                     │             │             │
        │              ┌──────▼──────┐ ┌────▼─────┐ ┌─────▼────┐
-       └─────────────►│  asterisk   │ │ postgres │ │  tts     │
-          SIP/RTP     │  PJSIP ARI  │ │  data    │ │ Piper    │
+       └─────────────►│  asterisk   │ │ postgres │ │ TTS*     │
+          SIP/RTP     │  PJSIP ARI  │ │  data    │ │ embedded │
                       └──────┬──────┘ └──────────┘ └──────────┘
+                      (* TTS runs inside the api/all-in-one process tree)
                              │
                       ┌──────▼──────┐
                       │  coturn     │  TURN for remote WebRTC

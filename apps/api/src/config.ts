@@ -48,8 +48,8 @@ export const config = {
   },
   recordingsDir: process.env.RECORDINGS_DIR ?? "/data/recordings",
   uploadsDir: process.env.UPLOADS_DIR ?? "/data/uploads",
-  /** Piper TTS HTTP service (empty = disabled). */
-  ttsUrl: (process.env.TTS_URL ?? "http://tts:5500").replace(/\/$/, ""),
+  /** Embedded TTS (Edge / EMA / Kokoro) — default is localhost inside the all-in-one image. */
+  ttsUrl: (process.env.TTS_URL ?? "http://127.0.0.1:5500").replace(/\/$/, ""),
   /** Shared secret for Asterisk dialplan → API internal hooks. */
   internalApiSecret: process.env.INTERNAL_API_SECRET ?? "dsip_internal_change_me",
   /**

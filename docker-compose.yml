@@ -45,30 +45,12 @@ services:
     depends_on:
       - postgres
 
-  tts:
-    build:
-      context: ./docker/tts
-    # EMA Lightning's normalizer-tr dep ships no linux/arm64 wheel, so pin amd64:
-    # native on amd64 hosts, emulated on Apple Silicon — consistent everywhere.
-    platform: linux/amd64
-    environment:
-      TTS_ENGINE: ${TTS_ENGINE:-auto}
-      TTS_ENABLE_EMA: ${TTS_ENABLE_EMA:-1}
-      TTS_EDGE_VOICE_TR: ${TTS_EDGE_VOICE_TR:-tr-TR-EmelNeural}
-      TTS_EDGE_VOICE_EN: ${TTS_EDGE_VOICE_EN:-en-US-JennyNeural}
-    networks:
-      - dsip
-    expose:
-      - "5500"
-    # Optional host access for debugging: ports: ["5500:5500"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5500/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+  # TTS runs embedded inside the api/all-in-one image (127.0.0.1:5500).
+  # Optional standalone: docker build -t dsip-tts ./docker/tts
 
   api:
+    # EMA/Kokoro TTS is amd64-oriented (normalizer-tr); match production VPS.
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile
@@ -98,7 +80,8 @@ services:
       RECORDINGS_DIR: /data/recordings
       UPLOADS_DIR: /data/uploads
       SECURITY_LOG_PATH: /data/logs/api-security.log
-      TTS_URL: ${TTS_URL:-http://tts:5500}
+      TTS_URL: ${TTS_URL:-http://127.0.0.1:5500}
+      TTS_EMBEDDED: ${TTS_EMBEDDED:-1}
       CERTS_DIR: /etc/nginx/certs
       ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-}
       TURN_SECRET: ${TURN_SECRET:-dsip_turn_secret_change_me}
@@ -114,8 +97,6 @@ services:
       postgres:
         condition: service_healthy
       asterisk:
-        condition: service_started
-      tts:
         condition: service_started
     networks:
       - dsip

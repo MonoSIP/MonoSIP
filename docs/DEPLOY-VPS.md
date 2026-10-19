@@ -142,7 +142,7 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 - **Host firewall:** Admin → Settings → Security → download nftables/ufw, or `SIP_ALLOW=… sudo ./scripts/harden-firewall.sh`.
 - **IP policy:** Settings `adminIpAllowlist` / `portalIpAllowlist` / `sipIpAllowlist` / `sipIpDenylist`; bans under Security section.
 - **Login flood guard:** API memory + `ip_bans` table after repeated failures (complements fail2ban).
-- **TTS (Piper):** service `tts` in compose — see [TTS.md](TTS.md). First build downloads EN/TR voice models.
+- **TTS:** embedded in the main image (`127.0.0.1:5500`) — see [TTS.md](TTS.md). No sidecar.
 
 ## 8. Troubleshooting
 

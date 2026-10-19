@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -36,7 +36,7 @@ export async function ttsHealth(): Promise<{
   }
 }
 
-/** Offline fallback when TTS microservice is unreachable (NineDeploy all-in-one). */
+/** Last-resort fallback when embedded TTS (127.0.0.1:5500) is unreachable. */
 async function synthesizeWithEspeak(text: string, language: TtsLanguage): Promise<Buffer> {
   const dir = await mkdtemp(path.join(tmpdir(), "dsip-tts-"));
   const raw = path.join(dir, "raw.wav");
@@ -64,6 +64,15 @@ function isEmaVoice(v: string): boolean {
   return g === "ema" || g === "ema-lightning";
 }
 
+function isKokoroVoice(v: string): boolean {
+  return v.toLowerCase() === "kokoro";
+}
+
+/** Explicit offline neural voices must not silently degrade to robotic espeak. */
+function isFailClosedVoice(v: string): boolean {
+  return isEmaVoice(v) || isKokoroVoice(v);
+}
+
 export async function synthesizeSpeech(
   text: string,
   language: TtsLanguage = "en",
@@ -71,12 +80,14 @@ export async function synthesizeSpeech(
   genderOrVoice: string = "female",
 ): Promise<Buffer> {
   const g = genderOrVoice.toLowerCase();
-  // EMA Lightning is Turkish-only — force lang so a mismatched UI choice
-  // does not 500 inside the TTS service and then fall through to espeak.
-  const lang: TtsLanguage = isEmaVoice(g) ? "tr" : language;
+  // EMA = Turkish-only, Kokoro = English-only — force lang so a mismatched UI
+  // choice does not 500 inside the TTS service and then fall through to espeak.
+  const lang: TtsLanguage = isEmaVoice(g) ? "tr" : isKokoroVoice(g) ? "en" : language;
   let voice: string | undefined;
   if (isEmaVoice(g)) {
     voice = "ema-lightning";
+  } else if (isKokoroVoice(g)) {
+    voice = "kokoro";
   } else if (g === "male" || g === "erkek") {
     voice = lang === "tr" ? "tr-TR-AhmetNeural" : "en-US-GuyNeural";
   } else if (g === "female" || g === "kadin" || g === "kadın") {
@@ -95,23 +106,23 @@ export async function synthesizeSpeech(
       if (res.ok) return Buffer.from(await res.arrayBuffer());
       const err = (await res.json().catch(() => ({}))) as { error?: string };
       console.warn("[tts] remote failed:", err.error ?? res.status);
-      if (isEmaVoice(g)) {
-        // Explicit neural voice: never silently degrade to robotic espeak.
+      if (isFailClosedVoice(g)) {
         throw new Error(err.error ?? `TTS failed (${res.status})`);
       }
     } catch (e) {
-      if (isEmaVoice(g)) throw e;
+      if (isFailClosedVoice(g)) throw e;
       console.warn("[tts] remote unreachable:", (e as Error).message);
     }
-  } else if (isEmaVoice(g)) {
-    throw new Error("EMA TTS unavailable: TTS_URL unset");
+  } else if (isFailClosedVoice(g)) {
+    const name = isEmaVoice(g) ? "EMA" : "Kokoro";
+    throw new Error(`${name} TTS unavailable: TTS_URL unset`);
   }
   return synthesizeWithEspeak(text, lang);
 }
 
 /**
  * Asterisk's native WAV player expects 8 kHz mono 16-bit PCM.
- * Piper (and many uploads) are 22.05 kHz — resample before writing.
+ * Many uploads are 22.05 kHz — resample before writing.
  */
 export function convertWavToAsterisk8k(buf: Buffer): Buffer {
   if (!isLikelyWav(buf)) return buf;
@@ -191,10 +202,13 @@ export async function writePromptWav(
   const safeExt = ext.replace(/^\./, "").toLowerCase() || "wav";
   const soundsDir = path.join(config.asterisk.configDir, "sounds", "dsip");
   await mkdir(soundsDir, { recursive: true });
+  // Asterisk runs as non-root — keep dirs/files world-readable (API may run as root).
+  await chmod(soundsDir, 0o755).catch(() => undefined);
   const safeId = promptId.replace(/[^\w.-]/g, "").slice(0, 64) || "prompt";
   const filePath = path.join(soundsDir, `${safeId}.${safeExt}`);
   const out = safeExt === "wav" && isLikelyWav(wav) ? convertWavToAsterisk8k(wav) : wav;
   await writeFile(filePath, out);
+  await chmod(filePath, 0o644).catch(() => undefined);
   // Relative to Asterisk sounds/ (symlink sounds/dsip → dsip/sounds/dsip)
   const media = `sound:dsip/${safeId}`;
   return { filePath, media };

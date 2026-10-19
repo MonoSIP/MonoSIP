@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
+  AudioLines,
   Building2,
   Globe,
   Mail,
@@ -14,12 +15,15 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { SPEECH_VOICES } from "./flow/nodeMeta";
 
 type Settings = {
   companyName?: string;
   recordingRetentionMonths?: number;
   kvkkAnnouncementEnabled?: boolean;
   kvkkPromptId?: string | null;
+  ttsVoice?: string;
+  ttsVoiceApplyAll?: boolean;
   allowedCountries?: string[];
   blockedCountries?: string[];
   dailySpendLimitMinutes?: number;
@@ -75,6 +79,8 @@ export function SettingsPage() {
   const [retention, setRetention] = useState(12);
   const [kvkk, setKvkk] = useState(true);
   const [kvkkPromptId, setKvkkPromptId] = useState("");
+  const [ttsVoice, setTtsVoice] = useState("female");
+  const [ttsVoiceApplyAll, setTtsVoiceApplyAll] = useState(true);
   const [countries, setCountries] = useState("TR");
   const [blockedCountries, setBlockedCountries] = useState("");
   const [daily, setDaily] = useState(1000);
@@ -149,6 +155,8 @@ export function SettingsPage() {
       setRetention(settings.data.recordingRetentionMonths ?? 12);
       setKvkk(settings.data.kvkkAnnouncementEnabled ?? true);
       setKvkkPromptId(settings.data.kvkkPromptId ?? "");
+      setTtsVoice(settings.data.ttsVoice ?? "female");
+      setTtsVoiceApplyAll(settings.data.ttsVoiceApplyAll !== false);
       setCountries((settings.data.allowedCountries ?? ["TR"]).join(","));
       setBlockedCountries((settings.data.blockedCountries ?? []).join(","));
       setDaily(settings.data.dailySpendLimitMinutes ?? 1000);
@@ -188,6 +196,8 @@ export function SettingsPage() {
         recordingRetentionMonths: retention,
         kvkkAnnouncementEnabled: kvkk,
         kvkkPromptId: kvkkPromptId || null,
+        ttsVoice,
+        ttsVoiceApplyAll,
         allowedCountries: countries.split(",").map((s) => s.trim()).filter(Boolean),
         blockedCountries: blockedCountries
           .split(",")
@@ -369,6 +379,35 @@ export function SettingsPage() {
             </option>
           ))}
         </SelectField>
+        <SelectField
+          label="IVR TTS model"
+          icon={AudioLines}
+          value={ttsVoice}
+          onChange={(e) => setTtsVoice(e.target.value)}
+        >
+          {SPEECH_VOICES.map((v) => (
+            <option key={v.value} value={v.value}>
+              {v.label}
+              {v.value === "ema-lightning"
+                ? " — Turkish offline"
+                : v.value === "kokoro"
+                  ? " — English offline"
+                  : ""}
+            </option>
+          ))}
+        </SelectField>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={ttsVoiceApplyAll}
+            onChange={(e) => setTtsVoiceApplyAll(e.target.checked)}
+          />
+          Apply TTS model to all IVR prompts (ignore per-node voice)
+        </label>
+        <p className="text-xs text-[var(--text-muted)]">
+          When enabled, live IVR speech uses this model without editing flow nodes. EMA is
+          Turkish-only; Kokoro is English-only.
+        </p>
         <TextField
           label="Allowed countries (ISO, comma — e.g. TR,DE or ALL)"
           value={countries}
