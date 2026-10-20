@@ -16,7 +16,7 @@ DSip runs as a **Docker Compose** stack. Supported production path: Linux VM (De
 ```bash
 git clone https://github.com/diggyen/DSip.git
 cd DSip
-git checkout v1.3.0   # or main
+git checkout v1.3.1   # or main
 
 cp .env.example .env
 chmod +x scripts/gen-certs.sh
@@ -78,6 +78,13 @@ docker run -d --name dsip --restart unless-stopped \
 
 Update: `docker pull ghcr.io/diggyen/dsip:latest`, then recreate the container — data
 stays in the `dsip-data` volume.
+
+**PaaS without building (NineDeploy, Coolify, …):** create the service from the
+image `ghcr.io/diggyen/dsip:latest` instead of the Git repository, mount `/data`,
+expose port 3000 (+ UDP 10000-10100) and set `PUBLIC_HOST` / `EXTERNAL_IP`. Deploys
+then only pull (~1 min) instead of building torch + TTS models (~10 min, ~4 GB of
+build layers left on the host per deploy). On NineDeploy enable **Auto-update** so a
+new `:latest` digest redeploys automatically; pin `:X.Y.Z` to upgrade manually.
 
 What every platform needs:
 
