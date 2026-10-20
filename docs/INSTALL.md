@@ -57,6 +57,28 @@ docker build -t dsip .
 docker run -d -p 3000:3000 -p 10000-10100:10000-10100/udp -v dsip-data:/data dsip
 ```
 
+### Prebuilt image (GitHub Container Registry)
+
+Every push to `main` and every `vX.Y.Z` tag publishes the same image to GHCR
+(`.github/workflows/docker.yml`, linux/amd64), so you can skip the build:
+
+```bash
+docker run -d --name dsip --restart unless-stopped \
+  -p 3000:3000 -p 10000-10100:10000-10100/udp \
+  -v dsip-data:/data \
+  -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
+  ghcr.io/diggyen/dsip:latest
+```
+
+| Tag | Source |
+| --- | --- |
+| `latest`, `X.Y.Z`, `X.Y` | release tags (`vX.Y.Z`) |
+| `main` | tip of `main` |
+| `sha-<short>` | a specific commit |
+
+Update: `docker pull ghcr.io/diggyen/dsip:latest`, then recreate the container — data
+stays in the `dsip-data` volume.
+
 What every platform needs:
 
 - **Dockerfile:** repo root `Dockerfile` (leave the build context at the repo root — the default; if a panel defaults to a subdirectory, clear its **baseDir** so context is `.`, otherwise `COPY` paths fail)
