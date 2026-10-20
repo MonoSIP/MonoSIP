@@ -53,3 +53,21 @@ describe("singleFlight (config write + Asterisk reload)", () => {
     await expect(run()).resolves.toBeUndefined();
   });
 });
+
+import { sipFromDomain } from "./config-writer.js";
+
+describe("sipFromDomain", () => {
+  it("keeps valid hostnames and IPv4 addresses", () => {
+    expect(sipFromDomain("dsip.gatex.uk")).toBe("dsip.gatex.uk");
+    expect(sipFromDomain("PBX.Example.com.")).toBe("pbx.example.com");
+    expect(sipFromDomain("46.20.6.254")).toBe("46.20.6.254");
+    expect(sipFromDomain("3cx.example.com")).toBe("3cx.example.com");
+  });
+
+  it("rejects hostnames SIP.js cannot parse (top label must start with a letter)", () => {
+    expect(sipFromDomain("20579c14dcc0")).toBe("localhost");
+    expect(sipFromDomain("pbx.123")).toBe("localhost");
+    expect(sipFromDomain("")).toBe("localhost");
+    expect(sipFromDomain("bad_host")).toBe("localhost");
+  });
+});

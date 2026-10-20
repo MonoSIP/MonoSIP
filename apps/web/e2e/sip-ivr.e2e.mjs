@@ -306,7 +306,7 @@ await scenario("I1", "IVR menu timeout", "No key pressed → menu timeout exit �
 
 await scenario("I2", "Menu 1 → operator answers", "Press 1 → transfer to 102 → 102 rings → answer → connected", async () => {
   const op = await openPhone("102");
-  await waitRegistered(op);
+  const regOp = await waitRegistered(op);
   const p = await openPhone("101");
   await waitRegistered(p);
   const { since } = await reachMenu(p);
@@ -318,7 +318,8 @@ await scenario("I2", "Menu 1 → operator answers", "Press 1 → transfer to 102
   const tl = await lastCallTimeline("101", since);
   const callerSip = (await sipLog(p)).slice(-15);
   await hangup(p);
-  return { ok: !!ring && !!opUp, evidence: { operatorRang: !!ring, operatorAnswered: !!opUp, timeline: tl?.events, callerSip } };
+  const operatorSip = (await sipLog(op)).slice(-20);
+  return { ok: !!ring && !!opUp, evidence: { regOp, operatorRang: !!ring, operatorAnswered: !!opUp, timeline: tl?.events, callerSip, operatorSip } };
 });
 
 await scenario("I3", "Menu 2 → operator not registered", "Press 2 → 103 offline → 'not registered' prompt → Hangup within ~10s", async () => {

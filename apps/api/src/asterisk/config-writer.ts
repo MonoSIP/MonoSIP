@@ -125,6 +125,22 @@ export function singleFlight(fn: () => Promise<void>): () => Promise<void> {
  * Only called from the single-flight writeAsteriskConfig. Returns false when the
  * Asterisk CLI is unreachable (Compose sidecar) so the reload.flag watcher takes over.
  */
+/**
+ * Domain Asterisk puts in From/Contact of requests to softphones. Without it Asterisk
+ * uses the container hostname — Docker names are random hex, and RFC 3261 requires the
+ * top label to start with a letter: on a "20579c14dcc0" container SIP.js drops every
+ * request ("error parsing header 'From'"), so qualify fails, the contact goes
+ * Unreachable, calls to the extension 404 and the IVR treats operators as offline.
+ * It worked or broke per deploy depending on the random name.
+ */
+export function sipFromDomain(host: string): string {
+  const h = host.trim().toLowerCase().replace(/\.$/, "");
+  const ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/;
+  const label = "[a-z0-9]([a-z0-9-]*[a-z0-9])?";
+  const hostname = new RegExp(`^(${label}\\.)*[a-z]([a-z0-9-]*[a-z0-9])?$`);
+  return ipv4.test(h) || hostname.test(h) ? h : "localhost";
+}
+
 export async function reloadAsteriskCli(): Promise<boolean> {
   // `module load` first: if a module DECLINED at cold start (config was briefly
   // unreadable/empty before the API wrote it), only `load` revives it — `reload`
@@ -391,6 +407,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     pjsip.push(
       `[${id}]`,
       "type=endpoint",
+      `from_domain=${sipFromDomain(config.publicHost)}`,
       "context=from-internal",
       "disallow=all",
       // Prefer PCM/G.722 — image has no codec_opus.so, so Opus breaks file playback (IVR/TTS)
@@ -446,6 +463,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       pjsip.push(
         `[${id}]`,
         "type=endpoint",
+        `from_domain=${sipFromDomain(config.publicHost)}`,
         "context=from-widget",
         "disallow=all",
         "allow=ulaw,alaw,g722",
