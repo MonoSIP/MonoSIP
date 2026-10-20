@@ -198,7 +198,12 @@ EOF
 
 # Reload watcher (same as compose Asterisk sidecar)
 (
-  LAST=""
+  # reload.flag persists in /data: a stale flag from the previous boot must not
+  # trigger a reload, and nothing may reload before Asterisk is fully booted —
+  # `module reload res_pjsip.so` during startup deadlocks the module loader
+  # (SIP over WebSocket then never answers).
+  LAST="$(cat /var/lib/asterisk/dsip/reload.flag 2>/dev/null || true)"
+  until asterisk -rx "core waitfullybooted" >/dev/null 2>&1; do sleep 2; done
   while true; do
     if [ -f /var/lib/asterisk/dsip/reload.flag ]; then
       CUR="$(cat /var/lib/asterisk/dsip/reload.flag 2>/dev/null || true)"

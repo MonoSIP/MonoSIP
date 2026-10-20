@@ -2253,7 +2253,24 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         // Columns: Processed / In Queue / Max Depth / Low water / High water
         taskprocessors: await cli("core show taskprocessors", /pjsip|stasis\/m|sorcery/i),
         websocketModule: await cli("module show like websocket"),
+        pjsipModulesRunning: await cli("module show like res_pjsip", /Running/),
       },
+      // Asterisk's own warnings/errors (no SSH needed to see a wedged stack)
+      asteriskLog: await (async () => {
+        try {
+          const { readFile } = await import("node:fs/promises");
+          const txt = await readFile("/var/log/asterisk/console.log", "utf8");
+          return txt
+            .replace(/\x1b\[[0-9;]*m/g, "")
+            .split("\n")
+            .filter((l) => /WARNING|ERROR|reload|deadlock|Interrupted|declined|Unable/i.test(l))
+            .filter((l) => !/rtpqos|cdr_csv|AstDB key/.test(l))
+            .slice(-80)
+            .join("\n");
+        } catch (e) {
+          return `unreadable: ${(e as Error).message}`;
+        }
+      })(),
     };
   });
 

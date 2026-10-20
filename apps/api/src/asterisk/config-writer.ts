@@ -160,7 +160,11 @@ export async function reloadAsteriskCli(): Promise<boolean> {
   // Hold the same lock as the reload.flag watcher in start-asterisk.sh for the whole
   // sequence, so a boot-time flag reload can't interleave with this one.
   const lock = path.join(config.asterisk.configDir, "reload.lock");
-  const script = cmds.map((c) => `asterisk -rx '${c}' >/dev/null 2>&1 && echo ok`).join("; ");
+  // Never reload a booting Asterisk (module reload during startup deadlocks the loader).
+  const script = [
+    "asterisk -rx 'core waitfullybooted' >/dev/null 2>&1 || exit 0",
+    ...cmds.map((c) => `asterisk -rx '${c}' >/dev/null 2>&1 && echo ok`),
+  ].join("; ");
   try {
     const { stdout } = await execFileAsync("flock", ["-w", "60", lock, "sh", "-c", script], {
       timeout: 90_000,
