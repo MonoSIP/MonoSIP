@@ -11,6 +11,7 @@
     "lint": "echo ok",
     "test": "vitest run",
     "test:e2e": "node e2e/flow-designer.e2e.mjs && node e2e/uploads.e2e.mjs",
+    "test:e2e:sip": "node e2e/sip-ivr.e2e.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {
