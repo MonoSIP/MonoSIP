@@ -14,13 +14,13 @@
   },
   "packageManager": "pnpm@12.14.0+sha512.c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6",
   "scripts": {
-    "dev": "pnpm -r --parallel --filter @dsip/api --filter @dsip/web run dev",
+    "dev": "pnpm --filter @dsip/shared build && pnpm -r --parallel --filter @dsip/api --filter @dsip/web run dev",
     "build": "pnpm -r run build",
     "db:generate": "pnpm --filter @dsip/api run db:generate",
     "db:migrate": "pnpm --filter @dsip/api run db:migrate",
     "db:seed": "pnpm --filter @dsip/api run db:seed",
     "lint": "pnpm -r run lint",
-    "typecheck": "pnpm -r run typecheck",
+    "typecheck": "pnpm --filter @dsip/shared build && pnpm -r run typecheck",
     "test": "pnpm -r run test"
   },
   "engines": {
