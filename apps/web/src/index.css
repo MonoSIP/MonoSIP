@@ -646,13 +646,286 @@ html.light .brand-mark {
 .flow-palette-chip:active {
   transform: none;
 }
-.flow-palette-dot {
-  width: 0.55rem;
-  height: 0.55rem;
+.flow-palette-icon {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
   flex-shrink: 0;
-  border-radius: 999px;
-  background: var(--chip-color);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--chip-color) 25%, transparent);
+  border-radius: 6px;
+  color: var(--chip-color);
+  background: color-mix(in oklab, var(--chip-color) 16%, transparent);
+}
+
+/* IVR designer — shaped nodes. The SVG outline (nodeShapes.tsx) carries the
+   border and fill so each node type can have its own silhouette. */
+.flow-node {
+  --node-fill: color-mix(in oklab, var(--node-color) 8%, var(--bg-elevated));
+  --node-stroke: color-mix(in oklab, var(--node-color) 50%, var(--border));
+  isolation: isolate;
+}
+.flow-node-shape {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.12));
+  transition: filter 0.2s ease;
+}
+.flow-node-body,
+.flow-node-back {
+  fill: var(--node-fill);
+  stroke: var(--node-stroke);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+}
+.flow-node-back {
+  fill: color-mix(in oklab, var(--node-color) 4%, var(--bg-elevated));
+  stroke: color-mix(in oklab, var(--node-color) 30%, var(--border));
+}
+.flow-node-detail {
+  fill: none;
+  stroke: color-mix(in oklab, var(--node-color) 40%, transparent);
+  stroke-width: 1.25;
+}
+.flow-node:hover {
+  --node-stroke: color-mix(in oklab, var(--node-color) 75%, var(--border));
+}
+.flow-node.is-selected {
+  --node-fill: color-mix(in oklab, var(--node-color) 16%, var(--bg-elevated));
+  --node-stroke: var(--node-color);
+}
+.flow-node.is-selected .flow-node-body {
+  stroke-width: 2;
+}
+.flow-node.is-selected .flow-node-shape,
+.react-flow__node.sim-active .flow-node-shape {
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--node-color) 45%, transparent));
+}
+.react-flow__node.sim-visited .flow-node {
+  --node-fill: color-mix(in oklab, var(--node-color) 13%, var(--bg-elevated));
+  --node-stroke: color-mix(in oklab, var(--node-color) 80%, var(--border));
+}
+.react-flow__node.sim-active .flow-node {
+  --node-fill: color-mix(in oklab, var(--node-color) 22%, var(--bg-elevated));
+  --node-stroke: var(--node-color);
+}
+.react-flow__node.sim-active .flow-node-body {
+  stroke-width: 2.25;
+  stroke-dasharray: 6 4;
+  animation: flow-march 0.6s linear infinite;
+}
+.flow-node-icon {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 7px;
+  color: var(--node-color);
+  background: color-mix(in oklab, var(--node-color) 15%, transparent);
+}
+.flow-node-exit {
+  position: absolute;
+  transform: translateY(-50%);
+  font-size: 9px;
+  line-height: 1;
+  color: var(--text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.flow-node-toolbar {
+  position: absolute;
+  right: 4px;
+  top: -14px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 2;
+}
+.flow-node:hover .flow-node-toolbar,
+.flow-node.is-selected .flow-node-toolbar,
+.flow-node:focus-within .flow-node-toolbar {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  .flow-node-toolbar {
+    opacity: 1;
+    transform: none;
+  }
+}
+.flow-node-tool {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+.flow-node-tool:hover {
+  color: var(--node-color);
+  background: color-mix(in oklab, var(--node-color) 16%, transparent);
+}
+.flow-node-tool--danger:hover {
+  color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 16%, transparent);
+}
+
+/* Edges — flowing dash + travelling dot on the live hop */
+.flow-edge-flow {
+  fill: none;
+  stroke-width: 2.25;
+  stroke-dasharray: 5 7;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.flow-edge-flow.is-live {
+  opacity: 1;
+  animation: flow-march 0.5s linear infinite;
+}
+.flow-edge-dot {
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+@keyframes flow-march {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+.sim-step {
+  background: var(--bg-soft);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.sim-step.is-done {
+  color: var(--text-muted);
+}
+.sim-step.is-current {
+  background: color-mix(in oklab, var(--accent) 18%, var(--bg-soft));
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Animated node icons: at rest each shows a static frame; motion plays on
+   hover, selection, simulation and palette hover. Start always breathes. */
+/* Only animated parts pivot on their own box; static `transform` attributes stay untouched. */
+.fi [class^="fi-"],
+.fi [class*=" fi-"] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.fi-ring {
+  opacity: 0;
+  animation: fi-ring 2.4s ease-out infinite;
+}
+.fi-ring.fi-d2 {
+  animation-delay: 1.2s;
+}
+@keyframes fi-ring {
+  0% { transform: scale(0.55); opacity: 0.7; }
+  100% { transform: scale(1.05); opacity: 0; }
+}
+:is(.flow-node:hover, .flow-node.is-selected, .react-flow__node.sim-active .flow-node, .flow-palette-chip:hover) {
+  & .fi-wave { animation: fi-blink 1.2s ease-in-out infinite; }
+  & .fi-wave.fi-d2 { animation-delay: 0.25s; }
+  & .fi-bar { animation: fi-eq 0.9s ease-in-out infinite; }
+  & .fi-bar.fi-d2 { animation-delay: 0.2s; }
+  & .fi-bar.fi-d3 { animation-delay: 0.4s; }
+  & .fi-key { animation: fi-press 1.6s ease-in-out infinite; }
+  & .fi-pin { animation: fi-pin 1.5s steps(1, end) infinite; }
+  & .fi-caret { animation: fi-caret 0.8s steps(1, end) infinite; }
+  & .fi-scan { animation: fi-scan 1.6s ease-in-out infinite; }
+  & .fi-hop { animation: fi-hop 0.9s ease-in-out infinite; }
+  & .fi-branch { animation: fi-blink 1.4s ease-in-out infinite; }
+  & .fi-branch.fi-alt { animation-delay: 0.7s; }
+  & .fi-hand { transform-origin: 0% 100%; animation: fi-spin 2.4s linear infinite; }
+  & .fi-draw { stroke-dasharray: 1; animation: fi-draw 1.4s ease-in-out infinite; }
+  & .fi-draw.fi-d2 { animation-delay: 0.3s; }
+  & .fi-globe { animation: fi-globe 1.8s ease-in-out infinite; }
+  & .fi-rotate { animation: fi-spin 2.2s linear infinite; }
+  & .fi-push { animation: fi-push 1s ease-in-out infinite; }
+  & .fi-q { animation: fi-q 1.1s linear infinite; }
+  & .fi-q-in { animation-name: fi-q-in; }
+  & .fi-q-out { animation-name: fi-q-out; }
+  & .fi-reel { animation: fi-spin 1.4s linear infinite; }
+  & .fi-shake { animation: fi-shake 0.6s ease-in-out infinite; }
+}
+@keyframes fi-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+@keyframes fi-eq {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.35); }
+}
+@keyframes fi-press {
+  0%, 12%, 100% { transform: scale(1); opacity: 1; }
+  6% { transform: scale(1.55); opacity: 0.6; }
+}
+@keyframes fi-pin {
+  0% { opacity: 0; }
+  33% { opacity: 1; }
+}
+@keyframes fi-caret {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes fi-scan {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-2.5px, -2px); }
+}
+@keyframes fi-hop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-2.5px); }
+}
+@keyframes fi-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes fi-draw {
+  0% { stroke-dashoffset: 1; }
+  45%, 100% { stroke-dashoffset: 0; }
+}
+@keyframes fi-globe {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.15); }
+}
+@keyframes fi-push {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(2.5px); }
+}
+@keyframes fi-q {
+  to { transform: translateX(6px); }
+}
+@keyframes fi-q-in {
+  from { opacity: 0; }
+  to { transform: translateX(6px); opacity: 1; }
+}
+@keyframes fi-q-out {
+  from { opacity: 1; }
+  to { transform: translateX(6px); opacity: 0; }
+}
+@keyframes fi-shake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-9deg); }
+  75% { transform: rotate(9deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fi *,
+  .fi *::before,
+  .flow-edge-flow.is-live,
+  .react-flow__node.sim-active .flow-node-body {
+    animation: none !important;
+  }
+  .fi-ring {
+    display: none;
+  }
 }
 
 /* React Flow zoom controls — match app theme */
@@ -678,4 +951,86 @@ html.light .brand-mark {
 }
 .react-flow__controls-button svg {
   fill: currentColor !important;
+}
+
+/* Shared SVG motion (components/motion.tsx) */
+.mo-spinner {
+  color: var(--accent);
+  animation: fi-spin 1.1s linear infinite;
+}
+.mo-spinner-arc {
+  stroke-dasharray: 28 72;
+  animation: mo-arc 1.6s ease-in-out infinite;
+}
+@keyframes mo-arc {
+  0%, 100% { stroke-dasharray: 12 88; }
+  50% { stroke-dasharray: 55 45; }
+}
+.mo-dot {
+  flex-shrink: 0;
+  overflow: visible;
+}
+.mo-dot circle { fill: var(--success, #16a34a); }
+.mo-dot--err circle { fill: var(--danger); }
+.mo-dot--busy circle { fill: #f59e0b; }
+.mo-dot-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mo-halo 1.8s ease-out infinite;
+}
+@keyframes mo-halo {
+  0% { transform: scale(0.6); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.mo-call {
+  display: block;
+  margin: 0 auto 0.5rem;
+  color: var(--accent);
+  overflow: visible;
+}
+.mo-call-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mo-call-ring 1.5s ease-out infinite;
+}
+.mo-call-core { fill: currentColor; }
+@keyframes mo-call-ring {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 0; }
+}
+.mo-call-bar {
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fi-eq 0.8s ease-in-out infinite;
+}
+.mo-call--ended { color: var(--text-muted); }
+.mo-call-flat {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  animation: mo-draw 0.6s ease-out forwards;
+}
+@keyframes mo-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mo-spinner,
+  .mo-spinner-arc,
+  .mo-dot-halo,
+  .mo-call-ring,
+  .mo-call-bar,
+  .mo-call-flat {
+    animation: none !important;
+  }
+  .mo-call-flat { stroke-dashoffset: 0; }
 }

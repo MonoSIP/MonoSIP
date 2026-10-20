@@ -17,7 +17,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { FlowCanvasActionsProvider, flowNodeTypes, type FlowNodeData } from "./flow/FlowNodes";
+import {
+  FlowCanvasActionsProvider,
+  flowEdgeTypes,
+  flowNodeTypes,
+  type FlowEdgeData,
+  type FlowNodeData,
+} from "./flow/FlowNodes";
+import { NodeIcon } from "./flow/nodeShapes";
 import { NodeSettings } from "./flow/NodeSettings";
 import {
   defaultDataForType,
@@ -85,6 +92,9 @@ export function FlowDesignerPage() {
   /** Node whose settings modal is open (pencil / add) — not the same as RF selection. */
   const [editingId, setEditingId] = useState<string | null>(null);
   const [simSteps, setSimSteps] = useState<string[]>([]);
+  /** Node ids visited by the last simulation, replayed on the canvas step by step. */
+  const [simTrace, setSimTrace] = useState<string[]>([]);
+  const [simIndex, setSimIndex] = useState(-1);
   const [simCaller, setSimCaller] = useState("05551234567");
   const [simDid, setSimDid] = useState("default");
   const [simDtmf, setSimDtmf] = useState("1,timeout");
@@ -149,6 +159,50 @@ export function FlowDesignerPage() {
       .then(setVersions)
       .catch(() => setVersions([]));
   }, [id, setNodes, setEdges]);
+
+  // Advance simulation playback one step at a time.
+  useEffect(() => {
+    if (simIndex < 0 || simIndex >= simTrace.length - 1) return;
+    const t = window.setTimeout(() => setSimIndex((i) => i + 1), 750);
+    return () => window.clearTimeout(t);
+  }, [simIndex, simTrace.length]);
+
+  const viewNodes = useMemo(() => {
+    if (simIndex < 0) return nodes;
+    const active = simTrace[simIndex];
+    const visited = new Set(simTrace.slice(0, simIndex));
+    return nodes.map((n) =>
+      n.id === active
+        ? { ...n, className: "sim-active" }
+        : visited.has(n.id)
+          ? { ...n, className: "sim-visited" }
+          : n,
+    );
+  }, [nodes, simTrace, simIndex]);
+
+  // Edges take their source node's color; only re-derive when node types change, not on drag.
+  const nodeTypeKey = nodes.map((n) => `${n.id}:${n.data.flowType}`).join("|");
+  const viewEdges = useMemo(() => {
+    const typeById = new Map(nodeTypeKey.split("|").map((p) => p.split(":") as [string, string]));
+    const hops = new Map<string, "visited" | "active">();
+    for (let i = 1; i <= simIndex && i < simTrace.length; i++) {
+      hops.set(`${simTrace[i - 1]}>${simTrace[i]}`, i === simIndex ? "active" : "visited");
+    }
+    return edges.map((e) => {
+      const stroke = nodeColor(typeById.get(e.source) ?? "");
+      const sim = hops.get(`${e.source}>${e.target}`);
+      return {
+        ...e,
+        style: { ...e.style, stroke },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: stroke },
+        labelStyle: { fill: stroke, fontSize: 10, fontWeight: 600 },
+        labelBgStyle: { fill: "var(--bg-elevated)" },
+        labelBgPadding: [4, 2] as [number, number],
+        labelBgBorderRadius: 4,
+        data: { ...e.data, sim } satisfies FlowEdgeData,
+      };
+    });
+  }, [edges, nodeTypeKey, simTrace, simIndex]);
 
   const selected = useMemo(
     () => nodes.find((n) => n.id === editingId) ?? null,
@@ -250,7 +304,7 @@ export function FlowDesignerPage() {
         return;
       }
     }
-    const r = await api.post<{ steps: Array<{ message: string }> }>(`/api/v1/admin/flows/${id}/simulate`, {
+    const r = await api.post<{ steps: Array<{ message: string; nodeId?: string }> }>(`/api/v1/admin/flows/${id}/simulate`, {
       caller: simCaller,
       did: simDid,
       dtmfSequence,
@@ -258,6 +312,8 @@ export function FlowDesignerPage() {
     });
     const msgs = r.steps.map((s) => s.message);
     setSimSteps(msgs);
+    setSimTrace(r.steps.map((s) => s.nodeId ?? ""));
+    setSimIndex(0);
     toast.message(msgs.join(" → "));
   }
 
@@ -480,7 +536,9 @@ export function FlowDesignerPage() {
                   className="flow-palette-chip"
                   style={{ ["--chip-color" as string]: color } as CSSProperties}
                 >
-                  <span className="flow-palette-dot" aria-hidden />
+                  <span className="flow-palette-icon">
+                    <NodeIcon type={p} size={16} />
+                  </span>
                   {nodeShortTitle(p)}
                 </button>
               );
@@ -492,9 +550,10 @@ export function FlowDesignerPage() {
         <div className="card relative min-h-0 min-w-0 flex-1 overflow-hidden">
           <FlowCanvasActionsProvider openSettings={openSettings} requestDelete={requestDeleteNode}>
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={viewNodes}
+              edges={viewEdges}
               nodeTypes={flowNodeTypes}
+              edgeTypes={flowEdgeTypes}
               onNodesChange={mobileView ? undefined : onNodesChange}
               onEdgesChange={mobileView ? undefined : onEdgesChange}
               onConnect={mobileView ? undefined : onConnect}
@@ -539,7 +598,7 @@ export function FlowDesignerPage() {
               <textarea
                 className="input mt-1 w-full font-mono text-[10px]"
                 rows={3}
-                placeholder='{"api1":{"temsilci":"101"}}'
+                placeholder='{"api1":{"agent":"101"}}'
                 value={simMockApi}
                 onChange={(e) => setSimMockApi(e.target.value)}
               />
@@ -548,13 +607,44 @@ export function FlowDesignerPage() {
               Run simulation
             </button>
             {simSteps.length > 0 && (
-              <ol className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto text-xs text-[var(--text)]">
-                {simSteps.map((s, i) => (
-                  <li key={`${i}-${s}`} className="rounded bg-[var(--bg-soft)] px-2 py-1">
-                    {i + 1}. {s}
-                  </li>
-                ))}
-              </ol>
+              <>
+                <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--text-muted)]">
+                  <span>
+                    {simIndex + 1} / {simSteps.length}
+                  </span>
+                  <span className="flex gap-1">
+                    <button className="btn px-2 py-0.5 text-[10px]" type="button" onClick={() => setSimIndex(0)}>
+                      Replay
+                    </button>
+                    <button
+                      className="btn px-2 py-0.5 text-[10px]"
+                      type="button"
+                      onClick={() => {
+                        setSimSteps([]);
+                        setSimTrace([]);
+                        setSimIndex(-1);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </span>
+                </div>
+                <ol className="mt-1 min-h-0 flex-1 space-y-1 overflow-y-auto text-xs text-[var(--text)]">
+                  {simSteps.map((s, i) => (
+                    <li key={`${i}-${s}`}>
+                      <button
+                        type="button"
+                        onClick={() => setSimIndex(i)}
+                        className={`sim-step w-full rounded px-2 py-1 text-left${
+                          i === simIndex ? " is-current" : i < simIndex ? " is-done" : ""
+                        }`}
+                      >
+                        {i + 1}. {s}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </>
             )}
         </div>
       </div>

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { api } from "./lib/api";
 import { useStore } from "./store";
+import { Spinner } from "./components/motion";
 
 function lazyNamed<M extends Record<string, unknown>>(loader: () => Promise<M>, exportName: keyof M & string) {
   return lazy(async () => {
@@ -52,7 +53,14 @@ const MyRecordingsPage = lazyNamed(() => import("./pages/portal/MyRecordingsPage
 const MySettingsPage = lazyNamed(() => import("./pages/portal/MySettingsPage"), "MySettingsPage");
 
 function BootScreen({ label = "Loading DSip…" }: { label?: string }) {
-  return <div className="grid h-full place-items-center text-[var(--text-muted)]">{label}</div>;
+  return (
+    <div className="grid h-full place-items-center text-[var(--text-muted)]">
+      <div className="flex flex-col items-center gap-3 text-sm">
+        <Spinner size={32} />
+        {label}
+      </div>
+    </div>
+  );
 }
 
 export default function App() {

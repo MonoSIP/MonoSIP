@@ -56,9 +56,9 @@ function fwdSelects() {
   return within(card).getAllByRole("combobox");
 }
 
-/** Tab-bar buttons. "Dönüldü" is also a row action, so it is never global. */
+/** Tab-bar buttons, scoped so tab labels never collide with row actions. */
 function tab(name: string) {
-  const bar = screen.getByRole("button", { name: "All" }).parentElement as HTMLElement;
+  const bar = screen.getByRole("button", { name: "missed.all" }).parentElement as HTMLElement;
   return within(bar).getByRole("button", { name });
 }
 
@@ -322,9 +322,9 @@ describe("missed-call status changes", () => {
     renderPage(<MissedPage />);
 
     await screen.findByText("5555");
-    // "Dönüldü" is both a tab label and a row action, so scope to the row.
+    // Scope to the row so the tab bar is never matched.
     const row = screen.getByText("5555").closest("tr") as HTMLElement;
-    await userEvent.click(within(row).getByRole("button", { name: "Dönüldü" }));
+    await userEvent.click(within(row).getByRole("button", { name: "missed.markReturned" }));
 
     expect(patch).toHaveBeenCalledWith("/api/v1/admin/missed-calls/m1", { status: "returned" });
     // The invalidation refetch returns status "returned", so the pending tab
@@ -341,7 +341,7 @@ describe("missed-call status changes", () => {
     renderPage(<MissedPage />);
 
     const row = (await screen.findByText("6666")).closest("tr") as HTMLElement;
-    await userEvent.click(within(row).getByRole("button", { name: "Ignore" }));
+    await userEvent.click(within(row).getByRole("button", { name: "missed.ignore" }));
 
     expect(patch).toHaveBeenCalledWith("/api/v1/admin/missed-calls/m2", { status: "ignored" });
   });
@@ -354,12 +354,12 @@ describe("missed-call status changes", () => {
     renderPage(<MissedPage />);
 
     // The default tab is "pending", which filters this row out entirely.
-    await userEvent.click(tab("All"));
+    await userEvent.click(tab("missed.all"));
 
     const row = (await screen.findByText("7777")).closest("tr") as HTMLElement;
-    expect(within(row).queryByRole("button", { name: "Ignore" })).not.toBeInTheDocument();
-    // Already returned, so no "Dönüldü" action is offered either.
-    expect(within(row).queryByRole("button", { name: "Dönüldü" })).not.toBeInTheDocument();
+    expect(within(row).queryByRole("button", { name: "missed.ignore" })).not.toBeInTheDocument();
+    // Already returned, so no "called back" action is offered either.
+    expect(within(row).queryByRole("button", { name: "missed.markReturned" })).not.toBeInTheDocument();
   });
 
   it("filters rows by tab", async () => {
@@ -373,7 +373,7 @@ describe("missed-call status changes", () => {
     await screen.findByText("1111");
     expect(screen.queryByText("2222")).not.toBeInTheDocument();
 
-    await userEvent.click(tab("Dönüldü"));
+    await userEvent.click(tab("missed.returned"));
     expect(await screen.findByText("2222")).toBeInTheDocument();
     expect(screen.queryByText("1111")).not.toBeInTheDocument();
   });

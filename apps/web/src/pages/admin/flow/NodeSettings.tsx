@@ -3,7 +3,7 @@ import { ApiNodeSettings } from "./ApiNodeSettings";
 import type { FlowNodeData } from "./FlowNodes";
 import {
   DEFAULT_MENU_DIGITS,
-  SPEECH_LANGS,
+  speechLangOptions,
   exitsForNode,
   menuDigits,
   nodeTitle,
@@ -110,7 +110,7 @@ export function NodeSettings({
             <SegmentedSelect
               aria-label="Language"
               value={String(data.language ?? "en")}
-              options={SPEECH_LANGS.map((l) => ({ value: l.code, label: l.label }))}
+              options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>
@@ -151,7 +151,7 @@ export function NodeSettings({
               <SegmentedSelect
                 aria-label="Language"
                 value={String(data.language ?? "en")}
-                options={SPEECH_LANGS.map((l) => ({ value: l.code, label: l.label }))}
+                options={speechLangOptions()}
                 onChange={(v) => patch({ language: v })}
               />
             </Field>
@@ -368,7 +368,7 @@ function SpeechSettings({
             <SegmentedSelect
               aria-label="Language"
               value={String(data.language ?? "en")}
-              options={SPEECH_LANGS.map((l) => ({ value: l.code, label: l.label }))}
+              options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>
@@ -418,7 +418,7 @@ function MenuSettings({
             <SegmentedSelect
               aria-label="Language"
               value={String(data.language ?? "en")}
-              options={SPEECH_LANGS.map((l) => ({ value: l.code, label: l.label }))}
+              options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>
@@ -547,7 +547,7 @@ function GetKeySettings({
             <SegmentedSelect
               aria-label="Language"
               value={String(data.language ?? "en")}
-              options={SPEECH_LANGS.map((l) => ({ value: l.code, label: l.label }))}
+              options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>

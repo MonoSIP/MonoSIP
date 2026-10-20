@@ -8,6 +8,7 @@ import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { Softphone, type CallPhase } from "../../lib/softphone";
 import { PageHeader, SectionCard } from "../../components/ui";
+import { CallPulse } from "../../components/motion";
 
 function formatCallTime(totalSec: number): string {
   const s = Math.max(0, Math.floor(totalSec));
@@ -247,6 +248,7 @@ export function PhonePage() {
             ⌫
           </button>
         </div>
+        {showCallUi && <CallPulse phase={callPhase} />}
         {showCallUi && (
           <p
             className="mb-3 text-center font-mono text-3xl tabular-nums tracking-wider text-[var(--text)]"

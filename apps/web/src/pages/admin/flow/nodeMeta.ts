@@ -1,9 +1,15 @@
+import i18n from "i18next";
 import type { FlowNodeData } from "./FlowNodes";
 
 export const SPEECH_LANGS = [
   { code: "en", label: "English" },
-  { code: "tr", label: "Türkçe" },
+  { code: "tr", label: "Turkish" },
 ] as const;
+
+/** Language select options labelled in the current UI language. */
+export function speechLangOptions() {
+  return SPEECH_LANGS.map((l) => ({ value: l.code, label: i18n.t(`langs.${l.code}`, { defaultValue: l.label }) }));
+}
 
 /**
  * Selectable TTS voices/models. `female`/`male` map to Edge Neural (online, EN+TR);

@@ -174,7 +174,10 @@
     "halfDay": "Half day (open until noon)",
     "newName": "New schedule name",
     "empty": "No schedules yet — create one to define open hours.",
-    "confirmDelete": "Delete this schedule?"
+    "confirmDelete": "Delete this schedule?",
+    "holidayPlaceholder": "e.g. National holiday",
+    "trPack": "Turkey public holidays",
+    "trPackDone": "Turkey {{year}}: {{count}} holiday(s) added"
   },
   "flows": {
     "title": "IVR",
@@ -249,5 +252,21 @@
     "ended": "Ended",
     "callEnded": "Call ended ({{time}})",
     "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then DSIP_RTP_PUBLISHED=1."
+  },
+  "langs": {
+    "en": "English",
+    "tr": "Turkish"
+  },
+  "missed": {
+    "pending": "Pending",
+    "returned": "Called back",
+    "all": "All",
+    "markReturned": "Mark called back",
+    "ignore": "Ignore"
+  },
+  "softphone": {
+    "micNotFound": "No microphone found. Enable a microphone in your system settings, or pick a default under Settings → Audio devices and save.",
+    "micDenied": "Microphone permission is required. Allow microphone access from the browser address bar.",
+    "micInvalid": "The saved microphone setting is not valid in this browser. Choose “System default” under Settings → Audio devices, save, then try again."
   }
 }

@@ -7,6 +7,7 @@ import {
   TransportState,
   type Session,
 } from "sip.js";
+import i18n from "i18next";
 
 export type SoftphoneStatus = "idle" | "connecting" | "registered" | "error";
 
@@ -556,11 +557,18 @@ export class Softphone {
     const msg = e instanceof Error ? e.message : String(e);
     if (name === "NotFoundError" || /requested device not found/i.test(msg)) {
       return new Error(
-        "Mikrofon bulunamadı. Sistem ayarlarından mikrofonu açın veya Ayarlar → Audio devices’ta varsayılanı seçip kaydedin.",
+        i18n.t("softphone.micNotFound", {
+          defaultValue:
+            "No microphone found. Enable a microphone in your system settings, or pick a default under Settings → Audio devices and save.",
+        }),
       );
     }
     if (name === "NotAllowedError" || /permission|denied/i.test(msg)) {
-      return new Error("Mikrofon izni gerekli. Tarayıcı adres çubuğundan mikrofona izin verin.");
+      return new Error(
+        i18n.t("softphone.micDenied", {
+          defaultValue: "Microphone permission is required. Allow microphone access from the browser address bar.",
+        }),
+      );
     }
     if (
       name === "OverconstrainedError" ||
@@ -568,7 +576,10 @@ export class Softphone {
     ) {
       this.clearPreferredMic();
       return new Error(
-        "Mikrofon ayarı bu tarayıcıda geçersiz. Ayarlar → Audio devices’ta «System default» seçip kaydedin, sonra tekrar deneyin.",
+        i18n.t("softphone.micInvalid", {
+          defaultValue:
+            "The saved microphone setting is not valid in this browser. Choose “System default” under Settings → Audio devices, save, then try again.",
+        }),
       );
     }
     return e instanceof Error ? e : new Error(msg);

@@ -502,7 +502,7 @@ export function SchedulesPage() {
                   className="input mt-1"
                   value={holName}
                   onChange={(e) => setHolName(e.target.value)}
-                  placeholder="Bayram"
+                  placeholder={t("schedules.holidayPlaceholder")}
                   required
                 />
               </label>
@@ -521,15 +521,16 @@ export function SchedulesPage() {
                     .post<{ inserted: number; year: number }>("/api/v1/admin/holidays/tr-pack", {
                       scheduleId: selected?.id ?? null,
                       year: new Date().getFullYear(),
+                      locale: lang,
                     })
                     .then((r) => {
-                      toast.success(`TR ${r.year}: ${r.inserted} holiday(s) added`);
+                      toast.success(t("schedules.trPackDone", { year: r.year, count: r.inserted }));
                       void qc.invalidateQueries({ queryKey: ["holidays"] });
                     })
                     .catch((e: Error) => toast.error(e.message));
                 }}
               >
-                TR resmi + bayramlar
+                {t("schedules.trPack")}
               </button>
             </form>
             <ul className="space-y-1 text-sm">

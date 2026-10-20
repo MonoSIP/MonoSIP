@@ -266,8 +266,8 @@ export function PromptsPage() {
                 if (!voiceOptions(lang).some((o) => o.value === voice)) setVoice("female");
               }}
             >
-              <option value="tr">Türkçe</option>
-              <option value="en">English</option>
+              <option value="tr">{t("langs.tr")}</option>
+              <option value="en">{t("langs.en")}</option>
             </SelectField>
             <SelectField
               label={t("prompts.voice", { defaultValue: "TTS model" })}

@@ -33,9 +33,9 @@ export function MissedPage() {
     <>
       {(
         [
-          ["pending", "Bekliyor"],
-          ["returned", "Dönüldü"],
-          ["all", "All"],
+          ["pending", t("missed.pending")],
+          ["returned", t("missed.returned")],
+          ["all", t("missed.all")],
         ] as const
       ).map(([k, label]) => (
         <button
@@ -91,7 +91,7 @@ export function MissedPage() {
                           type="button"
                           onClick={() => mark.mutate({ id: m.id, status: "returned" })}
                         >
-                          Dönüldü
+                          {t("missed.markReturned")}
                         </button>
                       )}
                       {m.status === "pending" && (
@@ -100,7 +100,7 @@ export function MissedPage() {
                           type="button"
                           onClick={() => mark.mutate({ id: m.id, status: "ignored" })}
                         >
-                          Ignore
+                          {t("missed.ignore")}
                         </button>
                       )}
                     </td>

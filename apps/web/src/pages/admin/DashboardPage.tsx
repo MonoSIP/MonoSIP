@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { PageHeader, StatTile } from "../../components/ui";
+import { LiveDot } from "../../components/motion";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -187,15 +188,15 @@ export function DashboardPage() {
             {(live.data?.trunks ?? []).length === 0 ? (
               <span className="text-sm text-[var(--text-muted)]">No trunks</span>
             ) : (
-              (live.data?.trunks ?? []).map((t) => (
-                <span
-                  key={t.id}
-                  className={`badge ${/regist|ok|avail/i.test(t.state) ? "badge-ok" : "badge-err"}`}
-                  title={t.host}
-                >
-                  {t.name}: {t.state}
-                </span>
-              ))
+              (live.data?.trunks ?? []).map((t) => {
+                const up = /regist|ok|avail/i.test(t.state);
+                return (
+                  <span key={t.id} className={`badge gap-1.5 ${up ? "badge-ok" : "badge-err"}`} title={t.host}>
+                    <LiveDot live={up} tone={up ? "ok" : "err"} />
+                    {t.name}: {t.state}
+                  </span>
+                );
+              })
             )}
           </div>
         </div>
@@ -206,7 +207,11 @@ export function DashboardPage() {
               <span className="text-sm text-[var(--text-muted)]">No presence data yet</span>
             ) : (
               live.data?.extensions.map((e) => (
-                <span key={e.number} className="badge">
+                <span key={e.number} className="badge gap-1.5">
+                  <LiveDot
+                    live={/use|busy|ring/i.test(e.state)}
+                    tone={/unavail|offline/i.test(e.state) ? "err" : /use|busy|ring/i.test(e.state) ? "busy" : "ok"}
+                  />
                   {e.number}:{e.state}
                 </span>
               ))

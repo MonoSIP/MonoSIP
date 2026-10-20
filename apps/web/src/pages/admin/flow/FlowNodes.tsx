@@ -1,7 +1,17 @@
-import { createContext, memo, useContext, type CSSProperties, type ReactNode } from "react";
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import {
+  createContext,
+  memo,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { BaseEdge, getBezierPath, Handle, Position, type EdgeProps, type NodeProps } from "@xyflow/react";
 import { Pencil, Trash2 } from "lucide-react";
-import { exitsForNode, menuDigits, nodeColor } from "./nodeMeta";
+import { exitsForNode, menuDigits, nodeColor, nodeShortTitle } from "./nodeMeta";
+import { leftInset, NodeIcon, rightInset, shapeFor, shapePadding, shapePaths } from "./nodeShapes";
 
 export type FlowNodeData = {
   label?: string;
@@ -71,6 +81,22 @@ function subtitle(data: FlowNodeData): string {
   return "";
 }
 
+/** Track the rendered node size so the SVG outline matches it pixel-for-pixel. */
+function useBoxSize() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () => setSize({ w: el.offsetWidth, h: el.offsetHeight });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, size] as const;
+}
+
 export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps) {
   const d = data as FlowNodeData;
   const type = d.flowType || "announce";
@@ -79,25 +105,42 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
   const detail = subtitle(d);
   const actions = useContext(FlowCanvasActionsCtx);
   const canDelete = type !== "start" && Boolean(actions?.requestDelete);
+  const kind = shapeFor(type);
+  const pad = shapePadding(kind);
+  const [boxRef, { w, h }] = useBoxSize();
+  const paths = w > 0 && h > 0 ? shapePaths(kind, w, h) : null;
+  const exitCol = outs.length > 1 ? Math.max(...outs.map((o) => o.length)) * 5.6 + 10 : 0;
+  const exitY = (i: number) => (i + 1) / (outs.length + 1);
 
   return (
     <div
+      ref={boxRef}
       style={
         {
           ["--node-color" as string]: color,
-          borderColor: selected ? color : `color-mix(in oklab, ${color} 45%, var(--border))`,
-          background: selected
-            ? `color-mix(in oklab, ${color} 16%, var(--bg-elevated))`
-            : `color-mix(in oklab, ${color} 7%, var(--bg-elevated))`,
-          boxShadow: selected ? `0 0 0 1px ${color}` : undefined,
+          paddingTop: 8 + pad.top,
+          paddingBottom: 8 + pad.bottom,
+          paddingLeft: 12 + pad.left,
+          paddingRight: 12 + pad.right + exitCol,
+          minHeight: Math.max(54, (outs.length + 1) * 15) + pad.top + pad.bottom,
         } as CSSProperties
       }
-      className="relative min-w-[140px] rounded-xl border-l-[3px] border px-3 py-2 pr-8 shadow-sm"
+      className={`flow-node flow-node--${kind} relative min-w-[150px]${selected ? " is-selected" : ""}`}
+      data-shape={kind}
     >
-      <div className="nodrag nopan absolute right-1 top-1 flex flex-col gap-0.5">
+      {paths && (
+        <svg className="flow-node-shape" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden>
+          {paths.back?.map((b, i) => (
+            <path key={i} d={b} className="flow-node-back" />
+          ))}
+          <path d={paths.body} className="flow-node-body" />
+          {paths.detail && <path d={paths.detail} className="flow-node-detail" />}
+        </svg>
+      )}
+      <div className="flow-node-toolbar nodrag nopan">
         <button
           type="button"
-          className="rounded-md p-1 text-[var(--text-muted)] hover:bg-[color-mix(in_oklab,var(--node-color)_18%,transparent)] hover:text-[var(--node-color)]"
+          className="flow-node-tool"
           title="Edit settings"
           aria-label="Edit node settings"
           onClick={(e) => {
@@ -105,12 +148,12 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
             actions?.openSettings(id);
           }}
         >
-          <Pencil size={14} />
+          <Pencil size={13} />
         </button>
         {canDelete && (
           <button
             type="button"
-            className="rounded-md p-1 text-[var(--text-muted)] hover:bg-[color-mix(in_oklab,var(--danger)_18%,transparent)] hover:text-[var(--danger)]"
+            className="flow-node-tool flow-node-tool--danger"
             title="Delete"
             aria-label="Delete node"
             onClick={(e) => {
@@ -118,7 +161,7 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
               actions?.requestDelete(id);
             }}
           >
-            <Trash2 size={14} />
+            <Trash2 size={13} />
           </button>
         )}
       </div>
@@ -126,15 +169,21 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
         <Handle
           type="target"
           position={Position.Left}
+          style={{ left: leftInset(kind) }}
           className="!h-2.5 !w-2.5 !border-white !bg-[var(--node-color)]"
         />
       )}
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--node-color)]">
-        {type}
+      <div className="relative flex items-center gap-1.5">
+        <span className="flow-node-icon">
+          <NodeIcon type={type} size={18} />
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--node-color)]">
+          {nodeShortTitle(type)}
+        </span>
       </div>
-      <div className="text-sm font-medium text-[var(--text)]">{d.label || type}</div>
+      <div className="relative mt-0.5 text-sm font-medium text-[var(--text)]">{d.label || type}</div>
       {detail ? (
-        <div className="mt-0.5 max-w-[180px] truncate text-xs text-[var(--text-muted)]">{detail}</div>
+        <div className="relative mt-0.5 max-w-[180px] truncate text-xs text-[var(--text-muted)]">{detail}</div>
       ) : null}
       {outs.map((exitId, i) => (
         <Handle
@@ -142,20 +191,21 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
           id={exitId}
           type="source"
           position={Position.Right}
-          style={{ top: `${((i + 1) / (outs.length + 1)) * 100}%` }}
+          style={{ top: `${exitY(i) * 100}%`, right: rightInset(kind, exitY(i), h) }}
           className="!h-2.5 !w-2.5 !border-white !bg-[var(--node-color)]"
           title={exitId}
         />
       ))}
-      {outs.length > 0 && (
-        <div className="mt-1 flex flex-col gap-0.5 text-[9px] text-[var(--text-muted)]">
-          {outs.map((exitId) => (
-            <div key={exitId} className="text-right">
-              {exitId}
-            </div>
-          ))}
-        </div>
-      )}
+      {outs.length > 1 &&
+        outs.map((exitId, i) => (
+          <div
+            key={exitId}
+            className="flow-node-exit"
+            style={{ top: `${exitY(i) * 100}%`, right: rightInset(kind, exitY(i), h) + 9 }}
+          >
+            {exitId}
+          </div>
+        ))}
     </div>
   );
 });
@@ -178,3 +228,44 @@ export const flowNodeTypes = {
   subflow: FlowNode,
   hangup: FlowNode,
 } as const;
+
+const reducedMotion =
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+export type FlowEdgeData = { sim?: "visited" | "active" };
+
+/** Bezier edge that animates the call path when selected or during simulation playback. */
+export const FlowEdge = memo(function FlowEdge(props: EdgeProps) {
+  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, selected, data } = props;
+  const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
+  const sim = (data as FlowEdgeData | undefined)?.sim;
+  const live = Boolean(selected) || sim === "active";
+  return (
+    <>
+      <BaseEdge
+        id={id}
+        path={path}
+        markerEnd={props.markerEnd}
+        style={{ ...props.style, strokeWidth: sim || selected ? 2.25 : 1.5 }}
+        label={props.label}
+        labelX={labelX}
+        labelY={labelY}
+        labelStyle={props.labelStyle}
+        labelShowBg={props.labelShowBg}
+        labelBgStyle={props.labelBgStyle}
+        labelBgPadding={props.labelBgPadding}
+        labelBgBorderRadius={props.labelBgBorderRadius}
+      />
+      {(live || sim === "visited") && (
+        <path d={path} className={`flow-edge-flow${live ? " is-live" : ""}`} style={{ stroke: props.style?.stroke }} />
+      )}
+      {live && !reducedMotion && (
+        <circle r={3.5} className="flow-edge-dot" style={{ fill: props.style?.stroke }}>
+          <animateMotion dur="1.2s" repeatCount="indefinite" path={path} />
+        </circle>
+      )}
+    </>
+  );
+});
+
+export const flowEdgeTypes = { default: FlowEdge } as const;
