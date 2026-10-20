@@ -2219,6 +2219,44 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     };
   });
 
+  /**
+   * Softphone stuck on "Connecting": is SIP-over-WebSocket processed at all?
+   * Probes Asterisk /ws directly (no proxy), reports proxy counters, and runs
+   * read-only CLI checks (PJSIP taskprocessor backlog shows a jammed stack).
+   */
+  app.get("/api/v1/admin/system/sip-diag", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { probeAsteriskSipWs } = await import("../lib/sip-probe.js");
+    const { proxyStats } = await import("./asterisk-ws-proxy.js");
+    const { execFile } = await import("node:child_process");
+    const { promisify } = await import("node:util");
+    const exec = promisify(execFile);
+    const cli = async (cmd: string, filter?: RegExp) => {
+      try {
+        const { stdout } = await exec("asterisk", ["-rx", cmd], { timeout: 5000 });
+        const lines = stdout.split("\n").filter((l) => l.trim());
+        return (filter ? lines.filter((l) => filter.test(l)) : lines).slice(0, 60).join("\n");
+      } catch (e) {
+        return `error: ${(e as Error).message}`;
+      }
+    };
+    const probe = await probeAsteriskSipWs(config.asterisk.ariUrl);
+    return {
+      at: new Date().toISOString(),
+      probe,
+      proxy: proxyStats,
+      cli: {
+        uptime: await cli("core show uptime"),
+        http: await cli("http show status"),
+        transports: await cli("pjsip show transports"),
+        contacts: await cli("pjsip show contacts", /Contact:|Objects found/),
+        // Columns: Processed / In Queue / Max Depth / Low water / High water
+        taskprocessors: await cli("core show taskprocessors", /pjsip|stasis\/m|sorcery/i),
+        websocketModule: await cli("module show like websocket"),
+      },
+    };
+  });
+
   async function buildBackup() {
     return {
       at: new Date().toISOString(),
