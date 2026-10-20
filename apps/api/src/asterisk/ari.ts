@@ -572,17 +572,22 @@ class AriClient extends EventEmitter {
 
   /** True if PJSIP endpoint has at least one reachable contact. */
   async isEndpointOnline(extension: string): Promise<boolean> {
+    return (await this.endpointState(extension)).online;
+  }
+
+  /** Registration plus in-call state: `busy` = the endpoint already has a live channel. */
+  async endpointState(extension: string): Promise<{ online: boolean; busy: boolean }> {
     try {
       const res = await fetch(`${this.baseUrl()}/ari/endpoints/PJSIP/${extension}`, {
         headers: { Authorization: this.authHeader() },
         signal: AbortSignal.timeout(2500),
       });
-      if (!res.ok) return false;
+      if (!res.ok) return { online: false, busy: false };
       const body = (await res.json()) as { state?: string; channel_ids?: string[] };
       // online | offline | unknown
-      return body.state === "online";
+      return { online: body.state === "online", busy: (body.channel_ids ?? []).length > 0 };
     } catch {
-      return false;
+      return { online: false, busy: false };
     }
   }
 

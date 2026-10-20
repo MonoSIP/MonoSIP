@@ -38,6 +38,7 @@ vi.mock("./ari.js", () => {
     clearDtmfBuffer: vi.fn(() => undefined),
     stopPlayback: vi.fn(async () => undefined),
     isEndpointOnline: vi.fn(async () => true),
+    endpointState: vi.fn(async () => ({ online: true, busy: false })),
     bridge: vi.fn(async () => undefined),
     originate: vi.fn(async () => "ch-1"),
     health: vi.fn(async () => true),
@@ -259,6 +260,7 @@ beforeEach(() => {
   vi.mocked(ari.waitDtmfDigits).mockResolvedValue("1");
   vi.mocked(ari.waitDtmf).mockResolvedValue("1");
   vi.mocked(ari.isEndpointOnline).mockResolvedValue(true);
+  vi.mocked(ari.endpointState).mockResolvedValue({ online: true, busy: false });
   vi.mocked(ari.play).mockResolvedValue("pb-1");
 });
 
@@ -311,6 +313,23 @@ describe("stasisStart dispatch table", () => {
       args: ["dial-failed", "NOANSWER"],
     });
     expect(ari.hangup).toHaveBeenCalledWith("ch-103");
+  });
+
+  it("follows the busy exit to a hangup node when the dial fails BUSY", async () => {
+    dbState.rows = [{ id: "uuid-102", number: "102" }];
+    const t = node("t", "transfer", { destType: "extension", destId: "102" });
+    const flow = flowOf(
+      [t, node("h", "hangup"), node("v", "voicemail", { extension: "102" })],
+      [edge("t", "v", "noanswer"), edge("t", "h", "busy")],
+    );
+    // Transfer parks the call in the dial context (pending transfer recorded)...
+    await executeFlowLoop("ch-200", flow, { caller: "101" }, 0, t as never, new Set(), async () => undefined);
+    expect(ari.redirect).toHaveBeenCalledWith("ch-200", "s", "dsip-flow-dial");
+    vi.mocked(ari.redirect).mockClear();
+    // ...and the dialplan returns BUSY to Stasis.
+    await stasis({ application: "dsip-flow", channel: { id: "ch-200" }, args: ["dial-failed", "BUSY"] });
+    expect(ari.hangup).toHaveBeenCalledWith("ch-200");
+    expect(ari.redirect).not.toHaveBeenCalled();
   });
 
   it("hangs up an unrecognised application", async () => {
@@ -753,7 +772,7 @@ describe("executeFlowLoop — transfer node", () => {
   });
 
   it("reports chanunavail when the target extension is offline", async () => {
-    vi.mocked(ari.isEndpointOnline).mockResolvedValue(false);
+    vi.mocked(ari.endpointState).mockResolvedValue({ online: false, busy: false });
     const flow = flowOf(
       [node("t", "transfer", { destType: "extension", destId: "102" }), node("v", "voicemail", { extension: "101" })],
       [edge("t", "v", "chanunavail")],
@@ -761,6 +780,36 @@ describe("executeFlowLoop — transfer node", () => {
     await runLoop(node("t", "transfer", { destType: "extension", destId: "102" }), flow, { caller: "101" });
     expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
     expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TARGET", "102");
+  });
+
+  it("takes the busy exit without dialing when the extension is already on a call", async () => {
+    vi.mocked(ari.endpointState).mockResolvedValue({ online: true, busy: true });
+    const flow = flowOf(
+      [
+        node("t", "transfer", { destType: "extension", destId: "102" }),
+        node("h", "hangup"),
+        node("v", "voicemail", { extension: "102" }),
+      ],
+      [edge("t", "v", "noanswer"), edge("t", "h", "busy")],
+    );
+    const { result } = await runLoop(node("t", "transfer", { destType: "extension", destId: "102" }), flow, {
+      caller: "101",
+    });
+    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TARGET", "102");
+    expect(ari.redirect).not.toHaveBeenCalled();
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+    expect(result).toBe("left");
+  });
+
+  it("never follows another exit's edge when the matching exit is missing", async () => {
+    vi.mocked(ari.endpointState).mockResolvedValue({ online: false, busy: false });
+    const flow = flowOf(
+      [node("t", "transfer", { destType: "extension", destId: "102" }), node("v", "voicemail", { extension: "102" })],
+      [edge("t", "v", "noanswer")],
+    );
+    await runLoop(node("t", "transfer", { destType: "extension", destId: "102" }), flow, { caller: "101" });
+    expect(ari.redirect).not.toHaveBeenCalledWith("ch-n", "*102", "dsip-voicemail");
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
   });
 
   it("hangs up when the transfer has no destination", async () => {

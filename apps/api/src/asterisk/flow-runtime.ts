@@ -67,6 +67,19 @@ type PendingTransfer = {
 /** Resume flow after dsip-flow-dial returns to Stasis with dial-failed. */
 const pendingTransfers = new Map<string, PendingTransfer>();
 
+/**
+ * Follow a transfer dial-status exit (noanswer / busy / chanunavail). Matching is
+ * strict so a busy call never wanders down another exit's edge; with no exit
+ * wired the caller goes back to the menu, or the call ends when there is none.
+ */
+export function dialExitNode(
+  flow: FlowJson,
+  nodeId: string,
+  handle: string,
+): FlowJson["nodes"][number] | undefined {
+  return nextNode(flow, nodeId, handle, true) ?? flow.nodes.find((n) => n.type === "menu");
+}
+
 /** WebRTC ICE/RTP often not ready immediately after answer — early play becomes a short beep then silence. */
 export const MEDIA_SETTLE_MS = 900;
 
@@ -707,7 +720,6 @@ export async function executeFlowLoop(
           await ari.hangup(channelId);
           return "left";
         }
-        const menuNode = flow.nodes.find((n) => n.type === "menu");
         // Softphone testing: option "1 → 101" while registered as 101 = self-dial → silence
         if (destType === "extension" && dest === caller) {
           console.warn(`[flow] ${channelId} refused self-transfer to ${dest}`);
@@ -719,15 +731,16 @@ export async function executeFlowLoop(
             lang,
             vars.__ttsVoice || "female",
           );
-          handle = "chanunavail";
-          if (menuNode && !nextNode(flow, node.id, handle)) {
-            jumpTo = menuNode;
-            break;
+          const exit = dialExitNode(flow, node.id, "chanunavail");
+          if (!exit) {
+            await ari.hangup(channelId);
+            return "left";
           }
+          jumpTo = exit;
           break;
         }
         if (destType === "extension") {
-          const online = await ari.isEndpointOnline(dest);
+          const { online, busy } = await ari.endpointState(dest);
           if (!online) {
             console.warn(`[flow] ${channelId} target ${dest} offline`);
             await playSpeech(
@@ -738,11 +751,30 @@ export async function executeFlowLoop(
               lang,
               vars.__ttsVoice || "female",
             );
-            handle = "chanunavail";
-            if (menuNode && !nextNode(flow, node.id, handle)) {
-              jumpTo = menuNode;
-              break;
+            const exit = dialExitNode(flow, node.id, "chanunavail");
+            if (!exit) {
+              await ari.hangup(channelId);
+              return "left";
             }
+            jumpTo = exit;
+            break;
+          }
+          // Already on a call: phones with call waiting would just ring until the
+          // timeout (NOANSWER), so take the busy exit without dialing.
+          if (busy) {
+            console.warn(`[flow] ${channelId} target ${dest} busy`);
+            await playSpeech(
+              channelId,
+              lang === "tr" ? `Dahili ${dest} su anda mesgul.` : `Extension ${dest} is busy.`,
+              lang,
+              vars.__ttsVoice || "female",
+            );
+            const exit = dialExitNode(flow, node.id, "busy");
+            if (!exit) {
+              await ari.hangup(channelId);
+              return "left";
+            }
+            jumpTo = exit;
             break;
           }
           await playSpeech(
@@ -995,16 +1027,9 @@ export function attachFlowRuntime(): void {
             console.log(`[flow] ${channelId} dial-failed ${status} → edge ${edgeHandle}`);
             await ari.answer(channelId);
             const fromNode = pending.flow.nodes.find((n) => n.id === pending.nodeId);
-            const nxt = fromNode
-              ? nextNode(pending.flow, pending.nodeId, edgeHandle)
-              : undefined;
+            const nxt = fromNode ? dialExitNode(pending.flow, pending.nodeId, edgeHandle) : undefined;
             if (!nxt) {
-              const menuNode = pending.flow.nodes.find((n) => n.type === "menu");
-              if (menuNode) {
-                await runFlowFromNode(channelId, pending.flow, menuNode, pending.vars, pending.depth);
-              } else {
-                await ari.hangup(channelId);
-              }
+              await ari.hangup(channelId);
               return;
             }
             await runFlowFromNode(channelId, pending.flow, nxt, pending.vars, pending.depth);

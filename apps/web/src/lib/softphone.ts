@@ -2,6 +2,7 @@ import {
   UserAgent,
   Registerer,
   RegistererState,
+  Invitation,
   Inviter,
   SessionState,
   TransportState,
@@ -411,6 +412,12 @@ export class Softphone {
 
     this.ua.delegate = {
       onInvite: (invitation) => {
+        // Already on a call: answer 486 so the caller's Dial sees BUSY (IVR busy
+        // exit) instead of the new call replacing the live session.
+        if (this.session && this.session.state !== SessionState.Terminated) {
+          void invitation.reject({ statusCode: 486, reasonPhrase: "Busy Here" }).catch(() => undefined);
+          return;
+        }
         // Incoming call (e.g. queue member ring)
         this.session = invitation;
         const from =
@@ -599,7 +606,10 @@ export class Softphone {
     switch (this.session.state) {
       case SessionState.Initial:
       case SessionState.Establishing:
-        if ("cancel" in this.session) {
+        if (this.session instanceof Invitation) {
+          // Declining a ringing incoming call → 486 Busy Here (DIALSTATUS=BUSY).
+          await this.session.reject({ statusCode: 486, reasonPhrase: "Busy Here" }).catch(() => undefined);
+        } else if ("cancel" in this.session) {
           await (this.session as { cancel: () => Promise<void> }).cancel();
         }
         break;
