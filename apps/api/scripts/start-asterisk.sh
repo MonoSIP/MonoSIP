@@ -205,6 +205,10 @@ EOF
       if [ "$CUR" != "$LAST" ] && [ -n "$CUR" ]; then
         LAST="$CUR"
         sleep 1
+        # Same lock as the API's CLI reload (config-writer.ts): overlapping
+        # `module reload res_pjsip.so` runs deadlock Asterisk's module loader.
+        exec 9>/var/lib/asterisk/dsip/reload.lock
+        flock -w 60 9 || true
         overlay_en_sounds 2>/dev/null || true
         asterisk -rx "module reload acl" 2>/dev/null || true
         asterisk -rx "reload acl" 2>/dev/null || true
@@ -220,6 +224,8 @@ EOF
         asterisk -rx "module load pbx_config.so" 2>/dev/null || true
         asterisk -rx "module reload pbx_config.so" 2>/dev/null || true
         echo "DSip: Asterisk reloaded"
+        flock -u 9 || true
+        exec 9>&-
       fi
     fi
     sleep 3

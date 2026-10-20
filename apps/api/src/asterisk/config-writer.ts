@@ -78,7 +78,6 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
   }
 }
 
-/** Immediate CLI reload — do not wait for reload.flag watcher (up to ~4s). */
 /**
  * queues.conf joinempty/leavewhenempty. With an "empty" destination configured the
  * caller must not wait when no agent can take the call: unregistered (unavailable),
@@ -92,7 +91,41 @@ export function queueEmptyRules(hasEmptyDest: boolean): { joinempty: string; lea
   return { joinempty: when, leavewhenempty: when };
 }
 
-export async function reloadAsteriskCli(): Promise<void> {
+/**
+ * Run `fn` one at a time. Calls made while it runs share ONE follow-up run, which
+ * starts after the current one and therefore sees every change made meanwhile.
+ */
+export function singleFlight(fn: () => Promise<void>): () => Promise<void> {
+  let running: Promise<void> | null = null;
+  let queued: Promise<void> | null = null;
+  const start = (): Promise<void> => {
+    running = fn().finally(() => {
+      running = null;
+    });
+    return running;
+  };
+  return () => {
+    if (!running) return start();
+    if (!queued) {
+      queued = running
+        .catch(() => undefined)
+        .then(() => {
+          queued = null;
+          return start();
+        });
+    }
+    return queued;
+  };
+}
+
+/**
+ * Immediate CLI reload. Must never overlap another reload: concurrent
+ * `module reload res_pjsip.so` runs deadlock Asterisk's module loader — the CLI
+ * hangs and SIP over WebSocket goes silent (softphones stuck on "Connecting").
+ * Only called from the single-flight writeAsteriskConfig. Returns false when the
+ * Asterisk CLI is unreachable (Compose sidecar) so the reload.flag watcher takes over.
+ */
+export async function reloadAsteriskCli(): Promise<boolean> {
   // `module load` first: if a module DECLINED at cold start (config was briefly
   // unreadable/empty before the API wrote it), only `load` revives it — `reload`
   // and `dialplan reload` error out ("not properly initialized" / "No such command")
@@ -108,13 +141,29 @@ export async function reloadAsteriskCli(): Promise<void> {
     "module load pbx_config.so",
     "module reload pbx_config.so",
   ];
+  // Hold the same lock as the reload.flag watcher in start-asterisk.sh for the whole
+  // sequence, so a boot-time flag reload can't interleave with this one.
+  const lock = path.join(config.asterisk.configDir, "reload.lock");
+  const script = cmds.map((c) => `asterisk -rx '${c}' >/dev/null 2>&1 && echo ok`).join("; ");
+  try {
+    const { stdout } = await execFileAsync("flock", ["-w", "60", lock, "sh", "-c", script], {
+      timeout: 90_000,
+    });
+    return stdout.includes("ok");
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") return false;
+  }
+  // No flock (dev host): plain sequence — still serialized by singleFlight.
+  let reachable = false;
   for (const c of cmds) {
     try {
       await execFileAsync("asterisk", ["-rx", c], { timeout: 5000 });
+      reachable = true;
     } catch {
-      /* watcher still has reload.flag as fallback */
+      /* unreachable CLI → caller writes reload.flag for the watcher */
     }
   }
+  return reachable;
 }
 
 /** Dialplan Playback() path for KVKK (sound under Asterisk sounds/). */
@@ -128,12 +177,17 @@ function kvkkPlaybackLine(kvkkPromptId: string | null | undefined): string {
 }
 
 /**
- * System(curl) with a single-quoted JSON body. Asterisk expands ${vars} before
- * the shell runs; nested () inside System() (CALLERID/CHANNEL/IF) must be Set()
- * onto flat vars first — otherwise the shell mangles \" and Fastify rejects the body.
+ * Dialplan → API hook, sent in-process with func_curl (no fork). System(curl) forked a
+ * shell per call; the SIGCHLD interrupted Asterisk's poll() loops ("WebSocket poll
+ * error: Interrupted system call"), dropping ARI and SIP WebSockets and killing threads
+ * — softphones then stuck on "Connecting" after the first call. CURL() splits its
+ * arguments on commas, so the JSON is URIENCODE()d (evaluated first) into a form field;
+ * the API's form parser turns it back into the JSON body (see internal-form.ts).
+ * Nested () inside the JSON (CALLERID/CHANNEL/IF) must still be Set() onto flat vars first.
  */
-function internalPost(apiPath: string, jsonBody: string): string {
-  return `System(curl -s -X POST http://api:3000/api/v1/internal/${apiPath} -H 'content-type: application/json' -H 'x-dsip-internal: ${config.internalApiSecret}' -d '${jsonBody}')`;
+export function internalPost(apiPath: string, jsonBody: string): string {
+  const url = `${config.internalApiUrl}/api/v1/internal/${apiPath}`;
+  return `Set(DSIP_HOOK=\${CURL(${url},secret=${config.internalApiSecret}&payload=\${URIENCODE(${jsonBody})})})`;
 }
 
 /** Prep flat channel vars for CDR / recording JSON (no nested () in System()). */
@@ -175,7 +229,13 @@ function qosPrepLines(opts?: { dialedTime?: boolean; cdrDuration?: boolean }): s
   return lines;
 }
 
-export async function writeAsteriskConfig(): Promise<void> {
+/**
+ * Write all generated config and reload Asterisk. Serialized and coalesced: a burst
+ * of changes (DND toggles, admin saves, bans) becomes one write + one reload.
+ */
+export const writeAsteriskConfig = singleFlight(writeAsteriskConfigNow);
+
+async function writeAsteriskConfigNow(): Promise<void> {
   const dir = config.asterisk.configDir;
   await ensureDir(dir);
 
@@ -1092,12 +1152,16 @@ export async function writeAsteriskConfig(): Promise<void> {
   await writeFile(path.join(dir, "queues_dsip.conf"), queuesConf.join("\n"), writeOpts);
   await writeFile(path.join(dir, "extensions_dsip.conf"), extensionsConf.join("\n"), writeOpts);
   await writeFile(path.join(dir, "musiconhold_dsip.conf"), mohConf.join("\n"), writeOpts);
-  await writeFile(path.join(dir, "reload.flag"), `${Date.now()}\n`, writeOpts);
 
   await ensureAsteriskCanReadConfig(dir);
-  // CLI reload is opt-in (tryReloadAsterisk / boot) — seed must not block on it.
-  if (process.env.DSIP_ASTERISK_CLI_RELOAD !== "0") {
-    await reloadAsteriskCli();
+  // One reload path only. The API reloads over the CLI when it can (all-in-one);
+  // reload.flag (watched by start-asterisk.sh / the Compose sidecar) is the fallback.
+  // Writing both made two reload sequences race — the deadlock described above.
+  // Seed sets DSIP_ASTERISK_CLI_RELOAD=0 so it never blocks on Asterisk.
+  const cliReloaded =
+    process.env.DSIP_ASTERISK_CLI_RELOAD !== "0" ? await reloadAsteriskCli() : false;
+  if (!cliReloaded) {
+    await writeFile(path.join(dir, "reload.flag"), `${Date.now()}\n`, writeOpts);
   }
 
   // Keep dialplan DND checks in sync with Postgres

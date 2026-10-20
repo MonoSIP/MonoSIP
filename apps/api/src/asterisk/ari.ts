@@ -295,7 +295,25 @@ class AriClient extends EventEmitter {
   }
 
   /** Start channel recording (WAV under Asterisk recording dir). */
+  /**
+   * Record a call without blocking it. ARI `channels/{id}/record` is a channel
+   * operation like playback: while it runs, later plays queue behind it — the IVR's
+   * "Calling extension…" prompt never started and transfers stalled in silence.
+   * Record a snoop channel instead (both directions, parked in Stasis via
+   * `snoop-wait`); it follows the caller through dialplan and ends at hangup.
+   */
   async record(channelId: string, name: string): Promise<string | null> {
+    const snoopParams = new URLSearchParams({ spy: "both", app: "dsip-flow", appArgs: "snoop-wait" });
+    const snoopRes = await fetch(`${this.baseUrl()}/ari/channels/${channelId}/snoop?${snoopParams}`, {
+      method: "POST",
+      headers: { Authorization: this.authHeader() },
+    });
+    if (!snoopRes.ok) {
+      console.warn("[ari] record snoop failed", await snoopRes.text());
+      return null;
+    }
+    const snoop = (await snoopRes.json()) as { id?: string };
+    if (!snoop.id) return null;
     const params = new URLSearchParams({
       name,
       format: "wav",
@@ -304,7 +322,7 @@ class AriClient extends EventEmitter {
       ifExists: "overwrite",
     });
     const res = await fetch(
-      `${this.baseUrl()}/ari/channels/${channelId}/record?${params}`,
+      `${this.baseUrl()}/ari/channels/${snoop.id}/record?${params}`,
       {
         method: "POST",
         headers: { Authorization: this.authHeader() },
@@ -571,6 +589,24 @@ class AriClient extends EventEmitter {
   }
 
   /** True if PJSIP endpoint has at least one reachable contact. */
+  /**
+   * Keep receiving a channel's events after it leaves Stasis (continue/redirect or
+   * hangup). Without this ChannelDestroyed never reaches the app, so IVR/inbound
+   * CDRs (closed on ChannelDestroyed) stayed open with no end time.
+   */
+  async subscribeChannel(app: string, channelId: string): Promise<void> {
+    try {
+      const params = new URLSearchParams({ eventSource: `channel:${channelId}` });
+      await fetch(`${this.baseUrl()}/ari/applications/${encodeURIComponent(app)}/subscription?${params}`, {
+        method: "POST",
+        headers: { Authorization: this.authHeader() },
+        signal: AbortSignal.timeout(3000),
+      });
+    } catch {
+      /* best effort — CDR falls back to the dialplan hook where one exists */
+    }
+  }
+
   async isEndpointOnline(extension: string): Promise<boolean> {
     return (await this.endpointState(extension)).online;
   }

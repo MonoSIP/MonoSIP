@@ -40,6 +40,8 @@ async function main() {
     limits: { fileSize: 25 * 1024 * 1024, files: 1 },
   });
   await app.register(websocket);
+  const { registerInternalFormParser } = await import("./lib/internal-form.js");
+  registerInternalFormParser(app);
 
   app.setErrorHandler((err, _req, reply) => {
     const error = err as Error & { name?: string };

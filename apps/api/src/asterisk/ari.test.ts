@@ -238,16 +238,32 @@ describe("ari REST commands", () => {
     await expect(ari.play("ch-3", "sound:missing")).resolves.toBeNull();
   });
 
-  it("record returns the MixMonitor name", async () => {
-    routeFetch([[/\/record\?/, () => json({ name: "MixMonitor/rec-1" })]]);
+  it("record records a snoop channel, never the call channel itself", async () => {
+    routeFetch([
+      [/\/channels\/ch-4\/snoop\?/, () => json({ id: "snoop-9" })],
+      [/\/record\?/, () => json({ name: "MixMonitor/rec-1" })],
+    ]);
     await expect(ari.record("ch-4", "rec-1")).resolves.toBe("MixMonitor/rec-1");
-    const url = String(fetchMock().mock.calls[0]![0]);
-    expect(url).toContain("format=wav");
-    expect(url).toContain("ifExists=overwrite");
+    const urls = fetchMock().mock.calls.map((c) => String(c[0]));
+    // A record operation on ch-4 would queue every later playback behind it.
+    expect(urls.some((u) => u.includes("/channels/ch-4/record"))).toBe(false);
+    expect(urls[0]).toContain("spy=both");
+    expect(urls[0]).toContain("appArgs=snoop-wait");
+    expect(urls[1]).toContain("/channels/snoop-9/record?");
+    expect(urls[1]).toContain("format=wav");
+    expect(urls[1]).toContain("ifExists=overwrite");
+  });
+
+  it("record returns null when the snoop cannot be created", async () => {
+    routeFetch([[/\/snoop\?/, () => new Response("gone", { status: 404 })]]);
+    await expect(ari.record("ch-4", "rec-1")).resolves.toBeNull();
   });
 
   it("record returns null on failure", async () => {
-    routeFetch([[/\/record\?/, () => new Response("busy", { status: 500 })]]);
+    routeFetch([
+      [/\/snoop\?/, () => json({ id: "snoop-9" })],
+      [/\/record\?/, () => new Response("busy", { status: 500 })],
+    ]);
     await expect(ari.record("ch-4", "rec-1")).resolves.toBeNull();
   });
 

@@ -1058,6 +1058,7 @@ export function attachFlowRuntime(): void {
             const { cdrStart, cdrEnd } = await import("../lib/cdr.js");
             const { isAnonymousCaller, loadSettings } = await import("../lib/call-policy.js");
 
+            void ari.subscribeChannel(ev.application, channelId);
             await cdrStart({
               callId: channelId,
               direction: "inbound",
@@ -1176,6 +1177,7 @@ export function attachFlowRuntime(): void {
             } else {
               callee = "Main IVR";
             }
+            void ari.subscribeChannel(ev.application, channelId);
             await cdrStart({
               callId: channelId,
               direction: "internal",

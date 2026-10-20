@@ -11,8 +11,8 @@ export type SipProbeResult = {
 
 /**
  * Send an out-of-dialog OPTIONS straight to Asterisk's SIP WebSocket (bypassing the
- * browser proxy). Asterisk answers OPTIONS to itself without auth, so silence here
- * means the PJSIP stack is not processing WebSocket traffic at all.
+ * browser proxy). Any SIP reply — usually 401 for this anonymous probe — proves the
+ * PJSIP stack is alive; silence means it is not processing WebSocket traffic at all.
  */
 export function probeAsteriskSipWs(ariUrl: string, timeoutMs = 4000): Promise<SipProbeResult> {
   const url = `${ariUrl.replace(/\/$/, "").replace(/^http/i, "ws")}/ws`;

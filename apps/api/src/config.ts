@@ -53,6 +53,15 @@ export const config = {
   /** Shared secret for Asterisk dialplan → API internal hooks. */
   internalApiSecret: process.env.INTERNAL_API_SECRET ?? "dsip_internal_change_me",
   /**
+   * Where Asterisk's dialplan reaches this API. All-in-one (embedded Asterisk on
+   * 127.0.0.1) has no `api` host; Compose runs Asterisk in its own container.
+   */
+  internalApiUrl:
+    process.env.DSIP_INTERNAL_API_URL ??
+    (/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/i.test(process.env.ASTERISK_ARI_URL ?? "http://127.0.0.1:8088")
+      ? `http://127.0.0.1:${process.env.API_PORT ?? 3000}`
+      : "http://api:3000"),
+  /**
    * Coturn `--static-auth-secret` for time-limited TURN/TURNS credentials.
    * Empty = softphone uses STUN only (NineDeploy without coturn).
    */

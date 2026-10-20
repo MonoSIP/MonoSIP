@@ -39,6 +39,7 @@ vi.mock("./ari.js", () => {
     stopPlayback: vi.fn(async () => undefined),
     isEndpointOnline: vi.fn(async () => true),
     endpointState: vi.fn(async () => ({ online: true, busy: false })),
+    subscribeChannel: vi.fn(async () => undefined),
     bridge: vi.fn(async () => undefined),
     originate: vi.fn(async () => "ch-1"),
     health: vi.fn(async () => true),
