@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { lookup as dnsLookup } from "node:dns/promises";
-import { chmod, mkdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
@@ -141,34 +141,72 @@ export function sipFromDomain(host: string): string {
   return ipv4.test(h) || hostname.test(h) ? h : "localhost";
 }
 
-export async function reloadAsteriskCli(): Promise<boolean> {
-  // `module load` first: if a module DECLINED at cold start (config was briefly
-  // unreadable/empty before the API wrote it), only `load` revives it — `reload`
-  // and `dialplan reload` error out ("not properly initialized" / "No such command")
-  // and the dialplan stays empty, 404ing every call. `load` on an already-running
-  // module is a harmless no-op, so pairing load+reload covers both states.
-  const cmds = [
-    "module reload acl",
-    "module load res_pjsip.so",
-    "module reload res_pjsip.so",
-    "module load app_queue.so",
-    "module reload app_queue.so",
-    "module reload res_musiconhold.so",
-    "module load pbx_config.so",
-    "module reload pbx_config.so",
-  ];
-  // Hold the same lock as the reload.flag watcher in start-asterisk.sh for the whole
-  // sequence, so a boot-time flag reload can't interleave with this one.
-  const lock = path.join(config.asterisk.configDir, "reload.lock");
-  // Never reload a booting Asterisk (module reload during startup deadlocks the loader).
-  const script = [
+/** Which generated config files changed in this write. */
+export type ConfigChanges = {
+  pjsip: boolean;
+  acl: boolean;
+  queues: boolean;
+  extensions: boolean;
+  moh: boolean;
+};
+
+/**
+ * Asterisk CLI reload commands for the files that changed.
+ *
+ * Never `module reload acl` together with `module reload res_pjsip.so`: an ACL
+ * reload makes res_pjsip reload its whole config asynchronously, and an explicit
+ * res_pjsip reload overlapping it never finishes ("The previous reload command
+ * didn't finish yet" forever) — SIP over WebSocket then goes silent. When the ACL
+ * changed, its own res_pjsip reload covers pjsip_dsip.conf too.
+ *
+ * `module load` (first run after boot only) revives modules that DECLINED at cold
+ * start because their config was briefly unreadable; `load` on a running module is
+ * a no-op, `reload` alone cannot revive a declined one.
+ */
+export function reloadPlan(changes: ConfigChanges, firstRun: boolean): string[] {
+  const cmds: string[] = [];
+  if (firstRun) cmds.push("module load res_pjsip.so", "module load app_queue.so", "module load pbx_config.so");
+  if (changes.acl) cmds.push("module reload acl");
+  else if (changes.pjsip) cmds.push("module reload res_pjsip.so");
+  if (changes.queues) cmds.push("module reload app_queue.so");
+  if (changes.moh) cmds.push("module reload res_musiconhold.so");
+  if (changes.extensions) cmds.push("module reload pbx_config.so");
+  return cmds;
+}
+
+/** Shell for one locked reload run (exported for tests). */
+export function reloadScript(cmds: string[]): string {
+  return [
+    // Never reload a booting Asterisk (module reload during startup deadlocks the loader).
     "asterisk -rx 'core waitfullybooted' >/dev/null 2>&1 || exit 0",
-    ...cmds.map((c) => `asterisk -rx '${c}' >/dev/null 2>&1 && echo ok`),
-  ].join("; ");
+    "echo ok",
+    // A reload refused because another is still running is retried, not dropped.
+    `rl() { i=0; while [ $i -lt 30 ]; do out=$(asterisk -rx "$1" 2>&1); case "$out" in *"didn't finish yet"*|*"already in progress"*) i=$((i+1)); sleep 1;; *) return 0;; esac; done; }`,
+    ...cmds.map((c) =>
+      c === "module reload acl"
+        ? // let the ACL-triggered async res_pjsip reload finish inside the lock
+          `rl '${c}'; sleep 5`
+        : `rl '${c}'`,
+    ),
+  ].join("\n");
+}
+
+let firstReload = true;
+
+/**
+ * Reload Asterisk over the CLI for the changed files. Runs only from the
+ * single-flight writeAsteriskConfig and under the same flock as the reload.flag
+ * watcher, so reloads never overlap. Returns false when the CLI is unreachable
+ * (Compose sidecar) so the caller falls back to reload.flag.
+ */
+export async function reloadAsteriskCli(changes: ConfigChanges): Promise<boolean> {
+  const cmds = reloadPlan(changes, firstReload);
+  const lock = path.join(config.asterisk.configDir, "reload.lock");
   try {
-    const { stdout } = await execFileAsync("flock", ["-w", "60", lock, "sh", "-c", script], {
-      timeout: 90_000,
+    const { stdout } = await execFileAsync("flock", ["-w", "60", lock, "sh", "-c", reloadScript(cmds)], {
+      timeout: 120_000,
     });
+    if (stdout.includes("ok")) firstReload = false;
     return stdout.includes("ok");
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") return false;
@@ -183,6 +221,7 @@ export async function reloadAsteriskCli(): Promise<boolean> {
       /* unreachable CLI → caller writes reload.flag for the watcher */
     }
   }
+  if (reachable) firstReload = false;
   return reachable;
 }
 
@@ -1169,11 +1208,23 @@ async function writeAsteriskConfigNow(): Promise<void> {
   }
 
   const writeOpts = { mode: 0o644 } as const;
-  await writeFile(path.join(dir, "pjsip_dsip.conf"), pjsip.join("\n"), writeOpts);
-  await writeFile(path.join(dir, "acl_dsip.conf"), namedAclConf.join("\n"), writeOpts);
-  await writeFile(path.join(dir, "queues_dsip.conf"), queuesConf.join("\n"), writeOpts);
-  await writeFile(path.join(dir, "extensions_dsip.conf"), extensionsConf.join("\n"), writeOpts);
-  await writeFile(path.join(dir, "musiconhold_dsip.conf"), mohConf.join("\n"), writeOpts);
+  /** Write a config file; true when its content actually changed. */
+  const put = async (name: string, content: string): Promise<boolean> => {
+    const file = path.join(dir, name);
+    const before = await readFile(file, "utf8").catch(() => null);
+    await writeFile(file, content, writeOpts);
+    return before !== content;
+  };
+  // First run after boot reloads everything (Asterisk may have loaded older files)
+  // except the ACL, which only reloads on a real change — an ACL reload already
+  // reloads res_pjsip, see reloadPlan.
+  const changes: ConfigChanges = {
+    pjsip: (await put("pjsip_dsip.conf", pjsip.join("\n"))) || firstReload,
+    acl: await put("acl_dsip.conf", namedAclConf.join("\n")),
+    queues: (await put("queues_dsip.conf", queuesConf.join("\n"))) || firstReload,
+    extensions: (await put("extensions_dsip.conf", extensionsConf.join("\n"))) || firstReload,
+    moh: (await put("musiconhold_dsip.conf", mohConf.join("\n"))) || firstReload,
+  };
 
   await ensureAsteriskCanReadConfig(dir);
   // One reload path only. The API reloads over the CLI when it can (all-in-one);
@@ -1181,7 +1232,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
   // Writing both made two reload sequences race — the deadlock described above.
   // Seed sets DSIP_ASTERISK_CLI_RELOAD=0 so it never blocks on Asterisk.
   const cliReloaded =
-    process.env.DSIP_ASTERISK_CLI_RELOAD !== "0" ? await reloadAsteriskCli() : false;
+    process.env.DSIP_ASTERISK_CLI_RELOAD !== "0" ? await reloadAsteriskCli(changes) : false;
   if (!cliReloaded) {
     await writeFile(path.join(dir, "reload.flag"), `${Date.now()}\n`, writeOpts);
   }

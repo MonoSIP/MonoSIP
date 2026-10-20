@@ -71,3 +71,45 @@ describe("sipFromDomain", () => {
     expect(sipFromDomain("bad_host")).toBe("localhost");
   });
 });
+
+import { reloadPlan, reloadScript } from "./config-writer.js";
+
+const none = { pjsip: false, acl: false, queues: false, extensions: false, moh: false };
+
+describe("reloadPlan", () => {
+  it("never reloads acl and res_pjsip together (that overlap wedged PJSIP)", () => {
+    for (const firstRun of [true, false]) {
+      const cmds = reloadPlan({ pjsip: true, acl: true, queues: true, extensions: true, moh: true }, firstRun);
+      expect(cmds).toContain("module reload acl");
+      expect(cmds).not.toContain("module reload res_pjsip.so");
+    }
+  });
+
+  it("reloads only what changed — a DND toggle does not touch res_pjsip", () => {
+    expect(reloadPlan({ ...none, queues: true, extensions: true }, false)).toEqual([
+      "module reload app_queue.so",
+      "module reload pbx_config.so",
+    ]);
+    expect(reloadPlan(none, false)).toEqual([]);
+    expect(reloadPlan({ ...none, pjsip: true }, false)).toEqual(["module reload res_pjsip.so"]);
+  });
+
+  it("revives declined modules with `module load` on the first run only", () => {
+    expect(reloadPlan(none, true).slice(0, 3)).toEqual([
+      "module load res_pjsip.so",
+      "module load app_queue.so",
+      "module load pbx_config.so",
+    ]);
+    expect(reloadPlan(none, false).some((c) => c.startsWith("module load"))).toBe(false);
+  });
+});
+
+describe("reloadScript", () => {
+  it("waits for full boot, retries refused reloads and settles after an ACL reload", () => {
+    const sh = reloadScript(["module reload acl", "module reload app_queue.so"]);
+    expect(sh.split("\n")[0]).toContain("core waitfullybooted");
+    expect(sh).toContain("didn't finish yet");
+    expect(sh).toContain("rl 'module reload acl'; sleep 5");
+    expect(sh).toContain("rl 'module reload app_queue.so'");
+  });
+});
