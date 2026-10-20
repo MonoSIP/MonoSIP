@@ -4,9 +4,60 @@ import type { FlowJson } from "@dsip/shared";
  * Expand variable placeholders from the flow bag.
  * Supports both `{{name}}` and `$name` (e.g. `$pin`, `{{caller}}`).
  */
+/** Turkish provinces in licence-plate order (index + 1 = plate code). */
+export const TR_PROVINCES = [
+  "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Amasya", "Ankara", "Antalya", "Artvin", "Aydın",
+  "Balıkesir", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa", "Çanakkale", "Çankırı",
+  "Çorum", "Denizli", "Diyarbakır", "Edirne", "Elazığ", "Erzincan", "Erzurum", "Eskişehir",
+  "Gaziantep", "Giresun", "Gümüşhane", "Hakkari", "Hatay", "Isparta", "Mersin", "İstanbul", "İzmir",
+  "Kars", "Kastamonu", "Kayseri", "Kırklareli", "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya",
+  "Manisa", "Kahramanmaraş", "Mardin", "Muğla", "Muş", "Nevşehir", "Niğde", "Ordu", "Rize", "Sakarya",
+  "Samsun", "Siirt", "Sinop", "Sivas", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Şanlıurfa", "Uşak",
+  "Van", "Yozgat", "Zonguldak", "Aksaray", "Bayburt", "Karaman", "Kırıkkale", "Batman", "Şırnak",
+  "Bartın", "Ardahan", "Iğdır", "Yalova", "Karabük", "Kilis", "Osmaniye", "Düzce",
+] as const;
+
+/**
+ * `{{var|filter}}` transforms for phone menus (keypad in, speech out):
+ *   il       plate code ("6", "06", "34") → province name ("Ankara", "İstanbul"); "" if invalid
+ *   rakam    "03128440695" → "0 3 1 2 8 4 4 0 6 9 5" so TTS reads a phone number digit by digit
+ *   tamsayi  "15.72" → "16"
+ *   tl       "49.578" / "6566.77" → "49,58" / "6.566,77" (Turkish decimals, 2 places)
+ *   ascii    "İzmir" / "Şanlıurfa" → "izmir" / "sanliurfa" (APIs that reject Turkish letters in a URL)
+ */
+const TEMPLATE_FILTERS: Record<string, (v: string) => string> = {
+  il: (v) => {
+    const n = Number(v.trim());
+    return Number.isInteger(n) && n >= 1 && n <= TR_PROVINCES.length ? TR_PROVINCES[n - 1]! : "";
+  },
+  rakam: (v) => v.replace(/\D/g, "").split("").join(" "),
+  ascii: (v) =>
+    v
+      .replace(/İ/g, "i")
+      .replace(/I/g, "ı")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/[çğıöşü]/g, (c) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" })[c] ?? c)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""),
+  tamsayi: (v) => {
+    const n = Number(v.replace(",", "."));
+    return Number.isFinite(n) && v.trim() !== "" ? String(Math.round(n)) : v;
+  },
+  tl: (v) => {
+    const n = Number(v.replace(",", "."));
+    return Number.isFinite(n) && v.trim() !== ""
+      ? n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : v;
+  },
+};
+
 export function expandTemplate(tpl: string, vars: Record<string, unknown>): string {
   return String(tpl ?? "")
-    .replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(vars[k] ?? ""))
+    .replace(/\{\{(\w+)(?:\|(\w+))?\}\}/g, (_, k: string, f?: string) => {
+      const v = String(vars[k] ?? "");
+      const fn = f ? TEMPLATE_FILTERS[f] : undefined;
+      return fn ? fn(v) : v;
+    })
     .replace(/\$([A-Za-z_]\w*)/g, (_, k: string) => String(vars[k] ?? ""));
 }
 

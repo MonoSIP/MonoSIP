@@ -183,3 +183,30 @@ describe("queue callback place helpers", () => {
     expect(shouldDialQueueCallback(1, null)).toBe(false);
   });
 });
+
+describe("expandTemplate filters", () => {
+  it("maps a plate code to the province name", () => {
+    expect(expandTemplate("{{p|il}}", { p: "06" })).toBe("Ankara");
+    expect(expandTemplate("{{p|il}}", { p: "34" })).toBe("İstanbul");
+    expect(expandTemplate("{{p|il}}", { p: "63" })).toBe("Şanlıurfa");
+    expect(expandTemplate("{{p|il}}", { p: "81" })).toBe("Düzce");
+    expect(expandTemplate("x{{p|il}}x", { p: "82" })).toBe("xx");
+    expect(expandTemplate("{{p|il}}", { p: "" })).toBe("");
+  });
+
+  it("formats phone digits, integers and Turkish money", () => {
+    expect(expandTemplate("{{t|rakam}}", { t: "0312 844 06" })).toBe("0 3 1 2 8 4 4 0 6");
+    expect(expandTemplate("{{d|tamsayi}}", { d: "15.72" })).toBe("16");
+    expect(expandTemplate("{{c|tl}}", { c: "49.578" })).toBe("49,58");
+    expect(expandTemplate("{{g|tl}}", { g: "6566.77" })).toBe("6.566,77");
+    expect(expandTemplate("{{g|tl}}", { g: "-" })).toBe("-");
+    expect(expandTemplate("{{c|ascii}}", { c: "İzmir" })).toBe("izmir");
+    expect(expandTemplate("{{c|ascii}}", { c: "Şanlıurfa" })).toBe("sanliurfa");
+    expect(expandTemplate("{{c|ascii}}", { c: "Iğdır" })).toBe("igdir");
+    expect(expandTemplate("{{c|ascii}}", { c: "Çanakkale" })).toBe("canakkale");
+  });
+
+  it("keeps plain {{var}} and $var, and ignores unknown filters", () => {
+    expect(expandTemplate("{{a}} $b {{a|nope}}", { a: "1", b: "2" })).toBe("1 2 1");
+  });
+});

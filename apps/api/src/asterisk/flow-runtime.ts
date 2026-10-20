@@ -80,6 +80,9 @@ export function dialExitNode(
   return nextNode(flow, nodeId, handle, true) ?? flow.nodes.find((n) => n.type === "menu");
 }
 
+/** Hard cap on nodes run per call, so a flow that loops back to a menu can't run forever. */
+export const MAX_FLOW_STEPS = 300;
+
 /** WebRTC ICE/RTP often not ready immediately after answer — early play becomes a short beep then silence. */
 export const MEDIA_SETTLE_MS = 900;
 
@@ -294,8 +297,13 @@ export async function executeFlowLoop(
   asSubflow = false,
 ): Promise<"ok" | "left"> {
   let node = startNode;
+  let steps = 0;
 
   while (node && !visited.has(node.id)) {
+    if (++steps > MAX_FLOW_STEPS) {
+      console.warn(`[flow] ${channelId} step limit ${MAX_FLOW_STEPS} reached — hanging up`);
+      break;
+    }
     visited.add(node.id);
     const data = node.data as Record<string, unknown>;
     let handle: string | undefined;
@@ -357,6 +365,9 @@ export async function executeFlowLoop(
         break;
       }
       case "menu": {
+        // Clear stale digits on entry — not after the prompt is synthesized/played:
+        // callers who know the menu press ahead, and that key must count.
+        ari.clearDtmfBuffer(channelId);
         const prompt = expandTemplate(String(data.prompt ?? data.text ?? "menu"), vars);
         console.log(`[flow] ${channelId} menu: ${prompt}`);
         const timeoutMs = Number(data.timeoutMs ?? 12000);
@@ -381,7 +392,8 @@ export async function executeFlowLoop(
           try {
             if (menuMedia) {
               if (maxDigits <= 1) {
-                collected = (await ari.playCollectDtmf(channelId, menuMedia, timeoutMs)) ?? "";
+                collected =
+                  (await ari.playCollectDtmf(channelId, menuMedia, timeoutMs, { clear: attempt > 0 })) ?? "";
               } else {
                 await ari.playAndWait(channelId, menuMedia, 60_000).catch(() => undefined);
                 collected = await ari.waitDtmfDigits(channelId, {
@@ -461,6 +473,8 @@ export async function executeFlowLoop(
         const lang = resolveSpeechLang(data, vars);
         const gender = resolveTtsVoice(data, vars);
         console.log(`[flow] ${channelId} get_key → $${varName} max=${maxDigits}`);
+        // Clear stale digits on entry; digits typed during the prompt count (type-ahead).
+        ari.clearDtmfBuffer(channelId);
         if (prompt) {
           try {
             const { ensureSpeechMedia } = await import("../lib/tts.js");
@@ -472,7 +486,6 @@ export async function executeFlowLoop(
             await playSpeech(channelId, prompt, lang, gender).catch(() => undefined);
           }
         }
-        ari.clearDtmfBuffer(channelId);
         const collected = await ari.waitDtmfDigits(channelId, {
           maxDigits,
           firstTimeoutMs: timeoutMs,
@@ -864,6 +877,11 @@ export async function executeFlowLoop(
       await ari.hangup(channelId);
       return "left";
     }
+    // Menus and key prompts wait for the caller, so edges back to them ("return to
+    // the main menu", "enter another code") start a fresh pass: the caller may pick
+    // the same branch again. Loops without caller input are still caught by
+    // `visited` (and MAX_FLOW_STEPS).
+    if (nxt.type === "menu" || nxt.type === "get_key") visited.clear();
     node = nxt;
   }
   if (asSubflow) return "ok";

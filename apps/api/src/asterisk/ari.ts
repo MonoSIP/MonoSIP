@@ -549,8 +549,10 @@ class AriClient extends EventEmitter {
     channelId: string,
     media: string,
     timeoutAfterMs = 12000,
+    /** false keeps digits typed before the prompt started (type-ahead). */
+    opts: { clear?: boolean } = {},
   ): Promise<string | null> {
-    this.clearDtmfBuffer(channelId);
+    if (opts.clear !== false) this.clearDtmfBuffer(channelId);
     let id = await this.play(channelId, media);
     if (!id) {
       await new Promise((r) => setTimeout(r, 300));
@@ -588,7 +590,6 @@ class AriClient extends EventEmitter {
     return res.ok;
   }
 
-  /** True if PJSIP endpoint has at least one reachable contact. */
   /**
    * Keep receiving a channel's events after it leaves Stasis (continue/redirect or
    * hangup). Without this ChannelDestroyed never reaches the app, so IVR/inbound

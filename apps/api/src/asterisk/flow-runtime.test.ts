@@ -1380,3 +1380,39 @@ describe("channelDestroyed", () => {
     }).not.toThrow();
   });
 });
+describe("executeFlowLoop — returning to a menu", () => {
+  it("runs the same branch twice in one call (menu → 1 → … → menu → 1 again)", async () => {
+    vi.mocked(ari.playCollectDtmf)
+      .mockResolvedValueOnce("1")
+      .mockResolvedValueOnce("1")
+      .mockResolvedValueOnce(null as never);
+    vi.mocked(ari.waitDtmf).mockResolvedValue(null as never);
+    const menu = node("m", "menu", { digits: ["1"], retries: 0, timeoutMs: 10 });
+    const flow = flowOf(
+      [menu, node("v", "set_var", { name: "x", value: "{{x}}+" }), node("a", "announce", { text: "info" }), node("h", "hangup")],
+      [edge("m", "v", "1"), edge("v", "a", "next"), edge("a", "m", "next"), edge("m", "h", "timeout"), edge("m", "h", "invalid")],
+    );
+    const { vars } = await runLoop(menu, flow, { x: "" });
+    // set_var ran on both passes — a stale `visited` used to stop the second one
+    expect(vars.x).toBe("++");
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+  });
+
+  it("re-enters a menu reached again through an edge (back to main menu)", async () => {
+    // menu → 1 → announce → back to menu → (timeout) → hangup
+    vi.mocked(ari.playCollectDtmf).mockResolvedValueOnce("1").mockResolvedValueOnce(null as never);
+    vi.mocked(ari.waitDtmf).mockResolvedValue(null as never);
+    vi.mocked(ari.waitDtmfDigits).mockResolvedValue(null as never);
+    const flow = flowOf(
+      [node("m", "menu", { digits: ["1"], retries: 0, timeoutMs: 10 }), node("a", "announce", { text: "info" }), node("h", "hangup")],
+      [edge("m", "a", "1"), edge("a", "m", "next"), edge("m", "h", "timeout"), edge("m", "h", "invalid")],
+    );
+    await runLoop(node("m", "menu", { digits: ["1"], retries: 0, timeoutMs: 10 }), flow);
+    const nodeEvents = dbState.updates.length; // keep lint quiet if unused
+    void nodeEvents;
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+    // the menu prompt ran twice: initial entry + after "back to menu"
+    const menuPlays = vi.mocked(ari.playCollectDtmf).mock.calls.length + vi.mocked(ari.playAndWait).mock.calls.length;
+    expect(menuPlays).toBeGreaterThanOrEqual(2);
+  });
+});
