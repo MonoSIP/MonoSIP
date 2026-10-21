@@ -1026,7 +1026,8 @@ describe("LoginPage", () => {
     apiPost.mockResolvedValue({});
     renderPage(<LoginPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "auth.signIn" }));
+    await userEvent.type(await screen.findByLabelText("auth.password"), "Admin123!");
+    await userEvent.click(screen.getByRole("button", { name: "auth.signIn" }));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/"));
     expect(apiPost).toHaveBeenCalledWith("/api/v1/admin/auth/login", {
@@ -1060,7 +1061,8 @@ describe("LoginPage", () => {
     await userEvent.click(await screen.findByRole("button", { name: "auth.portalLogin" }));
     expect(screen.queryByPlaceholderText("000000")).not.toBeInTheDocument();
 
-    await userEvent.click(await screen.findByRole("button", { name: "auth.signIn" }));
+    await userEvent.type(screen.getByLabelText("auth.password"), "portal101");
+    await userEvent.click(screen.getByRole("button", { name: "auth.signIn" }));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/"));
     expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/login", {

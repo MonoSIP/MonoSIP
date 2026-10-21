@@ -15,7 +15,7 @@ export function LoginPage() {
   const [mode, setMode] = useState<"admin" | "portal">("admin");
   const [email, setEmail] = useState("admin@example.com");
   const [extension, setExtension] = useState("101");
-  const [password, setPassword] = useState("Admin123!");
+  const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [needTotp, setNeedTotp] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,7 +63,7 @@ export function LoginPage() {
             className={`btn ${mode === "admin" ? "btn-primary" : ""}`}
             onClick={() => {
               setMode("admin");
-              setPassword("Admin123!");
+              setPassword("");
               setNeedTotp(false);
             }}
           >
@@ -75,7 +75,7 @@ export function LoginPage() {
             className={`btn ${mode === "portal" ? "btn-primary" : ""}`}
             onClick={() => {
               setMode("portal");
-              setPassword("portal101");
+              setPassword("");
               setNeedTotp(false);
             }}
           >

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SessionState } from "sip.js";
-import { Softphone } from "./softphone.js";
+import { Softphone, sdpWithoutPrivateHostCandidates } from "./softphone.js";
 
 /** Minimal AudioContext double — jsdom has no Web Audio. */
 class FakeAudioContext {
@@ -452,5 +452,27 @@ describe("loadPreferredDevices", () => {
     const sp = new Softphone();
     await expect(sp.loadPreferredDevices()).resolves.toBeUndefined();
     expect((sp as unknown as { preferredMicId: string }).preferredMicId).toBe("");
+  });
+});
+
+describe("sdpWithoutPrivateHostCandidates", () => {
+  const sdp = [
+    "v=0",
+    "c=IN IP4 192.168.1.20",
+    "a=candidate:1 1 UDP 1 192.168.1.20 40000 typ host",
+    "a=candidate:2 1 UDP 2 203.0.113.8 40000 typ srflx raddr 192.168.1.20 rport 40000",
+    "a=candidate:3 1 UDP 3 198.51.100.4 50000 typ relay raddr 203.0.113.8 rport 40000",
+  ].join("\r\n");
+
+  it("drops host candidates when a public candidate is present", () => {
+    const out = sdpWithoutPrivateHostCandidates(sdp);
+    expect(out).not.toContain("typ host");
+    expect(out).toContain("typ srflx");
+    expect(out).toContain("typ relay");
+  });
+
+  it("keeps host candidates when they are the only path", () => {
+    const lan = "a=candidate:1 1 UDP 1 192.168.1.20 40000 typ host";
+    expect(sdpWithoutPrivateHostCandidates(lan)).toBe(lan);
   });
 });

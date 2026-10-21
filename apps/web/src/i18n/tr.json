@@ -251,7 +251,7 @@
     "dialing": "Aranıyor",
     "ended": "Bitti",
     "callEnded": "Çağrı bitti ({{time}})",
-    "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then MUNASIP_RTP_PUBLISHED=1.",
+    "noRtp": "Bu tarayıcı çağrıyı duyamıyor. Öndeki ağ dönüş yolunu kesiyor. Başka bir ağ deneyin. Sürerse sunucuda TURN açın.",
     "incoming": "Gelen arama",
     "enterNumber": "Numara girin",
     "transfer": "Aktar",

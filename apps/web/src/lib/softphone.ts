@@ -43,6 +43,22 @@ function sipWsUrl(): string {
 
 const AUDIO_DEVICES_KEY = "munasip.audioDevices";
 
+/**
+ * Drop private host ICE candidates once a public one exists.
+ * Asterisk otherwise sends RTP to the browser's LAN address: the far end
+ * hears this phone, and this phone receives nothing.
+ */
+export function sdpWithoutPrivateHostCandidates(sdp: string): string {
+  const lines = sdp.split(/\r?\n/);
+  const hasPublic = lines.some(
+    (l) => l.startsWith("a=candidate:") && / typ (srflx|relay)( |$)/.test(l),
+  );
+  if (!hasPublic) return sdp;
+  return lines
+    .filter((l) => !(l.startsWith("a=candidate:") && / typ host( |$)/.test(l)))
+    .join("\r\n");
+}
+
 export class Softphone {
   status: SoftphoneStatus = "idle";
   session: Session | null = null;
@@ -57,7 +73,7 @@ export class Softphone {
   onStatus?: (s: SoftphoneStatus, detail?: string) => void;
   onSession?: (s: Session | null) => void;
   onCallPhase?: (phase: CallPhase, info?: CallPhaseInfo) => void;
-  /** Fired when remote RTP never arrives (typical missing host UDP 10000–10100). */
+  /** Fired when this browser receives no RTP (return path blocked, often NAT). */
   onMediaWarning?: (code: "no_rtp") => void;
   private remoteAudio = document.createElement("audio");
   private audioCtx: AudioContext | null = null;
@@ -198,7 +214,11 @@ export class Softphone {
     }
   }
 
-  private startLocalRingback() {
+  /**
+   * ringback: the flat 440+480 tone while we are calling.
+   * ringtone: a two-note double ring when a call arrives, so it is not mistaken for that tone.
+   */
+  private startLocalRingback(kind: "ringback" | "ringtone" = "ringback") {
     this.stopLocalRingback();
     try {
       const ctx = this.ensureAudioCtx();
@@ -217,11 +237,31 @@ export class Softphone {
         dest = ctx.destination;
       }
       let stopped = false;
+      const blip = (t0: number, freq: number, dur: number, peak: number, type: OscillatorType) => {
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        gain.connect(dest);
+        const osc = ctx.createOscillator();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+      };
       const tick = () => {
         if (stopped) return;
         const t0 = ctx.currentTime;
+        if (kind === "ringtone") {
+          blip(t0, 880, 0.18, 0.22, "triangle");
+          blip(t0 + 0.22, 1175, 0.22, 0.22, "triangle");
+          blip(t0 + 0.56, 880, 0.18, 0.22, "triangle");
+          blip(t0 + 0.78, 1175, 0.22, 0.22, "triangle");
+          return;
+        }
         const gain = ctx.createGain();
-        gain.gain.value = 0.06;
+        gain.gain.value = 0.08;
         gain.connect(dest);
         for (const f of [440, 480]) {
           const osc = ctx.createOscillator();
@@ -233,7 +273,7 @@ export class Softphone {
         }
       };
       tick();
-      const id = window.setInterval(tick, 4000);
+      const id = window.setInterval(tick, kind === "ringtone" ? 3000 : 4000);
       this.ringOsc = {
         stop: () => {
           stopped = true;
@@ -302,7 +342,7 @@ export class Softphone {
     };
     pts.sort((a, b) => rank(a) - rank(b));
     lines[mIdx] = [...header, ...pts].join(" ");
-    return { ...description, sdp: lines.join("\r\n") };
+    return { ...description, sdp: sdpWithoutPrivateHostCandidates(lines.join("\r\n")) };
   };
 
   private attachRemoteMedia(session: Session) {
@@ -323,17 +363,22 @@ export class Softphone {
       pc.getReceivers().forEach((r) => {
         if (r.track && r.track.kind === "audio") remote.addTrack(r.track);
       });
+      const incomingRing = this.callPhase === "ringing";
+      this.remoteAudio.muted = incomingRing;
       this.remoteAudio.srcObject = remote;
-      void this.remoteAudio.play().catch(() => undefined);
+      if (!incomingRing) void this.remoteAudio.play().catch(() => undefined);
     };
 
     this.trackHandler = (ev: RTCTrackEvent) => {
       if (ev.track.kind !== "audio") return;
-      this.stopLocalRingback();
+      // Early media on an incoming call is not a ringtone. Keep ours until answer.
+      const incomingRing = this.callPhase === "ringing";
+      if (!incomingRing) this.stopLocalRingback();
       const stream = (this.remoteAudio.srcObject as MediaStream | null) ?? new MediaStream();
       if (!stream.getTracks().includes(ev.track)) stream.addTrack(ev.track);
       this.remoteAudio.srcObject = stream;
-      void this.remoteAudio.play().catch(() => undefined);
+      this.remoteAudio.muted = incomingRing;
+      if (!incomingRing) void this.remoteAudio.play().catch(() => undefined);
     };
     pc.addEventListener("track", this.trackHandler);
     this.boundPc = pc;
@@ -429,8 +474,8 @@ export class Softphone {
         this.setCallPhase("ringing", { seconds: 0, peer: this.callPeer });
         this.onSession?.(invitation);
         invitation.stateChange.addListener((state) => this.handleState(state));
-        this.startLocalRingback();
-        void this.remoteAudio.play().catch(() => undefined);
+        this.remoteAudio.muted = true;
+        this.startLocalRingback("ringtone");
         this.notifyIncoming(invitation);
       },
     };
@@ -928,6 +973,7 @@ export class Softphone {
       }
     }
     if (state === SessionState.Established) {
+      this.remoteAudio.muted = false;
       this.stopLocalRingback();
       void this.remoteAudio.play().catch(() => undefined);
       if (!this.callStartedAt) this.callStartedAt = Date.now();

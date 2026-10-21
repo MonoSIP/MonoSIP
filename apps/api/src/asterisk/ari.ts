@@ -297,7 +297,7 @@ class AriClient extends EventEmitter {
   /**
    * Record a call without blocking it. ARI `channels/{id}/record` is a channel
    * operation like playback: while it runs, later plays queue behind it — the IVR's
-   * "Calling extension…" prompt never started and transfers stalled in silence.
+   * transfer prompt never started and transfers stalled in silence.
    * Record a snoop channel instead (both directions, parked in Stasis via
    * `snoop-wait`); it follows the caller through dialplan and ends at hangup.
    */

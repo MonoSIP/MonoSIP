@@ -8,6 +8,7 @@ import {
   extensions,
   flows,
   lastDialAttempts,
+  mohClasses,
   missedCalls,
   recordings,
   settings,
@@ -143,6 +144,19 @@ function resolveTtsVoice(
   const raw = String(data?.gender ?? data?.voice ?? "default").trim();
   if (!raw || raw === "default") return settingsVoice;
   return raw;
+}
+
+/** Hold-music class for a transfer. Prefer uploaded audio over the generated default tone. */
+async function transferHoldClass(): Promise<string> {
+  try {
+    const rows = await db.select().from(mohClasses);
+    const usable = rows.filter(
+      (r) => Array.isArray(r.files) && r.files.length > 0 && /^[\w.-]+$/.test(r.name),
+    );
+    return (usable.find((r) => r.name === "default") ?? usable[0])?.name ?? "default";
+  } catch {
+    return "default";
+  }
 }
 
 async function playSpeech(
@@ -738,7 +752,6 @@ export async function executeFlowLoop(
         let dest = String(data.destId ?? "");
         const destType = String(data.destType ?? "extension");
         const caller = vars.caller || "";
-        const lang = (vars.language === "tr" ? "tr" : "en") as "en" | "tr";
         const ringTimeout = Math.max(5, Math.min(120, Number(data.timeout ?? data.ringSeconds ?? 30) || 30));
         // Resolve UUID → extension number (legacy DestPicker stored ids)
         if (destType === "extension" && dest) {
@@ -755,14 +768,6 @@ export async function executeFlowLoop(
         // Softphone testing: option "1 → 101" while registered as 101 = self-dial → silence
         if (destType === "extension" && dest === caller) {
           console.warn(`[flow] ${channelId} refused self-transfer to ${dest}`);
-          await playSpeech(
-            channelId,
-            lang === "tr"
-              ? "Kendinize aktarım yapılamaz. Ana menüye dönülüyor."
-              : "You cannot transfer to yourself. Returning to the main menu.",
-            lang,
-            vars.__ttsVoice || "female",
-          );
           const exit = dialExitNode(flow, node.id, "chanunavail");
           if (!exit) {
             await ari.hangup(channelId);
@@ -775,14 +780,6 @@ export async function executeFlowLoop(
           const { online, busy } = await ari.endpointState(dest);
           if (!online) {
             console.warn(`[flow] ${channelId} target ${dest} offline`);
-            await playSpeech(
-              channelId,
-              lang === "tr"
-                ? `Dahili ${dest} kayıtlı değil.`
-                : `Extension ${dest} is not registered.`,
-              lang,
-              vars.__ttsVoice || "female",
-            );
             const exit = dialExitNode(flow, node.id, "chanunavail");
             if (!exit) {
               await ari.hangup(channelId);
@@ -795,12 +792,6 @@ export async function executeFlowLoop(
           // timeout (NOANSWER), so take the busy exit without dialing.
           if (busy) {
             console.warn(`[flow] ${channelId} target ${dest} busy`);
-            await playSpeech(
-              channelId,
-              lang === "tr" ? `Dahili ${dest} şu anda meşgul.` : `Extension ${dest} is busy.`,
-              lang,
-              vars.__ttsVoice || "female",
-            );
             const exit = dialExitNode(flow, node.id, "busy");
             if (!exit) {
               await ari.hangup(channelId);
@@ -809,12 +800,6 @@ export async function executeFlowLoop(
             jumpTo = exit;
             break;
           }
-          await playSpeech(
-            channelId,
-            lang === "tr" ? `Dahili ${dest} aranıyor.` : `Calling extension ${dest}.`,
-            lang,
-            vars.__ttsVoice || "female",
-          );
           // Dial in dialplan; on failure Stasis resumes with dial-failed + DIALSTATUS
           pendingTransfers.set(channelId, {
             flow,
@@ -824,16 +809,11 @@ export async function executeFlowLoop(
           });
           await ari.setChannelVar(channelId, "MUNASIP_DIAL_TARGET", dest);
           await ari.setChannelVar(channelId, "MUNASIP_DIAL_TIMEOUT", String(ringTimeout));
+          await ari.setChannelVar(channelId, "MUNASIP_DIAL_MOH", await transferHoldClass());
           await ari.redirect(channelId, "s", "munasip-flow-dial");
           return "left";
         }
         // Non-extension destinations: redirect (no DialStatus edges)
-        await playSpeech(
-          channelId,
-          lang === "tr" ? "Aktarılıyor." : "Transferring.",
-          lang,
-          vars.__ttsVoice || "female",
-        );
         const resolved = await resolveDestination({ destType, destId: dest });
         await applyResolved(channelId, resolved, vars);
         return "left";
@@ -863,8 +843,20 @@ export async function executeFlowLoop(
       }
       case "voicemail": {
         const ext = String(data.extensionId ?? data.extension ?? "");
-        if (ext) await ari.redirect(channelId, `*${ext}`, "munasip-voicemail");
-        else await ari.hangup(channelId);
+        if (!ext) {
+          await ari.hangup(channelId);
+          return "left";
+        }
+        const vmLang = resolveSpeechLang(data, vars);
+        const custom = data.prompt ?? data.text;
+        const greeting =
+          custom == null
+            ? vmLang === "tr"
+              ? "Mesajınızı bip sesinden sonra bırakabilirsiniz."
+              : "Please leave your message after the tone."
+            : String(custom).trim();
+        if (greeting) await playSpeech(channelId, greeting, vmLang, resolveTtsVoice(data, vars));
+        await ari.redirect(channelId, `*${ext}`, "munasip-voicemail");
         return "left";
       }
       case "hangup":

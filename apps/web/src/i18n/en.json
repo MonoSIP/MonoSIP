@@ -251,7 +251,7 @@
     "dialing": "Calling",
     "ended": "Ended",
     "callEnded": "Call ended ({{time}})",
-    "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then MUNASIP_RTP_PUBLISHED=1.",
+    "noRtp": "This browser is not receiving the call. The network in front of it is blocking the return path. Try another network. If it continues, turn on TURN on the server.",
     "incoming": "Incoming call",
     "enterNumber": "Enter a number",
     "transfer": "Transfer",

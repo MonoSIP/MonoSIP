@@ -1150,7 +1150,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     // Flow transfer: Dial then re-enter Stasis with DIALSTATUS on failure
     "[munasip-flow-dial]",
     "exten => s,1,NoOp(Flow dial ${MUNASIP_DIAL_TARGET})",
-    " same => n,Dial(PJSIP/${MUNASIP_DIAL_TARGET},${IF($[\"${MUNASIP_DIAL_TIMEOUT}\"=\"\"]?30:${MUNASIP_DIAL_TIMEOUT})},tT)",
+    " same => n,Dial(PJSIP/${MUNASIP_DIAL_TARGET},${IF($[\"${MUNASIP_DIAL_TIMEOUT}\"=\"\"]?30:${MUNASIP_DIAL_TIMEOUT})},tTm(${IF($[\"${MUNASIP_DIAL_MOH}\"=\"\"]?default:${MUNASIP_DIAL_MOH})}))",
     " same => n,GotoIf($[\"${DIALSTATUS}\" = \"ANSWER\"]?done)",
     " same => n,Stasis(munasip-flow,dial-failed,${DIALSTATUS})",
     " same => n,Hangup()",

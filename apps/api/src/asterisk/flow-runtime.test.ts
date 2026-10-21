@@ -531,6 +531,12 @@ describe("executeFlowLoop — terminal nodes", () => {
   it("voicemail redirects to the extension's voicemail", async () => {
     const flow = flowOf([node("v", "voicemail", { extension: "101" })]);
     const { result } = await runLoop(node("v", "voicemail", { extension: "101" }), flow);
+    expect(ensureSpeechMedia).toHaveBeenCalledWith(
+      "Please leave your message after the tone.",
+      "en",
+      1.05,
+      "female",
+    );
     expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
     expect(result).toBe("left");
   });
@@ -756,13 +762,24 @@ describe("executeFlowLoop — subflow node", () => {
 describe("executeFlowLoop — transfer node", () => {
   it("dials an online extension through the dialplan", async () => {
     dbState.rows = [{ id: "uuid-102", number: "102" }];
-    const flow = flowOf([node("t", "transfer", { destType: "extension", destId: "102", timeout: 25 })]);
-    const { result } = await runLoop(node("t", "transfer", { destType: "extension", destId: "102", timeout: 25 }), flow, {
+    const transfer = node("t", "transfer", {
+      destType: "extension",
+      destId: "102",
+      timeout: 25,
+      language: "en",
+      gender: "female",
+    });
+    const flow = flowOf([transfer]);
+    const { result } = await runLoop(transfer, flow, {
       caller: "101",
+      __ttsVoice: "ema-lightning",
+      __ttsApplyAll: "0",
     });
     expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TARGET", "102");
     expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TIMEOUT", "25");
+    expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_MOH", "default");
     expect(ari.redirect).toHaveBeenCalledWith("ch-n", "s", "munasip-flow-dial");
+    expect(ensureSpeechMedia).not.toHaveBeenCalled();
     expect(result).toBe("left");
   });
 
