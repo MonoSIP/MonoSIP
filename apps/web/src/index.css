@@ -557,6 +557,16 @@ textarea.input {
   height: 2.25rem;
   filter: drop-shadow(0 6px 14px rgb(4 120 87 / 0.35));
 }
+/* Version next to the product name: quiet, so the name leads */
+.brand-ver {
+  flex: none;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font: 500 0.625rem/1.4 var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
 
 .login-shell {
   min-height: 100%;

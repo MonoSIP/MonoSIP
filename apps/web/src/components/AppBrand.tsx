@@ -33,7 +33,7 @@ export function AppBrand({
             >
               {t("app.name")}
             </TitleTag>
-            <span className="badge badge-info tabular-nums" title={`MunaSIP ${APP_VERSION}`}>
+            <span className="brand-ver" title={`MünaSIP ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
           </div>
