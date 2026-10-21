@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """DSip TTS HTTP API — Edge Neural (high quality TR/EN) with EMA Lightning (offline
-Turkish neural) and Kokoro-82M (offline English neural)."""
+Turkish neural). Kokoro (offline English) was removed: its model filled the
+small PBX's memory and pushed EMA into swap."""
 
 from __future__ import annotations
 
@@ -23,21 +24,11 @@ from flask import Flask, jsonify, request, send_file
 
 HOST = os.environ.get("TTS_HOST", "0.0.0.0")
 PORT = int(os.environ.get("TTS_PORT", "5500"))
-# auto | edge | ema | kokoro — auto prefers Edge Neural, then EMA (TR) / Kokoro (EN).
+# auto | edge | ema — auto prefers Edge Neural, then EMA (TR, offline).
 ENGINE = (os.environ.get("TTS_ENGINE") or "auto").strip().lower()
 # EMA Lightning: tiny (~8.6M param) offline neural Turkish TTS, native 8 kHz output.
 EMA_ENABLED = (os.environ.get("TTS_ENABLE_EMA") or "1").strip().lower() not in ("0", "false", "no")
 EMA_VOICE_ID = "ema-lightning"
-# Kokoro-82M ONNX: high-quality offline English neural TTS (~80 MB int8).
-KOKORO_ENABLED = (os.environ.get("TTS_ENABLE_KOKORO") or "1").strip().lower() not in (
-    "0",
-    "false",
-    "no",
-)
-KOKORO_VOICE_ID = "kokoro"
-KOKORO_DIR = Path(os.environ.get("KOKORO_DIR", "/models/kokoro"))
-KOKORO_SPEAKER = (os.environ.get("TTS_KOKORO_VOICE") or "af_heart").strip() or "af_heart"
-
 EDGE_VOICES = {
     "en": os.environ.get("TTS_EDGE_VOICE_EN", "en-US-JennyNeural"),
     "en-US": os.environ.get("TTS_EDGE_VOICE_EN", "en-US-JennyNeural"),
@@ -57,7 +48,6 @@ EDGE_VOICES_MALE = {
 }
 
 _ema_cache: dict[str, object] = {}
-_kokoro_cache: dict[str, object] = {}
 log = logging.getLogger("tts")
 logging.basicConfig(level=logging.INFO)
 
@@ -192,69 +182,20 @@ def synthesize_ema(text: str, length_scale: float) -> tuple[bytes, str]:
     return out.getvalue(), EMA_VOICE_ID
 
 
-def kokoro_available() -> bool:
-    if not KOKORO_ENABLED:
-        return False
-    if importlib.util.find_spec("kokoro_onnx") is None:
-        return False
-    onnx = KOKORO_DIR / "kokoro-v1.0.int8.onnx"
-    voices = KOKORO_DIR / "voices-v1.0.bin"
-    if not onnx.is_file():
-        onnx = KOKORO_DIR / "kokoro-v1.0.onnx"
-    return onnx.is_file() and voices.is_file()
-
-
-def load_kokoro():
-    if "kokoro" in _kokoro_cache:
-        return _kokoro_cache["kokoro"]
-    from kokoro_onnx import Kokoro
-
-    onnx = KOKORO_DIR / "kokoro-v1.0.int8.onnx"
-    if not onnx.is_file():
-        onnx = KOKORO_DIR / "kokoro-v1.0.onnx"
-    voices = KOKORO_DIR / "voices-v1.0.bin"
-    if not onnx.is_file() or not voices.is_file():
-        raise FileNotFoundError(f"Kokoro model missing under {KOKORO_DIR}")
-    tts = Kokoro(str(onnx), str(voices))
-    _kokoro_cache["kokoro"] = tts
-    return tts
-
-
-def synthesize_kokoro(text: str, length_scale: float, speaker: str = "") -> tuple[bytes, str]:
-    """Kokoro-82M ONNX → 8 kHz mono WAV. English (en-us)."""
-    import numpy as np
-
-    tts = load_kokoro()
-    # length_scale > 1 = slower; Kokoro speed > 1 = faster.
-    speed = max(0.5, min(2.0, 1.0 / max(0.1, length_scale)))
-    voice_name = (speaker or KOKORO_SPEAKER).strip() or "af_heart"
-    samples, sample_rate = tts.create(text, voice=voice_name, speed=speed, lang="en-us")
-    audio = np.asarray(samples, dtype=np.float32)
-    pcm = (np.clip(audio, -1.0, 1.0) * 32767.0).astype("<i2").tobytes()
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(int(sample_rate))
-        w.writeframes(pcm)
-    return resample_wav_8k_mono(buf.getvalue()), KOKORO_VOICE_ID
-
-
 def synthesize_wav(
     text: str, lang: str, length_scale: float = 1.05, engine: str = ""
 ) -> tuple[bytes, str, str]:
     """Returns (wav8k, engine_name, voice_id).
 
-    `engine` (per request) overrides the server default: edge | ema | kokoro.
-    EMA is Turkish-only; Kokoro is English-only.
+    `engine` (per request) overrides the server default: edge | ema.
+    EMA is Turkish-only; English has no offline engine.
     """
     text = text.strip()
     want = (engine or ENGINE or "auto").strip().lower()
     is_tr = lang_key(lang).startswith("tr")
-    is_en = not is_tr  # current API only serves en/tr
 
     if want == "piper":
-        raise RuntimeError("Piper TTS has been removed; use edge, ema, or kokoro")
+        raise RuntimeError("Piper TTS has been removed; use edge or ema")
 
     # Explicit per-request engine selection.
     if want == "ema":
@@ -263,15 +204,13 @@ def synthesize_wav(
         wav, voice = synthesize_ema(text, length_scale)
         return wav, "ema", voice
     if want == "kokoro":
-        if not is_en:
-            raise RuntimeError("Kokoro supports English only")
-        wav, voice = synthesize_kokoro(text, length_scale)
-        return wav, "kokoro", voice
+        # Removed engine: older flows/settings may still name it — serve Edge.
+        want = "edge"
     if want == "edge":
         wav, voice = synthesize_edge(text, lang, length_scale)
         return wav, "edge", voice
 
-    # auto: Edge Neural (online) → EMA (TR) / Kokoro (EN) offline neural.
+    # auto: Edge Neural (online) → EMA (TR) offline neural.
     try:
         wav, voice = synthesize_edge(text, lang, length_scale)
         return wav, "edge", voice
@@ -286,16 +225,9 @@ def synthesize_wav(
             log.warning("EMA Lightning failed (%s)", e)
             raise RuntimeError(f"TTS failed: edge and EMA unavailable ({e})") from e
 
-    if is_en and kokoro_available():
-        try:
-            wav, voice = synthesize_kokoro(text, length_scale)
-            return wav, "kokoro", voice
-        except Exception as e:  # noqa: BLE001
-            log.warning("Kokoro failed (%s)", e)
-            raise RuntimeError(f"TTS failed: edge and Kokoro unavailable ({e})") from e
-
-    engine_hint = "EMA" if is_tr else "Kokoro"
-    raise RuntimeError(f"TTS failed: edge unavailable and {engine_hint} not ready")
+    if is_tr:
+        raise RuntimeError("TTS failed: edge unavailable and EMA not ready")
+    raise RuntimeError("TTS failed: edge unavailable (no offline English engine)")
 
 
 @app.get("/health")
@@ -304,15 +236,13 @@ def health():
         {
             "ok": True,
             "engine": ENGINE,
-            "preferred": "edge-tts → EMA (TR) / Kokoro (EN)"
+            "preferred": "edge-tts → EMA (TR)"
             if ENGINE == "auto"
             else ENGINE,
             "emaReady": ema_available(),
-            "kokoroReady": kokoro_available(),
             "voices": {
                 "edge": {"tr": EDGE_VOICES["tr"], "en": EDGE_VOICES["en"]},
                 "ema": {"tr": EMA_VOICE_ID},
-                "kokoro": {"en": KOKORO_VOICE_ID, "speaker": KOKORO_SPEAKER},
             },
         }
     )
@@ -351,14 +281,6 @@ def voices():
                 "name": "Jenny Neural (US English)",
                 "quality": "high",
             },
-            {
-                "language": "en",
-                "engine": "kokoro",
-                "id": KOKORO_VOICE_ID,
-                "name": f"Kokoro-82M ({KOKORO_SPEAKER}, offline neural English)",
-                "quality": "high",
-                "offline": True,
-            },
         ]
     )
 
@@ -377,7 +299,7 @@ def synthesize():
     except (TypeError, ValueError):
         length_scale = 1.05
     length_scale = max(0.7, min(1.6, length_scale))
-    # Optional engine override (edge | ema | kokoro) and gender/voice selection.
+    # Optional engine override (edge | ema) and gender/voice selection.
     engine_req = (body.get("engine") or "").strip().lower()
     gender = (body.get("gender") or "").strip().lower()
     voice_override = (body.get("voice") or "").strip()
@@ -385,13 +307,11 @@ def synthesize():
     if voice_override.lower() in ("ema", EMA_VOICE_ID) or gender in ("ema", EMA_VOICE_ID):
         engine_req = "ema"
         voice_override = ""
-    # A voice of "kokoro" selects the Kokoro-82M English engine.
-    if voice_override.lower() in ("kokoro", KOKORO_VOICE_ID) or gender in (
-        "kokoro",
-        KOKORO_VOICE_ID,
-    ):
-        engine_req = "kokoro"
+    # "kokoro" (removed engine) still arrives from older flows: plain Edge voice.
+    if voice_override.lower() == "kokoro" or gender == "kokoro":
+        engine_req = "edge" if engine_req == "kokoro" else engine_req
         voice_override = ""
+        gender = "female"
     if not voice_override and gender in ("male", "erkek", "m"):
         key = lang_key(str(lang))
         voice_override = EDGE_VOICES_MALE.get(key) or EDGE_VOICES_MALE.get(

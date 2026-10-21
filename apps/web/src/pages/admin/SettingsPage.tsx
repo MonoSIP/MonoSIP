@@ -167,7 +167,8 @@ export function SettingsPage() {
       setRetention(settings.data.recordingRetentionMonths ?? 12);
       setKvkk(settings.data.kvkkAnnouncementEnabled ?? true);
       setKvkkPromptId(settings.data.kvkkPromptId ?? "");
-      setTtsVoice(settings.data.ttsVoice ?? "female");
+      // "kokoro" (removed English model) now plays as the female voice
+      setTtsVoice(settings.data.ttsVoice && settings.data.ttsVoice !== "kokoro" ? settings.data.ttsVoice : "female");
       setTtsVoiceApplyAll(settings.data.ttsVoiceApplyAll !== false);
       setTtsCacheRetentionDays(settings.data.ttsCacheRetentionDays ?? 7);
       setCountries((settings.data.allowedCountries ?? ["TR"]).join(","));
@@ -413,11 +414,7 @@ export function SettingsPage() {
           {SPEECH_VOICES.map((v) => (
             <option key={v.value} value={v.value}>
               {v.label}
-              {v.value === "ema-lightning"
-                ? ` — ${tr("Turkish offline")}`
-                : v.value === "kokoro"
-                  ? ` — ${tr("English offline")}`
-                  : ""}
+              {v.value === "ema-lightning" ? ` — ${tr("Turkish offline")}` : ""}
             </option>
           ))}
         </SelectField>
@@ -430,7 +427,7 @@ export function SettingsPage() {
           {tr("Apply TTS model to all IVR prompts (ignore per-node voice)")}
         </label>
         <p className="text-xs text-[var(--text-muted)]">
-          {tr("When enabled, live IVR speech uses this model without editing flow nodes. EMA is Turkish-only; Kokoro is English-only.")}
+          {tr("When enabled, live IVR speech uses this model without editing flow nodes. EMA is Turkish-only.")}
         </p>
         <TextField
           label={tr("TTS cache retention (days)")}

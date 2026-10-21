@@ -3,7 +3,7 @@ import { ari } from "./ari.js";
 /**
  * Sentence-by-sentence IVR speech.
  *
- * Neural TTS (EMA/Kokoro on the PBX CPU) takes roughly as long as the audio it
+ * Neural TTS (EMA on the PBX CPU) takes roughly as long as the audio it
  * produces: a 30-second pharmacy read-out used to leave the caller in ~30 s of
  * silence. Text is split into short chunks; chunk 1 is synthesized and played
  * at once while chunk 2 is synthesized in the background, and so on — the caller

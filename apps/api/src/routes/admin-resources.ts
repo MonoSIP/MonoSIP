@@ -789,7 +789,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         /** Generate WAV via TTS from ttsText */
         synthesize: z.boolean().optional(),
         lengthScale: z.number().min(0.7).max(1.6).optional(),
-        /** TTS voice/model: female | male (Edge) | ema-lightning (TR) | kokoro (EN). */
+        /** TTS voice/model: female | male (Edge) | ema-lightning (TR). */
         voice: z.string().max(40).optional(),
       })
       .parse(req.body);

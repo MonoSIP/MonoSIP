@@ -14,18 +14,17 @@ export function speechLangOptions() {
 
 /**
  * Selectable TTS voices/models. `female`/`male` map to Edge Neural (online, EN+TR);
- * `ema-lightning` is offline neural Turkish (TR only); `kokoro` is offline neural
- * English (EN only). The value is sent as the node `gender` and routed by TTS.
+ * `ema-lightning` is offline neural Turkish (TR only). The value is sent as the
+ * node `gender` and routed by TTS. (Kokoro, offline English, was removed.)
  * `default` follows Admin → Settings → IVR TTS model (no per-node override).
  */
 export const SPEECH_VOICES = [
   { value: "female", label: "Female", langs: ["en", "tr"] },
   { value: "male", label: "Male", langs: ["en", "tr"] },
   { value: "ema-lightning", label: "EMA (TR)", langs: ["tr"] },
-  { value: "kokoro", label: "Kokoro (EN)", langs: ["en"] },
 ] as const;
 
-/** Voice options valid for the given language (EMA=TR-only, Kokoro=EN-only). */
+/** Voice options valid for the given language (EMA is TR-only). */
 export function voiceOptions(
   language: string,
   opts?: { includeDefault?: boolean },

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Embedded TTS (Edge / EMA / Kokoro) — runs inside the all-in-one container.
+# Embedded TTS (Edge / EMA) — runs inside the all-in-one container.
 # Sourced from docker-entrypoint.sh. No sidecar / no external TTS host required.
 # Set TTS_EMBEDDED=0 to skip (e.g. point TTS_URL at an external service).
 
@@ -33,16 +33,13 @@ fi
 
 mkdir -p "$(dirname "$TTS_LOG")" "$DATA_DIR/logs" 2>/dev/null || true
 export HF_HOME="${HF_HOME:-/models/hf}"
-export KOKORO_DIR="${KOKORO_DIR:-/models/kokoro}"
 export TTS_ENGINE="${TTS_ENGINE:-auto}"
 export TTS_ENABLE_EMA="${TTS_ENABLE_EMA:-1}"
-export TTS_ENABLE_KOKORO="${TTS_ENABLE_KOKORO:-1}"
-export TTS_KOKORO_VOICE="${TTS_KOKORO_VOICE:-af_heart}"
 
 echo "Starting embedded TTS on ${TTS_HOST_BIND}:${TTS_PORT_BIND}..."
 (
   cd "$TTS_DIR" || exit 1
-  # Single worker: EMA/Kokoro are memory-heavy; timeout covers cold neural synth.
+  # Single worker: EMA is memory-heavy; timeout covers cold neural synth.
   exec gunicorn \
     -b "${TTS_HOST_BIND}:${TTS_PORT_BIND}" \
     -w 1 \

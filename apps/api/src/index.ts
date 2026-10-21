@@ -132,7 +132,6 @@ async function main() {
     const { synthesizeSpeech } = await import("./lib/tts.js");
     for (const [text, lang, voice] of [
       ["Merhaba.", "tr", "ema-lightning"],
-      ["Hello.", "en", "kokoro"],
     ] as const) {
       const t0 = Date.now();
       await synthesizeSpeech(text, lang, 1.05, voice)

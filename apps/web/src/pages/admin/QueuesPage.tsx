@@ -293,7 +293,7 @@ export function QueuesPage() {
             onChange={(e) => {
               const next = e.target.value as "" | "tr" | "en";
               setLanguage(next);
-              // EMA is TR-only, Kokoro EN-only
+              // EMA is TR-only
               if (next && voice && !voiceOptions(next).some((v) => v.value === voice)) setVoice("");
             }}
           >

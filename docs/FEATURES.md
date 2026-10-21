@@ -102,7 +102,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 | API | Node 24, Fastify, Drizzle, PostgreSQL 17 |
 | UI | React, Vite, TanStack Query, SIP.js |
 | Edge | nginx (TLS, WSS), coturn |
-| TTS | Edge Neural + EMA (TR) / Kokoro (EN) offline |
+| TTS | Edge Neural + EMA (TR) offline |
 
 Persistence: Docker named volumes (`pgdata`, `recordings`, …) — see [INSTALL.md](INSTALL.md).
 

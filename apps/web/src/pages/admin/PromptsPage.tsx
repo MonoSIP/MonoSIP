@@ -263,7 +263,7 @@ export function PromptsPage() {
               onChange={(e) => {
                 const lang = e.target.value as "en" | "tr";
                 setLanguage(lang);
-                // EMA=TR-only, Kokoro=EN-only — fall back if voice becomes invalid.
+                // EMA is TR-only — fall back if the voice becomes invalid.
                 if (!voiceOptions(lang).some((o) => o.value === voice)) setVoice("female");
               }}
             >

@@ -72,13 +72,9 @@ function isEmaVoice(v: string): boolean {
   return g === "ema" || g === "ema-lightning";
 }
 
-function isKokoroVoice(v: string): boolean {
-  return v.toLowerCase() === "kokoro";
-}
-
 /** Explicit offline neural voices must not silently degrade to robotic espeak. */
 function isFailClosedVoice(v: string): boolean {
-  return isEmaVoice(v) || isKokoroVoice(v);
+  return isEmaVoice(v);
 }
 
 export async function synthesizeSpeech(
@@ -87,15 +83,15 @@ export async function synthesizeSpeech(
   lengthScale = 1.05,
   genderOrVoice: string = "female",
 ): Promise<Buffer> {
-  const g = genderOrVoice.toLowerCase();
-  // EMA = Turkish-only, Kokoro = English-only — force lang so a mismatched UI
-  // choice does not 500 inside the TTS service and then fall through to espeak.
-  const lang: TtsLanguage = isEmaVoice(g) ? "tr" : isKokoroVoice(g) ? "en" : language;
+  // "kokoro" (English offline model, removed) may still be stored on old flows,
+  // prompts or settings: it plays as the default female Edge voice.
+  const g = genderOrVoice.toLowerCase() === "kokoro" ? "female" : genderOrVoice.toLowerCase();
+  // EMA is Turkish-only — force lang so a mismatched UI choice does not 500
+  // inside the TTS service and then fall through to espeak.
+  const lang: TtsLanguage = isEmaVoice(g) ? "tr" : language;
   let voice: string | undefined;
   if (isEmaVoice(g)) {
     voice = "ema-lightning";
-  } else if (isKokoroVoice(g)) {
-    voice = "kokoro";
   } else if (g === "male" || g === "erkek") {
     voice = lang === "tr" ? "tr-TR-AhmetNeural" : "en-US-GuyNeural";
   } else if (g === "female" || g === "kadin" || g === "kadın") {
@@ -122,8 +118,7 @@ export async function synthesizeSpeech(
       console.warn("[tts] remote unreachable:", (e as Error).message);
     }
   } else if (isFailClosedVoice(g)) {
-    const name = isEmaVoice(g) ? "EMA" : "Kokoro";
-    throw new Error(`${name} TTS unavailable: TTS_URL unset`);
+    throw new Error("EMA TTS unavailable: TTS_URL unset");
   }
   return synthesizeWithEspeak(text, lang);
 }

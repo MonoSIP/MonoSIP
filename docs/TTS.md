@@ -1,8 +1,9 @@
 # TTS (embedded in the main image)
 
 DSip generates IVR / prompt audio **inside the all-in-one container** — no sidecar and no
-extra network dependency. Engines: **Microsoft Edge Neural** (online), **EMA Lightning**
-(Turkish offline), **Kokoro-82M** (English offline).
+extra network dependency. Engines: **Microsoft Edge Neural** (online) and **EMA Lightning**
+(Turkish offline). English has no offline engine: Kokoro-82M was removed because its model
+crowded a small PBX's memory and pushed EMA into swap. A stored `kokoro` voice plays as Edge.
 
 ## Engines
 
@@ -10,26 +11,23 @@ extra network dependency. Engines: **Microsoft Edge Neural** (online), **EMA Lig
 | --- | --- | --- | --- |
 | **edge** (default via `auto`) | High — e.g. `tr-TR-EmelNeural` / `en-US-JennyNeural` | Yes (at generate time) | Free unofficial Edge voices |
 | **ema** | High neural (TR) | No | EMA Lightning; Settings / Prompts: `ema-lightning` |
-| **kokoro** | High neural (EN) | No | Kokoro-82M ONNX; Settings / Prompts: `kokoro` |
 
-Weights for EMA + Kokoro are baked into the root `Dockerfile` at build time.
+Weights for EMA are baked into the root `Dockerfile` at build time.
 
 ## Voices
 
 | Language | Preferred (Edge) | Offline neural |
 | --- | --- | --- |
 | Turkish | `tr-TR-EmelNeural` | `ema-lightning` |
-| English | `en-US-JennyNeural` | `kokoro` (`af_heart`) |
+| English | `en-US-JennyNeural` | — |
 
 ## Config
 
 ```env
 TTS_URL=http://127.0.0.1:5500
 TTS_EMBEDDED=1
-TTS_ENGINE=auto          # auto | edge | ema | kokoro
+TTS_ENGINE=auto          # auto | edge | ema
 TTS_ENABLE_EMA=1
-TTS_ENABLE_KOKORO=1
-TTS_KOKORO_VOICE=af_heart
 ```
 
 - Entrypoint starts gunicorn on `127.0.0.1:5500` (`apps/api/scripts/start-tts.sh`).

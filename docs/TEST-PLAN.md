@@ -86,7 +86,7 @@ Execute in order before deep sections. Abort smoke on critical Fail.
 | A-04 | Browser DevTools → WS `/ws` after admin login | Connects; live events possible | MANUAL | |
 | A-05 | Softphone WSS `/asterisk-ws` | Upgrade succeeds when registered | LIVE | |
 | A-06 | Asterisk: `pjsip show endpoints` (compose exec) | Seed extensions present | MANUAL | |
-| A-07 | TTS health via admin Prompts / TTS status | TTS service reachable (Edge/EMA/Kokoro) | MANUAL | |
+| A-07 | TTS health via admin Prompts / TTS status | TTS service reachable (Edge/EMA) | MANUAL | |
 | A-08 | Restart api only; volumes persist | Settings/extensions still present | MANUAL | |
 | A-09 | Fail api with bad `DATABASE_URL` (isolated) | Health fails; clear logs | MANUAL | |
 | A-10 | nginx serves TLS; HTTP→HTTPS or ACME path as configured | No mixed-content on panel | MANUAL | |

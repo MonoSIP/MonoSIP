@@ -18,27 +18,15 @@ RUN mkdir -p /models/hf \
   && python -c "from ema_lightning import EMA; EMA().say('Merhaba', sample_rate=8000)" \
   && echo "EMA Lightning weights cached"
 
-# Kokoro-82M ONNX (English neural, ~80 MB int8) — offline counterpart to EMA for EN.
-ENV KOKORO_DIR=/models/kokoro
-RUN mkdir -p /models/kokoro \
-  && curl -fsSL -o /models/kokoro/kokoro-v1.0.int8.onnx \
-    "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx" \
-  && curl -fsSL -o /models/kokoro/voices-v1.0.bin \
-    "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin" \
-  && python -c "from kokoro_onnx import Kokoro; k=Kokoro('/models/kokoro/kokoro-v1.0.int8.onnx','/models/kokoro/voices-v1.0.bin'); k.create('Hello from Kokoro.', voice='af_heart', speed=1.0, lang='en-us'); print('Kokoro ready')" \
-  && echo "Kokoro ONNX weights cached"
-
 COPY server.py .
 
 ENV TTS_HOST=0.0.0.0
 ENV TTS_PORT=5500
-# auto = Edge Neural (best) → EMA (TR) / Kokoro (EN) offline neural
+# auto = Edge Neural (best) → EMA (TR) offline neural
 ENV TTS_ENGINE=auto
 ENV TTS_ENABLE_EMA=1
-ENV TTS_ENABLE_KOKORO=1
 ENV TTS_EDGE_VOICE_TR=tr-TR-EmelNeural
 ENV TTS_EDGE_VOICE_EN=en-US-JennyNeural
-ENV TTS_KOKORO_VOICE=af_heart
 EXPOSE 5500
 
 CMD ["gunicorn", "-b", "0.0.0.0:5500", "-w", "1", "--timeout", "120", "server:app"]

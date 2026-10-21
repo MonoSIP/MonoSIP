@@ -10,7 +10,6 @@ export function queueLanguage(queueLang: string | null | undefined, systemLang: 
 const VOICE_SUFFIX: Record<string, { suffix: string; langs: ReadonlyArray<"tr" | "en"> }> = {
   male: { suffix: "male", langs: ["tr", "en"] },
   "ema-lightning": { suffix: "ema", langs: ["tr"] },
-  kokoro: { suffix: "kokoro", langs: ["en"] },
 };
 
 /**

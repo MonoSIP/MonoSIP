@@ -75,7 +75,7 @@ overlay_en_sounds() {
     [ -f "$f" ] || continue
     ln -sfn "$f" "/var/lib/asterisk/sounds/en/$(basename "$f")"
   done
-  # Per-queue voice packs (sounds/tr_ema, en_kokoro …) — Asterisk language variants
+  # Per-queue voice packs (sounds/tr_ema, en_male …) — Asterisk language variants
   for d in /var/lib/asterisk/dsip/sounds/*_*; do
     [ -d "$d" ] || continue
     ln -sfn "$d" "/var/lib/asterisk/sounds/$(basename "$d")"

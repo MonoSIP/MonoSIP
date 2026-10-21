@@ -126,7 +126,7 @@ export const queues = pgTable("queues", {
   callbackEnabled: boolean("callback_enabled").notNull().default(false),
   /** Announcement language (tr/en); null = system default */
   language: varchar("language", { length: 8 }),
-  /** Announcement voice/model (female | male | ema-lightning | kokoro); null = default voice */
+  /** Announcement voice/model (female | male | ema-lightning); null = default voice */
   voice: varchar("voice", { length: 40 }),
 });
 
@@ -279,7 +279,7 @@ export const prompts = pgTable("prompts", {
   language: varchar("language", { length: 8 }).notNull().default("en"),
   filePath: text("file_path"),
   ttsText: text("tts_text"),
-  /** TTS voice/model: female | male (Edge) | ema-lightning (TR) | kokoro (EN). */
+  /** TTS voice/model: female | male (Edge) | ema-lightning (TR). */
   voice: varchar("voice", { length: 40 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

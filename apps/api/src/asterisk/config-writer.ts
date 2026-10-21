@@ -1006,7 +1006,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // Hangup handler `h` posts the CDR if the caller leaves before Queue() returns
       ` same => n,Set(DSIP_QUEUE=${q.number})`,
       ` same => n,Set(DSIP_QSTART=)`,
-      // tr_ema / en_kokoro … = that voice's clips, falling back to tr / en
+      // tr_ema / en_male … = that voice's clips, falling back to tr / en
       ` same => n,Set(CHANNEL(language)=${queueSoundLanguage(qLang, q.voice)})`,
       ` same => n,Set(CHANNEL(musicclass)=${mohName})`,
       ` same => n,PauseQueueMember(${q.number},PJSIP/\${CALLERID(num)})`,

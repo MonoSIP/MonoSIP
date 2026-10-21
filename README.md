@@ -46,7 +46,7 @@ Full list: **[docs/FEATURES.md](docs/FEATURES.md)**
 | `asterisk` | Asterisk 22 (PJSIP, ARI, AMI, WebRTC) |
 | `postgres` | Settings, CDR, flows (**persistent volume**) |
 | `coturn` | TURN for off-site softphone |
-| *(embedded)* | TTS runs inside `api` / all-in-one (Edge / EMA / Kokoro) |
+| *(embedded)* | TTS runs inside `api` / all-in-one (Edge / EMA) |
 
 Data survives rebuilds via named volumes (`pgdata`, `recordings`, …). See [INSTALL.md](docs/INSTALL.md).
 

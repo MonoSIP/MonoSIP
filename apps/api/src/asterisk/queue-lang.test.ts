@@ -17,7 +17,6 @@ describe("queueLanguage", () => {
 describe("queueSoundLanguage", () => {
   it("maps a voice to its Asterisk language variant", () => {
     expect(queueSoundLanguage("tr", "ema-lightning")).toBe("tr_ema");
-    expect(queueSoundLanguage("en", "kokoro")).toBe("en_kokoro");
     expect(queueSoundLanguage("tr", "male")).toBe("tr_male");
   });
 
@@ -33,7 +32,9 @@ describe("queueVoiceLanguages", () => {
   it("lists the packs a queue needs", () => {
     expect(queueVoiceLanguages("tr", "ema-lightning")).toEqual(["tr"]);
     expect(queueVoiceLanguages(null, "male")).toEqual(["tr", "en"]);
-    expect(queueVoiceLanguages(null, "kokoro")).toEqual(["en"]);
+    // kokoro (removed model) falls back to the base pack
+    expect(queueVoiceLanguages(null, "kokoro")).toEqual([]);
+    expect(queueSoundLanguage("en", "kokoro")).toBe("en");
     expect(queueVoiceLanguages("en", "ema-lightning")).toEqual([]);
     expect(queueVoiceLanguages("tr", null)).toEqual([]);
     expect(queueVoiceLanguages("tr", "female")).toEqual([]);

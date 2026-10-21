@@ -119,8 +119,12 @@ export const QueueSchema = z.object({
   callbackEnabled: z.boolean().default(false),
   /** Announcement language; null = system default */
   language: z.enum(["tr", "en"]).optional().nullable(),
-  /** Announcement voice/model; null = default voice. EMA is TR-only, Kokoro EN-only. */
-  voice: z.enum(["female", "male", "ema-lightning", "kokoro"]).optional().nullable(),
+  /** Announcement voice/model; null = default voice. EMA is TR-only. */
+  voice: z.preprocess(
+    // "kokoro" (removed English model) may still come from a stored queue
+    (v) => (v === "kokoro" ? null : v),
+    z.enum(["female", "male", "ema-lightning"]).optional().nullable(),
+  ),
   members: z
     .array(
       z.object({
@@ -176,7 +180,7 @@ export const SettingsSchema = z.object({
   kvkkAnnouncementEnabled: z.boolean().default(true),
   kvkkPromptId: z.string().uuid().optional().nullable(),
   /**
-   * Default TTS voice/model for live IVR speech: female | male | ema-lightning | kokoro.
+   * Default TTS voice/model for live IVR speech: female | male | ema-lightning.
    * Used when a node has no voice or voice is "default", and always when ttsVoiceApplyAll.
    */
   ttsVoice: z.string().max(40).default("female"),
