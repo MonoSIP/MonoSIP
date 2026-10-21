@@ -2,8 +2,11 @@
  * Built-in SIP brute-force guard (fail2ban for the all-in-one image).
  *
  * Listens to Asterisk's AMI "security" events. An address that fails SIP
- * authentication too often (unknown account / wrong password) is banned: the
- * ban lands in ip_bans, which config-writer turns into the SIP ACL deny list.
+ * authentication too often (unknown account / wrong password) is recorded in
+ * ip_bans (panel list + firewall export). It is deliberately NOT pushed into
+ * Asterisk's SIP ACL: an ACL change means `module reload acl`, which reloads
+ * res_pjsip, and under a scanner flood that reload never finished — every
+ * softphone stopped registering. Block scanners at the host firewall instead.
  * Loopback (WebSocket softphones arrive through the API proxy), private
  * networks, the SIP allowlist and trunk hosts are never banned.
  */
@@ -119,16 +122,14 @@ async function isExemptAddress(ip: string): Promise<boolean> {
 async function banAddress(ip: string, failures: number): Promise<void> {
   const { upsertIpBan } = await import("./ip-bans.js");
   const { securityLog } = await import("./security-log.js");
-  const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
   await upsertIpBan({
     ip,
-    source: "fail2ban",
+    source: "sip-guard",
     reason: `SIP brute force: ${failures} failed attempts in ${SIP_GUARD_DEFAULTS.windowMs / 1000}s`,
     expiresAt: new Date(Date.now() + SIP_GUARD_DEFAULTS.banMs),
   });
   await securityLog(`sip-guard ban ${ip} (${failures} failures)`).catch(() => undefined);
-  console.warn(`[sip-guard] banned ${ip} for 24h after ${failures} failed SIP attempts`);
-  await tryReloadAsterisk();
+  console.warn(`[sip-guard] recorded ${ip} (${failures} failed SIP attempts in 60s) — block it at the firewall`);
 }
 
 /** Keep an AMI session open for security events; reconnects with backoff. */

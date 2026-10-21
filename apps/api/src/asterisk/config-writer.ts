@@ -393,7 +393,12 @@ async function writeAsteriskConfigNow(): Promise<void> {
     let banDeny: string[] = [];
     try {
       const { listActiveIpBans } = await import("../lib/ip-bans.js");
-      banDeny = (await listActiveIpBans(500)).map((b) => b.ip).filter(Boolean);
+      // sip-guard entries stay out of the ACL: changing it reloads res_pjsip,
+      // which hangs under a scanner flood (see lib/sip-guard.ts)
+      banDeny = (await listActiveIpBans(500))
+        .filter((b) => b.source !== "sip-guard")
+        .map((b) => b.ip)
+        .filter(Boolean);
     } catch {
       /* ignore */
     }

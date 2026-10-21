@@ -2,7 +2,7 @@ import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { ipBans } from "../db/schema.js";
 
-export type BanSource = "login" | "fail2ban" | "manual";
+export type BanSource = "login" | "fail2ban" | "manual" | "sip-guard";
 
 export async function isIpActivelyBanned(ip: string): Promise<boolean> {
   const now = new Date();
