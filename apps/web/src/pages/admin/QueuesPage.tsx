@@ -23,6 +23,7 @@ type Queue = {
   callbackEnabled?: boolean;
   announceHoldtime?: boolean;
   announcePosition?: boolean;
+  language?: "tr" | "en" | null;
   timeoutDestType?: string | null;
   timeoutDestId?: string | null;
   fullDestType?: string | null;
@@ -47,6 +48,7 @@ export function QueuesPage() {
   const [callback, setCallback] = useState(false);
   const [announceHold, setAnnounceHold] = useState(true);
   const [announcePos, setAnnouncePos] = useState(true);
+  const [language, setLanguage] = useState<"" | "tr" | "en">("");
   const [timeoutDestType, setTimeoutDestType] = useState("hangup");
   const [timeoutDestId, setTimeoutDestId] = useState<string | null>(null);
   const [fullDestType, setFullDestType] = useState("hangup");
@@ -82,6 +84,7 @@ export function QueuesPage() {
     callbackEnabled: callback,
     announceHoldtime: announceHold,
     announcePosition: announcePos,
+    language: language || null,
     timeoutDestType: timeoutDestType || null,
     timeoutDestId: timeoutDestId,
     fullDestType: fullDestType || null,
@@ -125,6 +128,7 @@ export function QueuesPage() {
     setCallback(false);
     setAnnounceHold(true);
     setAnnouncePos(true);
+    setLanguage("");
     setTimeoutDestType("hangup");
     setTimeoutDestId(null);
     setFullDestType("hangup");
@@ -173,6 +177,7 @@ export function QueuesPage() {
     setCallback(!!q.callbackEnabled);
     setAnnounceHold(q.announceHoldtime ?? true);
     setAnnouncePos(q.announcePosition ?? true);
+    setLanguage(q.language ?? "");
     setTimeoutDestType(q.timeoutDestType ?? "hangup");
     setTimeoutDestId(q.timeoutDestId ?? null);
     setFullDestType(q.fullDestType ?? "hangup");
@@ -275,6 +280,16 @@ export function QueuesPage() {
             value={wrapup}
             onChange={(e) => setWrapup(Number(e.target.value))}
           />
+          <SelectField
+            label={tr("Announcement language")}
+            className="w-[10rem]"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as "" | "tr" | "en")}
+          >
+            <option value="">{tr("System default")}</option>
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+          </SelectField>
           <SelectField label={tr("MOH class")} className="w-[10rem]" value={mohId} onChange={(e) => setMohId(e.target.value)}>
             <option value="">default</option>
             {(moh.data ?? []).map((m) => (

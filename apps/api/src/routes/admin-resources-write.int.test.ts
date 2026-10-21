@@ -114,6 +114,20 @@ describe("queues", () => {
     expect(row?.announcePosition).toBe(true);
   });
 
+  it("stores the announcement language (null = system default) and rejects unknown ones", async () => {
+    const number = uniq().padStart(4, "0").slice(0, 6);
+    const res = await post("/api/v1/admin/queues", { name: "Lang", number, language: "tr" });
+    const id = (res.json() as { id: string }).id;
+    created.queueIds.push(id);
+    expect((await db.select().from(queues).where(eq(queues.id, id)))[0]?.language).toBe("tr");
+
+    const plain = await post("/api/v1/admin/queues", { name: "NoLang", number: String(Number(number) + 1).slice(0, 6) });
+    created.queueIds.push((plain.json() as { id: string }).id);
+    expect((plain.json() as { language: string | null }).language).toBeNull();
+
+    expect((await post("/api/v1/admin/queues", { name: "Bad", number: "99881", language: "de" })).statusCode).toBe(400);
+  });
+
   it("rejects a queue number that is not 2-6 digits", async () => {
     const res = await post("/api/v1/admin/queues", { name: "Bad", number: "12a45" });
     expect(res.statusCode).toBe(400);

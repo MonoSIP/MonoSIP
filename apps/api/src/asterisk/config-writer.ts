@@ -25,6 +25,7 @@ import {
 import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
 import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
+import { queueLanguage } from "./queue-lang.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -991,6 +992,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     } catch {
       /* keep env default */
     }
+    qLang = queueLanguage(q.language, qLang);
     // Answer → MOH first → entry TTS → Queue (periodic position/holdtime while waiting)
     const mohName = moh.find((m) => m.id === q.mohId)?.name ?? "default";
     const queueHead = [

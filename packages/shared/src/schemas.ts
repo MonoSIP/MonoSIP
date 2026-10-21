@@ -117,6 +117,8 @@ export const QueueSchema = z.object({
   joinemptyDestType: DestinationSchema.shape.destType.optional().nullable(),
   joinemptyDestId: z.string().optional().nullable(),
   callbackEnabled: z.boolean().default(false),
+  /** Announcement language; null = system default */
+  language: z.enum(["tr", "en"]).optional().nullable(),
   members: z
     .array(
       z.object({

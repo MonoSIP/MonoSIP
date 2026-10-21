@@ -124,6 +124,8 @@ export const queues = pgTable("queues", {
   joinemptyDestType: varchar("joinempty_dest_type", { length: 32 }),
   joinemptyDestId: text("joinempty_dest_id"),
   callbackEnabled: boolean("callback_enabled").notNull().default(false),
+  /** Announcement language (tr/en); null = system default */
+  language: varchar("language", { length: 8 }),
 });
 
 export const queueMembers = pgTable("queue_members", {

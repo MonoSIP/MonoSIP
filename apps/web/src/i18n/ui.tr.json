@@ -32,6 +32,7 @@
   "Announce / Play": "Anons / Çal",
   "Announce hold time (TTS, MOH pauses)": "Bekleme süresini anons et (TTS, bekleme müziği duraklar)",
   "Announce position (TTS ~30s, MOH pauses)": "Sıra numarasını anons et (TTS ~30 sn, bekleme müziği duraklar)",
+  "Announcement language": "Anons dili",
   "Answered": "Cevaplandı",
   "Applies to announce / menu / TTS after this node.": "Bu düğümden sonraki anons / menü / TTS için geçerlidir.",
   "Apply TTS model to all IVR prompts (ignore per-node voice)": "TTS modelini tüm IVR anonslarına uygula (düğüm sesini yok say)",
