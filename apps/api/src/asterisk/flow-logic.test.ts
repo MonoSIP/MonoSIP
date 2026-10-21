@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FlowJson } from "@dsip/shared";
 import {
+  numberToTurkishWords,
   compare,
   conditionLeft,
   decodeCallbackPlace,
@@ -197,12 +198,13 @@ describe("expandTemplate filters", () => {
   it("formats phone digits, integers and Turkish money", () => {
     expect(expandTemplate("{{t|rakam}}", { t: "0312 844 06" })).toBe("0 3 1 2 8 4 4 0 6");
     expect(expandTemplate("{{d|tamsayi}}", { d: "15.72" })).toBe("16");
-    expect(expandTemplate("{{c|tl}}", { c: "49.578" })).toBe("49 virgül 58");
-    expect(expandTemplate("{{g|tl}}", { g: "6566.77" })).toBe("6566 virgül 77");
-    expect(expandTemplate("{{g|tl}}", { g: "6566,7" })).toBe("6566 virgül 70");
-    expect(expandTemplate("{{d|tl}}", { d: "-1.25" })).toBe("eksi 1 virgül 25");
-    expect(expandTemplate("{{d|tl}}", { d: "-0.001" })).toBe("0 virgül 00");
-    expect(expandTemplate("{{d|tl}}", { d: "42" })).toBe("42 virgül 00");
+    expect(expandTemplate("{{c|tl}}", { c: "49.578" })).toBe("kırk dokuz virgül elli sekiz");
+    expect(expandTemplate("{{g|tl}}", { g: "6566.77" })).toBe("altı bin beş yüz altmış altı virgül yetmiş yedi");
+    expect(expandTemplate("{{g|tl}}", { g: "6566,7" })).toBe("altı bin beş yüz altmış altı virgül yetmiş");
+    expect(expandTemplate("{{d|tl}}", { d: "-1.25" })).toBe("eksi bir virgül yirmi beş");
+    expect(expandTemplate("{{d|tl}}", { d: "34.05" })).toBe("otuz dört virgül sıfır beş");
+    expect(expandTemplate("{{d|tl}}", { d: "-0.001" })).toBe("sıfır");
+    expect(expandTemplate("{{d|tl}}", { d: "42" })).toBe("kırk iki");
     expect(expandTemplate("{{g|tl}}", { g: "-" })).toBe("-");
     expect(expandTemplate("{{c|ascii}}", { c: "İzmir" })).toBe("izmir");
     expect(expandTemplate("{{c|ascii}}", { c: "Şanlıurfa" })).toBe("sanliurfa");
@@ -212,5 +214,18 @@ describe("expandTemplate filters", () => {
 
   it("keeps plain {{var}} and $var, and ignores unknown filters", () => {
     expect(expandTemplate("{{a}} $b {{a|nope}}", { a: "1", b: "2" })).toBe("1 2 1");
+  });
+});
+
+describe("numberToTurkishWords", () => {
+  it("reads Turkish numbers", () => {
+    expect(numberToTurkishWords(0)).toBe("sıfır");
+    expect(numberToTurkishWords(100)).toBe("yüz");
+    expect(numberToTurkishWords(1000)).toBe("bin");
+    expect(numberToTurkishWords(1001)).toBe("bin bir");
+    expect(numberToTurkishWords(10810)).toBe("on bin sekiz yüz on");
+    expect(numberToTurkishWords(101000)).toBe("yüz bir bin");
+    expect(numberToTurkishWords(2_500_000)).toBe("iki milyon beş yüz bin");
+    expect(numberToTurkishWords(1_000_000)).toBe("bir milyon");
   });
 });

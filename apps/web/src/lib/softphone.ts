@@ -937,7 +937,12 @@ export class Softphone {
     if (state === SessionState.Terminated) {
       this.stopLocalRingback();
       this.clearMediaWatch();
-      this.remoteAudio.srcObject = null;
+      // Let the jitter buffer play out the last words (an IVR hangs up right after
+      // its goodbye); a new call that took over the element in the meantime wins.
+      const ending = this.remoteAudio.srcObject;
+      window.setTimeout(() => {
+        if (this.remoteAudio.srcObject === ending) this.remoteAudio.srcObject = null;
+      }, 600);
       // hangup() already moved us to ended
       if (this.callPhase === "ended" || this.callPhase === "idle") {
         this.session = null;

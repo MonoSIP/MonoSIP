@@ -22,10 +22,36 @@ export const TR_PROVINCES = [
  *   il       plate code ("6", "06", "34") → province name ("Ankara", "İstanbul"); "" if invalid
  *   rakam    "03128440695" → "0 3 1 2 8 4 4 0 6 9 5" so TTS reads a phone number digit by digit
  *   tamsayi  "15.72" → "16"
- *   tl       "49.578" / "6566.77" / "-1.5" → "49 virgül 58" / "6566 virgül 77" / "eksi 1 virgül 50"
- *            (2 places, spoken: TTS skips "," and reads a thousands "." as nothing)
+ *   tl       "49.578" / "6566.77" / "-1.5" → "kırk dokuz virgül elli sekiz" /
+ *            "altı bin beş yüz altmış altı virgül yetmiş yedi" / "eksi bir virgül elli"
+ *            (2 places, in words: TTS skipped "," and read the decimals digit by digit)
  *   ascii    "İzmir" / "Şanlıurfa" → "izmir" / "sanliurfa" (APIs that reject Turkish letters in a URL)
  */
+const ONES = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"];
+const TENS = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"];
+const SCALES = ["", "bin", "milyon", "milyar", "trilyon"];
+
+/** 0 ≤ n < 1000 → "dokuz yüz kırk iki" ("yüz", not "bir yüz") */
+function hundredsTr(n: number): string {
+  const h = Math.floor(n / 100);
+  const parts = [h === 0 ? "" : h === 1 ? "yüz" : `${ONES[h]} yüz`, TENS[Math.floor(n / 10) % 10]!, ONES[n % 10]!];
+  return parts.filter(Boolean).join(" ");
+}
+
+/** Non-negative integer in Turkish words: 6566 → "altı bin beş yüz altmış altı" ("bin", not "bir bin"). */
+export function numberToTurkishWords(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return String(n);
+  n = Math.floor(n);
+  if (n === 0) return "sıfır";
+  const words: string[] = [];
+  for (let i = 0; n > 0 && i < SCALES.length; i++, n = Math.floor(n / 1000)) {
+    const g = n % 1000;
+    if (g === 0) continue;
+    words.unshift(i === 1 && g === 1 ? "bin" : [hundredsTr(g), SCALES[i]].filter(Boolean).join(" "));
+  }
+  return words.join(" ");
+}
+
 const TEMPLATE_FILTERS: Record<string, (v: string) => string> = {
   il: (v) => {
     const n = Number(v.trim());
@@ -47,8 +73,12 @@ const TEMPLATE_FILTERS: Record<string, (v: string) => string> = {
   tl: (v) => {
     const n = Number(v.replace(",", "."));
     if (!Number.isFinite(n) || v.trim() === "") return v;
-    const [whole, frac] = Math.abs(n).toFixed(2).split(".");
-    return `${n < 0 && Number(`${whole}.${frac}`) !== 0 ? "eksi " : ""}${whole} virgül ${frac}`;
+    const [whole, frac] = Math.abs(n).toFixed(2).split(".") as [string, string];
+    const sign = n < 0 && Number(`${whole}.${frac}`) !== 0 ? "eksi " : "";
+    // "05" is read "sıfır beş"; ",00" is left out
+    const decimals =
+      frac === "00" ? "" : ` virgül ${frac[0] === "0" ? `sıfır ${ONES[Number(frac[1])]}` : numberToTurkishWords(Number(frac))}`;
+    return `${sign}${numberToTurkishWords(Number(whole))}${decimals}`;
   },
 };
 

@@ -141,6 +141,10 @@ vi.mock("../lib/call-policy.js", () => ({
   })),
 }));
 
+vi.mock("../lib/silence.js", () => ({
+  silenceMedia: vi.fn(async (ms: number) => `sound:dsip/silence-${ms}`),
+}));
+
 vi.mock("../lib/smtp.js", () => ({ sendSmtpMail: vi.fn(async () => undefined) }));
 
 vi.mock("../lib/crypto.js", () => ({ decrypt: vi.fn(() => "tok-123") }));
@@ -1052,7 +1056,9 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
-    expect(ari.playAndWait).not.toHaveBeenCalled();
+    // only the silence that keeps RTP flowing — no announcement
+    const media = vi.mocked(ari.playAndWait).mock.calls.map((c) => String(c[1]));
+    expect(media.every((m) => m.startsWith("sound:dsip/silence-"))).toBe(true);
   });
 
   it("falls back to live TTS when no prompt is configured", async () => {
@@ -1422,16 +1428,28 @@ describe("executeFlowLoop — returning to a menu", () => {
 
 
 describe("executeFlowLoop — wait node", () => {
-  it("pauses for the configured seconds, then continues on next", async () => {
+  it("plays silence for the configured seconds (RTP keeps flowing), then continues on next", async () => {
+    const w = node("w", "wait", { seconds: 3 });
+    const flow = flowOf([w, node("h", "hangup")], [edge("w", "h", "next")]);
+    await runLoop(w, flow);
+    const media = vi.mocked(ari.playAndWait).mock.calls.map((c) => String(c[1]));
+    // 3 × 1 s for the wait, then the 800 ms tail before the hangup node
+    expect(media).toEqual(["sound:dsip/silence-1000", "sound:dsip/silence-1000", "sound:dsip/silence-1000", "sound:dsip/silence-800"]);
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+    expect(ari.startMoh).not.toHaveBeenCalled();
+  });
+
+  it("falls back to sleeping when silence cannot be played", async () => {
+    vi.mocked(ari.playAndWait).mockResolvedValue(false as never);
     const w = node("w", "wait", { seconds: 3 });
     const flow = flowOf([w, node("h", "hangup")], [edge("w", "h", "next")]);
     const running = runLoop(w, flow);
     await vi.advanceTimersByTimeAsync(2900);
     expect(ari.hangup).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(200);
+    await vi.advanceTimersByTimeAsync(1000);
     await running;
     expect(ari.hangup).toHaveBeenCalledWith("ch-n");
-    expect(ari.startMoh).not.toHaveBeenCalled();
+    vi.mocked(ari.playAndWait).mockResolvedValue(undefined as never);
   });
 
   it("plays hold music while waiting when a class is chosen", async () => {

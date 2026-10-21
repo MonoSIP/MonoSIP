@@ -34,6 +34,7 @@ import {
   nextNode,
 } from "./flow-logic.js";
 import path from "node:path";
+import { silenceMedia } from "../lib/silence.js";
 
 async function notifyMissedCall(caller: string, did: string) {
   try {
@@ -90,8 +91,35 @@ export const MAX_FLOW_STEPS = 300;
 /** WebRTC ICE/RTP often not ready immediately after answer — early play becomes a short beep then silence. */
 export const MEDIA_SETTLE_MS = 900;
 
+/** Silence played before the flow hangs up, so the last words reach the caller. */
+export const HANGUP_TAIL_MS = 800;
+
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Keep RTP flowing for `ms` with a near-silent clip (see lib/silence.ts) instead
+ * of sleeping: after a silent gap the caller's jitter buffer clips the next
+ * prompt's first syllable. Falls back to a plain sleep.
+ */
+async function playSilence(channelId: string, ms: number): Promise<void> {
+  const clips = [...Array<number>(Math.floor(ms / 1000)).fill(1000)];
+  if (ms % 1000 >= 100) clips.push(Math.round((ms % 1000) / 100) * 100);
+  for (const [i, clipMs] of clips.entries()) {
+    const media = await silenceMedia(clipMs).catch(() => null);
+    // playAndWait resolves false when the channel is gone or playback could not start
+    if (!media || (await ari.playAndWait(channelId, media, clipMs + 3000)) === false) {
+      await sleep(clips.slice(i).reduce((a, b) => a + b, 0));
+      return;
+    }
+  }
+}
+
+/** Let the last prompt drain out of the caller's jitter buffer, then hang up. */
+async function hangupAfterTail(channelId: string): Promise<void> {
+  await playSilence(channelId, HANGUP_TAIL_MS);
+  await ari.hangup(channelId);
 }
 
 /** Node language wins when set; otherwise flow `language` variable / English. */
@@ -191,7 +219,7 @@ export async function runFlowOnChannel(
   }
   if (!asSubflow) {
     await ari.answer(channelId);
-    await sleep(MEDIA_SETTLE_MS);
+    await playSilence(channelId, MEDIA_SETTLE_MS);
   }
 
   // Load IVR TTS prefs once (Settings → ttsVoice); nodes may override unless apply-all.
@@ -621,8 +649,12 @@ export async function executeFlowLoop(
         const moh = String(data.moh ?? "").trim();
         console.log(`[flow] ${channelId} wait ${seconds}s${moh ? ` (moh ${moh})` : ""}`);
         const withMoh = moh ? await ari.startMoh(channelId, moh === "default" ? undefined : moh) : false;
-        await sleep(seconds * 1000);
-        if (withMoh) await ari.stopMoh(channelId);
+        if (withMoh) {
+          await sleep(seconds * 1000);
+          await ari.stopMoh(channelId);
+        } else {
+          await playSilence(channelId, seconds * 1000);
+        }
         break;
       }
       case "language":
@@ -845,7 +877,7 @@ export async function executeFlowLoop(
         } catch {
           /* ignore */
         }
-        await ari.hangup(channelId);
+        await hangupAfterTail(channelId);
         return "left";
       default:
         console.log(`[flow] ${channelId} skip node type=${node.type}`);
@@ -861,7 +893,7 @@ export async function executeFlowLoop(
     const nxt = nextNode(flow, node.id, handle);
     if (!nxt) {
       if (asSubflow) return "ok";
-      await ari.hangup(channelId);
+      await hangupAfterTail(channelId);
       return "left";
     }
     // Menus and key prompts wait for the caller, so edges back to them ("return to
@@ -872,7 +904,7 @@ export async function executeFlowLoop(
     node = nxt;
   }
   if (asSubflow) return "ok";
-  await ari.hangup(channelId);
+  await hangupAfterTail(channelId);
   return "left";
 }
 

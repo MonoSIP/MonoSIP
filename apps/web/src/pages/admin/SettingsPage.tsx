@@ -17,6 +17,7 @@ import { api } from "../../lib/api";
 import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { SPEECH_VOICES } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
+import { Link } from "react-router-dom";
 
 /** SSL status codes shown as words (translated with tr at render). */
 const SSL_STATUS_LABEL: Record<string, string> = {
@@ -394,6 +395,15 @@ export function SettingsPage() {
               </option>
             ))}
         </SelectField>
+        {prompts.isSuccess && !(prompts.data ?? []).some((p) => p.source !== "cache") && (
+          <p className="text-xs text-[var(--text-muted)]">
+            {tr("No saved prompts yet. Create one from text (TTS) or upload a file on the")}{" "}
+            <Link to="/prompts" className="font-medium text-[var(--accent)] underline">
+              {tr("Prompts")}
+            </Link>{" "}
+            {tr("page; it then appears in this list.")}
+          </p>
+        )}
         <SelectField
           label={tr("IVR TTS model")}
           icon={AudioLines}
