@@ -11,4 +11,4 @@ python3 -m http.server 8765 --directory site
 # → http://localhost:8765
 ```
 
-Docs links on the page point at `github.com/MunaSIP/MunaSIP/blob/main/docs/...` so they work on Pages.
+Docs are rendered into `site/docs/` as `/docs/install/` and the other guides by `node scripts/build-site-docs.mjs`, which also writes `robots.txt` and `sitemap.xml`.

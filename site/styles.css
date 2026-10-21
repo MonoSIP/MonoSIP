@@ -17,18 +17,19 @@
   --violet-line: #a78bfa;
   --font: "Outfit", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
-  --radius: 14px;
+  --radius: 16px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   /* Shared page frame: fluid until the wide-screen band, always inside the viewport. */
   --page-max: 1720px;
   --page-gutter: 1.25rem;
   --measure: 46rem;
   --measure-tight: 32rem;
-  --section-pad: clamp(6rem, 2.5rem + 3.8vw, 8rem);
-  --hero-pad-top: clamp(4.5rem, 2rem + 3.5vw, 6.75rem);
-  --hero-pad-bottom: clamp(2.5rem, 1rem + 2vw, 4rem);
-  --split-gap: clamp(2.5rem, 1.2rem + 2.2vw, 4.75rem);
-  --card-gap: clamp(1rem, 0.7rem + 0.45vw, 1.375rem);
+  /* 8px rhythm: 16 inside a group, 24–32 under a heading, 48–64 between sections. */
+  --section-pad: clamp(3rem, 2rem + 1.4vw, 4rem);
+  --hero-pad-top: clamp(2.5rem, 1.5rem + 1.6vw, 3.5rem);
+  --hero-pad-bottom: clamp(1.5rem, 1rem + 0.8vw, 2.5rem);
+  --split-gap: clamp(2rem, 1.25rem + 1.2vw, 3rem);
+  --card-gap: 1rem;
   color-scheme: dark;
 }
 
@@ -62,6 +63,12 @@ img {
 }
 a {
   color: var(--accent);
+}
+a,
+button,
+.btn {
+  cursor: pointer;
+  touch-action: manipulation;
 }
 code {
   font-family: var(--mono);
@@ -152,6 +159,9 @@ main,
   margin-left: 12px;
 }
 .nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
@@ -168,6 +178,9 @@ main,
   display: flex;
   gap: 10px;
   align-items: center;
+}
+.nav-actions .nav-docs {
+  display: none;
 }
 
 /* ── buttons ── */
@@ -195,8 +208,8 @@ main,
   stroke: none;
 }
 .btn-sm {
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 16px;
   font-size: 14px;
 }
 .btn-primary {
@@ -285,7 +298,7 @@ main,
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -325,7 +338,7 @@ h1 em {
   color: transparent;
 }
 .lead {
-  margin: 20px 0 28px;
+  margin: 16px 0 24px;
   font-size: 19px;
   color: var(--text-muted);
   max-width: min(34em, 100%);
@@ -338,7 +351,7 @@ h1 em {
 .hero-facts {
   list-style: none;
   padding: 0;
-  margin: 28px 0 0;
+  margin: 24px 0 0;
   display: grid;
   gap: 8px;
   color: var(--text-muted);
@@ -365,14 +378,14 @@ h1 em {
   max-width: 46rem;
   justify-self: end;
   margin: 0;
-  padding: 18px;
-  border-radius: 24px;
+  padding: 16px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: linear-gradient(165deg, color-mix(in oklab, var(--bg-elevated) 92%, var(--accent) 8%), var(--bg));
   box-shadow: 0 30px 80px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
 .hero-caption {
-  margin-top: 10px;
+  margin-top: 8px;
   font-size: 13.5px;
   color: var(--text-muted);
   text-align: center;
@@ -515,14 +528,14 @@ h1 em {
 
 .stack-strip {
   list-style: none;
-  margin-top: clamp(3.5rem, 2rem + 2.5vw, 5rem);
-  padding: 18px 22px;
+  margin: clamp(2rem, 1.25rem + 1vw, 2.5rem) 0 0;
+  padding: 16px 24px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 14px 28px;
+  gap: 16px 24px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius);
   background: color-mix(in oklab, var(--bg-elevated) 70%, transparent);
   color: var(--text-muted);
   font-size: 14px;
@@ -542,10 +555,10 @@ h1 em {
 }
 .section-head {
   max-width: var(--measure);
-  margin-bottom: clamp(2.75rem, 1.5rem + 1.8vw, 3.75rem);
+  margin-bottom: clamp(1.5rem, 1rem + 0.8vw, 2rem);
 }
 .kicker {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--accent);
   font: 600 13px var(--mono);
   letter-spacing: 0.08em;
@@ -567,11 +580,13 @@ h2 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--card-gap);
+  counter-reset: feature;
 }
 .card {
   --tone: var(--accent);
   position: relative;
-  padding: 26px 24px 24px;
+  counter-increment: feature;
+  padding: 24px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: linear-gradient(165deg, color-mix(in oklab, var(--bg-elevated) 96%, var(--tone) 4%), var(--bg-elevated));
@@ -585,6 +600,15 @@ h2 {
   height: 2px;
   background: linear-gradient(90deg, var(--tone), transparent 70%);
   opacity: 0.8;
+}
+.card::after {
+  content: counter(feature, decimal-leading-zero);
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font: 600 13px var(--mono);
+  letter-spacing: 0.04em;
+  color: var(--tone);
 }
 .card:hover {
   transform: translateY(-3px);
@@ -622,17 +646,16 @@ h2 {
 
 /* IVR flow line */
 .flowline {
-  margin: 0 0 44px;
-  padding: 18px 16px;
-  border-radius: 20px;
+  margin: 0 0 32px;
+  padding: 16px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: color-mix(in oklab, var(--bg) 70%, transparent);
-  overflow-x: auto;
+  overflow: hidden;
 }
 .flowline svg {
   display: block;
-  width: min(100%, 1320px);
-  min-width: 760px;
+  width: 100%;
   height: auto;
   margin-inline: auto;
 }
@@ -736,7 +759,7 @@ h2 {
   margin: 0;
 }
 .shot .mock {
-  border-radius: 12px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--bg);
   box-shadow: 0 18px 50px rgb(0 0 0 / 0.4);
@@ -818,7 +841,7 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 .tabs button {
   min-height: 44px;
@@ -843,7 +866,7 @@ h2 {
 .tour-frame,
 .terminal {
   margin: 0;
-  border-radius: 18px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   overflow: hidden;
@@ -865,8 +888,8 @@ h2 {
 .window-bar {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 11px 16px;
+  gap: 8px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-soft);
 }
@@ -909,13 +932,13 @@ h2 {
   list-style: none;
   counter-reset: s;
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 .steps li {
   counter-increment: s;
   position: relative;
   min-height: 32px;
-  padding: 4px 0 0 46px;
+  padding: 4px 0 0 48px;
   color: var(--text-muted);
 }
 .steps li::before {
@@ -934,7 +957,7 @@ h2 {
   background: color-mix(in oklab, var(--accent) 10%, transparent);
 }
 .note {
-  margin: 22px 0 0;
+  margin: 24px 0 0;
   padding: 12px 16px;
   border-radius: 12px;
   border: 1px solid color-mix(in oklab, var(--warning) 35%, var(--border));
@@ -971,13 +994,13 @@ h2 {
 
 /* footer */
 .footer {
-  padding: clamp(2.25rem, 1.2rem + 1.5vw, 3.5rem) 0 clamp(3rem, 1.6rem + 2vw, 4.5rem);
+  padding: clamp(2rem, 1.25rem + 1vw, 2.5rem) 0 clamp(2.5rem, 1.5rem + 1.2vw, 3rem);
   border-top: 1px solid var(--border);
 }
 .footer-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px 28px;
+  gap: 16px 32px;
   align-items: center;
   justify-content: space-between;
   font-size: 14.5px;
@@ -1003,6 +1026,23 @@ h2 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+@container page (min-width: 64rem) {
+  .soft-grid .ticks {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+    max-width: none;
+  }
+}
+@container page (max-width: 55rem) {
+  .flowline {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .flowline svg {
+    width: 880px;
+  }
+}
 @media (min-width: 1025px) {
   :root {
     --page-gutter: clamp(1.25rem, 4.8vw - 1.85rem, 5.5rem);
@@ -1016,18 +1056,18 @@ h2 {
   }
   .callmap {
     position: absolute;
-    top: 18px;
-    right: 18px;
-    bottom: 3.4rem;
-    left: 18px;
+    top: 16px;
+    right: 16px;
+    bottom: 3rem;
+    left: 16px;
     width: auto;
     height: auto;
   }
   .hero-caption {
     position: absolute;
-    right: 18px;
-    bottom: 14px;
-    left: 18px;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
     margin: 0;
   }
 }
@@ -1036,7 +1076,7 @@ h2 {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: center;
-    gap: 14px 20px;
+    gap: 16px 24px;
   }
 }
 
@@ -1057,6 +1097,9 @@ h2 {
   }
   .nav-links {
     display: none;
+  }
+  .nav-actions .nav-docs {
+    display: inline-flex;
   }
   .soft-grid .phone-stage {
     order: 2;
@@ -1085,8 +1128,8 @@ h2 {
   }
   :root {
     --page-gutter: 1rem;
-    --section-pad: 4.5rem;
-    --hero-pad-top: 2.75rem;
+    --section-pad: 2.5rem;
+    --hero-pad-top: 2.5rem;
   }
   .hero {
     padding-top: var(--hero-pad-top);
@@ -1130,13 +1173,198 @@ h2 {
   }
 }
 
+/* ── docs ── */
+.doc-layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 46rem);
+  gap: 32px 48px;
+  justify-content: start;
+  padding-block: var(--section-pad);
+}
+.doc-layout > * {
+  min-width: 0;
+}
+.doc-nav {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.doc-nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-decoration: none;
+}
+.doc-nav a:hover {
+  color: var(--text);
+  background: var(--bg-soft);
+}
+.doc-nav a[aria-current="page"] {
+  color: var(--text);
+  background: var(--bg-soft);
+}
+.doc h1,
+.doc h2,
+.doc h3 {
+  scroll-margin-top: 88px;
+}
+.doc h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  margin-bottom: 16px;
+}
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.crumbs a {
+  font-weight: 500;
+  text-decoration: none;
+}
+.crumbs a:hover {
+  text-decoration: underline;
+}
+.crumbs [aria-current="page"] {
+  color: var(--text);
+}
+.doc h2 {
+  font-size: 24px;
+  margin: 32px 0 12px;
+}
+.doc h3 {
+  font-size: 18px;
+  margin: 24px 0 8px;
+}
+.doc p,
+.doc li {
+  color: var(--text-muted);
+}
+.doc p {
+  margin: 0 0 16px;
+}
+.doc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.doc a {
+  font-weight: 600;
+}
+.doc ul,
+.doc ol {
+  margin: 0 0 16px;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 8px;
+}
+.doc li.task {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  list-style: none;
+  margin-left: -1.25rem;
+}
+.doc li.task .box {
+  width: 16px;
+  height: 16px;
+  margin-top: 4px;
+  flex: none;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
+}
+.doc li.task.done .box {
+  background: var(--accent);
+}
+.doc pre {
+  margin: 0 0 16px;
+  padding: 16px;
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font: 13.5px/1.7 var(--mono);
+  color: var(--text);
+}
+.doc pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+.doc-table {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 0 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.doc th,
+.doc td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.doc tr:last-child td {
+  border-bottom: 0;
+}
+.doc th {
+  color: var(--text);
+  font-weight: 600;
+  background: color-mix(in oklab, var(--bg-elevated) 80%, transparent);
+}
+.doc td {
+  color: var(--text-muted);
+}
+.doc hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+@media (max-width: 800px) {
+  .doc-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .doc-nav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .doc-nav a {
+    min-height: 44px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+  }
+}
+
 .section-lead + .ticks {
-  margin-top: 26px;
+  margin-top: 24px;
 }
 .more {
   display: inline-flex;
   align-items: center;
-  margin-top: 22px;
+  min-height: 44px;
+  margin-top: 16px;
   font-weight: 600;
   text-decoration: none;
 }

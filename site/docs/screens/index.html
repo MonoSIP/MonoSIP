@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MunaSIP admin and portal screens</title>
+    <meta name="description" content="What each MunaSIP screen is for: dashboard, extensions, queues, the IVR designer, call logs, reports and settings." />
+    <link rel="canonical" href="https://munasip.github.io/docs/screens/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/screens/" />
+    <meta property="og:title" content="MunaSIP admin and portal screens" />
+    <meta property="og:description" content="What each MunaSIP screen is for: dashboard, extensions, queues, the IVR designer, call logs, reports and settings." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"Screens","item":"https://munasip.github.io/docs/screens/"}]},{"@type":"TechArticle","headline":"MunaSIP admin and portal screens","description":"What each MunaSIP screen is for: dashboard, extensions, queues, the IVR designer, call logs, reports and settings.","url":"https://munasip.github.io/docs/screens/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/screens/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="../install/">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="../ivr/">IVR</a>
+          <a href="../data-model/">Data model</a>
+          <a href="../api/">API</a>
+          <a href="./" aria-current="page">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="../security/">Security</a>
+          <a href="../text-to-speech/">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">Screens</span></nav>
+          <h1 id="munasip-admin-and-portal-screens">MunaSIP admin and portal screens</h1>
+<p>The admin panel has 15 screens; the user portal has 5. Both live in the same Vite app with different layouts by role.</p>
+<h2 id="admin-panel">Admin panel</h2>
+<div class="doc-table"><table><thead><tr><th>Screen</th><th>Content</th></tr></thead><tbody><tr><td>Dashboard</td><td>Active calls, queue waiters, extension state, trunk status, today’s summary; full-screen (TV) mode</td></tr><tr><td>Extensions</td><td>List (state, DND, device); detail tabs: general, forwarding, permissions, recording, portal, devices; CSV import/export</td></tr><tr><td>Ring groups</td><td>List and edit</td></tr><tr><td>Queues</td><td>List; detail: settings, members (drag-and-drop order, pause), announces, overflow destinations</td></tr><tr><td>Schedules</td><td>Weekly editor, holiday calendar, manual override, “now” status</td></tr><tr><td>IVR (flows)</td><td>List; designer: canvas, node palette, node settings, simulation panel, version history</td></tr><tr><td>Trunks</td><td>SIP provider list, create form, live status</td></tr><tr><td>Routes</td><td>Inbound and outbound routes, blacklist</td></tr><tr><td>Prompts</td><td>Upload announcements, generate via TTS, live TTS cache</td></tr><tr><td>Music on hold</td><td>Classes (unique names), upload, preview, delete</td></tr><tr><td>Recordings</td><td>Filtered list, waveform player, download, access log</td></tr><tr><td>Call logs</td><td>Filtered CDR table; a clicked row expands in place with call facts and the IVR step timeline; CSV export</td></tr><tr><td>Missed calls</td><td>Waiting / called-back list</td></tr><tr><td>Reports</td><td>Summary, queue, extension, IVR DTMF, quality; date range</td></tr><tr><td>Integration</td><td>Webhooks, API keys</td></tr><tr><td>Settings</td><td>General; security (admin/portal/SIP IP allowlists, denylist, bans, firewall export, login flood); country/spend limits; KVKK; email; backup; audit log; 2FA</td></tr></tbody></table></div>
+<h2 id="user-portal">User portal</h2>
+<div class="doc-table"><table><thead><tr><th>Screen</th><th>Content</th></tr></thead><tbody><tr><td>Phone</td><td>Softphone: keypad, call on the phone screen, recent calls behind a button; a mini phone appears on every other portal page</td></tr><tr><td>Directory</td><td>Coworkers and presence, dial</td></tr><tr><td>My calls</td><td>Inbound, outbound, missed; callback</td></tr><tr><td>My recordings</td><td>List and player (listen only)</td></tr><tr><td>My settings</td><td>DND, forwarding, voicemail, password, audio devices</td></tr></tbody></table></div>
+<h2 id="shared-ui-rules">Shared UI rules</h2>
+<ul><li>Desktop left nav; mobile bottom tabs (portal) or hamburger (admin)</li><li>Light/dark theme; follows system preference, overridable</li><li>Tables become cards on mobile; flow designer is view-only on mobile</li><li>Default UI language is <strong>English</strong> (Turkish available in-app). Dates/numbers use locale formatting</li></ul>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

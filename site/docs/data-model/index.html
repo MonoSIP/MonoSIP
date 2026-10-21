@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MunaSIP data model</title>
+    <meta name="description" content="What MunaSIP stores in PostgreSQL: extensions, queues, call flows, CDR, recordings and system settings." />
+    <link rel="canonical" href="https://munasip.github.io/docs/data-model/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/data-model/" />
+    <meta property="og:title" content="MunaSIP data model" />
+    <meta property="og:description" content="What MunaSIP stores in PostgreSQL: extensions, queues, call flows, CDR, recordings and system settings." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"Data model","item":"https://munasip.github.io/docs/data-model/"}]},{"@type":"TechArticle","headline":"MunaSIP data model","description":"What MunaSIP stores in PostgreSQL: extensions, queues, call flows, CDR, recordings and system settings.","url":"https://munasip.github.io/docs/data-model/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/data-model/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="../install/">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="../ivr/">IVR</a>
+          <a href="./" aria-current="page">Data model</a>
+          <a href="../api/">API</a>
+          <a href="../screens/">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="../security/">Security</a>
+          <a href="../text-to-speech/">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">Data model</span></nav>
+          <h1 id="munasip-data-model">MunaSIP data model</h1>
+<p>All settings live in PostgreSQL; Asterisk config is generated from here. Destination fields use the same pair everywhere: <code>dest_type</code> + <code>dest_id</code>.</p>
+<div class="doc-table"><table><thead><tr><th>Table</th><th>Main fields</th></tr></thead><tbody><tr><td><code>extensions</code></td><td>number, name, email, sip_secret (encrypted), portal_password_hash, portal_enabled, recording_mode, recording_listen_allowed, outbound_cli, call_permissions, mobile_forward_allowed, dnd, voicemail_pin</td></tr><tr><td><code>extension_forwarding</code></td><td>extension_id, status (no_answer / busy / unavailable), ring_seconds, dest_type, dest_id</td></tr><tr><td><code>devices</code></td><td>extension_id, model, mac, provisioning_profile, last register time</td></tr><tr><td><code>ring_groups</code></td><td>name, number, strategy, ring time, unanswered destination</td></tr><tr><td><code>ring_group_members</code></td><td>ring_group_id, extension_id, order</td></tr><tr><td><code>queues</code></td><td>name, number, strategy, member_timeout, wrapup, max_wait, max_callers, announce settings, moh_id, schedule_id, overflow destinations, callback_enabled</td></tr><tr><td><code>queue_members</code></td><td>queue_id, extension_id, penalty, paused, pause_reason</td></tr><tr><td><code>schedules</code></td><td>name, timezone, override_mode, override_until</td></tr><tr><td><code>schedule_ranges</code></td><td>schedule_id, day, start, end, status (open / lunch)</td></tr><tr><td><code>holidays</code></td><td>schedule_id (null = global), date, half-day flag, name</td></tr><tr><td><code>trunks</code></td><td>name, host, port, transport, auth_type, username, secret (encrypted), codecs, max_channels, number format rules, status</td></tr><tr><td><code>inbound_routes</code></td><td>did, caller_pattern, priority, dest_type, dest_id</td></tr><tr><td><code>outbound_routes</code></td><td>name, pattern, prefix rewrite, ordered trunk list, required permission</td></tr><tr><td><code>blacklist</code></td><td>number or pattern, direction, note</td></tr><tr><td><code>flows</code></td><td>name, draft_json, published_version_id</td></tr><tr><td><code>flow_versions</code></td><td>flow_id, version number, json, published_at</td></tr><tr><td><code>secrets</code></td><td>encrypted tokens/passwords for API nodes</td></tr><tr><td><code>prompts</code></td><td>name, language, file path, TTS source</td></tr><tr><td><code>moh_classes</code></td><td>name, files</td></tr><tr><td><code>cdr</code></td><td>call_id (linkedid), start, answer, end, direction, caller, callee, did, extension, queue, disposition, duration, trunk_id, recording_id, dnd_flag, quality (jitter, loss, MOS)</td></tr><tr><td><code>call_events</code></td><td>call_id, time, type, data (CEL and flow steps; IVR DTMF reports come from here)</td></tr><tr><td><code>queue_events</code></td><td>Asterisk <code>queue_log</code> rows</td></tr><tr><td><code>recordings</code></td><td>call_id, file path, duration, size, deleted_at, archived flag</td></tr><tr><td><code>recording_access_log</code></td><td>recording_id, who (admin / extension), time</td></tr><tr><td><code>missed_calls</code></td><td>number, destination, time, status (waiting / called_back), return call_id</td></tr><tr><td><code>voicemails</code></td><td>extension_id, caller, time, file, read flag</td></tr><tr><td><code>spend_limits</code></td><td>scope (global / extension), daily and monthly limits, current usage</td></tr><tr><td><code>webhooks</code></td><td>URL, event types, signing key, active flag</td></tr><tr><td><code>api_keys</code></td><td>name, hash, permissions, last used</td></tr><tr><td><code>audit_log</code></td><td>actor, action, object, before/after, IP, time</td></tr><tr><td><code>settings</code></td><td>global settings (KVKK retention, SMTP, backup, IP restrictions, hostname/SSL)</td></tr></tbody></table></div>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

@@ -73,7 +73,7 @@ Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
 ## Documentation
 
-All docs live under **[docs/](docs/README.md)**. Static product site: **[site/](site/index.html)** (open locally or publish with GitHub Pages → `/site`).
+All docs live under **[docs/](docs/README.md)** and on the site at **[munasip.github.io/docs](https://munasip.github.io/docs/)**. Static product site: **[site/](site/index.html)**.
 
 ## License
 

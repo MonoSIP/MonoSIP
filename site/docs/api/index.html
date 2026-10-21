@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MunaSIP HTTP API</title>
+    <meta name="description" content="HTTP API for the MunaSIP admin panel, the user portal and outside systems: extensions, flows, CDR, webhooks and API keys." />
+    <link rel="canonical" href="https://munasip.github.io/docs/api/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/api/" />
+    <meta property="og:title" content="MunaSIP HTTP API" />
+    <meta property="og:description" content="HTTP API for the MunaSIP admin panel, the user portal and outside systems: extensions, flows, CDR, webhooks and API keys." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"API","item":"https://munasip.github.io/docs/api/"}]},{"@type":"TechArticle","headline":"MunaSIP HTTP API","description":"HTTP API for the MunaSIP admin panel, the user portal and outside systems: extensions, flows, CDR, webhooks and API keys.","url":"https://munasip.github.io/docs/api/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/api/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="../install/">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="../ivr/">IVR</a>
+          <a href="../data-model/">Data model</a>
+          <a href="./" aria-current="page">API</a>
+          <a href="../screens/">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="../security/">Security</a>
+          <a href="../text-to-speech/">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">API</span></nav>
+          <h1 id="munasip-http-api">MunaSIP HTTP API</h1>
+<p>The backend exposes three surfaces: admin API, user portal API, and an integration API for external systems. All under <code>/api/v1</code>; request/response bodies are validated with Zod schemas in <code>packages/shared</code>.</p>
+<h2 id="admin-api-apiv1admin-session-2fa">Admin API (<code>/api/v1/admin</code>, session + 2FA)</h2>
+<div class="doc-table"><table><thead><tr><th>Resource</th><th>Endpoints</th></tr></thead><tbody><tr><td>Extensions</td><td><code>GET/POST /extensions</code>, <code>GET/PATCH/DELETE /extensions/:id</code>, <code>POST /extensions/import</code>, <code>GET /extensions/export</code>, <code>POST /extensions/:id/reset-password</code>, <code>PUT /extensions/:id/forwarding</code></td></tr><tr><td>Devices</td><td><code>GET/POST /devices</code>, <code>GET /devices/:id/qr</code></td></tr><tr><td>Ring groups</td><td><code>GET/POST /ring-groups</code>, <code>PATCH/DELETE /ring-groups/:id</code></td></tr><tr><td>Queues</td><td><code>GET/POST /queues</code>, <code>PATCH/DELETE /queues/:id</code>, <code>PUT /queues/:id/members</code>, <code>POST /queues/:id/members/:ext/pause</code></td></tr><tr><td>Schedules</td><td><code>GET/POST /schedules</code>, <code>PATCH /schedules/:id</code>, <code>PUT /schedules/:id/override</code>, <code>GET /holidays</code>, <code>POST /holidays/import</code></td></tr><tr><td>Trunks</td><td><code>GET/POST /trunks</code>, <code>PATCH/DELETE /trunks/:id</code>, <code>GET /trunks/:id/status</code></td></tr><tr><td>Routes</td><td><code>GET/POST /routes/inbound</code>, <code>GET/POST /routes/outbound</code>, <code>PATCH/DELETE /routes/:kind/:id</code>, <code>GET/POST/DELETE /blacklist</code></td></tr><tr><td>Flows</td><td><code>GET/POST /flows</code>, <code>GET/PUT /flows/:id/draft</code>, <code>POST /flows/:id/validate</code>, <code>POST /flows/:id/publish</code>, <code>GET /flows/:id/versions</code>, <code>POST /flows/:id/rollback</code>, <code>POST /flows/:id/simulate</code>, <code>POST /flows/test-http</code></td></tr><tr><td>Prompts</td><td><code>GET/POST /prompts</code> (upload or TTS), <code>GET/POST /moh</code></td></tr><tr><td>Recordings</td><td><code>GET /recordings</code>, <code>GET /recordings/:id/stream</code>, <code>GET /recordings/:id/download</code>, <code>GET /recordings/:id/access-log</code></td></tr><tr><td>Logs</td><td><code>GET /cdr</code>, <code>GET /cdr/export</code>, <code>GET /missed-calls</code>, <code>GET /calls/:id/timeline</code></td></tr><tr><td>Live</td><td><code>GET /live/calls</code>, <code>POST /live/calls/:id/spy</code> (listen / whisper / barge), <code>POST /live/calls/:id/hangup</code></td></tr><tr><td>Reports</td><td><code>GET /reports/summary</code>, <code>/reports/queues</code>, <code>/reports/extensions</code>, <code>/reports/ivr</code></td></tr><tr><td>System</td><td><code>GET/PATCH /settings</code>, <code>GET/POST /webhooks</code>, <code>GET/POST /api-keys</code>, <code>GET /audit-log</code>, <code>POST /backups</code>, <code>POST /system/reload</code></td></tr></tbody></table></div>
+<h2 id="user-portal-api-apiv1me-extension-session">User portal API (<code>/api/v1/me</code>, extension session)</h2>
+<ul><li><code>POST /auth/login</code> (extension + password), <code>POST /auth/logout</code>, <code>PATCH /me/password</code></li><li><code>GET /me/sip-credentials</code>: short-lived softphone credentials</li><li><code>GET /me/calls</code>, <code>GET /me/missed-calls</code></li><li><code>GET /me/recordings</code>, <code>GET /me/recordings/:id/stream</code> (own recordings only; no download header)</li><li><code>GET /me/voicemails</code>, <code>GET /me/voicemails/:id/stream</code>, <code>PATCH /me/voicemails/:id</code></li><li><code>GET/PUT /me/forwarding</code>, <code>PUT /me/dnd</code></li><li><code>GET /me/directory</code>: directory and coworker presence</li></ul>
+<h2 id="integration-api-apiv1ext-api-key">Integration API (<code>/api/v1/ext</code>, API key)</h2>
+<ul><li><code>POST /calls/originate</code>: click-to-call (rings extension first, then dials the number)</li><li><code>GET /cdr</code>, <code>GET /recordings/:id/stream</code></li><li>Webhook events: <code>call.ringing</code>, <code>call.answered</code>, <code>call.ended</code>, <code>call.missed</code>; HMAC-signed body, 3 retries</li></ul>
+<h2 id="websocket-ws">WebSocket (<code>/ws</code>)</h2>
+<ul><li>Admin: <code>call.*</code>, <code>queue.*</code> (waiters, member state), <code>extension.state</code>, <code>trunk.state</code>, <code>alert.*</code></li><li>Portal: <code>presence.*</code> (coworkers), <code>voicemail.new</code>, <code>missed.new</code></li><li>Events are collected from AMI and ARI, filtered by the backend, then fan-out</li></ul>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

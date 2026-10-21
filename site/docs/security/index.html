@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MunaSIP server security and KVKK</title>
+    <meta name="description" content="Harden a MunaSIP host: firewall, SIP exposure, toll-fraud limits, call recording and the KVKK announcement." />
+    <link rel="canonical" href="https://munasip.github.io/docs/security/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/security/" />
+    <meta property="og:title" content="MunaSIP server security and KVKK" />
+    <meta property="og:description" content="Harden a MunaSIP host: firewall, SIP exposure, toll-fraud limits, call recording and the KVKK announcement." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"Security","item":"https://munasip.github.io/docs/security/"}]},{"@type":"TechArticle","headline":"MunaSIP server security and KVKK","description":"Harden a MunaSIP host: firewall, SIP exposure, toll-fraud limits, call recording and the KVKK announcement.","url":"https://munasip.github.io/docs/security/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/security/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="../install/">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="../ivr/">IVR</a>
+          <a href="../data-model/">Data model</a>
+          <a href="../api/">API</a>
+          <a href="../screens/">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="./" aria-current="page">Security</a>
+          <a href="../text-to-speech/">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">Security</span></nav>
+          <h1 id="munasip-server-security-and-kvkk">MunaSIP server security and KVKK</h1>
+<h2 id="server">Server</h2>
+<p>All components run on a single on-prem or hosted VM. Sizing assumes at most ~8–10 concurrent calls.</p>
+<div class="doc-table"><table><thead><tr><th>Resource</th><th>Value</th></tr></thead><tbody><tr><td>CPU</td><td>2–4 vCPU, dedicated (no overcommit)</td></tr><tr><td>RAM</td><td>4–8 GB</td></tr><tr><td>System disk</td><td>40 GB</td></tr><tr><td>Recording disk</td><td>Separate disk, 200–500 GB</td></tr><tr><td>OS</td><td>Debian 13</td></tr><tr><td>On the same host</td><td>Asterisk, API, PostgreSQL, Nginx (panel + TLS), coturn</td></tr></tbody></table></div>
+<h2 id="network">Network</h2>
+<ul><li><strong>Recording footprint:</strong> WAV ≈ 1 MB/min; 1,000 minutes/day ≈ 20–25 GB/month. Opus cuts that ~5–8×</li><li><strong>Network:</strong> Stable private IP. Disable SIP ALG on modem/firewall</li><li><strong>Exposed:</strong> 443 for panel/portal (HTTPS + WSS). TURN 3478 + relay range. SIP/RTP toward the carrier only on the provider’s IPs</li><li><strong>Not exposed:</strong> 5060/5061 SIP, AMI, ARI, PostgreSQL. Off-site desk phones use VPN</li><li><strong>Audio quality:</strong> No CPU overcommit on the hypervisor; QoS (DSCP 46) when possible</li><li><strong>Backup:</strong> Nightly DB + settings to NAS or SFTP; VM snapshot separately</li><li><strong>Outage:</strong> If the host or uplink fails, carrier-side failover of inbound to mobile is configured in the SIP provider panel</li></ul>
+<h2 id="security">Security</h2>
+<p>The largest financial risk is toll fraud from a compromised extension. Call restrictions and spend limits ship in phase 1.</p>
+<h3 id="pbx">PBX</h3>
+<ul><li>SIP secrets are 32-character random; users never see them</li><li>Fail2ban: block IPs after bad SIP register / admin login (<code>docker compose --profile fail2ban</code>; prefer host firewall in production)</li><li>Panel → Settings → Security: <code>sipIpAllowlist</code> / <code>sipIpDenylist</code> → PJSIP ACL; nftables/ufw export for the host</li><li>Host firewall template: <code>scripts/harden-firewall.sh</code> (SIP/RTP allowlist only)</li><li>Outbound country allowlist; default Turkey-only</li><li>Dial-rate limit: extension that dials abnormally is stopped; admin gets email</li><li>Spend stop: global and per-extension daily/monthly limits</li><li>SIP TLS; desk media offers SDES SRTP (<code>media_encryption=sdes</code> + optimistic fallback); WebRTC uses DTLS-SRTP</li></ul>
+<h3 id="panel-and-portal">Panel and portal</h3>
+<ul><li>HTTPS only; Let’s Encrypt automatic certificates</li><li>Admin login requires 2FA; <code>adminIpAllowlist</code> applies to the whole admin API (empty = open in lab)</li><li>Portal: optional <code>portalIpAllowlist</code>; login flood → temporary ban (<code>ip_bans</code> + memory)</li><li>Trunk and API-node secrets encrypted at rest</li><li>Every admin change is written to the audit log</li></ul>
+<h2 id="kvkk-privacy">KVKK (privacy)</h2>
+<ul><li>Disclosure announcement on recorded inbound and outbound calls</li><li>Retention is configurable; expired recordings are deleted automatically and logged</li><li>Access by role: admin hears all; extension hears only own; extension cannot download</li><li>Every listen, download, and live spy is logged</li><li>Recordings and CDR stay in-company; not sent to third-party services</li><li>Inform employees that calls may be recorded</li></ul>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visual IVR designer for MunaSIP</title>
+    <meta name="description" content="Draw a MunaSIP IVR: menus, API lookups, neural speech, transfers and queues. Test the call, then publish it." />
+    <link rel="canonical" href="https://munasip.github.io/docs/ivr/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/ivr/" />
+    <meta property="og:title" content="Visual IVR designer for MunaSIP" />
+    <meta property="og:description" content="Draw a MunaSIP IVR: menus, API lookups, neural speech, transfers and queues. Test the call, then publish it." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"IVR","item":"https://munasip.github.io/docs/ivr/"}]},{"@type":"TechArticle","headline":"Visual IVR designer for MunaSIP","description":"Draw a MunaSIP IVR: menus, API lookups, neural speech, transfers and queues. Test the call, then publish it.","url":"https://munasip.github.io/docs/ivr/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/ivr/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="../install/">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="./" aria-current="page">IVR</a>
+          <a href="../data-model/">Data model</a>
+          <a href="../api/">API</a>
+          <a href="../screens/">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="../security/">Security</a>
+          <a href="../text-to-speech/">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">IVR</span></nav>
+          <h1 id="visual-ivr-designer-for-munasip">Visual IVR designer for MunaSIP</h1>
+<p>IVR flows are built with React Flow (drag-and-drop), stored as JSON, and executed by the ARI flow engine on the backend. Each node exit is a separate edge to the next node. Every node type has its own shape and color on the map (speech bubble for announcements, tag for menus, slanted card for API calls, hexagon for conditions, and so on).</p>
+<h2 id="nodes">Nodes</h2>
+<div class="doc-table"><table><thead><tr><th>Node</th><th>What it does</th><th>Exits</th></tr></thead><tbody><tr><td>Start</td><td>Call enters the flow; <code>caller</code>, <code>did</code>, <code>time</code> variables ready</td><td>next</td></tr><tr><td>Announce</td><td>Speaks text or plays a prompt WAV; language (en/tr), voice / TTS model</td><td>next</td></tr><tr><td>TTS</td><td>Speaks text; <code>$var</code> / <code>{{var}}</code> and filters supported; language, voice</td><td>next</td></tr><tr><td>Menu</td><td>Plays a prompt and collects DTMF; single or multi-digit, timeout, retries</td><td>per digit, timeout, invalid</td></tr><tr><td>Get key</td><td>Collects keypad digits into a named variable (e.g. <code>pin</code> → <code>$pin</code>); min / max digits</td><td>next, timeout</td></tr><tr><td>API request</td><td>HTTP call; maps the JSON response into variables</td><td>success, error</td></tr><tr><td>If (condition)</td><td>Compares variables (=, ≠, &gt;, &lt;, contains, empty, regex); area / country codes</td><td>true, false</td></tr><tr><td>Set variable</td><td>Writes a variable (templates and filters allowed)</td><td>next</td></tr><tr><td>Pause</td><td>Waits 1–600 seconds in silence or with a hold-music class, then continues</td><td>next</td></tr><tr><td>Language</td><td>Sets the language for the following prompts</td><td>next</td></tr><tr><td>Schedule</td><td>Looks up a schedule’s current status</td><td>open, lunch, after hours, holiday</td></tr><tr><td>Directory</td><td>Dial-by-name; connects to the extension</td><td>found, not found</td></tr><tr><td>Subflow</td><td>Runs another flow and returns</td><td>return</td></tr><tr><td>Transfer</td><td>Shared destination picker: extension, group, queue, external number</td><td>no answer, busy, unavailable</td></tr><tr><td>Queue</td><td>Enters a queue; uses the <code>priority</code> variable</td><td>timeout, full, no agents, callback requested</td></tr><tr><td>Voicemail</td><td>Extension or general mailbox</td><td>—</td></tr><tr><td>Hangup</td><td>Ends the call</td><td>—</td></tr></tbody></table></div>
+<p>A busy operator is detected before dialing: the caller hears “busy”, the <strong>busy</strong> exit runs, and the operator’s phone does not ring.</p>
+<h2 id="api-request-node">API request node</h2>
+<ul><li><strong>Request:</strong> GET, POST, PUT, PATCH, DELETE; URL, headers and body templates (<code>$caller</code>, <code>$pin</code>, <code>{{caller}}</code>)</li><li><strong>Auth:</strong> none, Bearer, Basic, or a custom header (e.g. <code>authorization: apikey …</code>). Secrets are stored encrypted in <strong>Settings → Secrets</strong> and never appear in the flow JSON</li><li><strong>Response mapping:</strong> JSON path → variable, e.g. <code>$.result.0.selling → gold</code>; arrays by index (<code>$.0.degree</code>)</li><li><strong>Safety:</strong> timeout (default 3 s, max 10 s) and an optional single retry</li><li><strong>Error exit:</strong> timeout, non-2xx or an unparseable body. A flow cannot publish while the error exit is unconnected</li><li><strong>Test:</strong> send a sample request from the node settings and see the raw response and mapped variables</li></ul>
+<p>Tip: put an Announce node such as “One moment, I’m looking that up.” in front of a lookup, so the caller knows the pause is the query.</p>
+<p>Example: inbound → POST the caller to a CRM → <code>{&quot;customer&quot;:true,&quot;agent&quot;:&quot;201&quot;}</code> → transfer to 201; if the API fails → general queue.</p>
+<h2 id="variables-templates-and-filters">Variables, templates and filters</h2>
+<p>Use <code>$name</code> or <code>{{name}}</code> in announcements, TTS and menu prompts, and in API URLs, headers and bodies. Built-ins: <code>caller</code>, <code>did</code>, <code>time</code>. Get key, Set variable and API mappings add more.</p>
+<p><code>{{name|filter}}</code> reshapes a value for speech or for a URL:</p>
+<div class="doc-table"><table><thead><tr><th>Filter</th><th>Input → output</th><th>Use</th></tr></thead><tbody><tr><td><code>province</code></td><td><code>6</code> / <code>06</code> → <code>Ankara</code></td><td>Turkish plate code to province name (empty when invalid — check it with an If node)</td></tr><tr><td><code>digits</code></td><td><code>03128440695</code> → <code>0 3 1 2 8 4 4 0 6 9 5</code></td><td>Read a phone or account number digit by digit</td></tr><tr><td><code>round</code></td><td><code>15.72</code> → <code>16</code></td><td>Whole numbers (temperatures, index points)</td></tr><tr><td><code>amount</code></td><td><code>49.578</code> → “forty-nine point fifty-eight” in Turkish words</td><td>Prices and rates read naturally by the Turkish voices; <code>,00</code> is left out</td></tr><tr><td><code>ascii</code></td><td><code>İzmir</code> → <code>izmir</code></td><td>APIs that reject non-ASCII letters in a URL</td></tr></tbody></table></div>
+<p>The short names <code>il</code>, <code>rakam</code>, <code>tamsayi</code> and <code>tl</code> are accepted as aliases.</p>
+<h2 id="speech">Speech</h2>
+<ul><li><strong>Sentence by sentence:</strong> long text is split into sentences; the next one is synthesized while the current one plays, so a long read-out starts in about a second.</li><li><strong>Type-ahead:</strong> callers can press a key during a prompt; the digit is buffered and the prompt stops.</li><li><strong>Clean edges:</strong> the line carries near-silence while the flow waits, so the next prompt’s first syllable is not clipped, and the flow plays a short tail before hanging up so the last words arrive.</li><li><strong>Cache:</strong> synthesized sentences are cached; repeated prompts play instantly.</li></ul>
+<h2 id="editing">Editing</h2>
+<ul><li>Drag nodes freely; click the <strong>pencil</strong> on a node to open its settings (Escape / Done / backdrop to close)</li><li>The trash icon deletes a node (with confirmation). Adding from the palette opens its settings once</li><li>Click a connection to select it, then press <strong>×</strong> on it (or Backspace) to remove it</li><li>The right sidebar is <strong>Test call</strong> only (simulate with caller, DID, DTMF sequence and optional mock API JSON)</li></ul>
+<h2 id="call-simulation">Call simulation</h2>
+<ul><li>Runs the flow step by step with a caller number, date/time and DTMF inputs</li><li>Visited nodes and edges highlight on the canvas; variables are visible at each step</li><li>API nodes hit the real endpoint or use the mock response</li></ul>
+<h2 id="versioning-and-validation">Versioning and validation</h2>
+<ul><li>Each flow has a draft and a published version; live calls use the published one</li><li>Pre-publish validation: unconnected exits, unreachable nodes, cycles (including subflows), missing destinations</li><li>Old versions are kept; one-click rollback</li><li>Import / export as JSON</li><li>If a new version publishes mid-call, the call in progress finishes on the version it started with</li></ul>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

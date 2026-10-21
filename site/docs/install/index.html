@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Install MunaSIP with Docker</title>
+    <meta name="description" content="Install the self-hosted company PBX from a prebuilt Docker image or Compose. Ports, volumes, lab logins and upgrading." />
+    <link rel="canonical" href="https://munasip.github.io/docs/install/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/install/" />
+    <meta property="og:title" content="Install MunaSIP with Docker" />
+    <meta property="og:description" content="Install the self-hosted company PBX from a prebuilt Docker image or Compose. Ports, volumes, lab logins and upgrading." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"Install","item":"https://munasip.github.io/docs/install/"}]},{"@type":"TechArticle","headline":"Install MunaSIP with Docker","description":"Install the self-hosted company PBX from a prebuilt Docker image or Compose. Ports, volumes, lab logins and upgrading.","url":"https://munasip.github.io/docs/install/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/install/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="./" aria-current="page">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="../ivr/">IVR</a>
+          <a href="../data-model/">Data model</a>
+          <a href="../api/">API</a>
+          <a href="../screens/">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="../security/">Security</a>
+          <a href="../text-to-speech/">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">Install</span></nav>
+          <h1 id="install-munasip-with-docker">Install MunaSIP with Docker</h1>
+<p>MunaSIP runs as a <strong>Docker Compose</strong> stack. Supported production path: Linux VM (Debian/Ubuntu). Local Mac is fine for the admin panel; desk phones and RTP work best on a real VPS.</p>
+<h2 id="requirements">Requirements</h2>
+<div class="doc-table"><table><thead><tr><th>Item</th><th>Notes</th></tr></thead><tbody><tr><td>Docker Engine + Compose v2</td><td><code>docker.io</code> + <code>docker-compose-v2</code> on Debian/Ubuntu</td></tr><tr><td>~2–4 vCPU, 4–8 GB RAM</td><td>Enough for ~20 extensions</td></tr><tr><td>Ports</td><td><code>443</code> (panel + WSS), <code>80</code> (ACME / redirect), SIP/RTP as needed</td></tr><tr><td>Git</td><td>To clone this repository</td></tr></tbody></table></div>
+<h2 id="lab-install-localhost">Lab install (localhost)</h2>
+<pre><code>git clone https://github.com/MunaSIP/MunaSIP.git
+cd MunaSIP
+git checkout v1.6.0   # or main
+
+cp .env.example .env
+chmod +x scripts/gen-certs.sh
+./scripts/gen-certs.sh
+
+docker compose up --build -d</code></pre>
+<p>Open <strong>https://localhost</strong> and accept the self-signed certificate warning.</p>
+<div class="doc-table"><table><thead><tr><th>Role</th><th>Login</th><th>Password</th></tr></thead><tbody><tr><td>Admin</td><td><code>admin@example.com</code></td><td><code>Admin123!</code></td></tr><tr><td>Portal</td><td><code>101</code></td><td><code>portal101</code></td></tr><tr><td>Portal</td><td><code>100</code>–<code>103</code></td><td><code>portal{number}</code></td></tr></tbody></table></div>
+<p>Change these passwords before any production use.</p>
+<h3 id="useful-commands">Useful commands</h3>
+<pre><code>docker compose ps
+docker compose logs -f api
+curl -sk https://localhost/api/v1/health
+docker compose down          # stop (keeps volumes)
+docker compose down -v       # stop AND delete DB/recordings volumes</code></pre>
+<h2 id="deploy-on-any-platform-single-docker-image">Deploy on any platform (single Docker image)</h2>
+<p>The whole product ships as <strong>one image</strong> built from the root <code>Dockerfile</code> with the <strong>repository root</strong> as build context — the universal default, so it works on any Docker-based host (Render, Railway, Fly.io, Coolify, Dokploy, CapRover, DigitalOcean App Platform, NineDeploy, a plain VM, …) with no platform-specific config:</p>
+<pre><code>docker build -t munasip .
+docker run -d -p 3000:3000 -p 10000-10100:10000-10100/udp -v munasip-data:/data munasip</code></pre>
+<h3 id="prebuilt-image-github-container-registry">Prebuilt image (GitHub Container Registry)</h3>
+<p>Every push to <code>main</code> and every <code>vX.Y.Z</code> tag publishes the same image to GHCR (<code>.github/workflows/docker.yml</code>, linux/amd64), so you can skip the build:</p>
+<pre><code>docker run -d --name munasip --restart unless-stopped \
+  -p 3000:3000 -p 10000-10100:10000-10100/udp \
+  -v munasip-data:/data \
+  -e EXTERNAL_IP=&lt;public IPv4&gt; -e PUBLIC_HOST=&lt;hostname&gt; \
+  ghcr.io/munasip/munasip:latest</code></pre>
+<div class="doc-table"><table><thead><tr><th>Tag</th><th>Source</th></tr></thead><tbody><tr><td><code>latest</code>, <code>X.Y.Z</code>, <code>X.Y</code></td><td>release tags (<code>vX.Y.Z</code>)</td></tr><tr><td><code>main</code></td><td>tip of <code>main</code></td></tr><tr><td><code>sha-&lt;short&gt;</code></td><td>a specific commit</td></tr></tbody></table></div>
+<p>Update: <code>docker pull ghcr.io/munasip/munasip:latest</code>, then recreate the container — data stays in the <code>munasip-data</code> volume.</p>
+<p><strong>PaaS without building (NineDeploy, Coolify, …):</strong> create the service from the image <code>ghcr.io/munasip/munasip:latest</code> instead of the Git repository, mount <code>/data</code>, expose port 3000 (+ UDP 10000-10100) and set <code>PUBLIC_HOST</code> / <code>EXTERNAL_IP</code>. Deploys then only pull (~1 min) instead of building torch + TTS models (~10 min, ~4 GB of build layers left on the host per deploy). On NineDeploy enable <strong>Auto-update</strong> so a new <code>:latest</code> digest redeploys automatically; pin <code>:X.Y.Z</code> to upgrade manually.</p>
+<p>What every platform needs:</p>
+<ul><li><strong>Dockerfile:</strong> repo root <code>Dockerfile</code> (leave the build context at the repo root — the default; if a panel defaults to a subdirectory, clear its <strong>baseDir</strong> so context is <code>.</code>, otherwise <code>COPY</code> paths fail)</li><li><strong>Persistent volume</strong> mounted at <code>/data</code> (DB, Asterisk config, recordings, secrets)</li><li><strong>Port 3000</strong> published for HTTPS/API/web/softphone signalling (<code>/asterisk-ws</code>)</li><li><strong>UDP 10000-10100</strong> published + <code>EXTERNAL_IP</code> set for softphone audio (RTP); or run coturn and enable TURNS on 443 for strict edges</li><li>Optional <code>DATABASE_URL</code> for managed Postgres (otherwise embedded Postgres runs under <code>/data/postgres</code>)</li></ul>
+<p><code>.ninedeploy</code> is an optional convenience manifest for NineDeploy (volume, ports, RAM hints); it is <strong>not</strong> required to build or run anywhere else.</p>
+<h3 id="one-click-image-deploy">One-click image deploy</h3>
+<p>The API image is <strong>all-in-one</strong>: Node API + web SPA + embedded Postgres + <strong>Asterisk</strong> + <strong>TTS</strong> (Edge / EMA on <code>127.0.0.1:5500</code>; ARI/WSS on <code>127.0.0.1:8088</code> only; public HTTPS must hit container <strong>port 3000</strong>, softphone via <code>/asterisk-ws</code>). Desk-phone UDP SIP usually needs a VPS with published <code>5060</code>/RTP — a PaaS edge typically only exposes HTTPS→3000.</p>
+<p>No env is required for a first boot:</p>
+<ul><li>If <code>DATABASE_URL</code> is unset, the image starts <strong>embedded Postgres</strong> under <code>/data/postgres</code> (persists <strong>only</strong> if the <strong>/data volume is persistent</strong>)</li><li>Embedded <strong>Asterisk</strong> starts unless <code>ASTERISK_ARI_URL</code> points at another host (Compose sets <code>http://asterisk:8088</code>)</li><li><code>SESSION_SECRET</code> / <code>ENCRYPTION_KEY</code> / ARI·AMI passwords are generated and stored in <code>/data/.munasip-secrets</code> — <strong>do not lose this file</strong> or encrypted SIP secrets become unreadable</li><li>Asterisk dialplan/PJSIP config persists under <code>/data/asterisk</code></li><li>Mount a persistent volume at <code>/data</code> (4 GB RAM recommended). Check deploy logs for <code>secrets=1 pg_cluster=1</code> (both 0 every deploy ⇒ volume not sticking)</li><li><strong>NineDeploy:</strong> set Service → Volume mount path to <code>/data</code> in the UI (the <code>.ninedeploy</code> <code>volume.mount</code> entry only configures backups — it does <strong>not</strong> attach the disk). Without this, every Deploy recreates an empty <code>/data</code> on the overlay and all settings/trunks vanish</li><li>Boot <strong>never wipes</strong> an existing Postgres cluster on start failure (set <code>MUNASIP_PG_WIPE_ON_FAIL=1</code> only after a backup if you intentionally reset)</li><li>Demo SIP trunk is <strong>not</strong> auto-seeded (set <code>MUNASIP_LAB_SEED=1</code> for lab only)</li><li>With <code>PUBLIC_HOST</code> set (or <code>MUNASIP_REQUIRE_PERSISTENT_DATA=1</code>), boot <strong>refuses</strong> to start if <code>/data</code> is not a real volume (prevents silent wipe). Lab-only escape: <code>MUNASIP_ALLOW_EPHEMERAL_DATA=1</code></li></ul>
+<p>Default admin (change after login): <code>admin@example.com</code> / <code>Admin123!</code></p>
+<p><strong>Vault (recommended for a public host such as <code>pbx.example.com</code>):</strong></p>
+<pre><code>PUBLIC_HOST=pbx.example.com
+PUBLIC_URL=https://pbx.example.com
+SIP_DOMAIN=pbx.example.com
+SIP_WSS_URL=wss://pbx.example.com/asterisk-ws
+EXTERNAL_IP=&lt;public IPv4 of the host&gt;
+ADMIN_PASSWORD=&lt;strong password&gt;</code></pre>
+<p><strong>Softphone audio (WebRTC):</strong> SIP over WSS works through HTTPS. Media is UDP RTP to Asterisk, and when behind corporate firewalls the softphone also uses <strong>TURNS on port 443</strong>.</p>
+<p><strong>Docker Compose:</strong> nginx multiplexes TLS on <code>:443</code> by ALPN — browsers (HTTPS/WSS) vs TURNS (empty ALPN → coturn <code>:5349</code>). Set <code>TURN_SECRET</code> (shared with the API) and <code>EXTERNAL_IP</code>. Softphone fetches <code>/api/v1/ice-servers</code> automatically.</p>
+<p><strong>PaaS edge without ALPN mux (e.g. Traefik):</strong> publish host <strong>UDP 10000–10100</strong> for RTP, set <code>EXTERNAL_IP</code>, then <code>MUNASIP_RTP_PUBLISHED=1</code>. Optionally set <code>MUNASIP_TURNS_ON_443=0</code> and skip <code>TURN_SECRET</code> (STUN-only). Deploy logs and <code>/api/v1/health.media</code> warn when RTP ports are missing.</p>
+<p><strong>Website widgets:</strong> Admin → Integrations → create a widget, copy the embed <code>&lt;script src=&quot;https://…/widget.js&quot; data-widget=&quot;w_…&quot;&gt;</code>.</p>
+<p><strong>Strongly recommended:</strong> attach a managed Postgres and set <code>DATABASE_URL</code> (or <code>POSTGRES_URL</code>) in the vault — embedded Postgres is then skipped and survives image rebuilds/major PG upgrades without risk of an empty lab seed.</p>
+<h2 id="production-vps">Production (VPS)</h2>
+<ol><li value="1">Set public identity in <code>.env</code>:</li></ol>
+<pre><code>EXTERNAL_IP=203.0.113.10
+PUBLIC_HOST=pbx.example.com
+PUBLIC_URL=https://pbx.example.com
+SIP_DOMAIN=pbx.example.com
+SIP_WSS_URL=wss://pbx.example.com/asterisk-ws
+TURN_REALM=pbx.example.com
+
+POSTGRES_PASSWORD=…          # strong
+SESSION_SECRET=…             # ≥32 random chars
+ENCRYPTION_KEY=…             # 64 hex chars
+ADMIN_PASSWORD=…
+ASTERISK_ARI_PASSWORD=…
+ASTERISK_AMI_PASSWORD=…</code></pre>
+<ol><li value="2">Start the stack: <code>docker compose up --build -d</code></li></ol>
+<ol><li value="3"><strong>TLS:</strong> Admin → <strong>Settings → Hostname &amp; SSL</strong> — set the public hostname, enable <strong>Automatic SSL</strong> (Let's Encrypt). Port <code>80</code> must reach the server. Offline lab only: <code>./scripts/gen-certs.sh</code></li></ol>
+<ol><li value="4">Open firewall: <code>443/tcp</code>, <code>80/tcp</code>; lock <code>5060</code> + RTP to office/VPN/trunk. Details: <a href="../deploy/">Deploy</a>.</li></ol>
+<ol><li value="5">Point desk phones at <code>EXTERNAL_IP:5060</code> using the SIP password from the portal.</li></ol>
+<h2 id="persistent-data">Persistent data</h2>
+<p>Compose <strong>named volumes</strong> keep state across rebuilds:</p>
+<div class="doc-table"><table><thead><tr><th>Volume</th><th>Contents</th></tr></thead><tbody><tr><td><code>pgdata</code></td><td>PostgreSQL (extensions, CDR, flows, settings)</td></tr><tr><td><code>recordings</code></td><td>Call recordings</td></tr><tr><td><code>uploads</code></td><td>Prompt / MOH uploads</td></tr><tr><td><code>asterisk_config</code></td><td>Generated dialplan / PJSIP</td></tr><tr><td><code>./docker/nginx/certs</code></td><td>TLS certificates (bind mount)</td></tr></tbody></table></div>
+<p><code>docker compose up --build</code> does <strong>not</strong> wipe volumes. Only <code>docker compose down -v</code> does.</p>
+<h2 id="upgrading-from-dsip-before-the-munasip-rename">Upgrading from DSip (before the MunaSIP rename)</h2>
+<p><strong>Single image:</strong> nothing to do. On the first start the image renames what it finds under the old name: <code>/data/.dsip-secrets</code>, the embedded Postgres role and database <code>dsip</code>, the generated <code>*_dsip.conf</code> files and the <code>sounds/dsip</code> folder (stored file paths are updated by a migration). <code>DSIP_*</code> environment variables keep working; <code>MUNASIP_*</code> wins when both are set. Browser sessions and saved preferences carry over. Point your deployment at <code>ghcr.io/munasip/munasip</code>.</p>
+<p><strong>Docker Compose:</strong> the Postgres service keeps its existing user and database, so either keep the old names in <code>.env</code></p>
+<pre><code>POSTGRES_USER=dsip
+POSTGRES_DB=dsip</code></pre>
+<p>or rename them once (<code>ALTER ROLE dsip RENAME TO munasip;</code> and <code>ALTER DATABASE dsip RENAME TO munasip;</code> while the API is stopped). The Asterisk config volume is now mounted at <code>/var/lib/asterisk/munasip</code>; the API renames the old <code>*_dsip.conf</code> files and the <code>sounds/dsip</code> folder on its next start.</p>
+<h2 id="optional-services">Optional services</h2>
+<pre><code># Asterisk + API login jail
+docker compose --profile fail2ban up -d</code></pre>
+<h2 id="development-api-web-on-the-host">Development (API / web on the host)</h2>
+<pre><code>pnpm install
+pnpm --filter @munasip/shared build
+docker compose up -d postgres asterisk coturn tts
+export DATABASE_URL=postgresql://munasip:munasip_secret_change_me@localhost:5432/munasip
+pnpm --filter @munasip/api run db:migrate
+pnpm --filter @munasip/api run db:seed
+pnpm dev</code></pre>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../features/">Features</a> — what the product does</li><li><a href="../architecture/">Architecture</a> — services and data flow</li><li><a href="../deploy/">Deploy</a> — phones, NAT, firewall</li></ul>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

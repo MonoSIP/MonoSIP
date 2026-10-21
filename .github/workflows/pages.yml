@@ -10,6 +10,9 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "docs/**"
+      - "TASKS.md"
+      - "scripts/build-site-docs.mjs"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -25,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Build docs pages
+        run: node scripts/build-site-docs.mjs
       - name: Push site/ to MunaSIP/munasip.github.io
         env:
           SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}

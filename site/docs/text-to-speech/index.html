@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MunaSIP text-to-speech</title>
+    <meta name="description" content="MunaSIP speech uses Edge Neural voices and offline Turkish EMA. Prompts are cached per sentence and spoken on the call." />
+    <link rel="canonical" href="https://munasip.github.io/docs/text-to-speech/" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="../../brand/munasip-mark.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://munasip.github.io/docs/text-to-speech/" />
+    <meta property="og:title" content="MunaSIP text-to-speech" />
+    <meta property="og:description" content="MunaSIP speech uses Edge Neural voices and offline Turkish EMA. Prompts are cached per sentence and spoken on the call." />
+    <meta property="og:image" content="https://munasip.github.io/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../styles.css" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://munasip.github.io/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://munasip.github.io/docs/"},{"@type":"ListItem","position":3,"name":"Speech","item":"https://munasip.github.io/docs/text-to-speech/"}]},{"@type":"TechArticle","headline":"MunaSIP text-to-speech","description":"MunaSIP speech uses Edge Neural voices and offline Turkish EMA. Prompts are cached per sentence and spoken on the call.","url":"https://munasip.github.io/docs/text-to-speech/","inLanguage":"en","mainEntityOfPage":"https://munasip.github.io/docs/text-to-speech/","author":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"},"publisher":{"@type":"Organization","name":"MunaSIP","url":"https://munasip.github.io/"}}]}</script>
+    <script>document.documentElement.classList.add("js")</script>
+  </head>
+  <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
+    <a class="skip" href="#doc">Skip to content</a>
+    <header class="nav" id="top">
+      <div class="wrap nav-row">
+        <a class="brand" href="../../">
+          <img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MünaSIP</span>
+          <span class="brand-ver">v1.6.0</span>
+        </a>
+        <nav class="nav-links" aria-label="Sections">
+          <a href="../../#softphone">Softphone</a>
+          <a href="../../#features">Features</a>
+          <a href="../../#ivr">IVR</a>
+          <a href="../../#panel">Panel</a>
+          <a href="../../#install">Install</a>
+          <a href="../">Docs</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="../">Docs</a>
+          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="doc">
+      <div class="wrap doc-layout">
+        <nav class="doc-nav" aria-label="Documentation">
+          <a href="../">Overview</a>
+          <a href="../install/">Install</a>
+          <a href="../features/">Features</a>
+          <a href="../architecture/">Architecture</a>
+          <a href="../deploy/">Deploy</a>
+          <a href="../user-portal/">Portal</a>
+          <a href="../ivr/">IVR</a>
+          <a href="../data-model/">Data model</a>
+          <a href="../api/">API</a>
+          <a href="../screens/">Screens</a>
+          <a href="../test-plan/">Test plan</a>
+          <a href="../security/">Security</a>
+          <a href="./" aria-current="page">Speech</a>
+          <a href="../roadmap/">Roadmap</a>
+        </nav>
+        <article class="doc">
+          <nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Home</a><span aria-hidden="true">/</span><a href="../">Documentation</a><span aria-hidden="true">/</span><span aria-current="page">Speech</span></nav>
+          <h1 id="munasip-text-to-speech">MunaSIP text-to-speech</h1>
+<p>MunaSIP generates IVR / prompt audio <strong>inside the all-in-one container</strong> — no sidecar and no extra network dependency. Engines: <strong>Microsoft Edge Neural</strong> (online) and <strong>EMA Lightning</strong> (Turkish offline). English has no offline engine: Kokoro-82M was removed because its model crowded a small PBX's memory and pushed EMA into swap. A stored <code>kokoro</code> voice plays as Edge.</p>
+<h2 id="engines">Engines</h2>
+<div class="doc-table"><table><thead><tr><th>Engine</th><th>Quality</th><th>Needs internet</th><th>Notes</th></tr></thead><tbody><tr><td><strong>edge</strong> (default via <code>auto</code>)</td><td>High — e.g. <code>tr-TR-EmelNeural</code> / <code>en-US-JennyNeural</code></td><td>Yes (at generate time)</td><td>Free unofficial Edge voices</td></tr><tr><td><strong>ema</strong></td><td>High neural (TR)</td><td>No</td><td>EMA Lightning; Settings / Prompts: <code>ema-lightning</code></td></tr></tbody></table></div>
+<p>Weights for EMA are baked into the root <code>Dockerfile</code> at build time.</p>
+<h2 id="voices">Voices</h2>
+<div class="doc-table"><table><thead><tr><th>Language</th><th>Preferred (Edge)</th><th>Offline neural</th></tr></thead><tbody><tr><td>Turkish</td><td><code>tr-TR-EmelNeural</code></td><td><code>ema-lightning</code></td></tr><tr><td>English</td><td><code>en-US-JennyNeural</code></td><td>—</td></tr></tbody></table></div>
+<h2 id="config">Config</h2>
+<pre><code>TTS_URL=http://127.0.0.1:5500
+TTS_EMBEDDED=1
+TTS_ENGINE=auto          # auto | edge | ema
+TTS_ENABLE_EMA=1</code></pre>
+<ul><li>Entrypoint starts gunicorn on <code>127.0.0.1:5500</code> (<code>apps/api/scripts/start-tts.sh</code>).</li><li><code>TTS_EMBEDDED=0</code> skips the local process (only if you point <code>TTS_URL</code> elsewhere).</li></ul>
+<h2 id="health">Health</h2>
+<pre><code># All-in-one / compose api container
+docker exec &lt;container&gt; curl -fsS http://127.0.0.1:5500/health</code></pre>
+<h2 id="notes">Notes</h2>
+<ul><li>Offline Turkish (EMA) works with no outbound network after the image is built; English needs Edge.</li><li>IVR speech is split into sentences and synthesized while the previous sentence plays; results are cached on disk.</li><li>Neural synthesis runs on the PBX CPU: plan 2 vCPU / 4 GB RAM. Under memory pressure the model is swapped out and fresh sentences become slow.</li><li>Edge needs outbound HTTPS when selected (or when <code>auto</code> reaches Microsoft).</li><li>Output is always 8 kHz mono WAV for Asterisk.</li><li>Optional standalone image remains at <code>docker/tts/</code> for debugging only.</li></ul>
+        </article>
+      </div>
+    </main>
+    <footer class="footer">
+      <div class="wrap footer-row">
+        <a class="brand" href="../../"><img class="brand-mark" src="../../brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
+        <span class="muted">Self-hosted company PBX · <a href="../">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <a href="#top" class="muted">Back to top ↑</a>
+      </div>
+    </footer>
+    <script src="../../script.js" defer></script>
+  </body>
+</html>

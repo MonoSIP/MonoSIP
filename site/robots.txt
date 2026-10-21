@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://munasip.github.io/sitemap.xml

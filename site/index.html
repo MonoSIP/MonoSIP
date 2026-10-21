@@ -8,6 +8,7 @@
       name="description"
       content="Self-hosted Asterisk company PBX in one Docker image: extensions, queues, visual IVR designer with API and neural TTS, browser softphone, call logs, live dashboard and automatic SSL."
     />
+    <link rel="canonical" href="https://munasip.github.io/" />
     <meta name="theme-color" content="#047857" />
     <link rel="apple-touch-icon" href="brand/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
@@ -27,6 +28,35 @@
     <link rel="stylesheet" href="styles.css" />
     <script>document.documentElement.classList.add("js")</script>
     <link rel="icon" type="image/svg+xml" href="brand/munasip-mark.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "MunaSIP",
+            "url": "https://munasip.github.io/",
+            "logo": "https://munasip.github.io/brand/og-image.png",
+            "sameAs": ["https://github.com/MunaSIP/MunaSIP"]
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "MunaSIP",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Linux",
+            "softwareVersion": "1.6.0",
+            "url": "https://munasip.github.io/",
+            "description": "Self-hosted Asterisk company PBX in one Docker image: extensions, queues, visual IVR, neural speech and a browser softphone.",
+            "license": "https://opensource.org/licenses/MIT",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div class="flow-map" aria-hidden="true"><svg></svg></div>
@@ -35,7 +65,7 @@
     <!-- ───────────────────────── Navigation ───────────────────────── -->
     <header class="nav" id="top">
       <div class="wrap nav-row">
-        <a class="brand" href="#top" aria-label="MunaSIP home">
+        <a class="brand" href="#top">
           <img class="brand-mark" src="brand/munasip-mark.svg" width="32" height="32" alt="" />
           <span class="brand-name">MünaSIP</span>
           <span class="brand-ver">v1.6.0</span>
@@ -46,9 +76,10 @@
           <a href="#ivr">IVR</a>
           <a href="#panel">Panel</a>
           <a href="#install">Install</a>
-          <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/README.md">Docs</a>
+          <a href="docs/">Docs</a>
         </nav>
         <div class="nav-actions">
+          <a class="btn btn-ghost btn-sm nav-docs" href="docs/">Docs</a>
           <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
             GitHub
@@ -309,7 +340,7 @@
               <li><b>One password</b> for the portal, the browser and the desk phone.</li>
               <li><b>Their own pages:</b> directory, calls, recordings, voicemail and forwarding.</li>
             </ul>
-            <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/USER-PORTAL.md">Portal and softphone guide</a>
+            <a class="more" href="docs/user-portal/">Portal and softphone guide</a>
           </div>
         </div>
       </section>
@@ -324,7 +355,7 @@
               Everything ships in the same image and is managed from the same admin panel.
               The field-by-field list lives in the docs.
             </p>
-            <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/FEATURES.md">Feature guide</a>
+            <a class="more" href="docs/features/">Feature guide</a>
           </header>
 
           <div class="cards">
@@ -418,7 +449,7 @@
                 <li><b>Every exit is a branch.</b> A menu has a path per digit, plus timeout and invalid. A transfer has busy, no answer and unavailable. A busy extension is caught before the phone rings, so the caller hears the busy path and the desk does not ring.</li>
                 <li><b>Try it, then publish.</b> The test call walks the draft with a caller number, a time and keypresses, and highlights the nodes it visited. Live calls keep using the published version. An older one is a click away, and a call already in progress finishes on the version it started with.</li>
               </ul>
-              <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/FLOW-DESIGNER.md">IVR designer guide</a>
+              <a class="more" href="docs/ivr/">IVR designer guide</a>
             </div>
             <div class="shots reveal">
               <figure class="shot shot-main">
@@ -611,7 +642,7 @@
             <p class="kicker">Admin panel</p>
             <h2>Day-two operations, in the same place</h2>
             <p class="section-lead">Illustrated views of the dashboard, call logs, queues and the rest of day-two work.</p>
-            <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/SCREENS.md">Screen by screen</a>
+            <a class="more" href="docs/screens/">Screen by screen</a>
           </header>
 
           <div class="tour reveal">
@@ -920,9 +951,9 @@ docker run -d --name munasip --restart unless-stopped \
 <span class="c"># update: data stays in the munasip-data volume</span>
 docker pull ghcr.io/munasip/munasip:latest</code></pre>
             <div class="term-links">
-              <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/INSTALL.md">Install guide</a>
-              <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/DEPLOY-VPS.md">VPS / Compose</a>
-              <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/FEATURES.md">Full feature list</a>
+              <a href="docs/install/">Install guide</a>
+              <a href="docs/deploy/">VPS / Compose</a>
+              <a href="docs/features/">Full feature list</a>
             </div>
           </div>
         </div>
@@ -932,7 +963,7 @@ docker pull ghcr.io/munasip/munasip:latest</code></pre>
     <footer class="footer">
       <div class="wrap footer-row">
         <span class="brand"><img class="brand-mark" src="brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></span>
-        <span class="muted">Self-hosted company PBX · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/README.md">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
+        <span class="muted">Self-hosted company PBX · <a href="docs/">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
         <a href="#top" class="muted">Back to top ↑</a>
       </div>
     </footer>
