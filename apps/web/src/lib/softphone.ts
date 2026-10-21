@@ -893,6 +893,16 @@ export class Softphone {
         };
       }) => Promise<unknown>;
     };
+    // Append to the RTCDTMFSender tone buffer: insertDTMF() *replaces* the queued
+    // tones, so quick presses ("0","6" for a plate code) dropped a digit — and the
+    // SIP INFO fallback is ignored by Asterisk's RFC 4733 mode.
+    const pc = (session.sessionDescriptionHandler as { peerConnection?: RTCPeerConnection } | undefined)
+      ?.peerConnection;
+    const dtmf = pc?.getSenders().find((s) => s.track?.kind === "audio")?.dtmf;
+    if (dtmf?.canInsertDTMF) {
+      dtmf.insertDTMF(dtmf.toneBuffer + digit, 120, 70);
+      return;
+    }
     if (session.sessionDescriptionHandler?.sendDtmf?.(digit)) return;
     await session.info?.({
       requestOptions: {
