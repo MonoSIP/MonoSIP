@@ -34,3 +34,6 @@ docker/tts/voices/*.onnx.json
 .idea/
 apps/web/tsconfig.tsbuildinfo
 packages/shared/tsconfig.tsbuildinfo
+
+__pycache__/
+*.pyc
