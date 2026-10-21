@@ -10,7 +10,7 @@ type MohClass = { id: string; name: string; files: unknown };
 
 export function MohPage() {
   const qc = useQueryClient();
-  const [name, setName] = useState("default");
+  const [name, setName] = useState("");
   const [playing, setPlaying] = useState<{ id: string; file: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -23,13 +23,29 @@ export function MohPage() {
   });
 
   const create = useMutation({
-    mutationFn: () => api.post("/api/v1/admin/moh", { name, files: [] }),
+    mutationFn: () => api.post("/api/v1/admin/moh", { name: name.trim(), files: [] }),
     onSuccess: () => {
       toast.success(tr("MOH class created"));
       setName("");
       void qc.invalidateQueries({ queryKey: ["moh"] });
     },
+    onError: (e) => toast.error((e as Error).message),
   });
+
+  const removeClass = useMutation({
+    mutationFn: (m: MohClass) => api.delete(`/api/v1/admin/moh/${m.id}`),
+    onSuccess: () => {
+      toast.success(tr("Removed"));
+      void qc.invalidateQueries({ queryKey: ["moh"] });
+    },
+    // 409 names the queue / IVR that still uses the class
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  // One class per name (it is also the Asterisk section and folder name)
+  const nameKey = name.trim().toLowerCase();
+  const nameTaken =
+    nameKey === "default" || (list.data ?? []).some((m) => m.name.trim().toLowerCase() === nameKey);
 
   useEffect(() => {
     return () => {
@@ -171,9 +187,14 @@ export function MohPage() {
             placeholder={tr("Class name")}
             required
           />
-          <button className="btn btn-primary" type="submit">
+          <button className="btn btn-primary" type="submit" disabled={!nameKey || nameTaken || create.isPending}>
             {tr("Create class")}
           </button>
+          {nameKey && nameTaken && (
+            <span className="self-center text-sm text-[var(--danger)]" role="alert">
+              {tr("A class with this name already exists")}
+            </span>
+          )}
         </form>
       </SectionCard>
 
@@ -194,6 +215,17 @@ export function MohPage() {
                 flush
                 actions={
                   <>
+                    <IconBtn
+                      icon={Trash2}
+                      label={tr("Delete class")}
+                      danger
+                      disabled={removeClass.isPending}
+                      onClick={() => {
+                        if (confirm(tr("Delete hold music class “{{name}}” and its files?", { name: m.name }))) {
+                          removeClass.mutate(m);
+                        }
+                      }}
+                    />
                     <input
                       ref={(el) => {
                         fileInputRefs.current[m.id] = el;

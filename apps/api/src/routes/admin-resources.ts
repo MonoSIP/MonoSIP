@@ -1456,10 +1456,50 @@ export async function adminResourceRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/admin/moh", async (req, reply) => {
     if (!(await admin(req, reply))) return;
-    const body = z.object({ name: z.string(), files: z.array(z.string()).default([]) }).parse(req.body);
+    const body = z
+      .object({ name: z.string().trim().min(1).max(100), files: z.array(z.string()).default([]) })
+      .parse(req.body);
+    // Class names are Asterisk section names ([name]) and directory names: one per name.
+    const key = body.name.toLowerCase();
+    if (key === "default") return reply.code(409).send({ error: "“default” is the built-in hold music class" });
+    const existing = await db.select({ name: mohClasses.name }).from(mohClasses);
+    if (existing.some((m) => m.name.trim().toLowerCase() === key)) {
+      return reply.code(409).send({ error: `A hold music class named “${body.name}” already exists` });
+    }
     const [row] = await db.insert(mohClasses).values(body).returning();
     await tryReloadAsterisk();
     return row;
+  });
+
+  app.delete("/api/v1/admin/moh/:id", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { id } = req.params as { id: string };
+    const [row] = await db.select().from(mohClasses).where(eq(mohClasses.id, id));
+    if (!row) return reply.code(404).send({ error: "Not found" });
+    // Refuse while something still plays it
+    const usedByQueues = await db.select({ name: queues.name }).from(queues).where(eq(queues.mohId, id));
+    const allFlows = await db.select({ name: flows.name, draftJson: flows.draftJson }).from(flows);
+    const needle = JSON.stringify(row.name);
+    const usedByFlows = allFlows.filter((f) => JSON.stringify(f.draftJson ?? {}).includes(needle));
+    if (usedByQueues.length || usedByFlows.length) {
+      const where = [
+        ...usedByQueues.map((q) => `queue “${q.name}”`),
+        ...usedByFlows.map((f) => `IVR “${f.name}”`),
+      ].join(", ");
+      return reply.code(409).send({ error: `In use by ${where} — change it there first`, usedBy: where });
+    }
+    await db.delete(mohClasses).where(eq(mohClasses.id, id));
+    // Files live in a directory per *name*; keep it if another class still has that name.
+    const sameName = (await db.select({ name: mohClasses.name }).from(mohClasses)).some(
+      (m) => m.name.trim().toLowerCase() === row.name.trim().toLowerCase(),
+    );
+    if (!sameName) {
+      const { mohClassDir } = await import("../lib/moh-audio.js");
+      const { rm } = await import("node:fs/promises");
+      await rm(mohClassDir(row.name), { recursive: true, force: true }).catch(() => undefined);
+    }
+    await tryReloadAsterisk();
+    return { ok: true };
   });
 
   app.post("/api/v1/admin/moh/:id/upload", async (req, reply) => {

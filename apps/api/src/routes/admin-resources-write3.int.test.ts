@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { mohClasses, prompts, secrets, settings, webhooks } from "../db/schema.js";
+import { mohClasses, prompts, queues, secrets, settings, webhooks } from "../db/schema.js";
 import {
   auth,
   buildApp,
@@ -51,7 +51,10 @@ afterEach(async () => {
   await db.delete(webhooks).where(eq(webhooks.url, "https://nopatch.test"));
   await db.delete(secrets).where(eq(secrets.name, "Test Secret"));
   await db.delete(prompts).where(eq(prompts.name, "Test Prompt"));
-  await db.delete(mohClasses).where(eq(mohClasses.name, "Test Moh"));
+  await db.delete(queues).where(eq(queues.number, "7991"));
+  for (const n of ["Test Moh", "Test Moh Files", "Test Moh Used", "test moh"]) {
+    await db.delete(mohClasses).where(eq(mohClasses.name, n));
+  }
   // Restore the shared singleton exactly as found.
   if (settingsSnapshot === null) {
     await db.delete(settings).where(eq(settings.id, 1));
@@ -315,11 +318,38 @@ describe("MOH classes", () => {
 
   it("accepts an explicit file list", async () => {
     const res = await post("/api/v1/admin/moh", {
-      name: "Test Moh",
+      name: "Test Moh Files",
       files: ["a.wav", "b.wav"],
     });
     const body = res.json() as { id: string; files: string[] };
     expect(body.files).toEqual(["a.wav", "b.wav"]);
+  });
+
+  it("refuses a second class with the same name (case-insensitive) and the reserved 'default'", async () => {
+    expect((await post("/api/v1/admin/moh", { name: "Test Moh" })).statusCode).toBe(200);
+    const dup = await post("/api/v1/admin/moh", { name: "  test moh " });
+    expect(dup.statusCode).toBe(409);
+    expect((dup.json() as { error: string }).error).toMatch(/already exists/);
+    expect((await post("/api/v1/admin/moh", { name: "Default" })).statusCode).toBe(409);
+    const rows = await db.select().from(mohClasses).where(eq(mohClasses.name, "Test Moh"));
+    expect(rows).toHaveLength(1);
+  });
+
+  it("deletes a class", async () => {
+    const { id } = (await post("/api/v1/admin/moh", { name: "Test Moh" })).json() as { id: string };
+    const res = await del(`/api/v1/admin/moh/${id}`);
+    expect(res.statusCode).toBe(200);
+    expect(await db.select().from(mohClasses).where(eq(mohClasses.id, id))).toHaveLength(0);
+    expect((await del(`/api/v1/admin/moh/${id}`)).statusCode).toBe(404);
+  });
+
+  it("refuses to delete a class a queue still uses", async () => {
+    const { id } = (await post("/api/v1/admin/moh", { name: "Test Moh Used" })).json() as { id: string };
+    await db.insert(queues).values({ name: "MOH user", number: "7991", mohId: id });
+    const res = await del(`/api/v1/admin/moh/${id}`);
+    expect(res.statusCode).toBe(409);
+    expect((res.json() as { error: string }).error).toContain("MOH user");
+    expect(await db.select().from(mohClasses).where(eq(mohClasses.id, id))).toHaveLength(1);
   });
 
   it("rejects a missing name", async () => {
