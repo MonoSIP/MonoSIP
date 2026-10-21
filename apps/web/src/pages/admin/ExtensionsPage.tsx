@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Download, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
+import { Download, KeyRound, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField, Switch } from "../../components/ui";
@@ -30,12 +30,30 @@ type Ext = {
   };
 };
 
+/** Same rule as the API (ExtensionPasswordSchema): it is also the SIP secret in pjsip.conf. */
+function passwordProblem(pw: string): string | null {
+  if (!pw) return null;
+  if (pw.length < 8) return tr("At least 8 characters");
+  if (pw.length > 64) return tr("At most 64 characters");
+  if (/[\s;"'\\]/.test(pw)) return tr("No spaces, quotes, semicolons or backslashes");
+  return null;
+}
+
+/** 14 characters without look-alikes (0/O, 1/l/I), easy to type on a desk phone. */
+function generatePassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(14));
+  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
+}
+
 export function ExtensionsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const [edit, setEdit] = useState<Ext | null>(null);
+  const [editPassword, setEditPassword] = useState("");
   const [editName, setEditName] = useState("");
   const [editPortal, setEditPortal] = useState(true);
   const [editRecording, setEditRecording] = useState("always");
@@ -63,11 +81,20 @@ export function ExtensionsPage() {
   });
 
   const create = useMutation({
-    mutationFn: () => api.post<{ portalPassword?: string }>("/api/v1/admin/extensions", { number, name }),
+    mutationFn: () =>
+      api.post<{ portalPassword?: string }>("/api/v1/admin/extensions", {
+        number,
+        name,
+        ...(password ? { portalPassword: password } : {}),
+      }),
     onSuccess: (r) => {
-      toast.success(r.portalPassword ? `${t("extensions.createdPassword")}: ${r.portalPassword}` : "OK");
+      toast.success(
+        r.portalPassword ? tr("Extension created. Password (portal + SIP): {{v0}}", { v0: r.portalPassword }) : "OK",
+        { duration: 15000 },
+      );
       setNumber("");
       setName("");
+      setPassword("");
       void qc.invalidateQueries({ queryKey: ["extensions"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -95,6 +122,8 @@ export function ExtensionsPage() {
         mobileForwardAllowed: mobileFwd,
         recordingListenAllowed: listenRec,
         outboundCli: cli || null,
+        // one password for the portal and SIP; empty keeps the current one
+        ...(editPassword ? { portalPassword: editPassword } : {}),
       });
       await api.put(
         `/api/v1/admin/extensions/${edit.id}/forwarding`,
@@ -120,6 +149,7 @@ export function ExtensionsPage() {
 
   async function openEdit(ext: Ext) {
     setEdit(ext);
+    setEditPassword("");
     setEditName(ext.name);
     setEditPortal(ext.portalEnabled);
     setEditRecording(ext.recordingMode ?? "always");
@@ -253,7 +283,18 @@ export function ExtensionsPage() {
             onChange={(e) => setName(e.target.value)}
             required
           />
-          <button className="btn btn-primary justify-center" type="submit">
+          <TextField
+            label={tr("Password")}
+            className="min-w-[14rem]"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={tr("Empty = generate")}
+            hint={passwordProblem(password) ?? undefined}
+            autoComplete="new-password"
+            spellCheck={false}
+            aria-invalid={!!passwordProblem(password)}
+          />
+          <button className="btn btn-primary justify-center" type="submit" disabled={!!passwordProblem(password)}>
             <UserPlus size={16} />
             {t("extensions.add")}
           </button>
@@ -261,7 +302,7 @@ export function ExtensionsPage() {
       </SectionCard>
 
       {edit && (
-        <SectionCard title={`Edit ${edit.number}`} icon={Users} tone="coral" className="mb-6">
+        <SectionCard title={tr("Edit extension {{v0}}", { v0: edit.number })} icon={Users} tone="coral" className="mb-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField label={tr("Name")} value={editName} onChange={(e) => setEditName(e.target.value)} />
             <SelectField
@@ -287,6 +328,22 @@ export function ExtensionsPage() {
                   </option>
                 ))}
             </SelectField>
+            <div className="sm:col-span-2 flex items-end gap-2">
+              <TextField
+                className="flex-1"
+                label={tr("New password")}
+                hint={passwordProblem(editPassword) ?? tr("Used for portal login and SIP (softphone, desk phone). Empty keeps the current one.")}
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                autoComplete="new-password"
+                spellCheck={false}
+                aria-invalid={!!passwordProblem(editPassword)}
+              />
+              <button type="button" className="btn mb-[1.6rem]" onClick={() => setEditPassword(generatePassword())}>
+                <KeyRound size={15} />
+                {tr("Generate")}
+              </button>
+            </div>
             <TextField
               className="sm:col-span-2"
               label={tr("Outbound CLI")}
@@ -405,7 +462,7 @@ export function ExtensionsPage() {
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button className="btn btn-primary" type="button" onClick={() => saveEdit.mutate()}>
+            <button disabled={!!passwordProblem(editPassword)} className="btn btn-primary" type="button" onClick={() => saveEdit.mutate()}>
               {t("common.save")}
             </button>
             <button
@@ -414,11 +471,13 @@ export function ExtensionsPage() {
               onClick={() =>
                 void api
                   .post<{ portalPassword: string }>(`/api/v1/admin/extensions/${edit.id}/reset-password`)
-                  .then((r) => toast.success(tr("New portal password: {{v0}}", { v0: r.portalPassword })))
+                  .then((r) =>
+                    toast.success(tr("New password (portal + SIP): {{v0}}", { v0: r.portalPassword }), { duration: 15000 }),
+                  )
                   .catch((e) => toast.error(String(e)))
               }
             >
-              {tr("Reset portal password")}
+              {tr("Generate new password now")}
             </button>
             <button className="btn" type="button" onClick={() => setEdit(null)}>
               {t("common.cancel", { defaultValue: "Cancel" })}

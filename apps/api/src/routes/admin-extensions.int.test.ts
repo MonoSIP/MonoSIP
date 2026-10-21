@@ -10,7 +10,8 @@ import {
   type Fixtures,
 } from "../test/helpers.js";
 import { db } from "../db/client.js";
-import { extensions } from "../db/schema.js";
+import { auditLog, extensions } from "../db/schema.js";
+import { decrypt, scryptVerify } from "../lib/crypto.js";
 
 /**
  * Authorization contract for the admin extension-management routes: every one
@@ -158,5 +159,59 @@ describe("admin extension routes admit a live admin session", () => {
       payload: { dailyLimitMinutes: 10, monthlyLimitMinutes: 100 },
     });
     expect(res.statusCode).toBe(401);
+  });
+});
+describe("one extension password for portal and SIP", () => {
+  const call = (method: "POST" | "PATCH" | "DELETE", url: string, payload?: unknown) =>
+    app.inject({ method, url, headers: auth(fx.adminToken), payload: payload as never });
+  const load = async (id: string) => (await db.select().from(extensions).where(eq(extensions.id, id)))[0]!;
+
+  it("uses an admin-chosen password for both the portal and SIP", async () => {
+    const res = await call("POST", "/api/v1/admin/extensions", { number: "18878", name: "Manual", portalPassword: "Desk-2026!x" });
+    expect(res.statusCode).toBe(200);
+    const id = (res.json() as { id: string }).id;
+    try {
+      let row = await load(id);
+      expect(scryptVerify("Desk-2026!x", row.portalPasswordHash)).toBe(true);
+      expect(decrypt(row.sipSecretEnc)).toBe("Desk-2026!x");
+
+      // changing it changes both
+      expect((await call("PATCH", `/api/v1/admin/extensions/${id}`, { portalPassword: "Yeni-Sifre42" })).statusCode).toBe(200);
+      row = await load(id);
+      expect(scryptVerify("Yeni-Sifre42", row.portalPasswordHash)).toBe(true);
+      expect(decrypt(row.sipSecretEnc)).toBe("Yeni-Sifre42");
+
+      // the password never reaches the audit log
+      const audits = await db.select().from(auditLog).where(eq(auditLog.objectId, id));
+      expect(JSON.stringify(audits)).not.toContain("Yeni-Sifre42");
+
+      // reset generates one password for both
+      const reset = await call("POST", `/api/v1/admin/extensions/${id}/reset-password`);
+      const pw = (reset.json() as { portalPassword: string }).portalPassword;
+      row = await load(id);
+      expect(scryptVerify(pw, row.portalPasswordHash)).toBe(true);
+      expect(decrypt(row.sipSecretEnc)).toBe(pw);
+    } finally {
+      await call("DELETE", `/api/v1/admin/extensions/${id}`);
+    }
+  });
+
+  it("generates one password for both when none is given", async () => {
+    const res = await call("POST", "/api/v1/admin/extensions", { number: "18879", name: "Generated" });
+    const { id, portalPassword } = res.json() as { id: string; portalPassword: string };
+    try {
+      const row = await load(id);
+      expect(decrypt(row.sipSecretEnc)).toBe(portalPassword);
+      expect(scryptVerify(portalPassword, row.portalPasswordHash)).toBe(true);
+    } finally {
+      await call("DELETE", `/api/v1/admin/extensions/${id}`);
+    }
+  });
+
+  it("rejects passwords that would break pjsip.conf or are too short", async () => {
+    for (const bad of ["short1", "has;semicolon", 'quote"d-pass', "with space 1", "back\\slash1"]) {
+      const res = await call("POST", "/api/v1/admin/extensions", { number: "18880", name: "Bad", portalPassword: bad });
+      expect(res.statusCode, bad).toBe(400);
+    }
   });
 });

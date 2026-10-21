@@ -5,6 +5,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 ## Extensions
 
 - Create, edit, delete extensions (admin only); bulk CSV import/export
+- One password per extension for the portal and SIP (softphone, desk phone): set by the admin or generated; changing it updates both
 - Call permissions: local landline, mobile, 444, international; per-extension recording and call block
 - Per-extension outbound CLI (caller ID)
 - Forwarding: no-answer (with ring time), busy, unavailable — each with its own destination. Chains max 5 hops; never loops back to the same extension

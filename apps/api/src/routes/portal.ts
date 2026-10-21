@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { and, desc, eq, or } from "drizzle-orm";
 import { z } from "zod";
-import { ForwardingRuleSchema } from "@dsip/shared";
+import { ExtensionPasswordSchema, ForwardingRuleSchema } from "@dsip/shared";
 import { db } from "../db/client.js";
 import {
   cdr,
@@ -13,7 +13,7 @@ import {
   voicemails,
 } from "../db/schema.js";
 import { requireExtension } from "../lib/auth.js";
-import { decrypt, scryptHash } from "../lib/crypto.js";
+import { decrypt, encrypt, scryptHash } from "../lib/crypto.js";
 import { config } from "../config.js";
 import { ari } from "../asterisk/ari.js";
 import { createReadStream, existsSync } from "node:fs";
@@ -280,11 +280,14 @@ export async function portalRoutes(app: FastifyInstance) {
     const actor = await requireExtension(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;
     const a = actor as { id: string };
-    const body = z.object({ password: z.string().min(8) }).parse(req.body);
+    const body = z.object({ password: ExtensionPasswordSchema }).parse(req.body);
+    // Same password for the portal and SIP (see admin-extensions.ts)
     await db
       .update(extensions)
-      .set({ portalPasswordHash: scryptHash(body.password) })
+      .set({ portalPasswordHash: scryptHash(body.password), sipSecretEnc: encrypt(body.password) })
       .where(eq(extensions.id, a.id));
+    const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
+    void tryReloadAsterisk();
     return { ok: true };
   });
 }

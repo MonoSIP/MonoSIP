@@ -10,12 +10,23 @@ export const CallPermissionsSchema = z.object({
   outboundBlocked: z.boolean().default(false),
 });
 
+/**
+ * One password per extension: portal login and SIP registration (softphone, desk
+ * phone). It is written into pjsip.conf as `password=…`, where `;` starts a
+ * comment — so no `;`, quotes, backslash or whitespace.
+ */
+export const ExtensionPasswordSchema = z
+  .string()
+  .min(8, "At least 8 characters")
+  .max(64, "At most 64 characters")
+  .regex(/^[^\s;"'\\]+$/, "No spaces, quotes, semicolons or backslashes");
+
 export const ExtensionCreateSchema = z.object({
   number: z.string().regex(/^\d{2,6}$/),
   name: z.string().min(1).max(100),
   email: z.string().email().optional().nullable(),
   portalEnabled: z.boolean().default(true),
-  portalPassword: z.string().min(8).optional(),
+  portalPassword: ExtensionPasswordSchema.optional(),
   recordingMode: z.enum(["off", "never", "always", "external", "on_demand"]).default("always"),
   recordingListenAllowed: z.boolean().default(true),
   outboundCli: z.string().optional().nullable(),

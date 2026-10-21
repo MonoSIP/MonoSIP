@@ -19,6 +19,11 @@ import {
 import { tryReloadAsterisk, writeAsteriskConfig } from "../asterisk/config-writer.js";
 import { ari } from "../asterisk/ari.js";
 
+/** Portal hash + SIP secret from the one extension password. */
+export function extensionCredentials(password: string) {
+  return { portalPasswordHash: scryptHash(password), sipSecretEnc: encrypt(password) };
+}
+
 export async function adminExtensionRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/extensions", async (req, reply) => {
     const actor = await requireAdmin(req, reply);
@@ -45,7 +50,7 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     const actor = await requireAdmin(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;
     const body = ExtensionCreateSchema.parse(req.body);
-    const sip = deriveSipPassword();
+    // One password for portal and SIP; generated when the admin leaves it empty.
     const portalPassword = body.portalPassword ?? randomSecret(12);
     const [row] = await db
       .insert(extensions)
@@ -53,8 +58,7 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
         number: body.number,
         name: body.name,
         email: body.email,
-        sipSecretEnc: encrypt(sip),
-        portalPasswordHash: scryptHash(portalPassword),
+        ...extensionCredentials(portalPassword),
         portalEnabled: body.portalEnabled,
         recordingMode: body.recordingMode,
         recordingListenAllowed: body.recordingListenAllowed,
@@ -112,7 +116,8 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
       patch.mobileForwardAllowed = body.mobileForwardAllowed;
     if (body.dnd !== undefined) patch.dnd = body.dnd;
     if (body.bossSecretaryOf !== undefined) patch.bossSecretaryOf = body.bossSecretaryOf;
-    if (body.portalPassword) patch.portalPasswordHash = scryptHash(body.portalPassword);
+    // Setting the password changes the SIP secret too (phones re-register with it).
+    if (body.portalPassword) Object.assign(patch, extensionCredentials(body.portalPassword));
     const [row] = await db
       .update(extensions)
       .set(patch)
@@ -129,7 +134,8 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
       action: "extension.update",
       objectType: "extension",
       objectId: id,
-      after: body,
+      // never store the password (portal + SIP) in the audit log
+      after: { ...body, portalPassword: body.portalPassword ? "(changed)" : undefined },
       ip: req.ip,
     });
     await tryReloadAsterisk();
@@ -189,8 +195,9 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     const portalPassword = randomSecret(12);
     await db
       .update(extensions)
-      .set({ portalPasswordHash: scryptHash(portalPassword), updatedAt: new Date() })
+      .set({ ...extensionCredentials(portalPassword), updatedAt: new Date() })
       .where(eq(extensions.id, id));
+    void tryReloadAsterisk();
     await writeAudit({
       actor,
       action: "extension.reset_password",
