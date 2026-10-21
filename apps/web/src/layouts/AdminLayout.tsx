@@ -27,6 +27,7 @@ import { api } from "../lib/api";
 import { useStore } from "../store";
 import i18n from "../i18n";
 import { AppBrand } from "../components/AppBrand";
+import { PageVeil } from "../components/PageVeil";
 
 const links = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", end: true, tone: "var(--accent)" },
@@ -136,7 +137,9 @@ export function AdminLayout() {
           </div>
         )}
         {/* Remount pages on a language switch so tr() copy re-renders */}
-        <Outlet key={i18n.language} />
+        <PageVeil>
+          <Outlet key={i18n.language} />
+        </PageVeil>
       </main>
     </div>
   );

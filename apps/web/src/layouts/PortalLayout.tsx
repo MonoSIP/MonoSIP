@@ -6,6 +6,7 @@ import { useStore } from "../store";
 import i18n from "../i18n";
 import { usePortalLive } from "../hooks/usePortalLive";
 import { AppBrand } from "../components/AppBrand";
+import { PageVeil } from "../components/PageVeil";
 
 const links = [
   { to: "/", icon: Phone, key: "phone", end: true, tone: "var(--accent)" },
@@ -78,7 +79,9 @@ export function PortalLayout() {
       </aside>
       <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
         {/* Remount pages on a language switch so tr() copy re-renders */}
-        <Outlet key={i18n.language} />
+        <PageVeil>
+          <Outlet key={i18n.language} />
+        </PageVeil>
       </main>
       <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--bg-elevated)_94%,transparent)] p-2 backdrop-blur-md md:hidden">
         {links.map((l) => (
