@@ -210,6 +210,22 @@ export async function portalRoutes(app: FastifyInstance) {
     return reply.send(createReadStream(vm.filePath));
   });
 
+  app.delete("/api/v1/me/voicemails/:id", async (req, reply) => {
+    const actor = await requireExtension(req, reply);
+    if (!actor || "statusCode" in (actor as object)) return;
+    const a = actor as { id: string };
+    const { id } = req.params as { id: string };
+    const [vm] = await db
+      .select()
+      .from(voicemails)
+      .where(and(eq(voicemails.id, id), eq(voicemails.extensionId, a.id)));
+    if (!vm) return reply.code(404).send({ error: "Not found" });
+    const { unlink } = await import("node:fs/promises");
+    await unlink(vm.filePath).catch(() => undefined);
+    await db.delete(voicemails).where(eq(voicemails.id, vm.id));
+    return { ok: true };
+  });
+
   app.get("/api/v1/me/forwarding", async (req, reply) => {
     const actor = await requireExtension(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;

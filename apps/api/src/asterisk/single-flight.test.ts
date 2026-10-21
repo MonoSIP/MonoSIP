@@ -54,7 +54,21 @@ describe("singleFlight (config write + Asterisk reload)", () => {
   });
 });
 
-import { sipFromDomain } from "./config-writer.js";
+import { sipFromDomain, trunkCallerLines } from "./config-writer.js";
+
+describe("trunkCallerLines", () => {
+  it("sends the operator number instead of the SIP login", () => {
+    expect(trunkCallerLines({ username: "936494", callerId: "+442045773102" })).toEqual([
+      "from_user=+442045773102",
+      "callerid=+442045773102",
+    ]);
+  });
+
+  it("keeps the SIP username when no caller ID is set", () => {
+    expect(trunkCallerLines({ username: "936494", callerId: "  " })).toEqual(["from_user=936494"]);
+    expect(trunkCallerLines({ username: null, callerId: null })).toEqual([]);
+  });
+});
 
 describe("sipFromDomain", () => {
   it("keeps valid hostnames and IPv4 addresses", () => {

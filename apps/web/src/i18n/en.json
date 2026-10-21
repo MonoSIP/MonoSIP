@@ -59,6 +59,7 @@
     "directory": "Directory",
     "myCalls": "My calls",
     "myRecordings": "My recordings",
+    "voicemail": "Voicemail",
     "mySettings": "My settings"
   },
   "dashboard": {
@@ -92,6 +93,8 @@
     "authIp": "IP-based (no REGISTER)",
     "authIpHint": "Provider authenticates by your public IP. Point their trunk at this PBX; no SIP password is sent.",
     "username": "SIP username",
+    "callerId": "Caller ID",
+    "callerIdHint": "Number the operator shows on outbound calls. Registration still uses the SIP username.",
     "secret": "SIP password",
     "secretKeep": "leave blank to keep",
     "register": "Register with provider",
@@ -265,7 +268,13 @@
     "unmute": "Unmute",
     "miniPhone": "Phone",
     "onCall": "On call",
-    "calling": "Calling…"
+    "calling": "Calling…",
+    "voicemailEmpty": "No messages left for you",
+    "callerId": "Caller ID",
+    "unread": "New",
+    "delete": "Delete",
+    "confirmDelete": "Delete this message",
+    "deleted": "Message deleted"
   },
   "langs": {
     "en": "English",

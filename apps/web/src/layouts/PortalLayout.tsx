@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { BookUser, LogOut, Phone, Settings, History, FileAudio } from "lucide-react";
+import { BookUser, FileAudio, History, LogOut, Phone, Settings, Voicemail } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
 import i18n from "../i18n";
@@ -15,6 +15,7 @@ const links = [
   { to: "/directory", icon: BookUser, key: "directory" },
   { to: "/calls", icon: History, key: "myCalls" },
   { to: "/recordings", icon: FileAudio, key: "myRecordings" },
+  { to: "/voicemail", icon: Voicemail, key: "voicemail" },
   { to: "/settings", icon: Settings, key: "mySettings" },
 ];
 
@@ -41,11 +42,11 @@ export function PortalLayout() {
     // One softphone for the whole portal: switching pages keeps the call up.
     <PhoneProvider>
     <div className="flex min-h-full flex-col md:flex-row">
-      <aside className="aside-panel hidden w-56 shrink-0 flex-col p-4 md:sticky md:top-0 md:flex md:h-screen">
+      <aside className="aside-panel hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:flex md:h-screen">
         <AppBrand
           subtitle={actor?.type === "extension" ? `${actor.number} · ${actor.name}` : ""}
         />
-        <nav className="flex flex-col gap-0.5">
+        <nav className="flex min-h-0 flex-col gap-0.5 overflow-y-auto">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -60,7 +61,8 @@ export function PortalLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-6 flex gap-2">
+        {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
+        <div className="mt-auto flex shrink-0 gap-2 pt-4">
           <button
             className="btn"
             type="button"
@@ -81,7 +83,6 @@ export function PortalLayout() {
             <LogOut size={16} />
           </button>
         </div>
-        {!onPhonePage && <MiniPhone className="mt-auto" />}
       </aside>
       <main className={`min-w-0 flex-1 p-4 md:p-8 md:pb-8 ${onPhonePage ? "pb-24" : "pb-40"}`}>
         {/* Remount pages on a language switch so tr() copy re-renders */}

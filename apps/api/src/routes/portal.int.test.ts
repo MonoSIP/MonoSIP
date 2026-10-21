@@ -126,6 +126,14 @@ describe("portal routes admit the owning extension", () => {
     });
   });
 
+  it("DELETE /api/v1/me/voicemails/:id -> 401 without a token", async () => {
+    const res = await app.inject({
+      method: "DELETE",
+      url: "/api/v1/me/voicemails/11111111-1111-1111-1111-111111111111",
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
   it("PUT /api/v1/me/dnd -> 401 without a token", async () => {
     const res = await app.inject({
       method: "PUT",

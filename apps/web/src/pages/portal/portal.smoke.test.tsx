@@ -36,6 +36,7 @@ import { DirectoryPage } from "./DirectoryPage";
 import { MyCallsPage } from "./MyCallsPage";
 import { MyRecordingsPage } from "./MyRecordingsPage";
 import { MySettingsPage } from "./MySettingsPage";
+import { MyVoicemailPage } from "./MyVoicemailPage";
 
 function renderPage(ui: React.ReactElement) {
   const client = new QueryClient({
@@ -147,11 +148,19 @@ describe("portal smoke tests", () => {
     await waitFor(() => expect(screen.getAllByRole("button")).toHaveLength(2));
   });
 
+  it("MyVoicemailPage lists messages left for this extension", async () => {
+    get.mockResolvedValue([
+      { id: "v1", caller: "90555", at: "2026-01-01T10:00:00Z", read: false },
+    ]);
+
+    renderPage(<MyVoicemailPage />);
+
+    expect((await screen.findAllByRole("heading", { name: "nav.voicemail" })).length).toBeGreaterThan(0);
+    expect(await screen.findByRole("button", { name: /90555/ })).toBeInTheDocument();
+  });
+
   it("MySettingsPage mounts and shows its forwarding controls", async () => {
-    // Three queries with different shapes: two lists and one object. A
-    // catch-all {} breaks the list-shaped ones.
     get.mockImplementation(async (path: string) => {
-      if (path === "/api/v1/me/voicemails") return [];
       if (path === "/api/v1/me/forwarding") return [];
       if (path === "/api/v1/me") return { dnd: false, mobileForwardAllowed: false };
       return {};

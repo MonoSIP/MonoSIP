@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -101,6 +101,16 @@ export function PhonePage() {
     const dial = params.get("dial");
     if (dial) setDigits(dial);
   }, [params]);
+
+  // The dialed number stays on the keypad after hangup unless it is cleared here.
+  const prevPhase = useRef(callPhase);
+  useEffect(() => {
+    const prev = prevPhase.current;
+    prevPhase.current = callPhase;
+    const leftCall =
+      prev === "dialing" || prev === "ringing" || prev === "active" || prev === "ended";
+    if (leftCall && (callPhase === "ended" || callPhase === "idle")) setDigits("");
+  }, [callPhase]);
 
   const showCallUi =
     inCall ||

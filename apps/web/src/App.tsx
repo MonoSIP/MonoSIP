@@ -50,6 +50,7 @@ const PhonePage = lazyNamed(() => import("./pages/portal/PhonePage"), "PhonePage
 const DirectoryPage = lazyNamed(() => import("./pages/portal/DirectoryPage"), "DirectoryPage");
 const MyCallsPage = lazyNamed(() => import("./pages/portal/MyCallsPage"), "MyCallsPage");
 const MyRecordingsPage = lazyNamed(() => import("./pages/portal/MyRecordingsPage"), "MyRecordingsPage");
+const MyVoicemailPage = lazyNamed(() => import("./pages/portal/MyVoicemailPage"), "MyVoicemailPage");
 const MySettingsPage = lazyNamed(() => import("./pages/portal/MySettingsPage"), "MySettingsPage");
 
 function BootScreen({ label = "Loading MunaSIP…" }: { label?: string }) {
@@ -112,6 +113,7 @@ export default function App() {
             <Route path="directory" element={<DirectoryPage />} />
             <Route path="calls" element={<MyCallsPage />} />
             <Route path="recordings" element={<MyRecordingsPage />} />
+            <Route path="voicemail" element={<MyVoicemailPage />} />
             <Route path="settings" element={<MySettingsPage />} />
           </Route>
         ) : (

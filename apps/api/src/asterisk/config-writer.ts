@@ -134,6 +134,16 @@ export function singleFlight(fn: () => Promise<void>): () => Promise<void> {
  * Unreachable, calls to the extension 404 and the IVR treats operators as offline.
  * It worked or broke per deploy depending on the random name.
  */
+/** From-header identity for a provider. A caller ID number replaces the SIP login. */
+export function trunkCallerLines(trunk: {
+  username?: string | null;
+  callerId?: string | null;
+}): string[] {
+  const cli = trunk.callerId?.trim();
+  if (cli) return [`from_user=${cli}`, `callerid=${cli}`];
+  return trunk.username ? [`from_user=${trunk.username}`] : [];
+}
+
 export function sipFromDomain(host: string): string {
   const h = host.trim().toLowerCase().replace(/\.$/, "");
   const ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/;
@@ -586,7 +596,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `aors=${id}`,
       `transport=${tport}`,
       `from_domain=${fromDomain}`,
-      ...(trunk.username ? [`from_user=${trunk.username}`] : []),
+      ...trunkCallerLines(trunk),
       "direct_media=no",
       `device_state_busy_at=${Math.max(1, trunk.maxChannels ?? 10)}`,
       "",

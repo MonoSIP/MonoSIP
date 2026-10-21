@@ -264,6 +264,27 @@ describe("PhonePage in-call controls", () => {
     expect(SoftphoneMock.last.hangup).toHaveBeenCalled();
   });
 
+  it("clears the number on screen after the call ends", async () => {
+    const input = await renderRegistered();
+    await userEvent.type(input, "101");
+
+    act(() => {
+      SoftphoneMock.last.onSession!({ id: "s-1" });
+      SoftphoneMock.last.onCallPhase?.("active", { seconds: 0, peer: "101" });
+    });
+    await screen.findByRole("button", { name: "portal.hangup" });
+
+    act(() => {
+      SoftphoneMock.last.onCallPhase?.("ended", { seconds: 4, peer: "101" });
+      SoftphoneMock.last.onSession!(null);
+    });
+    act(() => {
+      SoftphoneMock.last.onCallPhase?.("idle");
+    });
+
+    expect(await screen.findByLabelText("portal.enterNumber")).toHaveValue("");
+  });
+
   it("returns to the idle layout and clears mute/hold when the session ends", async () => {
     await enterCall();
     await userEvent.click(screen.getByRole("button", { name: "portal.mute" }));

@@ -88,9 +88,21 @@ async function main() {
   await ari.start();
 
   // Sync PJSIP secrets + dialplan on boot (seed may have raced empty conf / bad perms).
-  void import("./asterisk/config-writer.js")
-    .then(({ writeAsteriskConfig }) => writeAsteriskConfig())
-    .catch((e) => console.warn("[boot] asterisk config:", (e as Error).message));
+  // Health stays 503 until this finishes, so NineDeploy does not cut over early.
+  void (async () => {
+    const { writeAsteriskConfig } = await import("./asterisk/config-writer.js");
+    const { markDialplanReady } = await import("./lib/service-readiness.js");
+    for (;;) {
+      try {
+        await writeAsteriskConfig();
+        markDialplanReady();
+        return;
+      } catch (e) {
+        console.warn("[boot] asterisk config:", (e as Error).message);
+        await new Promise((r) => setTimeout(r, 3000));
+      }
+    }
+  })();
 
   const { startRetentionJob } = await import("./jobs/retention.js");
   startRetentionJob();

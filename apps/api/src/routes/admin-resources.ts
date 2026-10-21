@@ -82,6 +82,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         authType: body.authType,
         username: body.username,
         secretEnc: body.secret ? encrypt(body.secret) : null,
+        callerId: body.callerId?.trim() || null,
         fromDomain: body.fromDomain?.trim() || null,
         outboundProxy: body.outboundProxy?.trim() || null,
         register: body.register,
@@ -104,6 +105,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const patch: Record<string, unknown> = { ...body };
     delete patch.secret;
     if (body.secret) patch.secretEnc = encrypt(body.secret);
+    if (body.callerId !== undefined) patch.callerId = body.callerId?.trim() || null;
     if (body.fromDomain !== undefined) patch.fromDomain = body.fromDomain?.trim() || null;
     if (body.outboundProxy !== undefined) patch.outboundProxy = body.outboundProxy?.trim() || null;
     if (body.notes !== undefined) patch.notes = body.notes?.trim() || null;
@@ -2434,6 +2436,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
           authType: t.authType ?? t.auth_type ?? "userpass",
           username: t.username ?? null,
           secretEnc: t.secretEnc ?? t.secret_enc ?? null,
+          callerId: t.callerId ?? t.caller_id ?? null,
           codecs: t.codecs ?? ["ulaw", "alaw", "opus"],
           maxChannels: t.maxChannels ?? t.max_channels ?? 10,
           enabled: t.enabled ?? true,
@@ -2863,7 +2866,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/api/v1/health", async () => {
+  app.get("/api/v1/health", async (_req, reply) => {
     let dbOk = false;
     try {
       await db.execute(sql`select 1`);
@@ -2871,15 +2874,23 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     } catch {
       dbOk = false;
     }
-    const asteriskOk = await ari.health();
+    const { asteriskUsable, isDialplanReady, isServingReady } = await import("../lib/service-readiness.js");
+    const asteriskOk = await asteriskUsable(await ari.health());
+    const dialplan = isDialplanReady();
     const { getMediaReadiness } = await import("../lib/media-readiness.js");
     const media = await getMediaReadiness();
-    return {
-      ok: dbOk,
+    // NineDeploy cuts the old container over on a successful health check.
+    // 200/ok only after Postgres, Asterisk, and the dialplan are actually up.
+    const ok = isServingReady({ db: dbOk, asterisk: asteriskOk, dialplan });
+    const body = {
+      ok,
       db: dbOk,
       asterisk: asteriskOk,
+      dialplan,
       publicUrl: config.publicUrl,
       media,
     };
+    if (!ok) return reply.code(503).send(body);
+    return body;
   });
 }

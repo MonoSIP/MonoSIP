@@ -2,14 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-  KeyRound,
-  Mic,
-  PhoneForwarded,
-  UserCog,
-  Voicemail,
-  Volume2,
-} from "lucide-react";
+import { KeyRound, Mic, PhoneForwarded, UserCog, Volume2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
@@ -38,15 +31,7 @@ export function MySettingsPage() {
   const [micId, setMicId] = useState("");
   const [speakerId, setSpeakerId] = useState("");
   const [ringId, setRingId] = useState("");
-  const [playingVm, setPlayingVm] = useState<string | null>(null);
 
-  const vm = useQuery({
-    queryKey: ["voicemails"],
-    queryFn: () =>
-      api.get<Array<{ id: string; caller: string; at: string; read: boolean; filePath?: string }>>(
-        "/api/v1/me/voicemails",
-      ),
-  });
   const forwarding = useQuery({
     queryKey: ["forwarding"],
     queryFn: () => api.get<Fwd[]>("/api/v1/me/forwarding"),
@@ -274,64 +259,6 @@ export function MySettingsPage() {
         <button className="btn btn-primary" type="button" onClick={() => saveFwd.mutate()}>
           Save forwarding
         </button>
-      </SectionCard>
-
-      <SectionCard title="Voicemail" icon={Voicemail} tone="cyan">
-        <ul className="space-y-2">
-          {(vm.data ?? []).length === 0 ? (
-            <li className="text-[var(--text-muted)]">—</li>
-          ) : (
-            vm.data?.map((v) => (
-              <li key={v.id} className="flex items-center justify-between gap-2 text-sm">
-                <span>
-                  {v.caller} · {new Date(v.at).toLocaleString()}
-                  {!v.read ? " · new" : ""}
-                </span>
-                <span className="flex flex-col items-end gap-1">
-                  {playingVm === v.id ? (
-                    <audio
-                      className="max-w-[12rem]"
-                      controls
-                      autoPlay
-                      src={`/api/v1/me/voicemails/${v.id}/stream`}
-                      onEnded={() => setPlayingVm(null)}
-                    />
-                  ) : (
-                    <button
-                      className="btn"
-                      type="button"
-                      onClick={async () => {
-                      try {
-                        await api.patch(`/api/v1/me/voicemails/${v.id}`, { read: true });
-                        setPlayingVm(v.id);
-                        void qc.invalidateQueries({ queryKey: ["voicemails"] });
-                      } catch (e) {
-                        toast.error((e as Error).message);
-                      }
-                    }}
-                  >
-                    Play
-                  </button>
-                  )}
-                  <button
-                    className="btn"
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await api.patch(`/api/v1/me/voicemails/${v.id}`, { read: true });
-                        void qc.invalidateQueries({ queryKey: ["voicemails"] });
-                      } catch (e) {
-                        toast.error((e as Error).message);
-                      }
-                    }}
-                  >
-                    Read
-                  </button>
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
       </SectionCard>
     </div>
   );

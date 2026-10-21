@@ -368,6 +368,9 @@ describe("TrunksPage", () => {
     fireEvent.change(document.querySelector('input[type="password"]') as HTMLInputElement, {
       target: { value: "secret" },
     });
+    fireEvent.change(screen.getByPlaceholderText("+442045773102"), {
+      target: { value: "+442045773102" },
+    });
     fireEvent.submit(
       screen.getByRole("button", { name: "trunks.add" }).closest("form") as HTMLFormElement,
     );
@@ -375,7 +378,12 @@ describe("TrunksPage", () => {
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     const [path, payload] = apiPost.mock.calls[0] as [string, Record<string, unknown>];
     expect(path).toBe("/api/v1/admin/trunks");
-    expect(payload).toMatchObject({ enabled: true, name: "Carrier", host: "sip.example.net" });
+    expect(payload).toMatchObject({
+      enabled: true,
+      name: "Carrier",
+      host: "sip.example.net",
+      callerId: "+442045773102",
+    });
   });
 
   it("deletes a trunk from its row", async () => {
@@ -1127,6 +1135,11 @@ describe("PortalLayout", () => {
 
     expect(await screen.findByText("portal body")).toBeInTheDocument();
     expect(screen.getByText(/^v\d+\.\d+\.\d+/)).toBeInTheDocument();
+    const aside = document.querySelector("aside") as HTMLElement;
+    const phone = within(aside).getByRole("region", { name: "portal.miniPhone" });
+    const logout = within(aside).getByTitle("auth.logout");
+    // Phone sits directly under the menu; language and logout stay at the foot.
+    expect(phone.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await userEvent.click(screen.getByTitle("auth.logout"));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));

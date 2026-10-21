@@ -57,6 +57,13 @@ export const TrunkCreateSchema = z.object({
   authType: z.enum(["userpass", "ip"]).default("userpass"),
   username: z.string().optional().nullable(),
   secret: z.string().optional().nullable(),
+  /** Operator caller ID (E.164). Empty keeps the SIP username in the From header. */
+  callerId: z
+    .string()
+    .max(32)
+    .regex(/^$|^\+?[0-9]{6,20}$/)
+    .optional()
+    .nullable(),
   /** SIP From domain / realm (defaults to host when empty). */
   fromDomain: z.string().max(255).optional().nullable(),
   /** Optional outbound proxy host[:port]. */

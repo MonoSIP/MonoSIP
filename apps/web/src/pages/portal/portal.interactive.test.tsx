@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const get = vi.fn();
 const put = vi.fn();
 const patch = vi.fn();
+const del = vi.fn();
 const navigate = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
@@ -25,7 +26,7 @@ vi.mock("../../lib/api", () => ({
     put: (...a: unknown[]) => put(...a),
     patch: (...a: unknown[]) => patch(...a),
     post: vi.fn(async () => ({})),
-    del: vi.fn(async () => ({})),
+    delete: (...a: unknown[]) => del(...a),
   },
 }));
 vi.mock("react-router-dom", async () => {
@@ -43,6 +44,7 @@ vi.mock("sonner", () => ({
 
 import { MissedPage } from "../admin/MissedPage";
 import { MySettingsPage } from "./MySettingsPage";
+import { MyVoicemailPage } from "./MyVoicemailPage";
 
 function renderPage(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -204,10 +206,9 @@ describe("call forwarding", () => {
 });
 
 describe("password and voicemail error handling", () => {
-  function seedSettings(voicemails: unknown[] = []) {
+  function seedSettings() {
     get.mockImplementation(async (path: string) => {
       if (path === "/api/v1/me") return { dnd: false, mobileForwardAllowed: false };
-      if (path === "/api/v1/me/voicemails") return voicemails;
       if (path === "/api/v1/me/forwarding") return [];
       return {};
     });
@@ -256,33 +257,41 @@ describe("password and voicemail error handling", () => {
     expect(save).toBeEnabled();
   });
 
-  it("surfaces a failed voicemail Play and does not open the player", async () => {
-    seedSettings([
-      { id: "v1", caller: "4444", at: "2026-01-01T09:00:00Z", read: false },
-    ]);
+});
+
+const VOICEMAIL = { id: "v1", caller: "4444", at: "2026-01-01T09:00:00Z", read: false };
+
+describe("voicemail inbox", () => {
+  function seed(rows: unknown[] = [VOICEMAIL]) {
+    get.mockImplementation(async (path: string) => {
+      if (path === "/api/v1/me/voicemails") return rows;
+      return [];
+    });
+  }
+
+  it("does not open the recording when marking it read fails", async () => {
+    seed();
     patch.mockRejectedValueOnce(new Error("voicemail gone"));
 
-    renderPage(<MySettingsPage />);
+    renderPage(<MyVoicemailPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Play" }));
+    await userEvent.click(await screen.findByRole("button", { name: /4444/ }));
 
     expect(patch).toHaveBeenCalledWith("/api/v1/me/voicemails/v1", { read: true });
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("voicemail gone"));
-    // setPlayingVm runs only after the awaited patch resolves.
-    expect(screen.queryByRole("button", { name: "Play" })).toBeInTheDocument();
+    expect(document.querySelector("audio")).toBeNull();
   });
 
-  it("opens the player once the voicemail patch succeeds", async () => {
-    seedSettings([
-      { id: "v1", caller: "4444", at: "2026-01-01T09:00:00Z", read: false },
-    ]);
+  it("opens the recording with the caller id once the message is read", async () => {
+    seed();
     patch.mockResolvedValueOnce({});
 
-    renderPage(<MySettingsPage />);
+    renderPage(<MyVoicemailPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Play" }));
+    await userEvent.click(await screen.findByRole("button", { name: /4444/ }));
 
-    // <audio> has no implicit ARIA role, so query the element directly.
+    expect(await screen.findByRole("heading", { name: "portal.callerId" })).toBeInTheDocument();
+    expect(screen.getByText("4444", { selector: "p" })).toBeInTheDocument();
     const player = await waitFor(() => {
       const el = document.querySelector("audio");
       expect(el).not.toBeNull();
@@ -291,18 +300,24 @@ describe("password and voicemail error handling", () => {
     expect(player).toHaveAttribute("src", "/api/v1/me/voicemails/v1/stream");
   });
 
-  it("surfaces a failed voicemail Read", async () => {
-    seedSettings([
-      { id: "v1", caller: "4444", at: "2026-01-01T09:00:00Z", read: false },
-    ]);
-    patch.mockRejectedValueOnce(new Error("nope"));
+  it("deletes the open message after confirmation", async () => {
+    let rows: unknown[] = [VOICEMAIL];
+    get.mockImplementation(async (path: string) => (path === "/api/v1/me/voicemails" ? rows : []));
+    patch.mockResolvedValue({});
+    del.mockImplementation(async () => {
+      rows = [];
+      return { ok: true };
+    });
 
-    renderPage(<MySettingsPage />);
+    renderPage(<MyVoicemailPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Read" }));
+    await userEvent.click(await screen.findByRole("button", { name: /4444/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "portal.delete" }));
+    await userEvent.click(screen.getByRole("button", { name: "portal.confirmDelete" }));
 
-    expect(patch).toHaveBeenCalledWith("/api/v1/me/voicemails/v1", { read: true });
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("nope"));
+    expect(del).toHaveBeenCalledWith("/api/v1/me/voicemails/v1");
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("portal.deleted"));
+    await waitFor(() => expect(screen.queryByText("4444")).not.toBeInTheDocument());
   });
 });
 

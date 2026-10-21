@@ -212,9 +212,11 @@ describe("internal hooks require the shared secret", () => {
 });
 
 describe("unauthenticated endpoints stay open and inert", () => {
-  it("GET /api/v1/health responds without a token", async () => {
+  it("GET /api/v1/health responds without a token and stays down until the PBX is ready", async () => {
     const res = await app.inject({ method: "GET", url: "/api/v1/health" });
-    expect(res.statusCode).toBeLessThan(500);
+    // This process never publishes a dialplan, so the probe must not look healthy.
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toMatchObject({ ok: false, dialplan: false });
   });
 
   it("GET /cfg/:mac 404s an unknown MAC rather than leaking config", async () => {

@@ -39,6 +39,7 @@ type Trunk = {
   transport: string;
   authType: string;
   username?: string | null;
+  callerId?: string | null;
   fromDomain?: string | null;
   outboundProxy?: string | null;
   register?: boolean;
@@ -64,6 +65,7 @@ type TrunkForm = {
   transport: "udp" | "tcp" | "tls";
   authType: "userpass" | "ip";
   username: string;
+  callerId: string;
   secret: string;
   fromDomain: string;
   outboundProxy: string;
@@ -81,6 +83,7 @@ const emptyForm = (): TrunkForm => ({
   transport: "udp",
   authType: "userpass",
   username: "",
+  callerId: "",
   secret: "",
   fromDomain: "",
   outboundProxy: "",
@@ -99,6 +102,7 @@ function trunkToForm(tr: Trunk): TrunkForm {
     transport: (tr.transport as TrunkForm["transport"]) || "udp",
     authType: (tr.authType as TrunkForm["authType"]) || "userpass",
     username: tr.username ?? "",
+    callerId: tr.callerId ?? "",
     secret: "",
     fromDomain: tr.fromDomain ?? "",
     outboundProxy: tr.outboundProxy ?? "",
@@ -122,6 +126,7 @@ function formPayload(form: TrunkForm, forCreate: boolean) {
     transport: form.transport,
     authType: form.authType,
     username: form.authType === "userpass" ? form.username.trim() || null : null,
+    callerId: form.callerId.trim() || null,
     fromDomain: form.fromDomain.trim() || null,
     outboundProxy: form.outboundProxy.trim() || null,
     register: form.authType === "userpass" ? form.register : false,
@@ -348,6 +353,17 @@ export function TrunksPage() {
 
         <div className="grid gap-3 md:grid-cols-2">
           <TextField
+            label={t("trunks.callerId")}
+            hint={t("trunks.callerIdHint")}
+            className="font-mono md:col-span-2"
+            value={form.callerId}
+            onChange={(e) => set("callerId", e.target.value)}
+            placeholder="+442045773102"
+            inputMode="tel"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <TextField
             label={t("trunks.fromDomain")}
             className="font-mono"
             value={form.fromDomain}
@@ -542,6 +558,9 @@ export function TrunksPage() {
                   ) : (
                     <div className="text-xs text-[var(--text-muted)]">{t("trunks.authIp")}</div>
                   )}
+                  {trow.callerId ? (
+                    <div className="font-mono text-xs">{trow.callerId}</div>
+                  ) : null}
                 </td>
                 <td className="font-mono text-sm">
                   {trow.host}:{trow.port ?? 5060}

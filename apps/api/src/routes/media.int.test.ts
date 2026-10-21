@@ -518,4 +518,39 @@ describe("voicemail streaming", () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  it("deletes the owner's message and its file", async () => {
+    const vm = await seedVoicemail(fx.extensionId, "vm-delete.wav");
+    const res = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/me/voicemails/${vm.id}`,
+      headers: auth(fx.extensionToken),
+    });
+    expect(res.statusCode).toBe(200);
+    expect(existsSync(vm.filePath)).toBe(false);
+    const [row] = await db.select().from(voicemails).where(eq(voicemails.id, vm.id));
+    expect(row).toBeUndefined();
+  });
+
+  it("does not delete another extension's message", async () => {
+    const [other] = await db
+      .insert(extensions)
+      .values({
+        number: `9${Date.now()}`.slice(0, 16),
+        name: "Other Mailbox",
+        sipSecretEnc: "enc",
+        portalEnabled: true,
+        portalPasswordHash: "x",
+      })
+      .returning();
+    createdExtensions.push(other.id);
+    const vm = await seedVoicemail(other.id, "vm-not-mine.wav");
+    const res = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/me/voicemails/${vm.id}`,
+      headers: auth(fx.extensionToken),
+    });
+    expect(res.statusCode).toBe(404);
+    expect(existsSync(vm.filePath)).toBe(true);
+  });
 });

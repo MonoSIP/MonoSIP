@@ -59,6 +59,7 @@
     "directory": "Rehber",
     "myCalls": "Çağrılarım",
     "myRecordings": "Kayıtlarım",
+    "voicemail": "Sesli mesajlar",
     "mySettings": "Ayarlarım"
   },
   "dashboard": {
@@ -92,6 +93,8 @@
     "authIp": "IP tabanlı (REGISTER yok)",
     "authIpHint": "Sağlayıcı sizi genel IP’nizle tanır. Hattı bu santrale yönlendirin; SIP şifresi gönderilmez.",
     "username": "SIP kullanıcı adı",
+    "callerId": "Arayan numara",
+    "callerIdHint": "Operatörün giden aramada göstereceği numara. Kayıt SIP kullanıcı adıyla devam eder.",
     "secret": "SIP şifresi",
     "secretKeep": "değiştirmemek için boş bırakın",
     "register": "Sağlayıcıya kayıt ol",
@@ -265,7 +268,13 @@
     "unmute": "Sesi aç",
     "miniPhone": "Telefon",
     "onCall": "Görüşmede",
-    "calling": "Aranıyor…"
+    "calling": "Aranıyor…",
+    "voicemailEmpty": "Size bırakılan mesaj yok",
+    "callerId": "Arayan numara",
+    "unread": "Yeni",
+    "delete": "Sil",
+    "confirmDelete": "Bu mesajı sil",
+    "deleted": "Mesaj silindi"
   },
   "langs": {
     "en": "İngilizce",
