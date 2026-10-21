@@ -265,12 +265,14 @@ export async function portalRoutes(app: FastifyInstance) {
     const actor = await requireExtension(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;
     const rows = await db.select().from(extensions).orderBy(extensions.number);
+    const { extensionPresence } = await import("../lib/presence.js");
+    const presence = await extensionPresence(rows);
     return rows.map((r) => ({
       id: r.id,
       number: r.number,
       name: r.name,
       dnd: r.dnd,
-      state: ari.extensionStates.get(r.number)?.state ?? (r.dnd ? "dnd" : "idle"),
+      state: presence.get(r.number) ?? "offline",
     }));
   });
 

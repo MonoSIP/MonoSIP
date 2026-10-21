@@ -105,6 +105,40 @@ export function NodeSettings({
         </SettingsSection>
       )}
 
+      {type === "wait" && (
+        <SettingsSection
+          step={1}
+          title={tr("Pause")}
+          hint={tr("The caller hears silence (or hold music) for this long, then the flow continues.")}
+        >
+          <Field label={tr("Seconds (1–600)")}>
+            <input
+              className="input w-full font-mono"
+              type="number"
+              min={1}
+              max={600}
+              value={String(data.seconds ?? 5)}
+              onChange={(e) => patch({ seconds: Math.max(1, Math.min(600, Number(e.target.value) || 1)) })}
+            />
+          </Field>
+          <Field label={tr("While waiting")}>
+            <select
+              className="input w-full"
+              value={String(data.moh ?? "")}
+              onChange={(e) => patch({ moh: e.target.value })}
+            >
+              <option value="">{tr("Silence")}</option>
+              <option value="default">{tr("Hold music (default)")}</option>
+              {ctx.mohClasses.map((m) => (
+                <option key={m.id} value={m.name}>
+                  {tr("Hold music")}: {m.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </SettingsSection>
+      )}
+
       {type === "language" && (
         <SettingsSection step={1} title={tr("Language")} hint={tr("Applies to announce / menu / TTS after this node.")}>
           <Field label={tr("Language")}>

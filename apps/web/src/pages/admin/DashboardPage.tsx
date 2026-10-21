@@ -16,6 +16,14 @@ import { PageHeader, StatTile } from "../../components/ui";
 import { LiveDot } from "../../components/motion";
 import { tr } from "../../i18n";
 
+/** Presence words (server: lib/presence.ts) — DND comes from the extensions table. */
+const PRESENCE_LABEL: Record<string, string> = {
+  online: "Online",
+  busy: "On a call",
+  dnd: "Do not disturb",
+  offline: "Offline",
+};
+
 export function DashboardPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -36,7 +44,7 @@ export function DashboardPage() {
           state: string;
           tech?: string;
         }>;
-        extensions: Array<{ number: string; state: string }>;
+        extensions: Array<{ number: string; name?: string; dnd?: boolean; state: string }>;
         queues: Array<{ number: string; name: string; members: number; paused: number; waiting: number }>;
         trunks?: Array<{ id: string; name: string; host: string; state: string }>;
       }>("/api/v1/admin/live/calls"),
@@ -208,12 +216,12 @@ export function DashboardPage() {
               <span className="text-sm text-[var(--text-muted)]">{tr("No presence data yet")}</span>
             ) : (
               live.data?.extensions.map((e) => (
-                <span key={e.number} className="badge gap-1.5">
+                <span key={e.number} className="badge gap-1.5" title={e.name}>
                   <LiveDot
-                    live={/use|busy|ring/i.test(e.state)}
-                    tone={/unavail|offline/i.test(e.state) ? "err" : /use|busy|ring/i.test(e.state) ? "busy" : "ok"}
+                    live={e.state === "busy"}
+                    tone={e.state === "offline" ? "err" : e.state === "online" ? "ok" : "busy"}
                   />
-                  {e.number}:{e.state}
+                  {e.number} · {tr(PRESENCE_LABEL[e.state] ?? e.state)}
                 </span>
               ))
             )}

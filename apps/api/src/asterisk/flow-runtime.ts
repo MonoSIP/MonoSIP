@@ -81,6 +81,9 @@ export function dialExitNode(
   return nextNode(flow, nodeId, handle, true) ?? flow.nodes.find((n) => n.type === "menu");
 }
 
+/** Longest pause a wait node may hold a call (seconds). */
+export const MAX_WAIT_SECONDS = 600;
+
 /** Hard cap on nodes run per call, so a flow that loops back to a menu can't run forever. */
 export const MAX_FLOW_STEPS = 300;
 
@@ -612,6 +615,16 @@ export async function executeFlowLoop(
       case "set_var":
         vars[String(data.name ?? "var")] = expandTemplate(String(data.value ?? ""), vars);
         break;
+      case "wait": {
+        // Pause N seconds (optionally with hold music), then continue on "next".
+        const seconds = Math.max(1, Math.min(MAX_WAIT_SECONDS, Number(data.seconds ?? 5) || 5));
+        const moh = String(data.moh ?? "").trim();
+        console.log(`[flow] ${channelId} wait ${seconds}s${moh ? ` (moh ${moh})` : ""}`);
+        const withMoh = moh ? await ari.startMoh(channelId, moh === "default" ? undefined : moh) : false;
+        await sleep(seconds * 1000);
+        if (withMoh) await ari.stopMoh(channelId);
+        break;
+      }
       case "language":
         vars.language = String(data.language ?? "en");
         break;

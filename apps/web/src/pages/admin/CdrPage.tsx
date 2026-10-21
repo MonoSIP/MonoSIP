@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Download, Filter, History, Play, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Filter, History, Play } from "lucide-react";
 import { api } from "../../lib/api";
 import { IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
+import { nodeTitle } from "./flow/nodeMeta";
 
 type CdrRow = {
   id: string;
@@ -22,7 +23,30 @@ type CdrRow = {
   jitter?: number | null;
   packetLoss?: number | null;
   extensionNumber?: string | null;
+  answeredAt?: string | null;
+  endedAt?: string | null;
+  did?: string | null;
+  queueNumber?: string | null;
+  waitSec?: number | null;
+  trunkId?: string | null;
 };
+
+type TimelineEvent = { id: string; at: string; type: string; data: unknown };
+
+/** One readable line per IVR event: "Menu · Main menu", "Key: 1", "Exit: hangup". */
+function describeEvent(e: TimelineEvent): { title: string; detail: string } {
+  const d = (e.data ?? {}) as Record<string, unknown>;
+  if (e.type === "flow.node") {
+    const type = String(d.nodeType ?? "");
+    const label = d.label ? String(d.label) : "";
+    return { title: type ? nodeTitle(type) : tr("Step"), detail: label && label !== type ? label : "" };
+  }
+  if (e.type === "ivr.dtmf") return { title: tr("Key pressed"), detail: String(d.digit ?? "") };
+  if (e.type === "flow.exit") return { title: tr("Flow ended"), detail: String(d.reason ?? "") };
+  return { title: e.type, detail: Object.keys(d).length ? JSON.stringify(d) : "" };
+}
+
+const fmtTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString() : "—");
 
 export function CdrPage() {
   const { t } = useTranslation();
@@ -122,58 +146,108 @@ export function CdrPage() {
                 </td>
               </tr>
             ) : (
-              list.data?.map((r) => (
-                <tr key={r.id}>
-                  <td>{new Date(r.startedAt).toLocaleString()}</td>
-                  <td className="text-xs uppercase text-[var(--text-muted)]">{r.direction}</td>
-                  <td className="font-mono">{r.caller ?? "—"}</td>
-                  <td className="font-mono">{r.callee ?? "—"}</td>
-                  <td>
-                    <span className="badge">{r.disposition ?? "—"}</span>
-                  </td>
-                  <td className="col-num">{r.duration ?? 0}s</td>
-                  <td className="font-mono text-xs">{r.extensionNumber ?? "—"}</td>
-                  <td className="col-num text-xs">
-                    {r.mos != null ? r.mos.toFixed(2) : "—"}
-                  </td>
-                  <td>{r.dndFlag ? "yes" : "—"}</td>
-                  <td>
-                    {r.recordingId ? (
-                      <IconLink icon={Play} label={tr("Play recording")} href={`/recordings?id=${r.recordingId}`} />
-                    ) : (
-                      "—"
+              list.data?.map((r) => {
+                const open = timelineId === r.id;
+                return (
+                  <Fragment key={r.id}>
+                    <tr
+                      className={`cdr-row${open ? " is-open" : ""}`}
+                      onClick={() => setTimelineId(open ? null : r.id)}
+                      aria-expanded={open}
+                    >
+                      <td>
+                        <span className="inline-flex items-center gap-1.5">
+                          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          {new Date(r.startedAt).toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="text-xs uppercase text-[var(--text-muted)]">{r.direction}</td>
+                      <td className="font-mono">{r.caller ?? "—"}</td>
+                      <td className="font-mono">{r.callee ?? "—"}</td>
+                      <td>
+                        <span className="badge">{r.disposition ? tr(r.disposition) : "—"}</span>
+                      </td>
+                      <td className="col-num">{r.duration ?? 0}s</td>
+                      <td className="font-mono text-xs">{r.extensionNumber ?? "—"}</td>
+                      <td className="col-num text-xs">{r.mos != null ? r.mos.toFixed(2) : "—"}</td>
+                      <td>{r.dndFlag ? tr("yes") : "—"}</td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {r.recordingId ? (
+                          <IconLink icon={Play} label={tr("Play recording")} href={`/recordings?id=${r.recordingId}`} />
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="col-actions">
+                        <IconBtn
+                          icon={open ? ChevronDown : History}
+                          label={open ? tr("Close") : tr("Details")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTimelineId(open ? null : r.id);
+                          }}
+                        />
+                      </td>
+                    </tr>
+                    {open && (
+                      <tr className="cdr-detail">
+                        <td colSpan={11}>
+                          <div className="cdr-detail-grid">
+                            <dl className="cdr-facts">
+                              {(
+                                [
+                                  [tr("Call ID"), r.callId],
+                                  [tr("Started"), fmtTime(r.startedAt)],
+                                  [tr("Answered"), fmtTime(r.answeredAt)],
+                                  [tr("Ended"), fmtTime(r.endedAt)],
+                                  [tr("Duration"), `${r.duration ?? 0}s`],
+                                  [tr("Talk time"), `${r.billsec ?? 0}s`],
+                                  [tr("Wait"), r.waitSec != null ? `${r.waitSec}s` : "—"],
+                                  ["DID", r.did ?? "—"],
+                                  [tr("Queue"), r.queueNumber ?? "—"],
+                                  [tr("Trunk"), r.trunkId ? r.trunkId.slice(0, 8) : "—"],
+                                  ["MOS", r.mos != null ? r.mos.toFixed(2) : "—"],
+                                  [tr("Jitter / loss"), r.jitter != null ? `${r.jitter} ms / ${r.packetLoss ?? 0}%` : "—"],
+                                ] as Array<[string, string]>
+                              ).map(([k, v]) => (
+                                <div key={k}>
+                                  <dt>{k}</dt>
+                                  <dd className={k === tr("Call ID") ? "font-mono text-xs" : undefined}>{v}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                            <div>
+                              <div className="cdr-detail-title">{tr("Call timeline")}</div>
+                              {timeline.isLoading ? (
+                                <p className="text-sm text-[var(--text-muted)]">{t("common.loading")}</p>
+                              ) : (timeline.data?.events ?? []).length === 0 ? (
+                                <p className="text-sm text-[var(--text-muted)]">{tr("No IVR/flow events for this call.")}</p>
+                              ) : (
+                                <ol className="cdr-steps">
+                                  {timeline.data?.events.map((e) => {
+                                    const { title, detail } = describeEvent(e);
+                                    return (
+                                      <li key={e.id} className={`cdr-step cdr-step--${e.type.replace(/\W/g, "-")}`}>
+                                        <span className="cdr-step-time">{new Date(e.at).toLocaleTimeString()}</span>
+                                        <span className="cdr-step-title">{title}</span>
+                                        {detail && <span className="cdr-step-detail">{detail}</span>}
+                                      </li>
+                                    );
+                                  })}
+                                </ol>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                  <td className="col-actions">
-                    <IconBtn icon={History} label={tr("Timeline")} onClick={() => setTimelineId(r.id)} />
-                  </td>
-                </tr>
-              ))
+                  </Fragment>
+                );
+              })
             )}
           </tbody>
         </table>
       </SectionCard>
-      {timelineId && (
-        <SectionCard
-          title={tr("Call timeline")}
-          icon={History}
-          tone="coral"
-          actions={<IconBtn icon={X} label={tr("Close")} onClick={() => setTimelineId(null)} />}
-        >
-          {(timeline.data?.events ?? []).length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">{tr("No IVR/flow events for this call.")}</p>
-          ) : (
-            <ol className="space-y-1 text-sm">
-              {timeline.data?.events.map((e) => (
-                <li key={e.id} className="rounded bg-[var(--bg-soft)] px-2 py-1 font-mono text-xs">
-                  {new Date(e.at).toLocaleTimeString()} · {e.type}{" "}
-                  {e.data ? JSON.stringify(e.data) : ""}
-                </li>
-              ))}
-            </ol>
-          )}
-        </SectionCard>
-      )}
     </div>
   );
 }

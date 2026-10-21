@@ -37,6 +37,8 @@ vi.mock("./ari.js", () => {
     waitDtmfDigits: vi.fn(async () => "1"),
     clearDtmfBuffer: vi.fn(() => undefined),
     hasBufferedDtmf: vi.fn(() => false),
+    startMoh: vi.fn(async () => true),
+    stopMoh: vi.fn(async () => undefined),
     stopPlayback: vi.fn(async () => undefined),
     isEndpointOnline: vi.fn(async () => true),
     endpointState: vi.fn(async () => ({ online: true, busy: false })),
@@ -1415,5 +1417,39 @@ describe("executeFlowLoop — returning to a menu", () => {
     // the menu prompt ran twice: initial entry + after "back to menu"
     const menuPlays = vi.mocked(ari.playCollectDtmf).mock.calls.length + vi.mocked(ari.playAndWait).mock.calls.length;
     expect(menuPlays).toBeGreaterThanOrEqual(2);
+  });
+});
+
+
+describe("executeFlowLoop — wait node", () => {
+  it("pauses for the configured seconds, then continues on next", async () => {
+    const w = node("w", "wait", { seconds: 3 });
+    const flow = flowOf([w, node("h", "hangup")], [edge("w", "h", "next")]);
+    const running = runLoop(w, flow);
+    await vi.advanceTimersByTimeAsync(2900);
+    expect(ari.hangup).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+    await running;
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
+    expect(ari.startMoh).not.toHaveBeenCalled();
+  });
+
+  it("plays hold music while waiting when a class is chosen", async () => {
+    const w = node("w", "wait", { seconds: 2, moh: "default" });
+    const flow = flowOf([w, node("h", "hangup")], [edge("w", "h", "next")]);
+    const running = runLoop(w, flow);
+    await vi.advanceTimersByTimeAsync(2100);
+    await running;
+    expect(ari.startMoh).toHaveBeenCalledWith("ch-n", undefined);
+    expect(ari.stopMoh).toHaveBeenCalledWith("ch-n");
+  });
+
+  it("caps very long waits", async () => {
+    const w = node("w", "wait", { seconds: 99999 });
+    const flow = flowOf([w, node("h", "hangup")], [edge("w", "h", "next")]);
+    const running = runLoop(w, flow);
+    await vi.advanceTimersByTimeAsync(600_000 + 100);
+    await running;
+    expect(ari.hangup).toHaveBeenCalledWith("ch-n");
   });
 });

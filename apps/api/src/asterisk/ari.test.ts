@@ -182,12 +182,12 @@ describe("ari event handling", () => {
     expect(seen).toHaveLength(0);
   });
 
-  it("tracks extension state and emits extension.state", () => {
+  it("emits extension.state without keeping a stale copy", () => {
     const seen: unknown[] = [];
     ari.on("extension.state", (ev) => seen.push(ev));
     ari.setExtensionState("101", "dnd");
-    expect(ari.extensionStates.get("101")).toEqual({ number: "101", state: "dnd" });
     expect(seen).toEqual([{ number: "101", state: "dnd" }]);
+    expect((ari as unknown as { extensionStates?: unknown }).extensionStates).toBeUndefined();
   });
 });
 

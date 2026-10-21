@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Download, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, SelectField, TextField, Switch } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = {
@@ -445,9 +445,17 @@ export function ExtensionsPage() {
                 <td className="font-mono">{e.number}</td>
                 <td className="col-grow">{e.name}</td>
                 <td>
-                  <button className="btn btn-icon" type="button" onClick={() => toggleDnd.mutate(e)} title={tr("DND")} aria-label={tr("DND")}>
-                    {e.dnd ? tr("ON") : tr("OFF")}
-                  </button>
+                  {(() => {
+                    const pending = toggleDnd.isPending && toggleDnd.variables?.id === e.id;
+                    return (
+                      <Switch
+                        label={`${tr("DND")} ${e.number}`}
+                        checked={pending ? !e.dnd : !!e.dnd}
+                        pending={pending}
+                        onChange={() => toggleDnd.mutate(e)}
+                      />
+                    );
+                  })()}
                 </td>
                 <td>{e.portalEnabled ? t("common.yes") : t("common.no")}</td>
                 <td className="font-mono text-xs">

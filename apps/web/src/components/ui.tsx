@@ -251,3 +251,37 @@ export function SectionCard({
     </section>
   );
 }
+
+/**
+ * On/off switch. `pending` disables it and shows a spinner on the thumb while a
+ * save is in flight, so a second click can't race the first.
+ */
+export function Switch({
+  checked,
+  onChange,
+  label,
+  pending,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+  pending?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      aria-busy={pending || undefined}
+      title={label}
+      disabled={disabled || pending}
+      className={`ui-switch${checked ? " is-on" : ""}${pending ? " is-pending" : ""}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span className="ui-switch-thumb" />
+    </button>
+  );
+}

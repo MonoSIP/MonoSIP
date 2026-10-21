@@ -247,14 +247,19 @@ export function PhonePage() {
   const shownPeer = peer || digits;
   const avatarLabel = shownPeer ? (shownPeer.length <= 4 ? shownPeer : shownPeer.slice(-2)) : "?";
 
+  const [dndBusy, setDndBusy] = useState(false);
   async function toggleDnd() {
+    if (dndBusy) return;
     const next = !dnd;
+    setDndBusy(true);
     try {
       await api.put("/api/v1/me/dnd", { dnd: next });
       setDnd(next);
       void me.refetch();
     } catch (e) {
       toast.error((e as Error).message);
+    } finally {
+      setDndBusy(false);
     }
   }
 
@@ -333,7 +338,8 @@ export function PhonePage() {
       <span className="sp-act-label">{label}</span>
     </>
   );
-  const dndAct = act(t("portal.dnd"), <Moon size={18} />, () => void toggleDnd(), { on: dnd });
+  // Disabled while the change is saving, so repeated taps can't race each other.
+  const dndAct = act(t("portal.dnd"), <Moon size={18} />, () => void toggleDnd(), { on: dnd, disabled: dndBusy });
   const mainCall = (
     <button
       type="button"

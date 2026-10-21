@@ -334,6 +334,9 @@ export async function simulateFlow(
         vars.language = data.language ?? "en";
         message = `Language ${vars.language}`;
         break;
+      case "wait":
+        message = `Wait ${Math.max(1, Math.min(600, Number(data.seconds ?? 5) || 5))}s${data.moh ? " (hold music)" : ""}`;
+        break;
       case "time_condition": {
         handle = "open";
         message = `Schedule ${String(data.scheduleId ?? "")} → ${handle} (sim assumes open)`;

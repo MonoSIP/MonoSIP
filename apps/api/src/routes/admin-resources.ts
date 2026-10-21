@@ -1751,7 +1751,15 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     return {
       asteriskConnected: ari.connected,
       calls: [...ari.calls.values()],
-      extensions: [...ari.extensionStates.values()],
+      extensions: await (async () => {
+        const rows = await db
+          .select({ number: extensions.number, name: extensions.name, dnd: extensions.dnd })
+          .from(extensions)
+          .orderBy(extensions.number);
+        const { extensionPresence } = await import("../lib/presence.js");
+        const presence = await extensionPresence(rows);
+        return rows.map((r) => ({ number: r.number, name: r.name, dnd: r.dnd, state: presence.get(r.number) ?? "offline" }));
+      })(),
       queues: queueSummary,
       trunks: trunkSummary,
     };

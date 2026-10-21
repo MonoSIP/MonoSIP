@@ -20,7 +20,8 @@ export type ShapeKind =
   | "subroutine"
   | "arrow"
   | "stack"
-  | "envelope";
+  | "envelope"
+  | "delay";
 
 const SHAPE_BY_TYPE: Record<string, ShapeKind> = {
   start: "pill",
@@ -34,6 +35,7 @@ const SHAPE_BY_TYPE: Record<string, ShapeKind> = {
   time_condition: "hexagon",
   api: "parallelogram",
   set_var: "tag",
+  wait: "delay",
   language: "leaf",
   subflow: "subroutine",
   transfer: "arrow",
@@ -74,6 +76,8 @@ export function shapePadding(kind: ShapeKind): { top: number; right: number; bot
       return { top: 6, right: 0, bottom: 0, left: 0 };
     case "pill":
       return { top: 0, right: 8, bottom: 0, left: 8 };
+    case "delay":
+      return { top: 0, right: 14, bottom: 0, left: 0 };
     default:
       return { top: 0, right: 0, bottom: 0, left: 0 };
   }
@@ -185,6 +189,13 @@ export function shapePaths(kind: ShapeKind, w: number, h: number): { body: strin
       return {
         back: [rr(x0 + o * 2, y0, x1, y1 - o * 2, 9), rr(x0 + o, y0 + o, x1 - o, y1 - o, 9)],
         body: rr(x0, y0 + o * 2, x1 - o * 2, y1, 9),
+      };
+    }
+    case "delay": {
+      // Flowchart "delay": flat left side, half-round right side
+      const r = Math.min((y1 - y0) / 2, 40);
+      return {
+        body: `M${x0 + 6},${y0} H${x1 - r} A${r},${(y1 - y0) / 2} 0 0 1 ${x1 - r},${y1} H${x0 + 6} Q${x0},${y1} ${x0},${y1 - 6} V${y0 + 6} Q${x0},${y0} ${x0 + 6},${y0} Z`,
       };
     }
     case "envelope": {
@@ -386,6 +397,16 @@ export function NodeIcon({ type, size }: { type: string; size?: number }) {
           <circle className="fi-q" cx="10.5" cy="12" r="2.2" fill="currentColor" stroke="none" />
           <circle className="fi-q fi-q-out" cx="16.5" cy="12" r="2.2" fill="currentColor" stroke="none" />
           <path d="M21.5 6v12" />
+        </Svg>
+      );
+    case "wait":
+      return (
+        <Svg size={size}>
+          <path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9" />
+          <g className="fi-sand">
+            <path d="M9.5 6.5h5L12 9z" fill="currentColor" stroke="none" />
+          </g>
+          <path className="fi-sand-low" d="M9 19.5h6l-3-2.6z" fill="currentColor" stroke="none" />
         </Svg>
       );
     case "voicemail":

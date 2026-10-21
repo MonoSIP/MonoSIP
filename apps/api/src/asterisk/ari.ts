@@ -30,7 +30,6 @@ type AriEvent = {
 class AriClient extends EventEmitter {
   connected = false;
   calls = new Map<string, LiveCall>();
-  extensionStates = new Map<string, ExtensionState>();
   private pollTimer?: NodeJS.Timeout;
   private sockets: WebSocket[] = [];
   private dtmfWaiters = new Map<string, { resolve: (d: string | null) => void; timer: NodeJS.Timeout }>();
@@ -489,6 +488,25 @@ class AriClient extends EventEmitter {
     }
   }
 
+  /** Music on hold on a Stasis channel (IVR wait node). */
+  async startMoh(channelId: string, mohClass?: string): Promise<boolean> {
+    const q = mohClass ? `?${new URLSearchParams({ mohClass })}` : "";
+    const res = await fetch(`${this.baseUrl()}/ari/channels/${channelId}/moh${q}`, {
+      method: "POST",
+      headers: { Authorization: this.authHeader() },
+      signal: AbortSignal.timeout(3000),
+    }).catch(() => null);
+    return !!res?.ok;
+  }
+
+  async stopMoh(channelId: string): Promise<void> {
+    await fetch(`${this.baseUrl()}/ari/channels/${channelId}/moh`, {
+      method: "DELETE",
+      headers: { Authorization: this.authHeader() },
+      signal: AbortSignal.timeout(3000),
+    }).catch(() => undefined);
+  }
+
   /** A digit arrived that nobody has read yet (type-ahead / barge-in). */
   hasBufferedDtmf(channelId: string): boolean {
     return (this.dtmfBuffers.get(channelId)?.length ?? 0) > 0;
@@ -695,9 +713,27 @@ class AriClient extends EventEmitter {
     return res.json();
   }
 
+  /**
+   * Tell live clients (ws "extension.state") that an extension's DND/presence
+   * changed so they refetch. No state is kept here: DND lives in the extensions
+   * table and presence comes from Asterisk (lib/presence.ts) — an in-memory copy
+   * drifted from both (dashboard showed DND the other pages did not).
+   */
   setExtensionState(number: string, state: ExtensionState["state"]) {
-    this.extensionStates.set(number, { number, state });
     this.emit("extension.state", { number, state });
+  }
+
+  /** All PJSIP endpoints with registration state and live channels (one request). */
+  async listPjsipEndpoints(): Promise<Array<{ resource: string; state?: string; channel_ids?: string[] }>> {
+    try {
+      const res = await fetch(`${this.baseUrl()}/ari/endpoints/PJSIP`, {
+        headers: { Authorization: this.authHeader() },
+        signal: AbortSignal.timeout(3000),
+      });
+      return res.ok ? ((await res.json()) as Array<{ resource: string; state?: string; channel_ids?: string[] }>) : [];
+    } catch {
+      return [];
+    }
   }
 }
 

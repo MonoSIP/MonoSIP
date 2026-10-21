@@ -45,6 +45,7 @@ const palette = [
   "api",
   "condition",
   "set_var",
+  "wait",
   "language",
   "time_condition",
   "directory",
@@ -413,7 +414,7 @@ export function FlowDesignerPage() {
           {t("common.back")}
         </Link>
         <input
-          className="input max-w-[10rem]"
+          className="input min-w-[12rem] max-w-[28rem] flex-1 font-medium"
           value={flowName}
           onChange={(e) => setFlowName(e.target.value)}
           placeholder={tr("Flow name")}
@@ -422,7 +423,9 @@ export function FlowDesignerPage() {
         <label className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
           {tr("Ext")}
           <input
-            className="input w-24 font-mono"
+            className="input w-[5.5rem] text-center font-mono"
+            inputMode="numeric"
+            maxLength={8}
             value={extensionNumber}
             onChange={(e) => setExtensionNumber(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="900"

@@ -70,6 +70,7 @@ function subtitle(data: FlowNodeData): string {
     return `${data.variable ?? "?"} ${data.op ?? "="} ${data.value ?? ""}`.trim();
   }
   if (t === "set_var") return `${data.name ?? ""}=${data.value ?? ""}`;
+  if (t === "wait") return `${data.seconds ?? 5} ${tr("sec")}${data.moh ? " · ♪" : ""}`;
   if (t === "get_key") {
     const name = String(data.name ?? data.variable ?? "digits");
     return `$${name} · max ${data.maxDigits ?? 4}`;
@@ -221,6 +222,7 @@ export const flowNodeTypes = {
   condition: FlowNode,
   time_condition: FlowNode,
   set_var: FlowNode,
+  wait: FlowNode,
   language: FlowNode,
   directory: FlowNode,
   transfer: FlowNode,

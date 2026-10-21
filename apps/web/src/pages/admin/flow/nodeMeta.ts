@@ -114,6 +114,8 @@ export function defaultDataForType(type: string): Partial<FlowNodeData> {
       return { variable: "caller", op: "=", value: "" };
     case "set_var":
       return { name: "my_var", value: "" };
+    case "wait":
+      return { seconds: 5, moh: "" };
     case "get_key":
       return {
         name: "pin",
@@ -155,6 +157,7 @@ export function nodeTitle(flowType: string): string {
     api: "API request",
     condition: "Condition",
     set_var: "Set variable",
+    wait: "Pause",
     language: "Language",
     time_condition: "Schedule gate",
     directory: "Name directory",
@@ -178,6 +181,7 @@ export function nodeShortTitle(flowType: string): string {
     api: "API",
     condition: "If",
     set_var: "Set var",
+    wait: "Pause",
     language: "Lang",
     time_condition: "Schedule",
     directory: "Directory",
@@ -201,6 +205,7 @@ export function nodeColor(flowType: string): string {
     api: "#4f46e5",
     condition: "#7c3aed",
     set_var: "#65a30d",
+    wait: "#0891b2",
     language: "#db2777",
     time_condition: "#ca8a04",
     directory: "#2563eb",
@@ -224,6 +229,7 @@ export function nodeBlurb(flowType: string): string {
     api: "Call an HTTP API and store fields as variables.",
     condition: "Branch true / false by comparing a variable.",
     set_var: "Save a value for later nodes.",
+    wait: "Pause for the chosen number of seconds, then continue.",
     language: "Set language for prompts that follow.",
     time_condition: "Branch by open / lunch / closed / holiday.",
     directory: "Dial-by-name: caller enters surname on keypad.",

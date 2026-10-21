@@ -17,6 +17,7 @@ import {
   scryptHash,
 } from "../lib/crypto.js";
 import { tryReloadAsterisk, writeAsteriskConfig } from "../asterisk/config-writer.js";
+import { ari } from "../asterisk/ari.js";
 
 export async function adminExtensionRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/extensions", async (req, reply) => {
@@ -121,6 +122,7 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     if (body.dnd !== undefined) {
       const { syncDndAstDb } = await import("../lib/astdb-dnd.js");
       await syncDndAstDb(row.number, body.dnd);
+      ari.setExtensionState(row.number, body.dnd ? "dnd" : "idle");
     }
     await writeAudit({
       actor,

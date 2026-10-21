@@ -10,6 +10,7 @@ export const FlowNodeType = z.enum([
   "condition",
   "time_condition",
   "set_var",
+  "wait",
   "language",
   "directory",
   "transfer",
