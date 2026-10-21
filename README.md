@@ -2,7 +2,7 @@
 
 **Company PBX** — open-source Asterisk VoIP with an admin panel and browser softphone. Built for small offices (~20 extensions). Runs as Docker Compose on a Linux VM.
 
-[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.3.1](https://github.com/diggyen/DSip/releases/tag/v1.3.1)
+[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.3.1](https://github.com/diggyen/DSip/releases/tag/v1.3.1) · [MIT License](LICENSE)
 
 Default UI language: **English** (Turkish available in the app).
 
@@ -60,7 +60,10 @@ Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
 All docs live under **[docs/](docs/README.md)**. Static product site: **[site/](site/index.html)** (open locally or publish with GitHub Pages → `/site`).
 
-## Ownership / updates
+## License
 
-Canonical repo: **[github.com/diggyen/DSip](https://github.com/diggyen/DSip)**.  
-All updates are made by **[@diggyen](https://github.com/diggyen)** only. Unauthorized modifications and third-party PRs are closed (see [.github/MAINTENANCE.md](.github/MAINTENANCE.md)).
+DSip is released under the **[MIT License](LICENSE)** — use, modify and redistribute it freely, keeping the copyright notice.
+
+## Maintenance
+
+Canonical repo: **[github.com/diggyen/DSip](https://github.com/diggyen/DSip)**, maintained by **[@diggyen](https://github.com/diggyen)**. This repository does not take third-party pull requests (see [.github/MAINTENANCE.md](.github/MAINTENANCE.md)); fork it freely under the MIT License.

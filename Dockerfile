@@ -26,6 +26,8 @@ RUN pnpm install --filter @dsip/api... --filter @dsip/web... --frozen-lockfile=f
 
 # --- Runtime: Asterisk base + Node + Postgres ---
 FROM andrius/asterisk:22
+LABEL org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/diggyen/DSip"
 
 USER root
 ARG TARGETARCH
