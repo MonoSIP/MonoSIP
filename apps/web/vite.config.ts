@@ -45,19 +45,22 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
-          // Keep React ecosystem in one chunk to avoid circular vendor↔react splits.
-          if (
-            id.includes("react-dom") ||
-            id.includes("react-router") ||
-            id.includes("/react/") ||
-            id.includes("scheduler")
-          ) {
-            return "react-vendor";
-          }
+          // Page-specific libraries first: their paths contain "/react/" too
+          // (@xyflow/react), and must not be pulled into the React chunk that
+          // every page loads. d3 is left to Rollup, so it lands with its users.
           if (id.includes("@xyflow") || id.includes("/xyflow")) return "flow-vendor";
           if (id.includes("wavesurfer")) return "wave-vendor";
           if (id.includes("sip.js") || id.includes("/sipjs")) return "sip-vendor";
-          if (id.includes("recharts") || id.includes("/d3-")) return "charts-vendor";
+          if (id.includes("recharts")) return "charts-vendor";
+          // Keep React ecosystem in one chunk to avoid circular vendor↔react splits.
+          if (
+            id.includes("/react-dom/") ||
+            id.includes("/react-router") ||
+            id.includes("/node_modules/react/") ||
+            id.includes("/scheduler/")
+          ) {
+            return "react-vendor";
+          }
           if (id.includes("lucide-react")) return "icons-vendor";
           if (id.includes("i18next")) return "i18n-vendor";
           if (id.includes("@tanstack")) return "query-vendor";

@@ -148,6 +148,10 @@ async function main() {
     await app.register(fastifyStatic, {
       root: webDist,
       wildcard: false,
+      // dist/ ships .br / .gz next to each asset (apps/web/scripts/precompress.mjs)
+      preCompressed: true,
+      // Cache-Control is set below; the plugin's own "max-age=0" overwrote it.
+      cacheControl: false,
       setHeaders: (res, filePath) => {
         // Hashed Vite chunks never change; index.html must always be revalidated
         // so a redeploy doesn't leave tabs pointing at deleted chunk hashes.

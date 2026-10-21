@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/precompress.mjs",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "lint": "echo ok",
@@ -14,6 +14,7 @@
     "test:e2e": "node e2e/flow-designer.e2e.mjs && node e2e/uploads.e2e.mjs",
     "test:e2e:sip": "node e2e/sip-ivr.e2e.mjs",
     "test:e2e:queue": "node e2e/queue.e2e.mjs",
+    "test:e2e:perf": "node e2e/perf.e2e.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {
