@@ -1483,3 +1483,101 @@ html.light .sp-screen {
 }
 .flow-edge-delete:hover { background: var(--danger); color: #fff; }
 @keyframes flow-edge-delete-in { from { opacity: 0; } }
+
+/* Mini phone (components/MiniPhone.tsx): portal pages other than the phone */
+.mini-phone {
+  --mp-tone: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--mp-tone) 40%, var(--border));
+  background: color-mix(in oklab, var(--bg-elevated) 92%, var(--mp-tone) 8%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  transition: border-color 0.2s, background 0.2s;
+}
+.mini-phone.is-ok { --mp-tone: var(--success); }
+.mini-phone.is-live { --mp-tone: var(--accent); }
+.mini-phone.is-ringing { --mp-tone: var(--warning); animation: mini-ring 1.2s ease-in-out infinite; }
+.mini-phone-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  color: var(--text);
+  text-decoration: none;
+}
+.mini-phone-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mp-tone);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--mp-tone) 22%, transparent);
+}
+.mini-phone.is-live .mini-phone-dot,
+.mini-phone.is-ringing .mini-phone-dot { animation: mini-pulse 1.4s ease-out infinite; }
+.mini-phone-state {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.mini-phone-peer {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mini-phone-time {
+  font: 500 12px var(--mono);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.mini-phone-actions { display: flex; gap: 6px; }
+.mini-phone-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+.mini-phone-btn:hover { transform: scale(1.06); }
+.mini-phone-btn.is-on { background: var(--accent); color: #04211b; border-color: transparent; }
+.mini-phone-btn.is-end { background: var(--danger); color: #fff; border-color: transparent; }
+.mini-phone-btn.is-answer { background: var(--success); color: #052014; border-color: transparent; }
+/* the bar is the phone-width variant; the sidebar carries it from md up */
+@media (min-width: 768px) {
+  .mini-phone.mini-phone--bar { display: none; }
+}
+.mini-phone--bar {
+  position: fixed;
+  inset-inline: 10px;
+  bottom: 72px;
+  z-index: 30;
+  backdrop-filter: blur(12px);
+}
+@keyframes mini-pulse {
+  70% { box-shadow: 0 0 0 7px transparent; }
+}
+@keyframes mini-ring {
+  50% { border-color: var(--warning); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mini-phone,
+  .mini-phone-dot { animation: none !important; }
+}

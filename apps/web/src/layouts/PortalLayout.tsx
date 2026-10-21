@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { BookUser, LogOut, Phone, Settings, History, FileAudio } from "lucide-react";
 import { api } from "../lib/api";
@@ -7,6 +7,8 @@ import i18n from "../i18n";
 import { usePortalLive } from "../hooks/usePortalLive";
 import { AppBrand } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
+import { MiniPhone } from "../components/MiniPhone";
+import { PhoneProvider } from "../lib/phone-context";
 
 const links = [
   { to: "/", icon: Phone, key: "phone", end: true, tone: "var(--accent)" },
@@ -22,6 +24,8 @@ export function PortalLayout() {
   const actor = useStore((s) => s.actor);
   const setActor = useStore((s) => s.setActor);
   usePortalLive();
+  // The phone page shows the full phone; every other page gets the mini one.
+  const onPhonePage = useLocation().pathname === "/";
 
   async function logout() {
     try {
@@ -34,8 +38,10 @@ export function PortalLayout() {
   }
 
   return (
+    // One softphone for the whole portal: switching pages keeps the call up.
+    <PhoneProvider>
     <div className="flex min-h-full flex-col md:flex-row">
-      <aside className="aside-panel hidden w-56 shrink-0 p-4 md:block">
+      <aside className="aside-panel hidden w-56 shrink-0 flex-col p-4 md:sticky md:top-0 md:flex md:h-screen">
         <AppBrand
           subtitle={actor?.type === "extension" ? `${actor.number} · ${actor.name}` : ""}
         />
@@ -76,13 +82,15 @@ export function PortalLayout() {
             <LogOut size={16} />
           </button>
         </div>
+        {!onPhonePage && <MiniPhone className="mt-auto" />}
       </aside>
-      <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
+      <main className={`flex-1 p-4 md:p-8 md:pb-8 ${onPhonePage ? "pb-24" : "pb-40"}`}>
         {/* Remount pages on a language switch so tr() copy re-renders */}
         <PageVeil>
           <Outlet key={i18n.language} />
         </PageVeil>
       </main>
+      {!onPhonePage && <MiniPhone className="mini-phone--bar md:hidden" />}
       <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--bg-elevated)_94%,transparent)] p-2 backdrop-blur-md md:hidden">
         {links.map((l) => (
           <NavLink
@@ -103,5 +111,6 @@ export function PortalLayout() {
         ))}
       </nav>
     </div>
+    </PhoneProvider>
   );
 }

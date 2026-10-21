@@ -77,12 +77,17 @@ vi.mock("sonner", () => ({
 }));
 
 import { PhonePage } from "./PhonePage";
+import { PhoneProvider } from "../../lib/phone-context";
 
 function renderPage(entry = "/") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[entry]}>{<PhonePage />}</MemoryRouter>
+      <MemoryRouter initialEntries={[entry]}>
+        <PhoneProvider>
+          <PhonePage />
+        </PhoneProvider>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

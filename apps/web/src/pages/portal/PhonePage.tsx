@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
-import { Softphone, type CallPhase } from "../../lib/softphone";
+import { formatCallTime, usePhone } from "../../lib/phone-context";
 import { CallBars, CallPulse } from "../../components/motion";
 
 const RECENTS_SEEN_KEY = "dsip.recentsSeenAt";
@@ -43,13 +43,6 @@ const KEYS: Array<[string, string]> = [
   ["#", ""],
 ];
 
-function formatCallTime(totalSec: number): string {
-  const s = Math.max(0, Math.floor(totalSec));
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${sec.toString().padStart(2, "0")}`;
-}
-
 type HealthMedia = {
   rtpPortsPublished?: boolean;
   warnings?: Array<{ code: string; en: string; tr: string }>;
@@ -57,26 +50,15 @@ type HealthMedia = {
 
 export function PhonePage() {
   const { t, i18n } = useTranslation();
-  const qc = useQueryClient();
   const [params] = useSearchParams();
-  const phoneRef = useRef<Softphone | null>(null);
-  if (!phoneRef.current) phoneRef.current = new Softphone();
-  const phone = phoneRef.current;
-
-  const [status, setStatus] = useState(phone.status);
+  // The softphone lives in the portal layout (lib/phone-context): leaving this
+  // page keeps the registration and any call up.
+  const { phone, status, detail, domain, inCall, callPhase, callSeconds, peer, muted, held, noRtp, setMuted, setHeld, resetCall } =
+    usePhone();
   const [digits, setDigits] = useState("");
-  const [domain, setDomain] = useState("localhost");
-  const [inCall, setInCall] = useState(false);
-  const [callPhase, setCallPhase] = useState<CallPhase>("idle");
-  const [callSeconds, setCallSeconds] = useState(0);
   const [dnd, setDnd] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [held, setHeld] = useState(false);
   const [xferOpen, setXferOpen] = useState(false);
   const [xferTarget, setXferTarget] = useState("");
-  const [detail, setDetail] = useState<string | undefined>();
-  const [noRtp, setNoRtp] = useState(false);
-  const [peer, setPeer] = useState("");
   /** What the space under the screen shows while idle: keypad or recent calls. */
   const [view, setView] = useState<"keypad" | "recents">("keypad");
 
@@ -119,74 +101,6 @@ export function PhonePage() {
     const dial = params.get("dial");
     if (dial) setDigits(dial);
   }, [params]);
-
-  useEffect(() => {
-    if (callPhase !== "dialing" && callPhase !== "ringing" && callPhase !== "active") return;
-    const id = window.setInterval(() => setCallSeconds((s) => s + 1), 1000);
-    return () => window.clearInterval(id);
-  }, [callPhase]);
-
-  useEffect(() => {
-    let cancelled = false;
-    phone.onStatus = (s, d) => {
-      if (!cancelled) {
-        setStatus(s);
-        setDetail(d);
-      }
-    };
-    phone.onSession = (s) => {
-      if (!cancelled) {
-        setInCall(!!s);
-        if (!s) {
-          setMuted(false);
-          setHeld(false);
-        }
-      }
-    };
-    phone.onCallPhase = (phase, info) => {
-      if (cancelled) return;
-      setCallPhase(phase);
-      if (info?.seconds != null) setCallSeconds(info.seconds);
-      if (info?.peer) setPeer(info.peer);
-      if (phase === "idle") setPeer("");
-      if (phase === "ended") {
-        void qc.invalidateQueries({ queryKey: ["my-calls"] });
-        const dur = formatCallTime(info?.seconds ?? 0);
-        toast.message(t("portal.callEnded", { time: dur }));
-      }
-      if (phase === "idle" || phase === "dialing") setNoRtp(false);
-    };
-    phone.onMediaWarning = () => {
-      if (cancelled) return;
-      setNoRtp(true);
-      toast.error(t("portal.noRtp"));
-    };
-
-    void (async () => {
-      try {
-        const creds = await api.get<{
-          extension: string;
-          password: string;
-          domain: string;
-          displayName: string;
-        }>("/api/v1/me/sip-credentials");
-        if (cancelled) return;
-        setDomain(creds.domain);
-        await phone.loadPreferredDevices();
-        await Softphone.requestNotifyPermission().catch(() => undefined);
-        await phone.connect(creds);
-      } catch (e) {
-        if (cancelled) return;
-        setStatus("error");
-        toast.error((e as Error).message);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      void phone.disconnect(true);
-    };
-  }, [phone, t]);
 
   const showCallUi =
     inCall ||
@@ -584,8 +498,7 @@ export function PhonePage() {
                         setXferOpen(false);
                         setXferTarget("");
                         // Softphone also emits ended→idle; keep UI in sync for mocks.
-                        setInCall(false);
-                        setCallPhase("idle");
+                        resetCall();
                       })
                       .catch((e) => toast.error((e as Error).message));
                   }}
@@ -615,8 +528,7 @@ export function PhonePage() {
                         toast.success("Attended transfer done");
                         setXferOpen(false);
                         setXferTarget("");
-                        setInCall(false);
-                        setCallPhase("idle");
+                        resetCall();
                       })
                       .catch((e) => toast.error((e as Error).message));
                   }}

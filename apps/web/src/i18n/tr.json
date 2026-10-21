@@ -259,7 +259,13 @@
     "recents": "Son aramalar",
     "keypad": "Tuş takımı",
     "noRecents": "Henüz arama yok",
-    "yesterday": "Dün"
+    "yesterday": "Dün",
+    "openPhone": "Telefonu aç",
+    "decline": "Reddet",
+    "unmute": "Sesi aç",
+    "miniPhone": "Telefon",
+    "onCall": "Görüşmede",
+    "calling": "Aranıyor…"
   },
   "langs": {
     "en": "İngilizce",

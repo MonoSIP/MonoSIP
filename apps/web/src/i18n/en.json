@@ -259,7 +259,13 @@
     "recents": "Recents",
     "keypad": "Keypad",
     "noRecents": "No recent calls",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "openPhone": "Open phone",
+    "decline": "Decline",
+    "unmute": "Unmute",
+    "miniPhone": "Phone",
+    "onCall": "On call",
+    "calling": "Calling…"
   },
   "langs": {
     "en": "English",
