@@ -28,15 +28,14 @@ overlay_en_sounds() {
     [ -f "$f" ] || continue
     ln -sfn "$f" "/var/lib/asterisk/sounds/en/$(basename "$f")"
   done
-  mkdir -p /var/lib/asterisk/sounds/en/digits /var/lib/asterisk/sounds/en/qpos
-  for f in /var/lib/asterisk/dsip/sounds/en/digits/*.wav; do
-    [ -f "$f" ] || continue
-    ln -sfn "$f" "/var/lib/asterisk/sounds/en/digits/$(basename "$f")"
+  for d in digits qpos qhold; do
+    mkdir -p "/var/lib/asterisk/sounds/en/$d"
+    for f in /var/lib/asterisk/dsip/sounds/en/$d/*.wav; do
+      [ -f "$f" ] || continue
+      ln -sfn "$f" "/var/lib/asterisk/sounds/en/$d/$(basename "$f")"
+    done
   done
-  for f in /var/lib/asterisk/dsip/sounds/en/qpos/*.wav; do
-    [ -f "$f" ] || continue
-    ln -sfn "$f" "/var/lib/asterisk/sounds/en/qpos/$(basename "$f")"
-  done
+  chmod 755 /var/lib/asterisk/sounds/en /var/lib/asterisk/sounds/en/* 2>/dev/null || true
 }
 overlay_en_sounds
 

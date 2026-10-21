@@ -2,6 +2,8 @@
 # Start embedded Asterisk for NineDeploy / all-in-one image (background).
 # Sourced or executed from docker-entrypoint after bootstrap-runtime.
 set -e
+# Asterisk drops to runuser=asterisk: everything created here must be readable.
+umask 022
 
 ARI_USER="${ASTERISK_ARI_USER:-dsip}"
 ARI_PASS="${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}"
@@ -47,12 +49,12 @@ chmod 755 "$DATA_DIR" "$AST_CFG" 2>/dev/null || true
 chmod 644 "$AST_CFG"/pjsip_dsip.conf "$AST_CFG"/acl_dsip.conf \
   "$AST_CFG"/queues_dsip.conf "$AST_CFG"/extensions_dsip.conf \
   "$AST_CFG"/musiconhold_dsip.conf "$AST_CFG"/reload.flag 2>/dev/null || true
-# Prompt WAVs are written by the API (often as root with umask 077). Asterisk must read them.
-chmod 755 "$AST_CFG"/sounds "$AST_CFG"/sounds/dsip \
-  "$AST_CFG"/sounds/en "$AST_CFG"/sounds/tr \
-  "$AST_CFG"/moh "$AST_CFG"/voicemail 2>/dev/null || true
-find "$AST_CFG"/sounds "$AST_CFG"/moh -type f \( -name '*.wav' -o -name '*.ulaw' -o -name '*.sln*' \) \
-  -exec chmod 644 {} + 2>/dev/null || true
+# Prompt WAVs are written by the API as root (older images: umask 077). Asterisk must read them.
+# Every level counts: a single 700 subfolder (qpos/, qhold/, a MOH class) silently
+# mutes queue announcements or hold music.
+chmod 755 "$AST_CFG"/voicemail 2>/dev/null || true
+find "$AST_CFG"/sounds "$AST_CFG"/moh -type d ! -perm -005 -exec chmod 755 {} + 2>/dev/null || true
+find "$AST_CFG"/sounds "$AST_CFG"/moh -type f ! -perm -004 -exec chmod 644 {} + 2>/dev/null || true
 
 # MixMonitor path in dialplan ↔ API RECORDINGS_DIR
 mkdir -p "${RECORDINGS_DIR:-$DATA_DIR/recordings}"
@@ -73,15 +75,16 @@ overlay_en_sounds() {
     [ -f "$f" ] || continue
     ln -sfn "$f" "/var/lib/asterisk/sounds/en/$(basename "$f")"
   done
-  mkdir -p /var/lib/asterisk/sounds/en/digits /var/lib/asterisk/sounds/en/qpos
-  for f in /var/lib/asterisk/dsip/sounds/en/digits/*.wav; do
-    [ -f "$f" ] || continue
-    ln -sfn "$f" "/var/lib/asterisk/sounds/en/digits/$(basename "$f")"
+  for d in digits qpos qhold; do
+    mkdir -p "/var/lib/asterisk/sounds/en/$d"
+    for f in /var/lib/asterisk/dsip/sounds/en/$d/*.wav; do
+      [ -f "$f" ] || continue
+      ln -sfn "$f" "/var/lib/asterisk/sounds/en/$d/$(basename "$f")"
+    done
   done
-  for f in /var/lib/asterisk/dsip/sounds/en/qpos/*.wav; do
-    [ -f "$f" ] || continue
-    ln -sfn "$f" "/var/lib/asterisk/sounds/en/qpos/$(basename "$f")"
-  done
+  # Older images created these root-only (umask 077); Asterisk must traverse them.
+  chmod 755 /var/lib/asterisk/sounds /var/lib/asterisk/sounds/en /var/lib/asterisk/sounds/en/* 2>/dev/null || true
+  chmod 644 /var/lib/asterisk/sounds/beep.wav /var/lib/asterisk/sounds/en/beep.wav 2>/dev/null || true
 }
 overlay_en_sounds
 

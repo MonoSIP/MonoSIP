@@ -97,8 +97,9 @@ if [ -z "${ASTERISK_AMI_USER:-}" ]; then
   ASTERISK_AMI_USER="dsip"
 fi
 
-umask 077
-if ! cat > "$SECRETS_FILE" <<EOF
+# Only the secrets file is private: a global umask 077 leaked into Asterisk's
+# sound folders (root 700), which Asterisk (runuser=asterisk) then cannot read.
+if ! (umask 077 && cat > "$SECRETS_FILE") <<EOF
 export SESSION_SECRET='$SESSION_SECRET'
 export ENCRYPTION_KEY='$ENCRYPTION_KEY'
 export INTERNAL_API_SECRET='$INTERNAL_API_SECRET'
