@@ -99,16 +99,16 @@
             </p>
             <h1>The company PBX you <em>run yourself</em>.</h1>
             <p class="lead">
-              Extensions, queues, a visual IVR designer with live API lookups and neural
-              speech, a browser softphone, call logs and a live dashboard — the media
-              plane and the control plane on your own server.
+              A caller reaches your server. The IVR looks up a rate, speaks it, and the queue
+              rings whoever is free. Extensions, the designer, the browser phone and the
+              dashboard run in one Docker image on that server.
             </p>
             <div class="cta-row">
               <a class="btn btn-primary" href="#install">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" /></svg>
-                <span>Install in minutes</span>
+                <span>Pull the image</span>
               </a>
-              <a class="btn btn-ghost" href="#features">See what it does</a>
+              <a class="btn btn-ghost" href="#features">See the phone system</a>
             </div>
             <ul class="hero-facts">
               <li>Prebuilt image on GHCR — deploys pull, not build</li>
@@ -230,7 +230,7 @@
             </svg>
             <figcaption class="hero-caption">
               A call reaches the PBX, the IVR fetches live data over an API and reads it out,
-              and the queue rings the free agent — the busy one is skipped.
+              and the queue rings the free agent — the busy one is skipped. This drawing does not place a call.
             </figcaption>
           </figure>
         </div>
@@ -328,11 +328,10 @@
             </svg>
           </div>
           <div class="reveal">
-            <p class="kicker">Softphone &amp; portal</p>
-            <h2>A phone in the browser, a portal for every desk</h2>
+            <p class="kicker">01 · Softphone</p>
+            <h2>Answer from the browser</h2>
             <p class="section-lead">
-              Each extension signs in to its own portal and gets a full softphone — no app to install.
-              Desk phones register to the same PBX.
+              Each extension signs in once and gets a softphone that stays on the call while they move through the portal. Desk phones use the same password.
             </p>
             <ul class="ticks">
               <li><b>In the browser.</b> Each extension gets a softphone. No app to install.</li>
@@ -340,7 +339,7 @@
               <li><b>One password</b> for the portal, the browser and the desk phone.</li>
               <li><b>Their own pages:</b> directory, calls, recordings, voicemail and forwarding.</li>
             </ul>
-            <a class="more" href="docs/user-portal/">Portal and softphone guide</a>
+            <a class="more" href="docs/user-portal/">Open the portal and softphone guide</a>
           </div>
         </div>
       </section>
@@ -349,60 +348,111 @@
       <section class="section" id="features">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker">Everything a ~20-desk office needs</p>
-            <h2>One panel for the whole phone system</h2>
+            <p class="kicker">02 · Phone system</p>
+            <h2>Run the office from one panel</h2>
             <p class="section-lead">
-              Everything ships in the same image and is managed from the same admin panel.
-              The field-by-field list lives in the docs.
+              Built for about twenty desks. Extensions, queues, hours and trunks ship in the same image and are managed from the same admin.
             </p>
-            <a class="more" href="docs/features/">Feature guide</a>
+            <a class="more" href="docs/features/">Read what each feature does</a>
           </header>
 
           <div class="cards">
             <article class="card reveal" style="--tone: var(--accent)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.4-.3 4.3 1.2 4.9 4.8"/></svg></span>
-              <h3>Extensions</h3>
-              <p>Desks, who may call where, forwarding and who is free right now.</p>
+              <h3>Give every desk a number</h3>
+              <p>One password covers the portal, the browser and the desk phone.</p>
+              <ul class="chips">
+                <li>CSV import</li>
+                <li>Forwarding</li>
+                <li>Caller ID</li>
+                <li>Do not disturb</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--accent-3)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span>
-              <h3>Queues &amp; ring groups</h3>
-              <p>How the group rings, what callers hear while they wait, and where the call goes when it cannot.</p>
+              <h3>Tell callers where they stand</h3>
+              <p>Six ring strategies, hold music, and a callback when the wait runs long.</p>
+              <ul class="chips">
+                <li>Ring all</li>
+                <li>Least recent</li>
+                <li>Position</li>
+                <li>Callback</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--accent-2)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1.5"/><rect x="15" y="4" width="6" height="5" rx="1.5"/><rect x="9" y="15" width="6" height="5" rx="1.5"/><path d="M6 9v3h12V9M12 12v3"/></svg></span>
-              <h3>Visual IVR designer</h3>
-              <p>Draw the call, then check it, try it and publish it.</p>
+              <h3>Draw the path, then publish it</h3>
+              <p>Each step has its own shape. Live calls stay on the published version while you edit the draft.</p>
+              <ul class="chips">
+                <li>Menu</li>
+                <li>API lookup</li>
+                <li>Transfer</li>
+                <li>Version history</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--violet-line)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2M21 12h0"/></svg></span>
-              <h3>Neural speech, sentence by sentence</h3>
-              <p>English and Turkish neural voices. A long read-out starts while the rest is still being spoken.</p>
+              <h3>Start speaking before the line is finished</h3>
+              <p>English and Turkish neural voices. A long readout begins while the rest is still being made.</p>
+              <ul class="chips">
+                <li>Edge Neural</li>
+                <li>EMA</li>
+                <li>Cache</li>
+                <li>Type-ahead</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--warning)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
-              <h3>Schedules &amp; holidays</h3>
-              <p>Office hours, lunch, holidays and a switch to open or close the office now.</p>
+              <h3>Open and close with the clock</h3>
+              <p>Weekly hours, lunch, holidays, and a switch that opens or closes the office now.</p>
+              <ul class="chips">
+                <li>Lunch</li>
+                <li>Holidays</li>
+                <li>Override</li>
+                <li>Europe/Istanbul</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--success)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></span>
-              <h3>Trunks &amp; routes</h3>
-              <p>More than one provider, inbound numbers and outbound rules with a spend stop.</p>
+              <h3>Send the call out the right trunk</h3>
+              <p>More than one provider, inbound numbers, failover and a daily spend stop.</p>
+              <ul class="chips">
+                <li>DID</li>
+                <li>Failover</li>
+                <li>Caller ID</li>
+                <li>Spend stop</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--info)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
-              <h3>Call logs &amp; recordings</h3>
-              <p>Open a call and see the path it took, then listen to the recording.</p>
+              <h3>See the path a call took</h3>
+              <p>Open a row and the IVR steps, the keys pressed and the recording are on the same page.</p>
+              <ul class="chips">
+                <li>Timeline</li>
+                <li>CSV</li>
+                <li>Missed calls</li>
+                <li>Retention</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--danger)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-              <h3>Security built in</h3>
-              <p>Sign-in protection, address limits and certificates issued from Settings.</p>
+              <h3>Issue the certificate from Settings</h3>
+              <p>Sign-in protection and address limits ship with the panel. The hostname gets its certificate there too.</p>
+              <ul class="chips">
+                <li>Sign-in limits</li>
+                <li>Address limits</li>
+                <li>SSL</li>
+              </ul>
             </article>
             <article class="card reveal" style="--tone: var(--accent-dim)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M15 7l5 5-5 5"/></svg></span>
-              <h3>Integrations</h3>
-              <p>Webhooks, an API key and a call button you can put on the company site.</p>
+              <h3>Hand the call to the tools you use</h3>
+              <p>Webhooks fire on ring, answer and hangup. An API key and a call button cover the company site.</p>
+              <ul class="chips">
+                <li>Webhooks</li>
+                <li>API key</li>
+                <li>Call button</li>
+              </ul>
             </article>
           </div>
         </div>
@@ -412,12 +462,10 @@
       <section class="section section-alt" id="ivr">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker">IVR designer</p>
-            <h2>Draw the call. Fetch live data. Say it.</h2>
+            <p class="kicker">03 · Call flow</p>
+            <h2>A menu, a lookup, then a sentence</h2>
             <p class="section-lead">
-              The demo “Main line” that ships with MunaSIP: a welcome, a menu to sales and the support
-              queue, and live exchange rates fetched from an HTTP API — with a “one moment” prompt
-              before the lookup.
+              The demo line on 902 welcomes the caller, offers sales and the support queue, then reads a live exchange rate. Drafts stay off the phones until you publish.
             </p>
           </header>
 
@@ -449,7 +497,7 @@
                 <li><b>Every exit is a branch.</b> A menu has a path per digit, plus timeout and invalid. A transfer has busy, no answer and unavailable. A busy extension is caught before the phone rings, so the caller hears the busy path and the desk does not ring.</li>
                 <li><b>Try it, then publish.</b> The test call walks the draft with a caller number, a time and keypresses, and highlights the nodes it visited. Live calls keep using the published version. An older one is a click away, and a call already in progress finishes on the version it started with.</li>
               </ul>
-              <a class="more" href="docs/ivr/">IVR designer guide</a>
+              <a class="more" href="docs/ivr/">Open the IVR designer guide</a>
             </div>
             <div class="shots reveal">
               <figure class="shot shot-main">
@@ -639,10 +687,10 @@
       <section class="section" id="panel">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker">Admin panel</p>
-            <h2>Day-two operations, in the same place</h2>
-            <p class="section-lead">Illustrated views of the dashboard, call logs, queues and the rest of day-two work.</p>
-            <a class="more" href="docs/screens/">Screen by screen</a>
+            <p class="kicker">04 · After go-live</p>
+            <h2>Watch the floor from the same panel</h2>
+            <p class="section-lead">Active calls, the path of a finished call, queue wait and the certificate sit on these screens. The drawings use sample names.</p>
+            <a class="more" href="docs/screens/">Look through the admin screens</a>
           </header>
 
           <div class="tour reveal">
@@ -924,12 +972,10 @@
       <section class="section section-alt" id="install">
         <div class="wrap install-grid">
           <div class="reveal">
-            <p class="kicker">Install</p>
-            <h2>One container. Pull and run.</h2>
+            <p class="kicker">05 · On your server</p>
+            <h2>Pull the image. The PBX is up.</h2>
             <p class="section-lead">
-              Asterisk, the API, the panel, PostgreSQL and the TTS engines live in a single image,
-              published to GitHub Container Registry on every release. Deploys pull it in about a
-              minute instead of building.
+              Asterisk, the API, the panel, PostgreSQL and the speech engines live in one image on GitHub Container Registry. A deploy pulls it. It does not build it.
             </p>
             <ol class="steps">
               <li>Point a hostname at the server and open TCP 80/443 and UDP 10000–10100 (RTP).</li>
@@ -951,9 +997,9 @@ docker run -d --name munasip --restart unless-stopped \
 <span class="c"># update: data stays in the munasip-data volume</span>
 docker pull ghcr.io/munasip/munasip:latest</code></pre>
             <div class="term-links">
-              <a href="docs/install/">Install guide</a>
-              <a href="docs/deploy/">VPS / Compose</a>
-              <a href="docs/features/">Full feature list</a>
+              <a href="docs/install/">Follow the install guide</a>
+              <a href="docs/deploy/">Deploy on a VPS</a>
+              <a href="docs/features/">Read the feature list</a>
             </div>
           </div>
         </div>
