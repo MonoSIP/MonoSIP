@@ -206,8 +206,16 @@ export async function portalRoutes(app: FastifyInstance) {
       .from(voicemails)
       .where(and(eq(voicemails.id, id), eq(voicemails.extensionId, a.id)));
     if (!vm || !existsSync(vm.filePath)) return reply.code(404).send({ error: "Not found" });
+    const { statSync } = await import("node:fs");
+    const { browserWavBytes } = await import("../lib/recording-files.js");
+    const size = statSync(vm.filePath).size;
+    if (size < 128) return reply.code(404).send({ error: "Recording file is empty" });
+    const body = await browserWavBytes(vm.filePath);
     reply.header("content-type", "audio/wav");
-    return reply.send(createReadStream(vm.filePath));
+    reply.header("content-length", String(body.length));
+    reply.header("accept-ranges", "bytes");
+    reply.header("cache-control", "private, max-age=60");
+    return reply.send(body);
   });
 
   app.delete("/api/v1/me/voicemails/:id", async (req, reply) => {

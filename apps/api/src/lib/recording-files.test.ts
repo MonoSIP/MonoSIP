@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { deleteRecordingFile, wavDurationSeconds } from "./recording-files.js";
+import { deleteRecordingFile, repairWavHeader, wavDurationSeconds } from "./recording-files.js";
 
 function makeWav(sampleRate: number, samples: number): Buffer {
   const dataSize = samples * 2;
@@ -33,6 +33,20 @@ afterEach(() => {
       /* ignore */
     }
   }
+});
+
+describe("repairWavHeader", () => {
+  it("fills a zero data-chunk size so a browser can play the file", () => {
+    const buf = makeWav(8000, 8000);
+    buf.writeUInt32LE(0, 40);
+    buf.writeUInt32LE(0, 4);
+    repairWavHeader(buf);
+    const dir = mkdtempSync(path.join(tmpdir(), "vm-"));
+    dirs.push(dir);
+    const file = path.join(dir, "fixed.wav");
+    writeFileSync(file, buf);
+    expect(wavDurationSeconds(file)).toBe(1);
+  });
 });
 
 describe("wavDurationSeconds", () => {

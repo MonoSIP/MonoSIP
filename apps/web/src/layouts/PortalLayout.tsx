@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { BookUser, FileAudio, History, LogOut, Phone, Settings, Voicemail } from "lucide-react";
+import { BookUser, FileAudio, History, LogOut, Moon, Phone, Settings, Sun, Voicemail } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
 import i18n from "../i18n";
@@ -24,6 +24,8 @@ export function PortalLayout() {
   const navigate = useNavigate();
   const actor = useStore((s) => s.actor);
   const setActor = useStore((s) => s.setActor);
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
   usePortalLive();
   // The phone page shows the full phone; every other page gets the mini one.
   const onPhonePage = useLocation().pathname === "/";
@@ -42,11 +44,12 @@ export function PortalLayout() {
     // One softphone for the whole portal: switching pages keeps the call up.
     <PhoneProvider>
     <div className="flex min-h-full flex-col md:flex-row">
-      <aside className="aside-panel hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:flex md:h-screen">
+      <aside className="aside-panel portal-rail hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:flex">
         <AppBrand
+          className="mb-6 shrink-0 px-1"
           subtitle={actor?.type === "extension" ? `${actor.number} · ${actor.name}` : ""}
         />
-        <nav className="flex min-h-0 flex-col gap-0.5 overflow-y-auto">
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -62,23 +65,27 @@ export function PortalLayout() {
           ))}
         </nav>
         {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
-        <div className="mt-auto flex shrink-0 gap-2 pt-4">
+        <div className="portal-rail-foot">
           <button
             className="btn"
             type="button"
+            title={t("common.language")}
             onClick={() => {
               const next = i18n.language === "en" ? "tr" : "en";
               localStorage.setItem("munasip_locale", next);
               void i18n.changeLanguage(next);
             }}
           >
-            {i18n.language.toUpperCase()}
+            {i18n.language.slice(0, 2).toUpperCase()}
+          </button>
+          <button className="btn" type="button" title={t("common.theme")} onClick={toggleTheme}>
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button
             className="btn"
             type="button"
             onClick={() => void logout()}
-            title={t("auth.logout", { defaultValue: "Logout" })}
+            title={t("common.logout")}
           >
             <LogOut size={16} />
           </button>

@@ -158,15 +158,10 @@
   }
 
   function edge(box, side) {
-    const out = box.framed ? 0 : 20;
-    if (side === "left") return box.left - out;
-    if (side === "right") return box.right + out;
-    if (side === "top") return box.top - (box.framed ? 0 : 8);
-    return box.bottom + (box.framed ? 0 : 8);
-  }
-
-  function railPoint(box) {
-    return { x: edge(box, "left"), y: box.framed ? box.cy : box.top + 18 };
+    if (side === "left") return box.left;
+    if (side === "right") return box.right;
+    if (side === "top") return box.top;
+    return box.bottom;
   }
 
   function ortho(x1, y1, x2, y2, verticalFirst) {
@@ -234,90 +229,48 @@
       ports.push([x, y]);
     };
     const addWire = (spec) => {
-      if (spec.len < 12) return;
+      if (spec.len < 2) return;
       wires.push(spec);
     };
 
-    const head = rows[0].items[0];
-    const dockX = head.cx;
-    const dockY = head.top - 16;
-    const inlet = Math.max(14, head.left - 36);
-    addWire({
-      d: `M ${inlet.toFixed(1)} ${Math.max(20, dockY - 52).toFixed(1)} V ${dockY.toFixed(1)} H ${dockX.toFixed(1)}`,
-      len: 52 + Math.abs(dockX - inlet),
-      down: true,
-    });
-    addPort(inlet, Math.max(20, dockY - 52));
-    addPort(dockX, dockY);
+    const ordered = rows.flatMap((row) => row.items);
+    const n = (v) => v.toFixed(1);
+    const join = (x1, y1, x2, y2, verticalFirst) => {
+      const spec = ortho(x1, y1, x2, y2, verticalFirst);
+      addWire(spec);
+      addPort(x1, y1);
+      addPort(x2, y2);
+    };
 
-    for (const row of rows) {
-      for (let i = 0; i < row.items.length - 1; i++) {
-        const a = row.items[i];
-        const b = row.items[i + 1];
-        const ax = edge(a, "right");
-        const bx = edge(b, "left");
-        if (bx - ax < 8) continue;
-        addWire(ortho(ax, a.cy, bx, b.cy, false));
-        addPort(ax, a.cy);
-        addPort(bx, b.cy);
-      }
-    }
-
-    const overlap = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left);
-    for (let i = 0; i < rows.length - 1; i++) {
-      const curr = rows[i].items;
-      const next = rows[i + 1].items;
-      const gap = Math.min(...next.map((b) => b.top)) - Math.max(...curr.map((a) => a.bottom));
-      if (gap < 56) {
-        const linked = new Set();
-        const join = (a, b) => {
-          addWire(ortho(a.cx, edge(a, "bottom"), b.cx, edge(b, "top"), true));
-          addPort(a.cx, edge(a, "bottom"));
-          addPort(b.cx, edge(b, "top"));
-          linked.add(b);
-        };
-        for (const a of curr) {
-          let best = null;
-          let bestScore = -Infinity;
-          for (const b of next) {
-            const shared = overlap(a, b);
-            const score = shared > 24 ? shared : -Math.abs(a.cx - b.cx);
-            if (score > bestScore) {
-              bestScore = score;
-              best = b;
-            }
-          }
-          if (best) join(a, best);
-        }
-        for (const b of next) {
-          if (linked.has(b)) continue;
-          const best = curr.reduce((p, a) => (Math.abs(a.cx - b.cx) < Math.abs(p.cx - b.cx) ? a : p));
-          join(best, b);
-        }
-        continue;
-      }
-      const a = curr[0];
-      const b = next[0];
-      const ap = railPoint(a);
-      const bp = railPoint(b);
-      const railX = Math.max(14, Math.min(ap.x, bp.x) - 28);
+    const first = ordered[0];
+    const entryY = edge(first, "top");
+    if (entryY > 8) {
       addWire({
-        d: `M ${ap.x.toFixed(1)} ${ap.y.toFixed(1)} H ${railX.toFixed(1)} V ${bp.y.toFixed(1)} H ${bp.x.toFixed(1)}`,
-        len: Math.abs(ap.x - railX) + Math.abs(bp.y - ap.y) + Math.abs(bp.x - railX),
-        down: bp.y > ap.y,
+        d: `M ${n(first.cx)} 0 V ${n(entryY)}`,
+        len: entryY,
+        down: true,
       });
-      addPort(ap.x, ap.y);
-      addPort(bp.x, bp.y);
+      addPort(first.cx, entryY);
     }
 
-    const tail = railPoint(rows.at(-1).items[0]);
-    const tailX = Math.max(14, tail.x - 28);
-    addWire({
-      d: `M ${tail.x.toFixed(1)} ${tail.y.toFixed(1)} H ${tailX.toFixed(1)} V ${(tail.y + 72).toFixed(1)}`,
-      len: Math.abs(tail.x - tailX) + 72,
-      down: true,
-    });
-    addPort(tail.x, tail.y);
+    const sameRow = (a, b) => rows.some((row) => row.items.includes(a) && row.items.includes(b));
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const a = ordered[i];
+      const b = ordered[i + 1];
+      if (sameRow(a, b)) join(edge(a, "right"), a.cy, edge(b, "left"), b.cy, false);
+      else join(a.cx, edge(a, "bottom"), b.cx, edge(b, "top"), true);
+    }
+
+    const last = ordered.at(-1);
+    const exitY = edge(last, "bottom");
+    if (height - exitY > 8) {
+      addWire({
+        d: `M ${n(last.cx)} ${n(exitY)} V ${n(height)}`,
+        len: height - exitY,
+        down: true,
+      });
+      addPort(last.cx, exitY);
+    }
 
     for (const wire of wires) {
       const rail = document.createElementNS(ns, "path");

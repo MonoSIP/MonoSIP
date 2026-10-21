@@ -475,6 +475,7 @@ describe("voicemail streaming", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("audio/wav");
+    expect(res.headers["content-length"]).toBe(String(res.rawPayload.byteLength));
     expect(res.rawPayload.byteLength).toBeGreaterThan(128);
   });
 

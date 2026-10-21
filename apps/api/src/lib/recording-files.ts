@@ -1,4 +1,5 @@
-import { existsSync, openSync, readSync, closeSync, unlinkSync, statSync } from "node:fs";
+import { existsSync, openSync, readFileSync, readSync, closeSync, unlinkSync, statSync } from "node:fs";
+import { spawn } from "node:child_process";
 import { eq, lte, or, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { cdr, recordings } from "../db/schema.js";
@@ -141,4 +142,69 @@ export async function purgeZeroSecondRecordings(): Promise<number> {
   }
   if (n) console.log(`[recording] purged ${n} zero-second recording(s)`);
   return n;
+}
+
+/** Asterisk sometimes leaves the WAV sizes at 0. Browsers then refuse to play the file. */
+export function repairWavHeader(buf: Buffer): void {
+  if (buf.length < 44) return;
+  if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WAVE") return;
+  if (buf.readUInt32LE(4) !== buf.length - 8) buf.writeUInt32LE(buf.length - 8, 4);
+  let offset = 12;
+  while (offset + 8 <= buf.length) {
+    const id = buf.toString("ascii", offset, offset + 4);
+    const size = buf.readUInt32LE(offset + 4);
+    if (id === "data") {
+      const available = buf.length - (offset + 8);
+      if (size === 0 || size > available) buf.writeUInt32LE(available, offset + 4);
+      return;
+    }
+    if (size > buf.length) return;
+    offset += 8 + size + (size % 2);
+  }
+}
+
+function wavFormatTag(buf: Buffer): number | null {
+  if (buf.length < 44) return null;
+  if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WAVE") return null;
+  let offset = 12;
+  while (offset + 8 <= buf.length) {
+    const id = buf.toString("ascii", offset, offset + 4);
+    const size = buf.readUInt32LE(offset + 4);
+    if (id === "fmt " && offset + 10 <= buf.length) return buf.readUInt16LE(offset + 8);
+    if (size > buf.length) return null;
+    offset += 8 + size + (size % 2);
+  }
+  return null;
+}
+
+function transcodeToPcmWav(filePath: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "ffmpeg",
+      ["-hide_banner", "-loglevel", "error", "-i", filePath, "-f", "wav", "-acodec", "pcm_s16le", "-ar", "8000", "-ac", "1", "pipe:1"],
+      { stdio: ["ignore", "pipe", "pipe"] },
+    );
+    const chunks: Buffer[] = [];
+    child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0 && chunks.length) resolve(Buffer.concat(chunks));
+      else reject(new Error(`ffmpeg exit ${code}`));
+    });
+  });
+}
+
+/** Bytes a browser can decode: repaired PCM WAV, or ffmpeg output when the file is not PCM. */
+export async function browserWavBytes(filePath: string): Promise<Buffer> {
+  const raw = readFileSync(filePath);
+  const tag = wavFormatTag(raw);
+  if (tag != null && tag !== 1) {
+    try {
+      return await transcodeToPcmWav(filePath);
+    } catch {
+      /* fall through to the original bytes */
+    }
+  }
+  repairWavHeader(raw);
+  return raw;
 }

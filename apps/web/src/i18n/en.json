@@ -272,6 +272,10 @@
     "voicemailEmpty": "No messages left for you",
     "callerId": "Caller ID",
     "unread": "New",
+    "play": "Play",
+    "pause": "Pause",
+    "playbackFailed": "This message could not be played",
+    "recordingMissing": "The recording file is missing",
     "delete": "Delete",
     "confirmDelete": "Delete this message",
     "deleted": "Message deleted"

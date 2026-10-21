@@ -272,6 +272,10 @@
     "voicemailEmpty": "Size bırakılan mesaj yok",
     "callerId": "Arayan numara",
     "unread": "Yeni",
+    "play": "Dinle",
+    "pause": "Duraklat",
+    "playbackFailed": "Bu mesaj dinlenemedi",
+    "recordingMissing": "Ses dosyası yok",
     "delete": "Sil",
     "confirmDelete": "Bu mesajı sil",
     "deleted": "Mesaj silindi"

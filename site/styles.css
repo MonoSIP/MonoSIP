@@ -552,17 +552,21 @@ h1 em {
 
 .stack-strip {
   list-style: none;
-  margin: clamp(2rem, 1.25rem + 1vw, 2.5rem) 0 0;
+  margin: clamp(2rem, 1.25rem + 1vw, 2.5rem) auto 0;
   padding: 16px 24px;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 16px 24px;
+  justify-content: center;
+  gap: 12px 28px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: color-mix(in oklab, var(--bg-elevated) 70%, transparent);
   color: var(--text-muted);
   font-size: 14px;
+  text-align: center;
+}
+.stack-strip li {
+  text-align: center;
 }
 .stack-strip b {
   color: var(--text);
@@ -878,31 +882,125 @@ h2 {
 }
 
 /* panel tour */
+.panel-intro {
+  display: grid;
+  grid-template-columns: minmax(13.5rem, 17rem) minmax(0, 1fr);
+  gap: clamp(1.25rem, 2vw, 3rem);
+  align-items: center;
+  margin-bottom: clamp(1.5rem, 1rem + 0.8vw, 2.25rem);
+}
+.panel-intro .section-head {
+  max-width: 40rem;
+  margin-bottom: 0;
+}
 .tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0;
 }
 .tabs button {
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  color: var(--text-muted);
-  font: 500 15px var(--font);
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  --tab: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in oklab, var(--tab) 50%, var(--border));
+  background: color-mix(in oklab, var(--tab) 10%, var(--bg-elevated));
+  color: var(--text);
+  font: 600 15px var(--font);
+  text-align: left;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.tabs button::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: none;
+  background: var(--tab);
 }
 .tabs button:hover {
-  color: var(--text);
+  background: color-mix(in oklab, var(--tab) 18%, var(--bg-elevated));
 }
 .tabs button[aria-selected="true"] {
-  color: #04211b;
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-  border-color: transparent;
-  font-weight: 600;
+  background: color-mix(in oklab, var(--tab) 26%, var(--bg));
+  border-color: var(--tab);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--tab) 45%, transparent);
+}
+.tabs button[data-shot="dashboard"] {
+  --tab: var(--accent);
+  border-radius: 999px;
+}
+.tabs button[data-shot="dashboard"]::before {
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--tab) 28%, transparent);
+}
+.tabs button[data-shot="cdr"] {
+  --tab: var(--info);
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.tabs button[data-shot="cdr"]::before {
+  width: 11px;
+  height: 3px;
+  border-radius: 1px;
+}
+.tabs button[data-shot="queues"] {
+  --tab: var(--warning);
+  border-radius: 14px 4px;
+  border-left-width: 4px;
+}
+.tabs button[data-shot="queues"]::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+.tabs button[data-shot="extensions"] {
+  --tab: var(--success);
+  border-radius: 10px;
+  border-style: dashed;
+}
+.tabs button[data-shot="extensions"]::before {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--tab);
+}
+.tabs button[data-shot="reports"] {
+  --tab: var(--violet-line);
+  border-radius: 0;
+  border-width: 0 0 3px;
+  background: transparent;
+}
+.tabs button[data-shot="reports"]::before {
+  width: 14px;
+  height: 10px;
+  background:
+    linear-gradient(var(--tab), var(--tab)) left bottom / 3px 45% no-repeat,
+    linear-gradient(var(--tab), var(--tab)) center bottom / 3px 75% no-repeat,
+    linear-gradient(var(--tab), var(--tab)) right bottom / 3px 100% no-repeat;
+}
+.tabs button[data-shot="reports"][aria-selected="true"] {
+  background: color-mix(in oklab, var(--tab) 16%, transparent);
+}
+.tabs button[data-shot="settings"] {
+  --tab: var(--accent-2);
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tab) 40%, transparent);
+}
+.tabs button[data-shot="settings"]::before {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--bg-elevated), inset 0 0 0 3.5px var(--tab);
+}
+.tabs button[data-shot="settings"][aria-selected="true"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--tab) 55%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--tab) 45%, transparent);
 }
 .tour-frame,
 .terminal {
@@ -1114,10 +1212,8 @@ h2 {
 }
 @media (min-width: 1500px) {
   .stack-strip {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    align-items: center;
-    gap: 16px 24px;
+    justify-content: center;
+    gap: 12px 36px;
   }
 }
 
@@ -1198,7 +1294,12 @@ h2 {
     font-size: 0;
   }
   .stack-strip {
-    justify-content: flex-start;
+    justify-content: center;
+    gap: 10px 16px;
+  }
+  .panel-intro {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 }
 

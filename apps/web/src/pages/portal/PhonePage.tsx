@@ -473,12 +473,21 @@ export function PhonePage() {
             </div>
           ) : (
             <div className="sp-keypad">
-              {KEYS.map(([d, letters]) => (
-                <button key={d} type="button" className="sp-key" aria-label={d} onClick={() => press(d)}>
-                  <span className="sp-key-digit">{d}</span>
-                  <span className="sp-key-letters">{letters}</span>
-                </button>
-              ))}
+              {KEYS.map(([d, letters]) => {
+                const plain = d === "*" || d === "#";
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    className={plain ? "sp-key is-plain" : "sp-key"}
+                    aria-label={d}
+                    onClick={() => press(d)}
+                  >
+                    <span className="sp-key-digit">{d}</span>
+                    {plain ? null : <span className="sp-key-letters">{letters}</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
           {showCallUi && xferOpen && callPhase !== "ended" && (

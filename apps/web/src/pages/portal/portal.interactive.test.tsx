@@ -262,6 +262,17 @@ describe("password and voicemail error handling", () => {
 const VOICEMAIL = { id: "v1", caller: "4444", at: "2026-01-01T09:00:00Z", read: false };
 
 describe("voicemail inbox", () => {
+  const fetchMock = vi.fn(
+    async () => new Response(new Uint8Array(256), { status: 200, headers: { "content-type": "audio/wav" } }),
+  );
+
+  beforeEach(() => {
+    fetchMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
+    URL.createObjectURL = vi.fn(() => "blob:vm");
+    URL.revokeObjectURL = vi.fn();
+  });
+
   function seed(rows: unknown[] = [VOICEMAIL]) {
     get.mockImplementation(async (path: string) => {
       if (path === "/api/v1/me/voicemails") return rows;
@@ -269,35 +280,39 @@ describe("voicemail inbox", () => {
     });
   }
 
-  it("does not open the recording when marking it read fails", async () => {
+  it("still opens the row when marking it read fails", async () => {
     seed();
     patch.mockRejectedValueOnce(new Error("voicemail gone"));
 
     renderPage(<MyVoicemailPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: /4444/ }));
+    const row = await screen.findByRole("button", { name: /4444/ });
+    await userEvent.click(row);
 
     expect(patch).toHaveBeenCalledWith("/api/v1/me/voicemails/v1", { read: true });
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("voicemail gone"));
-    expect(document.querySelector("audio")).toBeNull();
+    expect(within(row.closest("li")!).getByText("portal.callerId")).toBeInTheDocument();
   });
 
-  it("opens the recording with the caller id once the message is read", async () => {
+  it("opens the recording under the row once the message is read", async () => {
     seed();
     patch.mockResolvedValueOnce({});
 
     renderPage(<MyVoicemailPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: /4444/ }));
+    const row = await screen.findByRole("button", { name: /4444/ });
+    await userEvent.click(row);
 
-    expect(await screen.findByRole("heading", { name: "portal.callerId" })).toBeInTheDocument();
-    expect(screen.getByText("4444", { selector: "p" })).toBeInTheDocument();
+    const item = row.closest("li")!;
+    expect(within(item).getByText("portal.callerId")).toBeInTheDocument();
+    expect(within(item).getByText("4444", { selector: "p" })).toBeInTheDocument();
     const player = await waitFor(() => {
-      const el = document.querySelector("audio");
+      const el = item.querySelector("audio");
       expect(el).not.toBeNull();
       return el!;
     });
-    expect(player).toHaveAttribute("src", "/api/v1/me/voicemails/v1/stream");
+    expect(player).toHaveAttribute("src", "blob:vm");
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/me/voicemails/v1/stream", { credentials: "include" });
   });
 
   it("deletes the open message after confirmation", async () => {

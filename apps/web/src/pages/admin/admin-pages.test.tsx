@@ -1136,11 +1136,18 @@ describe("PortalLayout", () => {
     expect(await screen.findByText("portal body")).toBeInTheDocument();
     expect(screen.getByText(/^v\d+\.\d+\.\d+/)).toBeInTheDocument();
     const aside = document.querySelector("aside") as HTMLElement;
+    expect(aside.className).toContain("portal-rail");
     const phone = within(aside).getByRole("region", { name: "portal.miniPhone" });
-    const logout = within(aside).getByTitle("auth.logout");
-    // Phone sits directly under the menu; language and logout stay at the foot.
-    expect(phone.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await userEvent.click(screen.getByTitle("auth.logout"));
+    const language = within(aside).getByTitle("common.language");
+    const theme = within(aside).getByTitle("common.theme");
+    const logout = within(aside).getByTitle("common.logout");
+    const foot = logout.parentElement as HTMLElement;
+    expect(foot.className).toContain("portal-rail-foot");
+    // Phone sits under the menu; language, theme and logout stay at the foot.
+    expect(phone.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(language.compareDocumentPosition(theme) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(theme.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await userEvent.click(screen.getByTitle("common.logout"));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));

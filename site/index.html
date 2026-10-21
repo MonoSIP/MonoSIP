@@ -690,15 +690,8 @@
       <!-- ───────────────────────── Panel tour ───────────────────────── -->
       <section class="section" id="panel">
         <div class="wrap">
-          <header class="section-head reveal">
-            <p class="kicker" data-i18n="panel.kicker">04 · After go-live</p>
-            <h2 data-i18n="panel.title">Watch the floor from the same panel</h2>
-            <p class="section-lead" data-i18n="panel.lead">Active calls, the path of a finished call, queue wait and the certificate sit on these screens. The drawings use sample names.</p>
-            <a class="more" href="docs/screens/" data-i18n="panel.more">Look through the admin screens</a>
-          </header>
-
-          <div class="tour reveal">
-            <div class="tabs" role="tablist" data-i18n-aria="panel.tabs" aria-label="Panel screens">
+          <div class="panel-intro">
+            <div class="tabs reveal" role="tablist" data-i18n-aria="panel.tabs" aria-label="Panel screens">
               <button role="tab" aria-selected="true" aria-controls="tour-img" data-shot="dashboard" data-i18n="panel.tab.dashboard">Live dashboard</button>
               <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="cdr" data-i18n="panel.tab.cdr">Call logs</button>
               <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="queues" data-i18n="panel.tab.queues">Queues</button>
@@ -706,6 +699,15 @@
               <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="reports" data-i18n="panel.tab.reports">Reports</button>
               <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="settings" data-i18n="panel.tab.settings">Settings &amp; SSL</button>
             </div>
+            <header class="section-head reveal">
+              <p class="kicker" data-i18n="panel.kicker">04 · After go-live</p>
+              <h2 data-i18n="panel.title">Watch the floor from the same panel</h2>
+              <p class="section-lead" data-i18n="panel.lead">Active calls, the path of a finished call, queue wait and the certificate sit on these screens. The drawings use sample names.</p>
+              <a class="more" href="docs/screens/" data-i18n="panel.more">Look through the admin screens</a>
+            </header>
+          </div>
+
+          <div class="tour reveal">
             <figure class="tour-frame" id="tour-img" role="tabpanel">
               <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>munasip.example.com</span></div>
               <svg class="mock-defs" aria-hidden="true">

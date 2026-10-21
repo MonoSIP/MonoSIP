@@ -601,6 +601,32 @@ textarea.input {
   border-right: 1px solid var(--border);
 }
 
+/* Portal rail stays the viewport height; language, theme and logout sit on the bottom edge. */
+@media (min-width: 768px) {
+  .portal-rail {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+  }
+}
+.portal-rail-foot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  flex: none;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.portal-rail-foot .btn {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 0.4rem;
+}
+
 /* MunaSIP mark (public/munasip-mark.svg) — the tile and its corners are in the SVG */
 .brand-mark {
   display: block;
@@ -1324,6 +1350,8 @@ html.light .sp-screen {
 .sp-key:active { transform: scale(0.94); background: color-mix(in oklab, var(--accent) 24%, var(--bg-soft)); }
 .sp-key-digit { font: 400 1.6rem/1 var(--font); }
 .sp-key-letters { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.14em; color: var(--text-muted); min-height: 0.7rem; margin-top: 0.15rem; }
+/* * and # have no letter row, so the glyph sits in the middle of the key */
+.sp-key.is-plain { justify-content: center; }
 
 .sp-actions {
   margin-top: 0.9rem;
