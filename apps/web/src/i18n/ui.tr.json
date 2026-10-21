@@ -356,6 +356,8 @@
   "Recordings": "Kayıtlar",
   "Reloaded": "Yeniden yüklendi",
   "Remove": "Kaldır",
+  "Remove connection": "Bağlantıyı kaldır",
+  "Remove connection (Backspace)": "Bağlantıyı kaldır (Backspace)",
   "Removed": "Kaldırıldı",
   "Replay": "Tekrar oynat",
   "Reports will be emailed when the nightly job runs.": "Raporlar gece çalışan görevle e-postayla gönderilir.",

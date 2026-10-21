@@ -1464,3 +1464,22 @@ html.light .sp-screen {
 }
 @keyframes veil-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .page-veil-content { transition: none; } }
+
+/* Remove button on a selected IVR connection (flow/FlowNodes.tsx FlowEdge) */
+.flow-edge-delete {
+  position: absolute;
+  pointer-events: all;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--danger);
+  background: var(--bg-elevated);
+  color: var(--danger);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+  cursor: pointer;
+  animation: flow-edge-delete-in 0.15s ease-out;
+}
+.flow-edge-delete:hover { background: var(--danger); color: #fff; }
+@keyframes flow-edge-delete-in { from { opacity: 0; } }

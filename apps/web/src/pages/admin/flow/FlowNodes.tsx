@@ -8,8 +8,8 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { BaseEdge, getBezierPath, Handle, Position, type EdgeProps, type NodeProps } from "@xyflow/react";
-import { Pencil, Trash2 } from "lucide-react";
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, Handle, Position, type EdgeProps, type NodeProps } from "@xyflow/react";
+import { Pencil, Trash2, X } from "lucide-react";
 import { exitsForNode, menuDigits, nodeColor, nodeShortTitle } from "./nodeMeta";
 import { leftInset, NodeIcon, rightInset, shapeFor, shapePadding, shapePaths } from "./nodeShapes";
 import { tr } from "../../../i18n";
@@ -26,6 +26,8 @@ export type FlowNodeData = {
 type FlowCanvasActions = {
   openSettings: (nodeId: string) => void;
   requestDelete: (nodeId: string) => void;
+  /** Remove a connection; absent when the canvas is read-only */
+  deleteEdge?: (edgeId: string) => void;
 };
 
 const FlowCanvasActionsCtx = createContext<FlowCanvasActions | null>(null);
@@ -33,14 +35,16 @@ const FlowCanvasActionsCtx = createContext<FlowCanvasActions | null>(null);
 export function FlowCanvasActionsProvider({
   openSettings,
   requestDelete,
+  deleteEdge,
   children,
 }: {
   openSettings: (nodeId: string) => void;
   requestDelete: (nodeId: string) => void;
+  deleteEdge?: (edgeId: string) => void;
   children: ReactNode;
 }) {
   return (
-    <FlowCanvasActionsCtx.Provider value={{ openSettings, requestDelete }}>
+    <FlowCanvasActionsCtx.Provider value={{ openSettings, requestDelete, deleteEdge }}>
       {children}
     </FlowCanvasActionsCtx.Provider>
   );
@@ -243,6 +247,7 @@ export const FlowEdge = memo(function FlowEdge(props: EdgeProps) {
   const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition });
   const sim = (data as FlowEdgeData | undefined)?.sim;
   const live = Boolean(selected) || sim === "active";
+  const deleteEdge = useContext(FlowCanvasActionsCtx)?.deleteEdge;
   return (
     <>
       <BaseEdge
@@ -266,6 +271,24 @@ export const FlowEdge = memo(function FlowEdge(props: EdgeProps) {
         <circle r={3.5} className="flow-edge-dot" style={{ fill: props.style?.stroke }}>
           <animateMotion dur="1.2s" repeatCount="indefinite" path={path} />
         </circle>
+      )}
+      {selected && deleteEdge && (
+        <EdgeLabelRenderer>
+          <button
+            type="button"
+            className="flow-edge-delete nodrag nopan"
+            // below the midpoint so a menu-digit label stays readable
+            style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + (props.label ? 22 : 0)}px)` }}
+            title={tr("Remove connection (Backspace)")}
+            aria-label={tr("Remove connection")}
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteEdge(id);
+            }}
+          >
+            <X size={12} strokeWidth={2.5} />
+          </button>
+        </EdgeLabelRenderer>
       )}
     </>
   );

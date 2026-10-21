@@ -552,7 +552,11 @@ export function FlowDesignerPage() {
         )}
 
         <div className="card relative min-h-0 min-w-0 flex-1 overflow-hidden">
-          <FlowCanvasActionsProvider openSettings={openSettings} requestDelete={requestDeleteNode}>
+          <FlowCanvasActionsProvider
+            openSettings={openSettings}
+            requestDelete={requestDeleteNode}
+            deleteEdge={mobileView ? undefined : (edgeId) => setEdges((es) => es.filter((e) => e.id !== edgeId))}
+          >
             <ReactFlow
               nodes={viewNodes}
               edges={viewEdges}
