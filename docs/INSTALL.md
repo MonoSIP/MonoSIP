@@ -16,7 +16,7 @@ MunaSIP runs as a **Docker Compose** stack. Supported production path: Linux VM 
 ```bash
 git clone https://github.com/MunaSIP/MunaSIP.git
 cd MunaSIP
-git checkout v1.7.1   # or main
+git checkout v1.7.2   # or main
 
 cp .env.example .env
 chmod +x scripts/gen-certs.sh
