@@ -19,6 +19,16 @@
   --mono: "JetBrains Mono", ui-monospace, monospace;
   --radius: 14px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Shared page frame: fluid until the wide-screen band, always inside the viewport. */
+  --page-max: 1720px;
+  --page-gutter: 1.25rem;
+  --measure: 46rem;
+  --measure-tight: 32rem;
+  --section-pad: clamp(6rem, 2.5rem + 3.8vw, 8rem);
+  --hero-pad-top: clamp(4.5rem, 2rem + 3.5vw, 6.75rem);
+  --hero-pad-bottom: clamp(2.5rem, 1rem + 2vw, 4rem);
+  --split-gap: clamp(2.5rem, 1.2rem + 2.2vw, 4.75rem);
+  --card-gap: clamp(1rem, 0.7rem + 0.45vw, 1.375rem);
   color-scheme: dark;
 }
 
@@ -66,8 +76,10 @@ code {
   border-radius: 6px;
 }
 .wrap {
-  width: min(1180px, 100% - 40px);
+  width: min(var(--page-max), max(0px, calc(100% - 2 * var(--page-gutter))));
   margin-inline: auto;
+  container-type: inline-size;
+  container-name: page;
 }
 .skip {
   position: absolute;
@@ -200,13 +212,20 @@ code {
 
 /* ── hero ── */
 .hero {
-  padding: 72px 0 40px;
+  padding: var(--hero-pad-top) 0 var(--hero-pad-bottom);
 }
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.02fr 1fr;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: var(--split-gap);
   align-items: center;
+}
+.hero-grid > *,
+.ivr-grid > *,
+.soft-grid > *,
+.install-grid > *,
+.cards > * {
+  min-width: 0;
 }
 .eyebrow {
   display: inline-flex;
@@ -255,7 +274,7 @@ h1 em {
   margin: 20px 0 28px;
   font-size: 19px;
   color: var(--text-muted);
-  max-width: 34em;
+  max-width: min(34em, 100%);
 }
 .cta-row {
   display: flex;
@@ -287,6 +306,9 @@ h1 em {
   transform: rotate(-45deg);
 }
 .hero-art {
+  width: 100%;
+  max-width: 46rem;
+  justify-self: end;
   margin: 0;
   padding: 18px;
   border-radius: 24px;
@@ -438,7 +460,7 @@ h1 em {
 
 .stack-strip {
   list-style: none;
-  margin-top: 56px;
+  margin-top: clamp(3.5rem, 2rem + 2.5vw, 5rem);
   padding: 18px 22px;
   display: flex;
   flex-wrap: wrap;
@@ -458,14 +480,14 @@ h1 em {
 
 /* ── sections ── */
 .section {
-  padding: 96px 0;
+  padding-block: var(--section-pad);
 }
 .section-alt {
   background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--bg-elevated) 55%, transparent) 20%, color-mix(in oklab, var(--bg-elevated) 55%, transparent) 80%, transparent);
 }
 .section-head {
-  max-width: 760px;
-  margin-bottom: 44px;
+  max-width: var(--measure);
+  margin-bottom: clamp(2.75rem, 1.5rem + 1.8vw, 3.75rem);
 }
 .kicker {
   margin: 0 0 12px;
@@ -480,6 +502,7 @@ h2 {
 }
 .section-lead {
   margin: 16px 0 0;
+  max-width: min(42rem, 100%);
   color: var(--text-muted);
   font-size: 18px;
 }
@@ -487,8 +510,8 @@ h2 {
 /* feature cards */
 .cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-gap);
 }
 .card {
   --tone: var(--accent);
@@ -518,6 +541,7 @@ h2 {
 }
 .card p {
   margin: 0;
+  max-width: 62ch;
   color: var(--text-muted);
   font-size: 15.5px;
 }
@@ -551,9 +575,11 @@ h2 {
   overflow-x: auto;
 }
 .flowline svg {
-  width: 100%;
+  display: block;
+  width: min(100%, 1320px);
   min-width: 760px;
   height: auto;
+  margin-inline: auto;
 }
 .fl-wire {
   stroke: var(--border);
@@ -615,8 +641,8 @@ h2 {
 
 .ivr-grid {
   display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
-  gap: 40px;
+  grid-template-columns: minmax(0, var(--measure-tight)) minmax(0, 1fr);
+  gap: var(--split-gap);
   align-items: start;
 }
 .ticks {
@@ -625,6 +651,7 @@ h2 {
   padding: 0;
   display: grid;
   gap: 16px;
+  max-width: var(--measure);
 }
 .ticks li {
   position: relative;
@@ -648,7 +675,7 @@ h2 {
 .shots {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--card-gap);
 }
 .shot {
   margin: 0;
@@ -670,8 +697,8 @@ h2 {
 /* softphone */
 .soft-grid {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 56px;
+  grid-template-columns: minmax(17rem, 24rem) minmax(0, 1fr);
+  gap: var(--split-gap);
   align-items: center;
 }
 .phone-stage {
@@ -804,9 +831,14 @@ h2 {
 /* install */
 .install-grid {
   display: grid;
-  grid-template-columns: 1fr 1.1fr;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--split-gap);
   align-items: center;
+}
+.soft-grid > .reveal:not(.phone-stage) > h2,
+.install-grid > .reveal:not(.terminal) > h2,
+.install-grid > .reveal:not(.terminal) :is(.section-lead, .steps, .note) {
+  max-width: min(42rem, 100%);
 }
 .steps {
   margin: 24px 0 0;
@@ -876,7 +908,7 @@ h2 {
 
 /* footer */
 .footer {
-  padding: 36px 0 48px;
+  padding: clamp(2.25rem, 1.2rem + 1.5vw, 3.5rem) 0 clamp(3rem, 1.6rem + 2vw, 4.5rem);
   border-top: 1px solid var(--border);
 }
 .footer-row {
@@ -902,6 +934,34 @@ h2 {
   transform: none;
 }
 
+/* Softphone notes split into two columns once the text side has room for both. */
+@container page (min-width: 68rem) {
+  .soft-grid .ticks {
+    grid-template-columns: 1fr 1fr;
+    column-gap: clamp(1.25rem, 2vw, 2.5rem);
+    max-width: 70rem;
+  }
+}
+/* One more card column once each card stays about as wide as the old 3-up row. */
+@container page (min-width: 96rem) {
+  .cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1025px) {
+  :root {
+    --page-gutter: clamp(1.25rem, 4.8vw - 1.85rem, 5.5rem);
+  }
+}
+@media (min-width: 1500px) {
+  .stack-strip {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: center;
+    gap: 14px 20px;
+  }
+}
+
 /* ── responsive ── */
 @media (max-width: 1024px) {
   .hero-grid,
@@ -910,8 +970,12 @@ h2 {
   .install-grid {
     grid-template-columns: 1fr;
   }
+  .hero-art {
+    max-width: none;
+    justify-self: stretch;
+  }
   .cards {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .nav-links {
     display: none;
@@ -924,18 +988,20 @@ h2 {
   body {
     font-size: 16px;
   }
-  .wrap {
-    width: calc(100% - 32px);
+  :root {
+    --page-gutter: 1rem;
+    --section-pad: 4.5rem;
+    --hero-pad-top: 2.75rem;
   }
   .hero {
-    padding-top: 44px;
+    padding-top: var(--hero-pad-top);
   }
   .cards,
   .shots {
     grid-template-columns: 1fr;
   }
   .section {
-    padding: 72px 0;
+    padding-block: var(--section-pad);
   }
   .nav-actions .btn-sm {
     padding: 0 10px;

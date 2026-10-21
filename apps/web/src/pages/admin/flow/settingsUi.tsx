@@ -18,7 +18,7 @@ export function SettingsSection({
       <header className="space-y-0.5">
         <div className="flex items-center gap-2">
           {step != null && (
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-bold text-white">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--primary-foreground)]">
               {step}
             </span>
           )}
@@ -100,7 +100,7 @@ export function SegmentedSelect({
             aria-checked={active}
             className={`min-w-[3.25rem] flex-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
               active
-                ? "bg-[var(--accent)] text-white shadow-sm"
+                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
                 : "text-[var(--text-muted)] hover:bg-[var(--bg-soft)] hover:text-[var(--text)]"
             }`}
             onClick={() => onChange(o.value)}

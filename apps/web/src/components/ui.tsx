@@ -221,7 +221,6 @@ export function IconLink({
 export function SectionCard({
   title,
   icon: Icon,
-  tone = "cyan",
   children,
   actions,
   className,
@@ -236,13 +235,11 @@ export function SectionCard({
   className?: string;
   flush?: boolean;
 }) {
-  const tint =
-    tone === "coral" ? "card-tint-coral" : tone === "blue" ? "card-tint-blue" : "card-tint-cyan";
   return (
-    <section className={`card section-card ${tint} ${flush ? "section-card-flush" : ""} ${className ?? ""}`}>
+    <section className={`card section-card ${flush ? "section-card-flush" : ""} ${className ?? ""}`}>
       <div className="section-card-head">
-        <h2 className="section-card-title" style={{ color: TONE_VAR[tone] }}>
-          {Icon ? <Icon size={18} strokeWidth={2.25} /> : null}
+        <h2 className="section-card-title">
+          {Icon ? <Icon size={16} strokeWidth={2.25} /> : null}
           {title}
         </h2>
         {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}

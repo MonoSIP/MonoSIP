@@ -11,11 +11,11 @@ import { MiniPhone } from "../components/MiniPhone";
 import { PhoneProvider } from "../lib/phone-context";
 
 const links = [
-  { to: "/", icon: Phone, key: "phone", end: true, tone: "var(--accent)" },
-  { to: "/directory", icon: BookUser, key: "directory", tone: "var(--accent-3)" },
-  { to: "/calls", icon: History, key: "myCalls", tone: "var(--warning)" },
-  { to: "/recordings", icon: FileAudio, key: "myRecordings", tone: "var(--violet-line)" },
-  { to: "/settings", icon: Settings, key: "mySettings", tone: "var(--text-muted)" },
+  { to: "/", icon: Phone, key: "phone", end: true },
+  { to: "/directory", icon: BookUser, key: "directory" },
+  { to: "/calls", icon: History, key: "myCalls" },
+  { to: "/recordings", icon: FileAudio, key: "myRecordings" },
+  { to: "/settings", icon: Settings, key: "mySettings" },
 ];
 
 export function PortalLayout() {
@@ -51,7 +51,6 @@ export function PortalLayout() {
               key={l.to}
               to={l.to}
               end={l.end}
-              style={{ ["--tone" as string]: l.tone }}
               className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
             >
               <span className="nav-ico">
@@ -84,21 +83,21 @@ export function PortalLayout() {
         </div>
         {!onPhonePage && <MiniPhone className="mt-auto" />}
       </aside>
-      <main className={`flex-1 p-4 md:p-8 md:pb-8 ${onPhonePage ? "pb-24" : "pb-40"}`}>
+      <main className={`min-w-0 flex-1 p-4 md:p-8 md:pb-8 ${onPhonePage ? "pb-24" : "pb-40"}`}>
         {/* Remount pages on a language switch so tr() copy re-renders */}
         <PageVeil>
           <Outlet key={i18n.language} />
         </PageVeil>
       </main>
       {!onPhonePage && <MiniPhone className="mini-phone--bar md:hidden" />}
-      <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--bg-elevated)_94%,transparent)] p-2 backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-[var(--border)] bg-[var(--card)] p-2 md:hidden">
         {links.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
             end={l.end}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition ${
+              `flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-[var(--radius)] px-2 py-1.5 text-xs ${
                 isActive
                   ? "bg-[color-mix(in_oklab,var(--accent)_16%,transparent)] text-[var(--accent)]"
                   : "text-[var(--text-muted)]"

@@ -480,7 +480,7 @@ function MenuSettings({
               type="button"
               className={`min-w-[2.25rem] rounded-md border px-2 py-1.5 text-sm font-semibold ${
                 digitSet.has(d)
-                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  ? "border-transparent bg-[var(--primary)] text-[var(--primary-foreground)]"
                   : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-soft)]"
               }`}
               onClick={() => toggleDigit(d)}
