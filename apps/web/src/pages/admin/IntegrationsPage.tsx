@@ -6,6 +6,7 @@ import { Copy, KeyRound, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 const ALL_PERMS = ["cdr", "originate", "recordings"] as const;
 
@@ -74,7 +75,7 @@ export function IntegrationsPage() {
         enabled: true,
       }),
     onSuccess: (row) => {
-      toast.success(`Widget ${row.publicKey} created`);
+      toast.success(tr("Widget {{v0}} created", { v0: row.publicKey }));
       void qc.invalidateQueries({ queryKey: ["widgets"] });
     },
     onError: (e) => toast.error((e as Error).message),
@@ -94,7 +95,7 @@ export function IntegrationsPage() {
     mutationFn: () =>
       api.post<{ key: string }>("/api/v1/admin/api-keys", { name: keyName, permissions: perms }),
     onSuccess: (r) => {
-      toast.success(`API key: ${r.key}`);
+      toast.success(tr("API key: {{v0}}", { v0: r.key }));
       void qc.invalidateQueries({ queryKey: ["api-keys"] });
     },
   });
@@ -105,7 +106,7 @@ export function IntegrationsPage() {
 
   async function saveKeyPerms(id: string, permissions: string[]) {
     await api.patch(`/api/v1/admin/api-keys/${id}`, { permissions });
-    toast.success("Permissions updated");
+    toast.success(tr("Permissions updated"));
     void qc.invalidateQueries({ queryKey: ["api-keys"] });
   }
 
@@ -115,9 +116,9 @@ export function IntegrationsPage() {
         icon={Webhook}
         title={t("nav.integrations")}
         tone="blue"
-        description="Webhooks, API keys, and website call widgets"
+        description={tr("Webhooks, API keys, and website call widgets")}
       />
-      <SectionCard title="Webhooks" icon={Webhook} tone="coral">
+      <SectionCard title={tr("Webhooks")} icon={Webhook} tone="coral">
         <form
           className="toolbar"
           onSubmit={(e) => {
@@ -127,7 +128,7 @@ export function IntegrationsPage() {
         >
           <TextField
             className="min-w-[16rem] flex-1"
-            label="Webhook URL"
+            label={tr("Webhook URL")}
             icon={Webhook}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -153,21 +154,20 @@ export function IntegrationsPage() {
                     )
                     .then((r) =>
                       toast[r.ok ? "success" : "error"](
-                        r.ok ? `Test OK (${r.status})` : r.error ?? "Test failed",
+                        r.ok ? tr("Test OK ({{status}})", { status: r.status ?? "" }) : r.error ?? tr("Test failed"),
                       ),
                     )
                 }
               >
-                Test
+                {tr("Test")}
               </button>
             </li>
           ))}
         </ul>
       </SectionCard>
-      <SectionCard title="Website call widgets" icon={Globe} tone="cyan">
+      <SectionCard title={tr("Website call widgets")} icon={Globe} tone="cyan">
         <p className="text-sm text-[var(--text-muted)]">
-          Embed a “Call us” button on any site. Visitors talk over WebRTC or leave a number for
-          call-back.
+          {tr("Embed a “Call us” button on any site. Visitors talk over WebRTC or leave a number for call-back.")}
         </p>
         <form
           className="grid gap-2 sm:grid-cols-2"
@@ -176,9 +176,9 @@ export function IntegrationsPage() {
             addWidget.mutate();
           }}
         >
-          <TextField label="Name" value={wName} onChange={(e) => setWName(e.target.value)} required />
+          <TextField label={tr("Name")} value={wName} onChange={(e) => setWName(e.target.value)} required />
           <TextField
-            label="Virtual DID"
+            label={tr("Virtual DID")}
             value={wNumber}
             onChange={(e) => setWNumber(e.target.value.replace(/\D/g, ""))}
             required
@@ -195,24 +195,24 @@ export function IntegrationsPage() {
           </div>
           <TextAreaField
             className="sm:col-span-2"
-            label="Allowed websites"
-            hint="One host per line (www.example.com or *.example.com). Empty = any."
+            label={tr("Allowed websites")}
+            hint={tr("One host per line (www.example.com or *.example.com). Empty = any.")}
             value={wOrigins}
             onChange={(e) => setWOrigins(e.target.value)}
           />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={wCallback} onChange={(e) => setWCallback(e.target.checked)} />
-            Enable call-back form
+            {tr("Enable call-back form")}
           </label>
           <TextField
-            label="Call-back prefixes"
+            label={tr("Call-back prefixes")}
             value={wPrefixes}
             onChange={(e) => setWPrefixes(e.target.value)}
             disabled={!wCallback}
             hint="e.g. 05,90"
           />
           <button className="btn btn-primary sm:col-span-2" type="submit" disabled={addWidget.isPending}>
-            Create widget
+            {tr("Create widget")}
           </button>
         </form>
         <ul className="space-y-3">
@@ -222,17 +222,17 @@ export function IntegrationsPage() {
               <li key={w.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <span>
-                    <strong>{w.name}</strong> · DID {w.number} ·{" "}
+                    <strong>{w.name}</strong> {tr("· DID")} {w.number} ·{" "}
                     <span className="font-mono text-[var(--text-muted)]">{w.publicKey}</span>
                     {!w.enabled ? " (disabled)" : ""}
                   </span>
                   <IconBtn
                     icon={Trash2}
-                    label="Delete"
+                    label={tr("Delete")}
                     danger
                     onClick={() =>
                       void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
-                        toast.message("Widget deleted");
+                        toast.message(tr("Widget deleted"));
                         void qc.invalidateQueries({ queryKey: ["widgets"] });
                       })
                     }
@@ -242,10 +242,10 @@ export function IntegrationsPage() {
                 <IconBtn
                   className="mt-2"
                   icon={Copy}
-                  label="Copy embed"
+                  label={tr("Copy embed")}
                   onClick={() => {
                     void navigator.clipboard.writeText(embed);
-                    toast.success("Embed code copied");
+                    toast.success(tr("Embed code copied"));
                   }}
                 />
               </li>
@@ -253,7 +253,7 @@ export function IntegrationsPage() {
           })}
         </ul>
       </SectionCard>
-      <SectionCard title="API keys" icon={KeyRound} tone="blue">
+      <SectionCard title={tr("API keys")} icon={KeyRound} tone="blue">
         <form
           className="flex flex-wrap gap-2"
           onSubmit={(e) => {
@@ -263,7 +263,7 @@ export function IntegrationsPage() {
         >
           <TextField
             className="max-w-xs"
-            label="Key name"
+            label={tr("Key name")}
             icon={KeyRound}
             value={keyName}
             onChange={(e) => setKeyName(e.target.value)}
@@ -291,7 +291,7 @@ export function IntegrationsPage() {
                   </span>
                   <IconBtn
                     icon={Trash2}
-                    label="Revoke"
+                    label={tr("Revoke")}
                     danger
                     onClick={() =>
                       void api.delete(`/api/v1/admin/api-keys/${k.id}`).then(() =>

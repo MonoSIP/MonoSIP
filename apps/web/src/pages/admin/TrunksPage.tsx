@@ -7,6 +7,7 @@ import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from 
 import { api } from "../../lib/api";
 import { DIAL_COUNTRIES } from "../../lib/dialCountries";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type DialSettings = {
   allowedCountries?: string[];
@@ -268,7 +269,7 @@ export function TrunksPage() {
             label={t("trunks.name")}
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            placeholder="Netgsm / Turkcell / Custom"
+            placeholder={tr("Netgsm / Turkcell / Custom")}
             required
           />
           <TextField
@@ -292,9 +293,9 @@ export function TrunksPage() {
             value={form.transport}
             onChange={(e) => set("transport", e.target.value as TrunkForm["transport"])}
           >
-            <option value="udp">UDP</option>
-            <option value="tcp">TCP</option>
-            <option value="tls">TLS</option>
+            <option value="udp">{tr("UDP")}</option>
+            <option value="tcp">{tr("TCP")}</option>
+            <option value="tls">{tr("TLS")}</option>
           </SelectField>
           <SelectField
             label={t("trunks.authType")}
@@ -351,7 +352,7 @@ export function TrunksPage() {
             className="font-mono"
             value={form.fromDomain}
             onChange={(e) => set("fromDomain", e.target.value)}
-            placeholder="realm.example (optional)"
+            placeholder={tr("realm.example (optional)")}
           />
           <TextField
             label={t("trunks.outboundProxy")}
@@ -365,7 +366,7 @@ export function TrunksPage() {
             className="font-mono md:col-span-2"
             value={form.codecs}
             onChange={(e) => set("codecs", e.target.value)}
-            placeholder="ulaw,alaw,g722"
+            placeholder={tr("ulaw,alaw,g722")}
           />
           <TextAreaField
             label={t("trunks.notes")}
@@ -446,7 +447,7 @@ export function TrunksPage() {
                 className="font-mono w-[7.5rem]"
                 value={allowExtra}
                 onChange={(e) => setAllowExtra(e.target.value.toUpperCase())}
-                placeholder="ISO"
+                placeholder={tr("ISO")}
                 maxLength={3}
               />
               <button
@@ -491,7 +492,7 @@ export function TrunksPage() {
               className="font-mono w-[7.5rem]"
               value={blockExtra}
               onChange={(e) => setBlockExtra(e.target.value.toUpperCase())}
-              placeholder="ISO"
+              placeholder={tr("ISO")}
               maxLength={3}
             />
             <button
@@ -519,7 +520,7 @@ export function TrunksPage() {
         </button>
       </SectionCard>
 
-      <SectionCard title="Trunk list" icon={Cable} tone="blue" flush>
+      <SectionCard title={tr("Trunk list")} icon={Cable} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>

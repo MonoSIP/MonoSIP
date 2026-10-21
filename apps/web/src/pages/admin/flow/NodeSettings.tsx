@@ -10,6 +10,7 @@ import {
   voiceOptions,
 } from "./nodeMeta";
 import { ExitsHint, Field, SegmentedSelect, SettingsSection } from "./settingsUi";
+import { tr } from "../../../i18n";
 
 type Prompt = { id: string; name: string };
 type Moh = { id: string; name: string };
@@ -39,8 +40,8 @@ export function NodeSettings({
 
   return (
     <div className="space-y-3">
-      <SettingsSection title="On the map">
-        <Field label="Label" hint="Short name shown on the node">
+      <SettingsSection title={tr("On the map")}>
+        <Field label={tr("Label")} hint={tr("Short name shown on the node")}>
           <input
             className="input w-full"
             value={String(data.label ?? "")}
@@ -52,9 +53,9 @@ export function NodeSettings({
       </SettingsSection>
 
       {type === "start" && (
-        <SettingsSection title="How it works" hint="No extra options — this is the entry point.">
+        <SettingsSection title={tr("How it works")} hint={tr("No extra options — this is the entry point.")}>
           <p className="text-xs text-[var(--text-muted)]">
-            Variables ready when the call starts: <code>caller</code>, <code>did</code>,{" "}
+            {tr("Variables ready when the call starts:")} <code>caller</code>, <code>did</code>,{" "}
             <code>time</code>.
           </p>
         </SettingsSection>
@@ -82,10 +83,10 @@ export function NodeSettings({
       {type === "set_var" && (
         <SettingsSection
           step={1}
-          title="Variable"
-          hint="Use later as $name or {{name}} in TTS, menu, API URL/body, etc."
+          title={tr("Variable")}
+          hint={tr("Use later as $name or {{name}} in TTS, menu, API URL/body, etc.")}
         >
-          <Field label="Name">
+          <Field label={tr("Name")}>
             <input
               className="input w-full font-mono"
               value={String(data.name ?? "")}
@@ -93,22 +94,22 @@ export function NodeSettings({
               placeholder="agent"
             />
           </Field>
-          <Field label="Value">
+          <Field label={tr("Value")}>
             <input
               className="input w-full font-mono"
               value={String(data.value ?? "")}
               onChange={(e) => patch({ value: e.target.value })}
-              placeholder="$caller or a literal"
+              placeholder={tr("$caller or a literal")}
             />
           </Field>
         </SettingsSection>
       )}
 
       {type === "language" && (
-        <SettingsSection step={1} title="Language" hint="Applies to announce / menu / TTS after this node.">
-          <Field label="Language">
+        <SettingsSection step={1} title={tr("Language")} hint={tr("Applies to announce / menu / TTS after this node.")}>
+          <Field label={tr("Language")}>
             <SegmentedSelect
-              aria-label="Language"
+              aria-label={tr("Language")}
               value={String(data.language ?? "en")}
               options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
@@ -120,16 +121,16 @@ export function NodeSettings({
       {type === "time_condition" && (
         <SettingsSection
           step={1}
-          title="Schedule"
-          hint="Pick a schedule from Schedules. The live status chooses the exit."
+          title={tr("Schedule")}
+          hint={tr("Pick a schedule from Schedules. The live status chooses the exit.")}
         >
-          <Field label="Schedule">
+          <Field label={tr("Schedule")}>
             <select
               className="input w-full"
               value={String(data.scheduleId ?? "")}
               onChange={(e) => patch({ scheduleId: e.target.value })}
             >
-              <option value="">— select schedule —</option>
+              <option value="">{tr("— select schedule —")}</option>
               {ctx.schedules.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -144,21 +145,21 @@ export function NodeSettings({
         <>
           <SettingsSection
             step={1}
-            title="Dial-by-name"
-            hint="Caller types last name on the keypad (2=ABC … 9=WXYZ), then #."
+            title={tr("Dial-by-name")}
+            hint={tr("Caller types last name on the keypad (2=ABC … 9=WXYZ), then #.")}
           >
-            <Field label="Prompt language">
+            <Field label={tr("Prompt language")}>
               <SegmentedSelect
-                aria-label="Language"
+                aria-label={tr("Language")}
                 value={String(data.language ?? "en")}
                 options={speechLangOptions()}
                 onChange={(v) => patch({ language: v })}
               />
             </Field>
           </SettingsSection>
-          <SettingsSection step={2} title="Input">
+          <SettingsSection step={2} title={tr("Input")}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="First-digit timeout (ms)">
+              <Field label={tr("First-digit timeout (ms)")}>
                 <input
                   className="input w-full"
                   type="number"
@@ -172,7 +173,7 @@ export function NodeSettings({
                   }
                 />
               </Field>
-              <Field label="Max digits">
+              <Field label={tr("Max digits")}>
                 <input
                   className="input w-full"
                   type="number"
@@ -192,16 +193,16 @@ export function NodeSettings({
       {type === "subflow" && (
         <SettingsSection
           step={1}
-          title="Subflow"
-          hint="Runs the published version, then continues on return."
+          title={tr("Subflow")}
+          hint={tr("Runs the published version, then continues on return.")}
         >
-          <Field label="Flow">
+          <Field label={tr("Flow")}>
             <select
               className="input w-full"
               value={String(data.flowId ?? "")}
               onChange={(e) => patch({ flowId: e.target.value })}
             >
-              <option value="">— select flow —</option>
+              <option value="">{tr("— select flow —")}</option>
               {ctx.flows
                 .filter((f) => f.id !== ctx.currentFlowId)
                 .map((f) => (
@@ -216,7 +217,7 @@ export function NodeSettings({
 
       {type === "transfer" && (
         <>
-          <SettingsSection step={1} title="Destination" hint="Where the call goes.">
+          <SettingsSection step={1} title={tr("Destination")} hint={tr("Where the call goes.")}>
             <DestPicker
               destType={String(data.destType ?? "extension")}
               destId={(data.destId as string | null) ?? null}
@@ -226,10 +227,10 @@ export function NodeSettings({
           {String(data.destType ?? "extension") === "extension" && (
             <SettingsSection
               step={2}
-              title="Ring"
-              hint="If no answer / busy / unavailable, follow those exits on the map."
+              title={tr("Ring")}
+              hint={tr("If no answer / busy / unavailable, follow those exits on the map.")}
             >
-              <Field label="Ring timeout (seconds)">
+              <Field label={tr("Ring timeout (seconds)")}>
                 <input
                   className="input w-full"
                   type="number"
@@ -245,7 +246,7 @@ export function NodeSettings({
           )}
           {String(data.destType ?? "") !== "extension" && (
             <p className="text-xs text-[var(--text-muted)]">
-              Non-extension destinations leave the flow immediately (no dial-status exits).
+              {tr("Non-extension destinations leave the flow immediately (no dial-status exits).")}
             </p>
           )}
         </>
@@ -254,10 +255,10 @@ export function NodeSettings({
       {type === "queue" && (
         <SettingsSection
           step={1}
-          title="Queue"
-          hint="Overflow (timeout / full) is set on the Queues screen — edges after this node are unused."
+          title={tr("Queue")}
+          hint={tr("Overflow (timeout / full) is set on the Queues screen — edges after this node are unused.")}
         >
-          <Field label="Queue">
+          <Field label={tr("Queue")}>
             <select
               className="input w-full"
               value={String(data.queueNumber ?? data.queueId ?? "")}
@@ -271,7 +272,7 @@ export function NodeSettings({
                 });
               }}
             >
-              <option value="">— select queue —</option>
+              <option value="">{tr("— select queue —")}</option>
               {ctx.queues.map((q) => (
                 <option key={q.id} value={q.number}>
                   {q.number} — {q.name}
@@ -279,7 +280,7 @@ export function NodeSettings({
               ))}
             </select>
           </Field>
-          <Field label="Priority (0–99)" hint="Higher jumps ahead. vip=true in flow vars also applies.">
+          <Field label={tr("Priority (0–99)")} hint={tr("Higher jumps ahead. vip=true in flow vars also applies.")}>
             <input
               className="input w-full"
               type="number"
@@ -295,14 +296,14 @@ export function NodeSettings({
       )}
 
       {type === "voicemail" && (
-        <SettingsSection step={1} title="Mailbox" hint="Ends the flow and opens that mailbox.">
-          <Field label="Extension">
+        <SettingsSection step={1} title={tr("Mailbox")} hint={tr("Ends the flow and opens that mailbox.")}>
+          <Field label={tr("Extension")}>
             <select
               className="input w-full"
               value={String(data.extension ?? data.extensionId ?? "")}
               onChange={(e) => patch({ extension: e.target.value, extensionId: e.target.value })}
             >
-              <option value="">— select extension —</option>
+              <option value="">{tr("— select extension —")}</option>
               {ctx.extensions.map((e) => (
                 <option key={e.id} value={e.number}>
                   {e.number} — {e.name}
@@ -314,8 +315,8 @@ export function NodeSettings({
       )}
 
       {type === "hangup" && (
-        <SettingsSection title="How it works" hint="Place at the end of a path.">
-          <p className="text-xs text-[var(--text-muted)]">Ends the call immediately. No exits.</p>
+        <SettingsSection title={tr("How it works")} hint={tr("Place at the end of a path.")}>
+          <p className="text-xs text-[var(--text-muted)]">{tr("Ends the call immediately. No exits.")}</p>
         </SettingsSection>
       )}
     </div>
@@ -335,25 +336,25 @@ function SpeechSettings({
     <>
       <SettingsSection
         step={1}
-        title="What to say"
-        hint="Saved prompt plays first if chosen; otherwise the text is spoken."
+        title={tr("What to say")}
+        hint={tr("Saved prompt plays first if chosen; otherwise the text is spoken.")}
       >
-        <Field label="Text" hint="Use $caller or {{caller}} for variables">
+        <Field label={tr("Text")} hint={tr("Use $caller or {{caller}} for variables")}>
           <textarea
             className="input w-full"
             rows={3}
             value={String(data.text ?? data.prompt ?? "")}
             onChange={(e) => patch({ text: e.target.value })}
-            placeholder="Welcome. Your code is $pin."
+            placeholder={tr("Welcome. Your code is $pin.")}
           />
         </Field>
-        <Field label="Or play saved prompt (WAV)">
+        <Field label={tr("Or play saved prompt (WAV)")}>
           <select
             className="input w-full"
             value={String(data.promptId ?? "")}
             onChange={(e) => patch({ promptId: e.target.value || undefined })}
           >
-            <option value="">— synthesize text above —</option>
+            <option value="">{tr("— synthesize text above —")}</option>
             {prompts.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -362,19 +363,19 @@ function SpeechSettings({
           </select>
         </Field>
       </SettingsSection>
-      <SettingsSection step={2} title="Voice">
+      <SettingsSection step={2} title={tr("Voice")}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Language">
+          <Field label={tr("Language")}>
             <SegmentedSelect
-              aria-label="Language"
+              aria-label={tr("Language")}
               value={String(data.language ?? "en")}
               options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>
-          <Field label="Voice" hint="System default = Admin → Settings → IVR TTS">
+          <Field label={tr("Voice")} hint={tr("System default = Admin → Settings → IVR TTS")}>
             <SegmentedSelect
-              aria-label="Voice"
+              aria-label={tr("Voice")}
               value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
@@ -403,28 +404,28 @@ function MenuSettings({
 
   return (
     <>
-      <SettingsSection step={1} title="Prompt" hint="Spoken before collecting digits.">
-        <Field label="Menu text">
+      <SettingsSection step={1} title={tr("Prompt")} hint={tr("Spoken before collecting digits.")}>
+        <Field label={tr("Menu text")}>
           <textarea
             className="input w-full"
             rows={3}
             value={String(data.prompt ?? data.text ?? "")}
             onChange={(e) => patch({ prompt: e.target.value })}
-            placeholder="Press 1 for sales, 2 for support."
+            placeholder={tr("Press 1 for sales, 2 for support.")}
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Language">
+          <Field label={tr("Language")}>
             <SegmentedSelect
-              aria-label="Language"
+              aria-label={tr("Language")}
               value={String(data.language ?? "en")}
               options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>
-          <Field label="Voice" hint="System default = Admin → Settings → IVR TTS">
+          <Field label={tr("Voice")} hint={tr("System default = Admin → Settings → IVR TTS")}>
             <SegmentedSelect
-              aria-label="Voice"
+              aria-label={tr("Voice")}
               value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
@@ -435,8 +436,8 @@ function MenuSettings({
 
       <SettingsSection
         step={2}
-        title="Keys on the map"
-        hint="Only selected keys appear as exits. Always wire timeout (and optionally invalid)."
+        title={tr("Keys on the map")}
+        hint={tr("Only selected keys appear as exits. Always wire timeout (and optionally invalid).")}
       >
         <div className="flex flex-wrap gap-1.5">
           {[...DEFAULT_MENU_DIGITS, "6", "7", "8", "9", "*", "#"].map((d) => (
@@ -456,9 +457,9 @@ function MenuSettings({
         </div>
       </SettingsSection>
 
-      <SettingsSection step={3} title="Collection">
+      <SettingsSection step={3} title={tr("Collection")}>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Max digits">
+          <Field label={tr("Max digits")}>
             <input
               className="input w-full"
               type="number"
@@ -470,7 +471,7 @@ function MenuSettings({
               }
             />
           </Field>
-          <Field label="Retries">
+          <Field label={tr("Retries")}>
             <input
               className="input w-full"
               type="number"
@@ -482,7 +483,7 @@ function MenuSettings({
               }
             />
           </Field>
-          <Field label="Timeout (ms)">
+          <Field label={tr("Timeout (ms)")}>
             <input
               className="input w-full"
               type="number"
@@ -516,10 +517,10 @@ function GetKeySettings({
     <>
       <SettingsSection
         step={1}
-        title="Store as variable"
+        title={tr("Store as variable")}
         hint={`Digits are saved here. Elsewhere write $${varName || "pin"} (or {{${varName || "pin"}}}) — TTS, API URL/body, conditions.`}
       >
-        <Field label="Variable name" hint="Letters, numbers, underscore — e.g. pin, order_id">
+        <Field label={tr("Variable name")} hint={tr("Letters, numbers, underscore — e.g. pin, order_id")}>
           <div className="flex items-center gap-1">
             <span className="font-mono text-sm text-[var(--accent)]">$</span>
             <input
@@ -532,28 +533,28 @@ function GetKeySettings({
         </Field>
       </SettingsSection>
 
-      <SettingsSection step={2} title="Prompt" hint="Spoken before collecting keys. Leave empty for beep-only.">
-        <Field label="Prompt text">
+      <SettingsSection step={2} title={tr("Prompt")} hint={tr("Spoken before collecting keys. Leave empty for beep-only.")}>
+        <Field label={tr("Prompt text")}>
           <textarea
             className="input w-full"
             rows={2}
             value={String(data.prompt ?? data.text ?? "")}
             onChange={(e) => patch({ prompt: e.target.value })}
-            placeholder="Enter your PIN, then press pound."
+            placeholder={tr("Enter your PIN, then press pound.")}
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Language">
+          <Field label={tr("Language")}>
             <SegmentedSelect
-              aria-label="Language"
+              aria-label={tr("Language")}
               value={String(data.language ?? "en")}
               options={speechLangOptions()}
               onChange={(v) => patch({ language: v })}
             />
           </Field>
-          <Field label="Voice" hint="System default = Admin → Settings → IVR TTS">
+          <Field label={tr("Voice")} hint={tr("System default = Admin → Settings → IVR TTS")}>
             <SegmentedSelect
-              aria-label="Voice"
+              aria-label={tr("Voice")}
               value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
               onChange={(v) => patch({ gender: v })}
@@ -564,11 +565,11 @@ function GetKeySettings({
 
       <SettingsSection
         step={3}
-        title="Collection"
-        hint="Stops at max digits, #, or silence between digits. * clears and restarts."
+        title={tr("Collection")}
+        hint={tr("Stops at max digits, #, or silence between digits. * clears and restarts.")}
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field label="Max digits">
+          <Field label={tr("Max digits")}>
             <input
               className="input w-full"
               type="number"
@@ -580,7 +581,7 @@ function GetKeySettings({
               }
             />
           </Field>
-          <Field label="Min digits">
+          <Field label={tr("Min digits")}>
             <input
               className="input w-full"
               type="number"
@@ -592,7 +593,7 @@ function GetKeySettings({
               }
             />
           </Field>
-          <Field label="Timeout (ms)">
+          <Field label={tr("Timeout (ms)")}>
             <input
               className="input w-full"
               type="number"
@@ -620,15 +621,15 @@ function ConditionSettings({
   return (
     <SettingsSection
       step={1}
-      title="Compare"
-      hint="Result chooses the true or false exit."
+      title={tr("Compare")}
+      hint={tr("Result chooses the true or false exit.")}
     >
       <Field
-        label="Variable"
+        label={tr("Variable")}
         hint={
           op === "area_code" || op === "country_code"
-            ? "Leave empty to use caller / DID"
-            : "e.g. caller, agent, http_status"
+            ? tr("Leave empty to use caller / DID")
+            : tr("e.g. caller, agent, http_status")
         }
       >
         <input
@@ -638,29 +639,29 @@ function ConditionSettings({
           placeholder="caller"
         />
       </Field>
-      <Field label="Operator">
+      <Field label={tr("Operator")}>
         <select
           className="input w-full"
           value={op}
           onChange={(e) => patch({ op: e.target.value })}
         >
-          <option value="=">equals (=)</option>
-          <option value="!=">not equal (!=)</option>
-          <option value=">">greater (&gt;)</option>
-          <option value="<">less (&lt;)</option>
-          <option value=">=">greater or equal</option>
-          <option value="<=">less or equal</option>
+          <option value="=">{tr("equals (=)")}</option>
+          <option value="!=">{tr("not equal (!=)")}</option>
+          <option value=">">{tr("greater (>)")}</option>
+          <option value="<">{tr("less (<)")}</option>
+          <option value=">=">{tr("greater or equal")}</option>
+          <option value="<=">{tr("less or equal")}</option>
           <option value="contains">contains</option>
-          <option value="starts_with">starts with</option>
-          <option value="ends_with">ends with</option>
-          <option value="empty">is empty</option>
-          <option value="regex">matches regex</option>
-          <option value="area_code">area code</option>
-          <option value="country_code">country code</option>
+          <option value="starts_with">{tr("starts with")}</option>
+          <option value="ends_with">{tr("ends with")}</option>
+          <option value="empty">{tr("is empty")}</option>
+          <option value="regex">{tr("matches regex")}</option>
+          <option value="area_code">{tr("area code")}</option>
+          <option value="country_code">{tr("country code")}</option>
         </select>
       </Field>
       {op !== "empty" && (
-        <Field label="Value">
+        <Field label={tr("Value")}>
           <input
             className="input w-full font-mono"
             value={String(data.value ?? "")}

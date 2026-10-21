@@ -4,6 +4,7 @@ import { Music, Pause, Play, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type MohClass = { id: string; name: string; files: unknown };
 
@@ -24,7 +25,7 @@ export function MohPage() {
   const create = useMutation({
     mutationFn: () => api.post("/api/v1/admin/moh", { name, files: [] }),
     onSuccess: () => {
-      toast.success("MOH class created");
+      toast.success(tr("MOH class created"));
       setName("");
       void qc.invalidateQueries({ queryKey: ["moh"] });
     },
@@ -61,7 +62,7 @@ export function MohPage() {
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
       const blob = await res.blob();
-      if (blob.size < 64) throw new Error("Audio file is empty");
+      if (blob.size < 64) throw new Error(tr("Audio file is empty"));
       const url = URL.createObjectURL(blob);
       blobUrlRef.current = url;
       audio.src = url;
@@ -71,7 +72,7 @@ export function MohPage() {
     } catch (e) {
       setIsPlaying(false);
       setPlaying(null);
-      toast.error(`Playback failed: ${(e as Error).message}`);
+      toast.error(tr("Playback failed: {{v0}}", { v0: (e as Error).message }));
     }
   }
 
@@ -108,7 +109,7 @@ export function MohPage() {
         void audio
           .play()
           .then(() => setIsPlaying(true))
-          .catch((e) => toast.error(`Playback failed: ${(e as Error).message}`));
+          .catch((e) => toast.error(tr("Playback failed: {{v0}}", { v0: (e as Error).message })));
       }
       return;
     }
@@ -131,7 +132,7 @@ export function MohPage() {
     void api
       .delete(`/api/v1/admin/moh/${id}/files/${encodeURIComponent(file)}`)
       .then(() => {
-        toast.success("Removed");
+        toast.success(tr("Removed"));
         void qc.invalidateQueries({ queryKey: ["moh"] });
       })
       .catch((e) => toast.error(String(e)));
@@ -149,11 +150,11 @@ export function MohPage() {
       />
       <PageHeader
         icon={Music}
-        title="Music on Hold"
+        title={tr("Music on Hold")}
         tone="blue"
-        description="Upload WAV/MP3/OGG; non-WAV or wrong sample rate is converted to 8 kHz mono WAV for Asterisk. Use Play to preview."
+        description={tr("Upload WAV/MP3/OGG; non-WAV or wrong sample rate is converted to 8 kHz mono WAV for Asterisk. Use Play to preview.")}
       />
-      <SectionCard title="New MOH class" icon={Plus} tone="blue">
+      <SectionCard title={tr("New MOH class")} icon={Plus} tone="blue">
         <form
           className="toolbar"
           onSubmit={(e) => {
@@ -162,24 +163,24 @@ export function MohPage() {
           }}
         >
           <TextField
-            label="Class name"
+            label={tr("Class name")}
             icon={Music}
             className="max-w-xs"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Class name"
+            placeholder={tr("Class name")}
             required
           />
           <button className="btn btn-primary" type="submit">
-            Create class
+            {tr("Create class")}
           </button>
         </form>
       </SectionCard>
 
       <div className="space-y-4">
         {(list.data ?? []).length === 0 ? (
-          <SectionCard title="Classes" icon={Music} tone="blue">
-            <p className="text-[var(--text-muted)]">No MOH classes yet.</p>
+          <SectionCard title={tr("Classes")} icon={Music} tone="blue">
+            <p className="text-[var(--text-muted)]">{tr("No MOH classes yet.")}</p>
           </SectionCard>
         ) : (
           list.data?.map((m) => {
@@ -212,19 +213,19 @@ export function MohPage() {
                       onClick={() => fileInputRefs.current[m.id]?.click()}
                     >
                       <Upload size={16} />
-                      Upload
+                      {tr("Upload")}
                     </button>
                   </>
                 }
               >
                 {files.length === 0 ? (
-                  <div className="px-4 pb-4 text-sm text-[var(--text-muted)]">No files yet.</div>
+                  <div className="px-4 pb-4 text-sm text-[var(--text-muted)]">{tr("No files yet.")}</div>
                 ) : (
                   <table className="table">
                       <thead>
                         <tr>
-                          <th className="col-grow">File</th>
-                          <th className="col-actions">Actions</th>
+                          <th className="col-grow">{tr("File")}</th>
+                          <th className="col-actions">{tr("Actions")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -244,7 +245,7 @@ export function MohPage() {
                                   />
                                   <IconBtn
                                     icon={Trash2}
-                                    label="Delete"
+                                    label={tr("Delete")}
                                     danger
                                     onClick={() => removeFile(m.id, f, active)}
                                   />

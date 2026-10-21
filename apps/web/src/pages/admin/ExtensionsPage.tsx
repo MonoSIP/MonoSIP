@@ -6,6 +6,7 @@ import { Download, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react"
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Ext = {
   id: string;
@@ -110,7 +111,7 @@ export function ExtensionsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Saved");
+      toast.success(tr("Saved"));
       setEdit(null);
       void qc.invalidateQueries({ queryKey: ["extensions"] });
     },
@@ -198,7 +199,7 @@ export function ExtensionsPage() {
     const r = await api.post<{ created: number; updated: number }>("/api/v1/admin/extensions/import", {
       csv,
     });
-    toast.success(`Import: +${r.created} / ~${r.updated}`);
+    toast.success(tr("Import: +{{v0}} / ~{{v1}}", { v0: r.created, v1: r.updated }));
     void qc.invalidateQueries({ queryKey: ["extensions"] });
   }
 
@@ -208,16 +209,16 @@ export function ExtensionsPage() {
         icon={Users}
         title={t("extensions.title")}
         tone="blue"
-        description="Desk phones, softphones, and portal accounts"
+        description={tr("Desk phones, softphones, and portal accounts")}
         actions={
           <div className="flex gap-2">
             <button className="btn" type="button" onClick={() => void exportCsv()}>
               <Download size={16} />
-              Export CSV
+              {tr("Export CSV")}
             </button>
             <label className="btn cursor-pointer">
               <Upload size={16} />
-              Import CSV
+              {tr("Import CSV")}
               <input
                 type="file"
                 accept=".csv,text/csv"
@@ -231,7 +232,7 @@ export function ExtensionsPage() {
           </div>
         }
       />
-      <SectionCard title="Add extension" icon={UserPlus} tone="cyan" className="mb-6">
+      <SectionCard title={tr("Add extension")} icon={UserPlus} tone="cyan" className="mb-6">
         <form
           className="toolbar"
           onSubmit={(e) => {
@@ -262,22 +263,22 @@ export function ExtensionsPage() {
       {edit && (
         <SectionCard title={`Edit ${edit.number}`} icon={Users} tone="coral" className="mb-6">
           <div className="grid gap-3 sm:grid-cols-2">
-            <TextField label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            <TextField label={tr("Name")} value={editName} onChange={(e) => setEditName(e.target.value)} />
             <SelectField
-              label="Recording"
+              label={tr("Recording")}
               value={editRecording}
               onChange={(e) => setEditRecording(e.target.value)}
             >
               <option value="off">off</option>
               <option value="always">always</option>
-              <option value="external">external only</option>
+              <option value="external">{tr("external only")}</option>
             </SelectField>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={editPortal} onChange={(e) => setEditPortal(e.target.checked)} />
-              Portal enabled
+              {tr("Portal enabled")}
             </label>
-            <SelectField label="Secretary of" value={editBoss} onChange={(e) => setEditBoss(e.target.value)}>
-              <option value="">— none —</option>
+            <SelectField label={tr("Secretary of")} value={editBoss} onChange={(e) => setEditBoss(e.target.value)}>
+              <option value="">{tr("— none —")}</option>
               {list.data
                 ?.filter((x) => x.id !== edit.id)
                 .map((x) => (
@@ -288,13 +289,13 @@ export function ExtensionsPage() {
             </SelectField>
             <TextField
               className="sm:col-span-2"
-              label="Outbound CLI"
+              label={tr("Outbound CLI")}
               value={cli}
               onChange={(e) => setCli(e.target.value)}
             />
             <TextField
-              label="Daily spend limit (min)"
-              hint="Empty = global default"
+              label={tr("Daily spend limit (min)")}
+              hint={tr("Empty = global default")}
               type="number"
               min={0}
               value={spendDaily}
@@ -302,7 +303,7 @@ export function ExtensionsPage() {
               placeholder="—"
             />
             <TextField
-              label="Monthly spend limit (min)"
+              label={tr("Monthly spend limit (min)")}
               type="number"
               min={0}
               value={spendMonthly}
@@ -312,7 +313,7 @@ export function ExtensionsPage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Forwarding rules</span>
+              <span className="text-sm font-medium">{tr("Forwarding rules")}</span>
               <button
                 className="btn text-xs"
                 type="button"
@@ -323,7 +324,7 @@ export function ExtensionsPage() {
                   ])
                 }
               >
-                Add rule
+                {tr("Add rule")}
               </button>
             </div>
             {fwdRules.map((rule, i) => (
@@ -346,7 +347,7 @@ export function ExtensionsPage() {
                   <input
                     className="input w-24"
                     type="number"
-                    title="Ring seconds"
+                    title={tr("Ring seconds")}
                     value={rule.ringSeconds}
                     onChange={(e) =>
                       setFwdRules((rs) =>
@@ -359,7 +360,7 @@ export function ExtensionsPage() {
                     type="button"
                     onClick={() => setFwdRules((rs) => rs.filter((_, j) => j !== i))}
                   >
-                    Remove
+                    {tr("Remove")}
                   </button>
                 </div>
                 <DestPicker
@@ -391,16 +392,16 @@ export function ExtensionsPage() {
                   checked={perms[k]}
                   onChange={(e) => setPerms({ ...perms, [k]: e.target.checked })}
                 />
-                {label}
+                {tr(label)}
               </label>
             ))}
             <label className="flex items-center gap-1">
               <input type="checkbox" checked={mobileFwd} onChange={(e) => setMobileFwd(e.target.checked)} />
-              Mobile forward OK
+              {tr("Mobile forward OK")}
             </label>
             <label className="flex items-center gap-1">
               <input type="checkbox" checked={listenRec} onChange={(e) => setListenRec(e.target.checked)} />
-              Listen recordings
+              {tr("Listen recordings")}
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -413,11 +414,11 @@ export function ExtensionsPage() {
               onClick={() =>
                 void api
                   .post<{ portalPassword: string }>(`/api/v1/admin/extensions/${edit.id}/reset-password`)
-                  .then((r) => toast.success(`New portal password: ${r.portalPassword}`))
+                  .then((r) => toast.success(tr("New portal password: {{v0}}", { v0: r.portalPassword })))
                   .catch((e) => toast.error(String(e)))
               }
             >
-              Reset portal password
+              {tr("Reset portal password")}
             </button>
             <button className="btn" type="button" onClick={() => setEdit(null)}>
               {t("common.cancel", { defaultValue: "Cancel" })}
@@ -426,7 +427,7 @@ export function ExtensionsPage() {
         </SectionCard>
       )}
 
-      <SectionCard title="Extensions" icon={Users} tone="blue" flush>
+      <SectionCard title={tr("Extensions")} icon={Users} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
@@ -434,7 +435,7 @@ export function ExtensionsPage() {
               <th>{t("extensions.name")}</th>
               <th>{t("extensions.dnd")}</th>
               <th>{t("extensions.portal")}</th>
-              <th>Secretary</th>
+              <th>{tr("Secretary")}</th>
               <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
@@ -444,8 +445,8 @@ export function ExtensionsPage() {
                 <td className="font-mono">{e.number}</td>
                 <td className="col-grow">{e.name}</td>
                 <td>
-                  <button className="btn btn-icon" type="button" onClick={() => toggleDnd.mutate(e)} title="DND" aria-label="DND">
-                    {e.dnd ? "ON" : "OFF"}
+                  <button className="btn btn-icon" type="button" onClick={() => toggleDnd.mutate(e)} title={tr("DND")} aria-label={tr("DND")}>
+                    {e.dnd ? tr("ON") : tr("OFF")}
                   </button>
                 </td>
                 <td>{e.portalEnabled ? t("common.yes") : t("common.no")}</td>
@@ -456,7 +457,7 @@ export function ExtensionsPage() {
                 </td>
                 <td className="col-actions">
                   <div className="btn-icon-row">
-                    <IconBtn icon={Pencil} label="Edit" onClick={() => void openEdit(e)} />
+                    <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => void openEdit(e)} />
                     <IconBtn icon={Trash2} label={t("common.delete")} danger onClick={() => remove.mutate(e.id)} />
                   </div>
                 </td>

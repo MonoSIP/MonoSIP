@@ -5,6 +5,7 @@ import { BellRing, Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-re
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
 type Group = {
@@ -40,7 +41,7 @@ export function RingGroupsPage() {
     onSuccess: () => {
       reset();
       void qc.invalidateQueries({ queryKey: ["ring-groups"] });
-      toast.success("Created");
+      toast.success(tr("Created"));
     },
   });
 
@@ -50,7 +51,7 @@ export function RingGroupsPage() {
     onSuccess: () => {
       reset();
       void qc.invalidateQueries({ queryKey: ["ring-groups"] });
-      toast.success("Saved");
+      toast.success(tr("Saved"));
     },
   });
 
@@ -80,7 +81,7 @@ export function RingGroupsPage() {
         icon={UsersRound}
         title={t("nav.ringGroups")}
         tone="cyan"
-        description="Ring multiple extensions together with ringall or linear strategy"
+        description={tr("Ring multiple extensions together with ringall or linear strategy")}
       />
       <SectionCard
         title={editId ? t("common.save") : t("common.create")}
@@ -115,7 +116,7 @@ export function RingGroupsPage() {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <SelectField label="Strategy" value={strategy} onChange={(e) => setStrategy(e.target.value)}>
+            <SelectField label={tr("Strategy")} value={strategy} onChange={(e) => setStrategy(e.target.value)}>
               <option value="ringall">ringall</option>
               <option value="linear">linear</option>
             </SelectField>
@@ -134,20 +135,20 @@ export function RingGroupsPage() {
             </button>
             {editId && (
               <button className="btn" type="button" onClick={reset}>
-                Cancel
+                {tr("Cancel")}
               </button>
             )}
           </div>
         </form>
       </SectionCard>
-      <SectionCard title="Ring groups" icon={List} tone="blue" flush>
+      <SectionCard title={tr("Ring groups")} icon={List} tone="blue" flush>
         <table className="table">
             <thead>
               <tr>
                 <th>{t("extensions.number")}</th>
                 <th className="col-grow">{t("extensions.name")}</th>
-                <th>Strategy</th>
-                <th>Members</th>
+                <th>{tr("Strategy")}</th>
+                <th>{tr("Members")}</th>
                 <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>
@@ -160,7 +161,7 @@ export function RingGroupsPage() {
                   <td>{g.memberIds?.length ?? 0}</td>
                   <td className="col-actions">
                     <div className="btn-icon-row">
-                      <IconBtn icon={Pencil} label="Edit" onClick={() => startEdit(g)} />
+                      <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(g)} />
                       <IconBtn
                         icon={Trash2}
                         label={t("common.delete")}

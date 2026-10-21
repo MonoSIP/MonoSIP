@@ -35,6 +35,7 @@ import {
   nodeShortTitle,
   nodeTitle,
 } from "./flow/nodeMeta";
+import { tr } from "../../i18n";
 
 const palette = [
   "announce",
@@ -234,7 +235,7 @@ export function FlowDesignerPage() {
     if (!id) return;
     const num = extensionNumber.trim();
     if (num && !/^\d{2,8}$/.test(num)) {
-      toast.error("Extension must be 2–8 digits");
+      toast.error(tr("Extension must be 2–8 digits"));
       return;
     }
     await api.patch(`/api/v1/admin/flows/${id}`, {
@@ -266,14 +267,14 @@ export function FlowDesignerPage() {
 
   async function validate() {
     const r = await api.post<{ ok: boolean; errors: string[] }>(`/api/v1/admin/flows/${id}/validate`);
-    if (r.ok) toast.success("Valid");
+    if (r.ok) toast.success(tr("Valid"));
     else toast.error(r.errors.join("; "));
   }
 
   async function publish() {
     await save();
     const r = await api.post<{ version: number }>(`/api/v1/admin/flows/${id}/publish`);
-    toast.success(`Published v${r.version}`);
+    toast.success(tr("Published v{{v0}}", { v0: r.version }));
     const vers = await api.get<Array<{ id: string; version: number; publishedAt: string }>>(
       `/api/v1/admin/flows/${id}/versions`,
     );
@@ -282,7 +283,7 @@ export function FlowDesignerPage() {
 
   async function rollback(versionId: string) {
     await api.post(`/api/v1/admin/flows/${id}/rollback`, { versionId });
-    toast.success("Rolled back — reloading draft");
+    toast.success(tr("Rolled back — reloading draft"));
     const f = await api.get<{
       draftJson: { nodes: Array<Record<string, unknown>>; edges: Array<Record<string, unknown>> };
     }>(`/api/v1/admin/flows/${id}/draft`);
@@ -300,7 +301,7 @@ export function FlowDesignerPage() {
       try {
         mockApiResponses = JSON.parse(simMockApi) as Record<string, unknown>;
       } catch {
-        toast.error("Mock API JSON invalid — expected { \"nodeId\": { ... } }");
+        toast.error(tr("Mock API JSON invalid — expected { \"nodeId\": { ... } }"));
         return;
       }
     }
@@ -386,7 +387,7 @@ export function FlowDesignerPage() {
     if (editingId === idToRemove) {
       setEditingId(null);
     }
-    toast.success("Node deleted");
+    toast.success(tr("Node deleted"));
   }
 
   useEffect(() => {
@@ -415,21 +416,21 @@ export function FlowDesignerPage() {
           className="input max-w-[10rem]"
           value={flowName}
           onChange={(e) => setFlowName(e.target.value)}
-          placeholder="Flow name"
-          title="Flow name"
+          placeholder={tr("Flow name")}
+          title={tr("Flow name")}
         />
         <label className="flex items-center gap-1 text-sm text-[var(--text-muted)]">
-          Ext
+          {tr("Ext")}
           <input
             className="input w-24 font-mono"
             value={extensionNumber}
             onChange={(e) => setExtensionNumber(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="900"
-            title="Dial this number from softphone to test the published flow"
+            title={tr("Dial this number from softphone to test the published flow")}
           />
         </label>
         {mobileView && (
-          <span className="badge text-xs">Mobile: view only</span>
+          <span className="badge text-xs">{tr("Mobile: view only")}</span>
         )}
         {!mobileView && (
           <>
@@ -463,14 +464,14 @@ export function FlowDesignerPage() {
               a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.dsip-flow.json`;
               a.click();
               URL.revokeObjectURL(a.href);
-              toast.success("Exported");
+              toast.success(tr("Exported"));
             })().catch((e) => toast.error(String(e)));
           }}
         >
-          Export
+          {tr("Export")}
         </button>
         <label className="btn cursor-pointer">
-          Import
+          {tr("Import")}
           <input
             type="file"
             accept="application/json,.json"
@@ -491,7 +492,7 @@ export function FlowDesignerPage() {
                     draftJson,
                     name: parsed.name,
                   });
-                  toast.success("Imported — reload draft");
+                  toast.success(tr("Imported — reload draft"));
                   window.location.reload();
                 })
                 .catch((err) => toast.error((err as Error).message));
@@ -508,7 +509,7 @@ export function FlowDesignerPage() {
               e.target.value = "";
             }}
           >
-            <option value="">Rollback…</option>
+            <option value="">{tr("Rollback…")}</option>
             {versions.map((v) => (
               <option key={v.id} value={v.id}>
                 v{v.version}
@@ -522,7 +523,7 @@ export function FlowDesignerPage() {
         {!mobileView && (
         <div className="card w-44 shrink-0 overflow-hidden p-2.5">
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Nodes
+            {tr("Nodes")}
           </div>
           <div className="flex flex-col gap-1">
             {palette.map((p) => {
@@ -574,37 +575,37 @@ export function FlowDesignerPage() {
         </div>
 
         <div className="card flex w-56 shrink-0 flex-col overflow-hidden p-3">
-            <div className="mb-1 text-xs font-semibold uppercase text-[var(--text-muted)]">Test call</div>
+            <div className="mb-1 text-xs font-semibold uppercase text-[var(--text-muted)]">{tr("Test call")}</div>
             <label className="mb-1 block text-xs text-[var(--text-muted)]">
-              Caller
+              {tr("Caller")}
               <input className="input mt-1 w-full" value={simCaller} onChange={(e) => setSimCaller(e.target.value)} />
             </label>
             <label className="mb-1 block text-xs text-[var(--text-muted)]">
-              DID
+              {tr("DID")}
               <input className="input mt-1 w-full" value={simDid} onChange={(e) => setSimDid(e.target.value)} />
             </label>
             <label className="mb-2 block text-xs text-[var(--text-muted)]">
-              DTMF seq (comma)
+              {tr("DTMF seq (comma)")}
               <input
                 className="input mt-1 w-full"
                 value={simDtmf}
                 onChange={(e) => setSimDtmf(e.target.value)}
-                placeholder="1,1234,timeout"
-                title="Menu: one digit. Get key: full code e.g. 1234"
+                placeholder={tr("1,1234,timeout")}
+                title={tr("Menu: one digit. Get key: full code e.g. 1234")}
               />
             </label>
             <label className="mb-2 block text-xs text-[var(--text-muted)]">
-              Mock API JSON (optional)
+              {tr("Mock API JSON (optional)")}
               <textarea
                 className="input mt-1 w-full font-mono text-[10px]"
                 rows={3}
-                placeholder='{"api1":{"agent":"101"}}'
+                placeholder={tr("{\"api1\":{\"agent\":\"101\"}}")}
                 value={simMockApi}
                 onChange={(e) => setSimMockApi(e.target.value)}
               />
             </label>
             <button className="btn w-full text-sm" type="button" onClick={() => void simulate()}>
-              Run simulation
+              {tr("Run simulation")}
             </button>
             {simSteps.length > 0 && (
               <>
@@ -614,7 +615,7 @@ export function FlowDesignerPage() {
                   </span>
                   <span className="flex gap-1">
                     <button className="btn px-2 py-0.5 text-[10px]" type="button" onClick={() => setSimIndex(0)}>
-                      Replay
+                      {tr("Replay")}
                     </button>
                     <button
                       className="btn px-2 py-0.5 text-[10px]"
@@ -625,7 +626,7 @@ export function FlowDesignerPage() {
                         setSimIndex(-1);
                       }}
                     >
-                      Clear
+                      {tr("Clear")}
                     </button>
                   </span>
                 </div>
@@ -654,7 +655,7 @@ export function FlowDesignerPage() {
           className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Node settings"
+          aria-label={tr("Node settings")}
           onClick={() => closeInspector()}
         >
           <div
@@ -664,7 +665,7 @@ export function FlowDesignerPage() {
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
               <div className="min-w-0">
                 <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  Node settings
+                  {tr("Node settings")}
                 </div>
                 <div className="text-base font-semibold text-[var(--text)]">
                   {nodeTitle(selected.data.flowType)}
@@ -676,7 +677,7 @@ export function FlowDesignerPage() {
                 ) : null}
               </div>
               <button className="btn shrink-0" type="button" onClick={() => closeInspector()}>
-                Done
+                {tr("Done")}
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-auto p-4">
@@ -703,7 +704,7 @@ export function FlowDesignerPage() {
           className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-4"
           role="dialog"
           aria-modal="true"
-          aria-label="Confirm delete"
+          aria-label={tr("Confirm delete")}
           onClick={() => setPendingDeleteId(null)}
         >
           <div

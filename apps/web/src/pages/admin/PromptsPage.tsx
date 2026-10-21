@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { voiceOptions } from "./flow/nodeMeta";
+import { tr } from "../../i18n";
 
 type PromptRow = {
   source: "prompt" | "cache";
@@ -93,7 +94,7 @@ export function PromptsPage() {
         void audio
           .play()
           .then(() => setIsPlaying(true))
-          .catch((e) => toast.error(`Playback failed: ${(e as Error).message}`));
+          .catch((e) => toast.error(tr("Playback failed: {{v0}}", { v0: (e as Error).message })));
       }
       return;
     }
@@ -108,7 +109,7 @@ export function PromptsPage() {
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
       const blob = await res.blob();
-      if (blob.size < 64) throw new Error("Audio file is empty");
+      if (blob.size < 64) throw new Error(tr("Audio file is empty"));
       const url = URL.createObjectURL(blob);
       blobUrlRef.current = url;
       audio.src = url;
@@ -118,7 +119,7 @@ export function PromptsPage() {
     } catch (e) {
       setPlayingId(null);
       setIsPlaying(false);
-      toast.error(`Playback failed: ${(e as Error).message}`);
+      toast.error(tr("Playback failed: {{v0}}", { v0: (e as Error).message }));
     }
   }
 
@@ -207,7 +208,7 @@ export function PromptsPage() {
 
   const ttsBadge = (
     <span className="text-sm text-[var(--text-muted)]">
-      TTS:{" "}
+      {tr("TTS:")}{" "}
       <span className={ttsStatus.data?.ok ? "badge badge-ok" : "badge badge-err"}>
         {ttsStatus.data?.ok
           ? t("prompts.ttsReady", { defaultValue: "ready (EN + TR)" })
@@ -230,7 +231,7 @@ export function PromptsPage() {
         icon={Mic}
         title={t("nav.prompts")}
         tone="coral"
-        description="IVR prompts — upload WAV or generate with TTS"
+        description={tr("IVR prompts — upload WAV or generate with TTS")}
         actions={ttsBadge}
       />
 
@@ -283,7 +284,7 @@ export function PromptsPage() {
             </SelectField>
           </div>
           <TextAreaField
-            label="TTS text"
+            label={tr("TTS text")}
             className="min-h-24"
             value={ttsText}
             onChange={(e) => setTtsText(e.target.value)}
@@ -315,7 +316,7 @@ export function PromptsPage() {
               />
               {audioFile && (
                 <span className="text-sm text-[var(--text-muted)]">
-                  {audioFile.name} ({Math.round(audioFile.size / 1024)} KB)
+                  {audioFile.name} ({Math.round(audioFile.size / 1024)} {tr("KB)")}
                   <button
                     type="button"
                     className="btn ml-2"
@@ -354,16 +355,16 @@ export function PromptsPage() {
         }}
       />
 
-      <SectionCard title="All prompts" icon={List} tone="blue" flush>
+      <SectionCard title={tr("All prompts")} icon={List} tone="blue" flush>
         <table className="table">
             <thead>
               <tr>
-                <th>Name / text</th>
-                <th>Type</th>
-                <th>Lang</th>
-                <th>Created</th>
-                <th>Expires</th>
-                <th>File</th>
+                <th>{tr("Name / text")}</th>
+                <th>{tr("Type")}</th>
+                <th>{tr("Lang")}</th>
+                <th>{tr("Created")}</th>
+                <th>{tr("Expires")}</th>
+                <th>{tr("File")}</th>
                 <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>

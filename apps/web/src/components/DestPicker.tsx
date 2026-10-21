@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapPin, Route } from "lucide-react";
 import { api } from "../lib/api";
 import { SelectField, TextField } from "./ui";
+import { tr } from "../i18n";
 
 const DEST_TYPES = [
   { value: "extension", label: "Extension" },
@@ -78,25 +79,25 @@ export function DestPicker({ destType, destId, onChange, className }: Props) {
   return (
     <div className={`grid w-full gap-2 sm:grid-cols-2 ${className ?? ""}`}>
       <SelectField
-        label="Type"
+        label={tr("Type")}
         icon={Route}
         value={destType}
         onChange={(e) => onChange(e.target.value, e.target.value === "hangup" ? null : destId)}
       >
         {DEST_TYPES.map((d) => (
           <option key={d.value} value={d.value}>
-            {d.label}
+            {tr(d.label)}
           </option>
         ))}
       </SelectField>
       {needsId && useSelect && (
         <SelectField
-          label="Target"
+          label={tr("Target")}
           icon={MapPin}
           value={destId ?? ""}
           onChange={(e) => onChange(destType, e.target.value || null)}
         >
-          <option value="">— select —</option>
+          <option value="">{tr("— select —")}</option>
           {options.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}

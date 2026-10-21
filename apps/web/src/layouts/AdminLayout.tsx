@@ -135,7 +135,8 @@ export function AdminLayout() {
             </button>
           </div>
         )}
-        <Outlet />
+        {/* Remount pages on a language switch so tr() copy re-renders */}
+        <Outlet key={i18n.language} />
       </main>
     </div>
   );

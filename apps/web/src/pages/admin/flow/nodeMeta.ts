@@ -1,4 +1,5 @@
 import i18n from "i18next";
+import { tr } from "../../../i18n";
 import type { FlowNodeData } from "./FlowNodes";
 
 export const SPEECH_LANGS = [
@@ -32,10 +33,10 @@ export function voiceOptions(
   const lang = (language || "en").toLowerCase();
   const list = SPEECH_VOICES.filter((v) => (v.langs as readonly string[]).includes(lang)).map((v) => ({
     value: v.value,
-    label: v.label,
+    label: tr(v.label),
   }));
   if (opts?.includeDefault === false) return list;
-  return [{ value: "default", label: "System default" }, ...list];
+  return [{ value: "default", label: tr("System default") }, ...list];
 }
 
 export const DEFAULT_MENU_DIGITS = ["1", "2", "3", "4", "5", "0"];
@@ -163,7 +164,7 @@ export function nodeTitle(flowType: string): string {
     voicemail: "Voicemail",
     hangup: "Hangup",
   };
-  return titles[flowType] ?? flowType;
+  return titles[flowType] ? tr(titles[flowType]) : flowType;
 }
 
 /** Compact label for the add-node palette. */
@@ -186,7 +187,7 @@ export function nodeShortTitle(flowType: string): string {
     voicemail: "Voicemail",
     hangup: "Hangup",
   };
-  return titles[flowType] ?? flowType;
+  return titles[flowType] ? tr(titles[flowType]) : flowType;
 }
 
 /** Accent color shared by palette chips and canvas nodes. */
@@ -232,7 +233,7 @@ export function nodeBlurb(flowType: string): string {
     voicemail: "Send the caller to a mailbox.",
     hangup: "End the call.",
   };
-  return blurbs[flowType] ?? "";
+  return blurbs[flowType] ? tr(blurbs[flowType]) : "";
 }
 
 export function modalMaxWidth(flowType: string): string {

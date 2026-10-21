@@ -14,6 +14,7 @@ import {
 import { api } from "../../lib/api";
 import { PageHeader, StatTile } from "../../components/ui";
 import { LiveDot } from "../../components/motion";
+import { tr } from "../../i18n";
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -92,7 +93,7 @@ export function DashboardPage() {
         mode,
         listenerExtension: listenerExt,
       });
-      toast.success(`${mode} → ${listenerExt} (answer the ringing softphone)`);
+      toast.success(tr("{{v0}} → {{v1}} (answer the ringing softphone)", { v0: mode, v1: listenerExt }));
       void qc.invalidateQueries({ queryKey: ["live"] });
     } catch (e) {
       toast.error((e as Error).message);
@@ -103,7 +104,7 @@ export function DashboardPage() {
   async function cleanupSnoops() {
     try {
       const r = await api.post<{ hungupSnoops: number }>("/api/v1/admin/live/cleanup", {});
-      toast.success(`Cleared ${r.hungupSnoops} stuck spy channel(s)`);
+      toast.success(tr("Cleared {{v0}} stuck spy channel(s)", { v0: r.hungupSnoops }));
       void qc.invalidateQueries({ queryKey: ["live"] });
     } catch (e) {
       toast.error((e as Error).message);
@@ -118,17 +119,17 @@ export function DashboardPage() {
         tone="cyan"
         description={
           <>
-            Asterisk:{" "}
+            {tr("Asterisk:")}{" "}
             <span className={health.data?.asterisk ? "badge badge-ok" : "badge badge-err"}>
               {health.data?.asterisk ? t("dashboard.connected") : t("dashboard.disconnected")}
             </span>{" "}
-            · WS: {wsNote}
+            {tr("· WS:")} {wsNote}
           </>
         }
         actions={
           <>
             <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-              Spy listener
+              {tr("Spy listener")}
               <select
                 className="input w-auto min-w-[8rem]"
                 value={listenerExt}
@@ -146,11 +147,11 @@ export function DashboardPage() {
             </label>
             <button className="btn" type="button" onClick={() => void cleanupSnoops()}>
               <Trash2 size={16} />
-              Clear stuck spy
+              {tr("Clear stuck spy")}
             </button>
             <button className="btn" type="button" onClick={() => setTv((v) => !v)}>
               <Tv size={16} />
-              {tv ? "Exit TV" : "TV mode"}
+              {tv ? tr("Exit TV") : tr("TV mode")}
             </button>
           </>
         }
@@ -183,10 +184,10 @@ export function DashboardPage() {
       </div>
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <div className="card overflow-hidden">
-          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">Trunks</div>
+          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">{tr("Trunks")}</div>
           <div className="flex flex-wrap gap-2 p-4">
             {(live.data?.trunks ?? []).length === 0 ? (
-              <span className="text-sm text-[var(--text-muted)]">No trunks</span>
+              <span className="text-sm text-[var(--text-muted)]">{tr("No trunks")}</span>
             ) : (
               (live.data?.trunks ?? []).map((t) => {
                 const up = /regist|ok|avail/i.test(t.state);
@@ -201,10 +202,10 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="card overflow-hidden">
-          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">Extensions</div>
+          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">{tr("Extensions")}</div>
           <div className="flex flex-wrap gap-2 p-4">
             {(live.data?.extensions ?? []).length === 0 ? (
-              <span className="text-sm text-[var(--text-muted)]">No presence data yet</span>
+              <span className="text-sm text-[var(--text-muted)]">{tr("No presence data yet")}</span>
             ) : (
               live.data?.extensions.map((e) => (
                 <span key={e.number} className="badge gap-1.5">
@@ -219,14 +220,14 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="card overflow-hidden">
-          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">Queues</div>
+          <div className="border-b border-[var(--border)] px-4 py-3 font-medium">{tr("Queues")}</div>
           <table className="table">
             <thead>
               <tr>
-                <th>Queue</th>
-                <th>Members</th>
-                <th>Paused</th>
-                <th>Waiting</th>
+                <th>{tr("Queue")}</th>
+                <th>{tr("Members")}</th>
+                <th>{tr("Paused")}</th>
+                <th>{tr("Waiting")}</th>
               </tr>
             </thead>
             <tbody>
@@ -257,7 +258,7 @@ export function DashboardPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>{tr("ID")}</th>
               <th>{t("cdr.caller")}</th>
               <th>{t("cdr.callee")}</th>
               <th>{t("common.status")}</th>
@@ -284,13 +285,13 @@ export function DashboardPage() {
                   </td>
                   <td className="flex flex-wrap gap-1">
                     <button className="btn" type="button" onClick={() => void spy(c.id, "listen")}>
-                      Spy
+                      {tr("Spy")}
                     </button>
                     <button className="btn" type="button" onClick={() => void spy(c.id, "whisper")}>
-                      Whisper
+                      {tr("Whisper")}
                     </button>
                     <button className="btn" type="button" onClick={() => void spy(c.id, "barge")}>
-                      Barge
+                      {tr("Barge")}
                     </button>
                     <button
                       className="btn btn-danger"
@@ -302,7 +303,7 @@ export function DashboardPage() {
                           .catch((e: Error) => toast.error(e.message))
                       }
                     >
-                      Hangup
+                      {tr("Hangup")}
                     </button>
                   </td>
                 </tr>

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { api } from "../../../lib/api";
 import type { FlowNodeData } from "./FlowNodes";
 import { ExitsHint, Field, SegmentedSelect, SettingsSection } from "./settingsUi";
+import { tr } from "../../../i18n";
 
 type Mapping = { path: string; var: string };
 type HeaderRow = { key: string; value: string };
@@ -76,9 +77,9 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
   });
   return (
     <div className="space-y-2">
-      <Field label="Secret">
+      <Field label={tr("Secret")}>
         <select className="input w-full" value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">— select secret —</option>
+          <option value="">{tr("— select secret —")}</option>
           {(secrets.data ?? []).map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -89,13 +90,13 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
       <div className="flex flex-wrap gap-1">
         <input
           className="input flex-1"
-          placeholder="New secret name"
+          placeholder={tr("New secret name")}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
         />
         <input
           className="input flex-1"
-          placeholder="Value"
+          placeholder={tr("Value")}
           type="password"
           value={newVal}
           onChange={(e) => setNewVal(e.target.value)}
@@ -108,7 +109,7 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
             void api
               .post<{ id: string }>("/api/v1/admin/secrets", { name: newName, value: newVal })
               .then((r) => {
-                toast.success("Secret saved");
+                toast.success(tr("Secret saved"));
                 setNewName("");
                 setNewVal("");
                 onChange(r.id);
@@ -117,7 +118,7 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
               .catch((e: Error) => toast.error(e.message));
           }}
         >
-          Add
+          {tr("Add")}
         </button>
       </div>
     </div>
@@ -159,7 +160,7 @@ export function ApiNodeSettings({
   async function runTest() {
     const url = String(data.url ?? "").trim();
     if (!url) {
-      toast.error("URL required");
+      toast.error(tr("URL required"));
       return;
     }
     setTesting(true);
@@ -195,7 +196,7 @@ export function ApiNodeSettings({
       } else {
         setMappedPreview({ http_status: String(r.status) });
       }
-      toast.success(`HTTP ${r.status}`);
+      toast.success(tr("HTTP {{v0}}", { v0: r.status }));
     } catch (e) {
       setTestStatus(null);
       setTestBody((e as Error).message);
@@ -211,19 +212,19 @@ export function ApiNodeSettings({
 
       <SettingsSection
         step={1}
-        title="Request"
-        hint={`How the call sends the HTTP request. Use $caller, $pin, or {{caller}} in URL / body.`}
+        title={tr("Request")}
+        hint={tr("How the call sends the HTTP request. Use $caller, $pin, or {{caller}} in URL / body.", { caller: "{{caller}}" })}
       >
-        <Field label="Method" hint="Select GET, POST, or another verb">
+        <Field label={tr("Method")} hint={tr("Select GET, POST, or another verb")}>
           <SegmentedSelect
-            aria-label="HTTP method"
+            aria-label={tr("HTTP method")}
             value={method}
             options={[...METHODS]}
             onChange={(v) => patch({ method: v })}
           />
         </Field>
 
-        <Field label="URL">
+        <Field label={tr("URL")}>
           <input
             className="input w-full font-mono text-xs"
             value={String(data.url ?? "")}
@@ -233,7 +234,7 @@ export function ApiNodeSettings({
         </Field>
 
         {needsBody && (
-          <Field label="Body" hint="JSON or text — shown for POST / PUT / PATCH">
+          <Field label={tr("Body")} hint={tr("JSON or text — shown for POST / PUT / PATCH")}>
             <textarea
               className="input w-full font-mono text-xs"
               rows={4}
@@ -245,7 +246,7 @@ export function ApiNodeSettings({
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Timeout (ms)">
+          <Field label={tr("Timeout (ms)")}>
             <input
               className="input w-full"
               type="number"
@@ -263,22 +264,22 @@ export function ApiNodeSettings({
               checked={Number(data.retry ?? 0) > 0}
               onChange={(e) => patch({ retry: e.target.checked ? 1 : 0 })}
             />
-            Retry once on failure
+            {tr("Retry once on failure")}
           </label>
         </div>
       </SettingsSection>
 
-      <SettingsSection step={2} title="Auth & headers" hint="Secrets stay encrypted — never stored in the flow JSON.">
-        <Field label="Auth type">
+      <SettingsSection step={2} title={tr("Auth & headers")} hint={tr("Secrets stay encrypted — never stored in the flow JSON.")}>
+        <Field label={tr("Auth type")}>
           <select
             className="input w-full"
             value={String(data.authType ?? "none")}
             onChange={(e) => patch({ authType: e.target.value })}
           >
-            <option value="none">None</option>
-            <option value="bearer">Bearer token</option>
-            <option value="basic">Basic (secret = base64 user:pass)</option>
-            <option value="header">Custom header + secret</option>
+            <option value="none">{tr("None")}</option>
+            <option value="bearer">{tr("Bearer token")}</option>
+            <option value="basic">{tr("Basic (secret = base64 user:pass)")}</option>
+            <option value="header">{tr("Custom header + secret")}</option>
           </select>
         </Field>
         {(data.authType === "bearer" || data.authType === "basic" || data.authType === "header") && (
@@ -288,7 +289,7 @@ export function ApiNodeSettings({
           />
         )}
         {data.authType === "header" && (
-          <Field label="Header name">
+          <Field label={tr("Header name")}>
             <input
               className="input w-full"
               value={String(data.authHeader ?? "X-Api-Key")}
@@ -299,20 +300,20 @@ export function ApiNodeSettings({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[var(--text)]">Extra headers</span>
+            <span className="text-xs font-medium text-[var(--text)]">{tr("Extra headers")}</span>
             <button
               className="btn text-xs"
               type="button"
               onClick={() => setHeaders([...headerRows, { key: "", value: "" }])}
             >
-              + Header
+              {tr("+ Header")}
             </button>
           </div>
           {headerRows.map((row, i) => (
             <div key={`h-${i}`} className="flex gap-1">
               <input
                 className="input flex-1 font-mono text-xs"
-                placeholder="Name"
+                placeholder={tr("Name")}
                 value={row.key}
                 onChange={(e) => {
                   const next = headerRows.map((r, idx) =>
@@ -323,7 +324,7 @@ export function ApiNodeSettings({
               />
               <input
                 className="input flex-[1.4] font-mono text-xs"
-                placeholder="Value"
+                placeholder={tr("Value")}
                 value={row.value}
                 onChange={(e) => {
                   const next = headerRows.map((r, idx) =>
@@ -335,7 +336,7 @@ export function ApiNodeSettings({
               <button
                 className="btn"
                 type="button"
-                title="Remove"
+                title={tr("Remove")}
                 onClick={() => setHeaders(headerRows.filter((_, idx) => idx !== i))}
               >
                 ×
@@ -347,11 +348,11 @@ export function ApiNodeSettings({
 
       <SettingsSection
         step={3}
-        title="While waiting"
-        hint="Optional audio while the HTTP call runs (caller hears this)."
+        title={tr("While waiting")}
+        hint={tr("Optional audio while the HTTP call runs (caller hears this).")}
       >
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Prompt">
+          <Field label={tr("Prompt")}>
             <select
               className="input w-full"
               value={String(data.waitPromptId ?? "")}
@@ -362,7 +363,7 @@ export function ApiNodeSettings({
                 })
               }
             >
-              <option value="">— none —</option>
+              <option value="">{tr("— none —")}</option>
               {prompts.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -370,14 +371,14 @@ export function ApiNodeSettings({
               ))}
             </select>
           </Field>
-          <Field label="Music on hold" hint="Used only if no prompt">
+          <Field label={tr("Music on hold")} hint={tr("Used only if no prompt")}>
             <select
               className="input w-full"
               value={String(data.waitMoh ?? "")}
               disabled={Boolean(data.waitPromptId)}
               onChange={(e) => patch({ waitMoh: e.target.value || undefined })}
             >
-              <option value="">— none —</option>
+              <option value="">{tr("— none —")}</option>
               {mohClasses.map((m) => (
                 <option key={m.id} value={m.name}>
                   {m.name}
@@ -390,8 +391,8 @@ export function ApiNodeSettings({
 
       <SettingsSection
         step={4}
-        title="Response → variables"
-        hint="Map JSON fields into flow variables. Status is always saved as http_status."
+        title={tr("Response → variables")}
+        hint={tr("Map JSON fields into flow variables. Status is always saved as http_status.")}
       >
         <div className="flex justify-end">
           <button
@@ -399,20 +400,20 @@ export function ApiNodeSettings({
             type="button"
             onClick={() => setMappings([...mappings, { path: "", var: "" }])}
           >
-            + Mapping
+            {tr("+ Mapping")}
           </button>
         </div>
         <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">
-          <span>JSON path</span>
+          <span>{tr("JSON path")}</span>
           <span />
-          <span>Variable name</span>
+          <span>{tr("Variable name")}</span>
           <span />
         </div>
         {mappings.map((row, i) => (
           <div key={`m-${i}`} className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-1">
             <input
               className="input font-mono text-xs"
-              placeholder="$.data.agent"
+              placeholder={tr("$.data.agent")}
               value={row.path}
               onChange={(e) => {
                 const next = mappings.map((r, idx) =>
@@ -436,7 +437,7 @@ export function ApiNodeSettings({
             <button
               className="btn"
               type="button"
-              title="Remove"
+              title={tr("Remove")}
               onClick={() => setMappings(mappings.filter((_, idx) => idx !== i))}
             >
               ×
@@ -447,8 +448,8 @@ export function ApiNodeSettings({
 
       <SettingsSection
         step={5}
-        title="Test"
-        hint="Sends the real request (auth included). Replace {{var}} with sample values for a trial."
+        title={tr("Test")}
+        hint={tr("Sends the real request (auth included). Replace {{var}} with sample values for a trial.")}
       >
         <button
           className="btn btn-primary w-full text-sm"
@@ -462,7 +463,7 @@ export function ApiNodeSettings({
           <div className="space-y-2">
             {testStatus !== null && (
               <div className="text-xs">
-                Status:{" "}
+                {tr("Status:")}{" "}
                 <span
                   className={
                     testStatus >= 200 && testStatus < 300 ? "badge badge-ok" : "badge badge-err"
@@ -475,7 +476,7 @@ export function ApiNodeSettings({
             {mappedPreview && (
               <div>
                 <div className="mb-1 text-[11px] font-semibold uppercase text-[var(--text-muted)]">
-                  Mapped variables
+                  {tr("Mapped variables")}
                 </div>
                 <pre className="max-h-28 overflow-auto rounded bg-[var(--bg)] p-2 text-[10px]">
                   {JSON.stringify(mappedPreview, null, 2)}
@@ -484,7 +485,7 @@ export function ApiNodeSettings({
             )}
             <div>
               <div className="mb-1 text-[11px] font-semibold uppercase text-[var(--text-muted)]">
-                Raw response
+                {tr("Raw response")}
               </div>
               <pre className="max-h-36 overflow-auto whitespace-pre-wrap rounded bg-[var(--bg)] p-2 text-[10px]">
                 {testBody.slice(0, 4000)}

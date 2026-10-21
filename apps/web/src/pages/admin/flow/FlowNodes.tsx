@@ -12,6 +12,7 @@ import { BaseEdge, getBezierPath, Handle, Position, type EdgeProps, type NodePro
 import { Pencil, Trash2 } from "lucide-react";
 import { exitsForNode, menuDigits, nodeColor, nodeShortTitle } from "./nodeMeta";
 import { leftInset, NodeIcon, rightInset, shapeFor, shapePadding, shapePaths } from "./nodeShapes";
+import { tr } from "../../../i18n";
 
 export type FlowNodeData = {
   label?: string;
@@ -55,7 +56,7 @@ function subtitle(data: FlowNodeData): string {
   if (t === "menu") {
     const lang = data.language ? String(data.language) : "";
     const keys = menuDigits(data).join(",");
-    const body = String(data.prompt ?? data.text ?? "DTMF menu");
+    const body = String(data.prompt ?? data.text ?? tr("DTMF menu"));
     return [lang, keys && `[${keys}]`, body].filter(Boolean).join(" · ");
   }
   if (t === "transfer") return `${data.destType ?? ""} ${data.destId ?? ""}`.trim();
@@ -141,8 +142,8 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
         <button
           type="button"
           className="flow-node-tool"
-          title="Edit settings"
-          aria-label="Edit node settings"
+          title={tr("Edit settings")}
+          aria-label={tr("Edit node settings")}
           onClick={(e) => {
             e.stopPropagation();
             actions?.openSettings(id);
@@ -154,8 +155,8 @@ export const FlowNode = memo(function FlowNode({ id, data, selected }: NodeProps
           <button
             type="button"
             className="flow-node-tool flow-node-tool--danger"
-            title="Delete"
-            aria-label="Delete node"
+            title={tr("Delete")}
+            aria-label={tr("Delete node")}
             onClick={(e) => {
               e.stopPropagation();
               actions?.requestDelete(id);

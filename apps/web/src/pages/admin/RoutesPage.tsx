@@ -7,6 +7,7 @@ import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Inbound = {
   id: string;
@@ -108,7 +109,7 @@ export function RoutesPage() {
       return api.post("/api/v1/admin/routes/inbound", body);
     },
     onSuccess: () => {
-      toast.success(editInboundId ? "Inbound route updated" : "Inbound route added");
+      toast.success(editInboundId ? tr("Inbound route updated") : tr("Inbound route added"));
       resetInbound();
       void qc.invalidateQueries({ queryKey: ["inbound"] });
     },
@@ -132,7 +133,7 @@ export function RoutesPage() {
       return api.post("/api/v1/admin/routes/outbound", body);
     },
     onSuccess: () => {
-      toast.success(editOutboundId ? "Outbound route updated" : "Outbound route added");
+      toast.success(editOutboundId ? tr("Outbound route updated") : tr("Outbound route added"));
       resetOutbound();
       void qc.invalidateQueries({ queryKey: ["outbound"] });
     },
@@ -141,7 +142,7 @@ export function RoutesPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description="Inbound DIDs and outbound patterns" />
+      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description={tr("Inbound DIDs and outbound patterns")} />
       <SectionCard title={t("routes.inbound")} icon={Signpost} tone="cyan">
         <form
           className="mb-3 grid gap-2 sm:grid-cols-6 sm:items-end"
@@ -150,9 +151,9 @@ export function RoutesPage() {
             saveInbound.mutate();
           }}
         >
-          <TextField label="DID" value={did} onChange={(e) => setDid(e.target.value)} />
+          <TextField label={tr("DID")} value={did} onChange={(e) => setDid(e.target.value)} />
           <TextField
-            label="Caller pattern"
+            label={tr("Caller pattern")}
             value={callerPattern}
             onChange={(e) => setCallerPattern(e.target.value)}
           />
@@ -165,7 +166,7 @@ export function RoutesPage() {
             }}
           />
           <TextField
-            label="Priority"
+            label={tr("Priority")}
             type="number"
             value={priority}
             onChange={(e) => setPriority(Number(e.target.value))}
@@ -185,10 +186,10 @@ export function RoutesPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>DID</th>
-              <th>Caller</th>
-              <th>Destination</th>
-              <th>Priority</th>
+              <th>{tr("DID")}</th>
+              <th>{tr("Caller")}</th>
+              <th>{tr("Destination")}</th>
+              <th>{tr("Priority")}</th>
               <th />
             </tr>
           </thead>
@@ -229,24 +230,24 @@ export function RoutesPage() {
             saveOutbound.mutate();
           }}
         >
-          <TextField label="Name" value={obName} onChange={(e) => setObName(e.target.value)} required />
+          <TextField label={tr("Name")} value={obName} onChange={(e) => setObName(e.target.value)} required />
           <TextField
-            label="Pattern"
+            label={tr("Pattern")}
             className="font-mono"
             value={obPattern}
             onChange={(e) => setObPattern(e.target.value)}
             required
           />
-          <SelectField label="Trunk" value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
-            <option value="">Trunk…</option>
+          <SelectField label={tr("Trunk")} value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
+            <option value="">{tr("Trunk…")}</option>
             {(trunks.data ?? []).map((tr) => (
               <option key={tr.id} value={tr.id}>
                 {tr.name}
               </option>
             ))}
           </SelectField>
-          <SelectField label="Permission" value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
-            <option value="localFixed">localFixed</option>
+          <SelectField label={tr("Permission")} value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
+            <option value="localFixed">{tr("Local landline")}</option>
             <option value="mobile">mobile</option>
             <option value="short444">short444</option>
             <option value="international">international</option>
@@ -270,9 +271,9 @@ export function RoutesPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Pattern</th>
-              <th>Perm</th>
+              <th>{tr("Name")}</th>
+              <th>{tr("Pattern")}</th>
+              <th>{tr("Perm")}</th>
               <th>{t("common.enabled")}</th>
               <th />
             </tr>

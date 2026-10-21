@@ -7,6 +7,7 @@ import { ClipboardList, Disc, Download, FileAudio, Pause, Play, X } from "lucide
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, IconLink, PageHeader, SectionCard } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Rec = {
   id: string;
@@ -59,12 +60,12 @@ export function RecordingsPage() {
     ws.on("ready", () => {
       const dur = ws.getDuration();
       if (!dur || dur < 0.05) {
-        setLoadError("Recording file is empty or unreadable");
+        setLoadError(tr("Recording file is empty or unreadable"));
         return;
       }
       void ws.play().then(() => setIsPlaying(true)).catch((e) => {
         setLoadError(String(e));
-        toast.error("Playback failed — check browser audio permission");
+        toast.error(tr("Playback failed — check browser audio permission"));
       });
     });
     ws.on("play", () => setIsPlaying(true));
@@ -72,8 +73,8 @@ export function RecordingsPage() {
     ws.on("finish", () => setIsPlaying(false));
     ws.on("error", (e) => {
       console.error("[recordings] wavesurfer", e);
-      setLoadError("Could not load audio (auth or file missing)");
-      toast.error("Could not load recording");
+      setLoadError(tr("Could not load audio (auth or file missing)"));
+      toast.error(tr("Could not load recording"));
     });
     return () => {
       ws.destroy();
@@ -87,10 +88,10 @@ export function RecordingsPage() {
         icon={Disc}
         title={t("nav.recordings")}
         tone="coral"
-        description="Listen, download, and review access logs for stored call recordings"
+        description={tr("Listen, download, and review access logs for stored call recordings")}
       />
       {playingId && (
-        <SectionCard title="Player" icon={FileAudio} tone="coral">
+        <SectionCard title={tr("Player")} icon={FileAudio} tone="coral">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm text-[var(--text-muted)]">
@@ -113,20 +114,20 @@ export function RecordingsPage() {
                     else void ws.play();
                   }}
                 />
-                <IconBtn icon={X} label="Close" onClick={() => setPlayingId(null)} />
+                <IconBtn icon={X} label={tr("Close")} onClick={() => setPlayingId(null)} />
               </div>
             </div>
             <div ref={waveRef} />
           </div>
         </SectionCard>
       )}
-      <SectionCard title="Recordings" icon={Disc} tone="blue" flush>
+      <SectionCard title={tr("Recordings")} icon={Disc} tone="blue" flush>
         <table className="table">
             <thead>
               <tr>
-                <th>Call</th>
+                <th>{tr("Call")}</th>
                 <th>{t("cdr.duration")}</th>
-                <th>Created</th>
+                <th>{tr("Created")}</th>
                 <th className="col-actions">{t("common.actions")}</th>
               </tr>
             </thead>
@@ -143,15 +144,15 @@ export function RecordingsPage() {
                     <td>{new Date(r.createdAt).toLocaleString()}</td>
                     <td className="col-actions">
                       <div className="btn-icon-row">
-                        <IconBtn icon={Play} label="Play" onClick={() => setPlayingId(r.id)} />
+                        <IconBtn icon={Play} label={tr("Play")} onClick={() => setPlayingId(r.id)} />
                         <IconLink
                           icon={Download}
-                          label="Download"
+                          label={tr("Download")}
                           href={`/api/v1/admin/recordings/${r.id}/download`}
                         />
                         <IconBtn
                           icon={ClipboardList}
-                          label="Access log"
+                          label={tr("Access log")}
                           onClick={() => setAccessId(r.id)}
                         />
                       </div>
@@ -164,10 +165,10 @@ export function RecordingsPage() {
       </SectionCard>
       {accessId && (
         <SectionCard
-          title="Access log"
+          title={tr("Access log")}
           icon={ClipboardList}
           tone="coral"
-          actions={<IconBtn icon={X} label="Close" onClick={() => setAccessId(null)} />}
+          actions={<IconBtn icon={X} label={tr("Close")} onClick={() => setAccessId(null)} />}
         >
           <ul className="space-y-1 text-sm">
             {(access.data ?? []).length === 0 ? (

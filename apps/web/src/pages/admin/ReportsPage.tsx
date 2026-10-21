@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 export function ReportsPage() {
   const { t } = useTranslation();
@@ -79,19 +80,19 @@ export function ReportsPage() {
         icon={BarChart3}
         title={t("reports.title")}
         tone="cyan"
-        description="Call volume, queues, IVR, and voice quality for the selected range"
+        description={tr("Call volume, queues, IVR, and voice quality for the selected range")}
       />
-      <SectionCard title="Date range" icon={CalendarRange} tone="cyan">
+      <SectionCard title={tr("Date range")} icon={CalendarRange} tone="cyan">
         <div className="toolbar">
           <TextField
-            label="From"
+            label={tr("From")}
             type="datetime-local"
             icon={CalendarRange}
             value={from}
             onChange={(e) => setFrom(e.target.value)}
           />
           <TextField
-            label="To"
+            label={tr("To")}
             type="datetime-local"
             icon={CalendarRange}
             value={to}
@@ -99,7 +100,7 @@ export function ReportsPage() {
           />
         </div>
       </SectionCard>
-      <SectionCard title="Summary" icon={Phone} tone="cyan">
+      <SectionCard title={tr("Summary")} icon={Phone} tone="cyan">
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {[
             ["Total", summary.data?.total ?? 0],
@@ -110,18 +111,17 @@ export function ReportsPage() {
             [t("reports.avgTalk"), `${summary.data?.avgDuration ?? 0}s`],
           ].map(([label, value]) => (
             <div key={String(label)} className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] p-4">
-              <div className="text-sm text-[var(--text-muted)]">{label}</div>
+              <div className="text-sm text-[var(--text-muted)]">{tr(String(label))}</div>
               <div className="mt-1 text-2xl font-semibold">{value}</div>
             </div>
           ))}
         </div>
       </SectionCard>
-      <SectionCard title="Voice quality" icon={Gauge} tone="blue">
+      <SectionCard title={tr("Voice quality")} icon={Gauge} tone="blue">
         <div className="grid gap-4 sm:grid-cols-4">
           {(quality.data?.total ?? 0) === 0 ? (
             <p className="col-span-full text-sm text-[var(--text-muted)]">
-              Voice quality (MOS/jitter/loss) has no samples yet — make answered calls so dialplan can post RTP QoS
-              this lab build.
+              {tr("Voice quality (MOS/jitter/loss) has no samples yet — make answered calls so dialplan can post RTP QoS this lab build.")}
             </p>
           ) : (
             [
@@ -131,22 +131,22 @@ export function ReportsPage() {
               ["Quality samples", quality.data?.total ?? 0],
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-lg border border-[var(--border)] bg-[var(--bg-soft)] p-4">
-                <div className="text-sm text-[var(--text-muted)]">{label}</div>
+                <div className="text-sm text-[var(--text-muted)]">{tr(String(label))}</div>
                 <div className="mt-1 text-2xl font-semibold">{value}</div>
               </div>
             ))
           )}
         </div>
       </SectionCard>
-      <SectionCard title="By queue" icon={ListOrdered} tone="cyan" flush>
+      <SectionCard title={tr("By queue")} icon={ListOrdered} tone="cyan" flush>
         <table className="table">
           <thead>
             <tr>
-              <th className="col-grow">Queue</th>
-              <th className="col-num">Calls</th>
-              <th className="col-num">Answered</th>
-              <th className="col-num">Abandoned</th>
-              <th className="col-num">Avg wait</th>
+              <th className="col-grow">{tr("Queue")}</th>
+              <th className="col-num">{tr("Calls")}</th>
+              <th className="col-num">{tr("Answered")}</th>
+              <th className="col-num">{tr("Abandoned")}</th>
+              <th className="col-num">{tr("Avg wait")}</th>
             </tr>
           </thead>
           <tbody>
@@ -170,13 +170,13 @@ export function ReportsPage() {
           </tbody>
         </table>
       </SectionCard>
-      <SectionCard title="By extension" icon={Hash} tone="blue" flush>
+      <SectionCard title={tr("By extension")} icon={Hash} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
               <th className="col-grow">{t("extensions.number")}</th>
-              <th className="col-num">Calls</th>
-              <th className="col-num">Talk</th>
+              <th className="col-num">{tr("Calls")}</th>
+              <th className="col-num">{tr("Talk")}</th>
             </tr>
           </thead>
           <tbody>
@@ -193,12 +193,12 @@ export function ReportsPage() {
         </table>
       </SectionCard>
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="IVR DTMF" icon={Radio} tone="coral" flush>
+        <SectionCard title={tr("IVR DTMF")} icon={Radio} tone="coral" flush>
           <table className="table">
             <thead>
               <tr>
-                <th>Digit</th>
-                <th className="col-num">Count</th>
+                <th>{tr("Digit")}</th>
+                <th className="col-num">{tr("Count")}</th>
               </tr>
             </thead>
             <tbody>
@@ -217,12 +217,12 @@ export function ReportsPage() {
             </tbody>
           </table>
         </SectionCard>
-        <SectionCard title="IVR hangup location" icon={Radio} tone="coral" flush>
+        <SectionCard title={tr("IVR hangup location")} icon={Radio} tone="coral" flush>
           <table className="table">
             <thead>
               <tr>
-                <th>Where</th>
-                <th className="col-num">Count</th>
+                <th>{tr("Where")}</th>
+                <th className="col-num">{tr("Count")}</th>
               </tr>
             </thead>
             <tbody>

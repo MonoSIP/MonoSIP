@@ -77,7 +77,8 @@ export function PortalLayout() {
         </div>
       </aside>
       <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
-        <Outlet />
+        {/* Remount pages on a language switch so tr() copy re-renders */}
+        <Outlet key={i18n.language} />
       </main>
       <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--bg-elevated)_94%,transparent)] p-2 backdrop-blur-md md:hidden">
         {links.map((l) => (

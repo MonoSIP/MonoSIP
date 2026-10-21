@@ -6,6 +6,7 @@ import { Headphones, ListOrdered, Pencil, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
 type Member = { extensionId: string; penalty: number; paused?: boolean };
@@ -99,7 +100,7 @@ export function QueuesPage() {
     onSuccess: () => {
       resetForm();
       void qc.invalidateQueries({ queryKey: ["queues"] });
-      toast.success("Queue created");
+      toast.success(tr("Queue created"));
     },
   });
 
@@ -108,7 +109,7 @@ export function QueuesPage() {
     onSuccess: () => {
       resetForm();
       void qc.invalidateQueries({ queryKey: ["queues"] });
-      toast.success("Queue updated");
+      toast.success(tr("Queue updated"));
     },
   });
 
@@ -199,7 +200,7 @@ export function QueuesPage() {
         icon={Headphones}
         title={t("queues.title")}
         tone="blue"
-        description="Call queues, agents, and overflow destinations"
+        description={tr("Call queues, agents, and overflow destinations")}
       />
       <SectionCard
         title={editId ? t("common.edit", { defaultValue: "Edit" }) : t("common.create")}
@@ -246,14 +247,14 @@ export function QueuesPage() {
             ))}
           </SelectField>
           <TextField
-            label="Max wait (s)"
+            label={tr("Max wait (s)")}
             className="w-[7rem]"
             type="number"
             value={maxWait}
             onChange={(e) => setMaxWait(Number(e.target.value))}
           />
           <TextField
-            label="Max callers"
+            label={tr("Max callers")}
             className="w-[7rem]"
             type="number"
             min={0}
@@ -261,20 +262,20 @@ export function QueuesPage() {
             onChange={(e) => setMaxCallers(Number(e.target.value))}
           />
           <TextField
-            label="Agent ring (s)"
+            label={tr("Agent ring (s)")}
             className="w-[7rem]"
             type="number"
             value={memberTimeout}
             onChange={(e) => setMemberTimeout(Number(e.target.value))}
           />
           <TextField
-            label="Wrap-up (s)"
+            label={tr("Wrap-up (s)")}
             className="w-[7rem]"
             type="number"
             value={wrapup}
             onChange={(e) => setWrapup(Number(e.target.value))}
           />
-          <SelectField label="MOH class" className="w-[10rem]" value={mohId} onChange={(e) => setMohId(e.target.value)}>
+          <SelectField label={tr("MOH class")} className="w-[10rem]" value={mohId} onChange={(e) => setMohId(e.target.value)}>
             <option value="">default</option>
             {(moh.data ?? []).map((m) => (
               <option key={m.id} value={m.id}>
@@ -286,19 +287,19 @@ export function QueuesPage() {
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={callback} onChange={(e) => setCallback(e.target.checked)} />
-            Queue callback
+            {tr("Queue callback")}
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={announceHold} onChange={(e) => setAnnounceHold(e.target.checked)} />
-            Announce hold time (TTS, MOH pauses)
+            {tr("Announce hold time (TTS, MOH pauses)")}
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={announcePos} onChange={(e) => setAnnouncePos(e.target.checked)} />
-            Announce position (TTS ~30s, MOH pauses)
+            {tr("Announce position (TTS ~30s, MOH pauses)")}
           </label>
         </div>
         <div className="space-y-2">
-          <div className="text-sm text-[var(--text-muted)]">Timeout overflow</div>
+          <div className="text-sm text-[var(--text-muted)]">{tr("Timeout overflow")}</div>
           <DestPicker
             destType={timeoutDestType}
             destId={timeoutDestId}
@@ -307,7 +308,7 @@ export function QueuesPage() {
               setTimeoutDestId(id);
             }}
           />
-          <div className="text-sm text-[var(--text-muted)]">Full overflow</div>
+          <div className="text-sm text-[var(--text-muted)]">{tr("Full overflow")}</div>
           <DestPicker
             destType={fullDestType}
             destId={fullDestId}
@@ -316,7 +317,7 @@ export function QueuesPage() {
               setFullDestId(id);
             }}
           />
-          <div className="text-sm text-[var(--text-muted)]">Join-empty overflow</div>
+          <div className="text-sm text-[var(--text-muted)]">{tr("Join-empty overflow")}</div>
           <DestPicker
             destType={joinDestType}
             destId={joinDestId}
@@ -352,7 +353,7 @@ export function QueuesPage() {
                     <span className="w-6 text-[var(--text-muted)]">{idx + 1}.</span>
                     <span className="font-mono min-w-[4rem]">{ext?.number ?? "?"}</span>
                     <label className="flex items-center gap-1">
-                      Penalty
+                      {tr("Penalty")}
                       <input
                         className="input w-16"
                         type="number"
@@ -385,13 +386,13 @@ export function QueuesPage() {
           </button>
           {editId && (
             <button className="btn" type="button" onClick={resetForm}>
-              Cancel
+              {tr("Cancel")}
             </button>
           )}
         </div>
         </form>
       </SectionCard>
-      <SectionCard title="Queue list" icon={ListOrdered} tone="blue" flush>
+      <SectionCard title={tr("Queue list")} icon={ListOrdered} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
@@ -399,7 +400,7 @@ export function QueuesPage() {
               <th>{t("extensions.name")}</th>
               <th>{t("queues.strategy")}</th>
               <th className="col-grow">{t("queues.members")}</th>
-              <th>Callback</th>
+              <th>{tr("Callback")}</th>
               <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
@@ -431,7 +432,7 @@ export function QueuesPage() {
                 </td>
                 <td>{q.callbackEnabled ? "on" : "off"}</td>
                 <td className="col-actions">
-                  <IconBtn icon={Pencil} label="Edit" onClick={() => startEdit(q)} />
+                  <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(q)} />
                 </td>
               </tr>
             ))}

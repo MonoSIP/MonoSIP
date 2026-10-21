@@ -16,6 +16,15 @@ import {
 import { api } from "../../lib/api";
 import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { SPEECH_VOICES } from "./flow/nodeMeta";
+import { tr } from "../../i18n";
+
+/** SSL status codes shown as words (translated with tr at render). */
+const SSL_STATUS_LABEL: Record<string, string> = {
+  none: "No certificate",
+  pending: "Issuing…",
+  ok: "Active",
+  error: "Error",
+};
 
 type Settings = {
   companyName?: string;
@@ -230,7 +239,7 @@ export function SettingsPage() {
         sslEmail: sslEmail.trim() || null,
       }),
     onSuccess: () => {
-      toast.success("Saved");
+      toast.success(tr("Saved"));
       void qc.invalidateQueries({ queryKey: ["settings"] });
       void qc.invalidateQueries({ queryKey: ["security-status"] });
       void qc.invalidateQueries({ queryKey: ["ssl-status"] });
@@ -239,7 +248,7 @@ export function SettingsPage() {
 
   const reload = useMutation({
     mutationFn: () => api.post<{ ok: boolean }>("/api/v1/admin/system/reload"),
-    onSuccess: (r) => toast.success(r.ok ? "Reloaded" : "Config written (Asterisk offline)"),
+    onSuccess: (r) => toast.success(r.ok ? tr("Reloaded") : tr("Config written (Asterisk offline)")),
   });
 
   async function setupTotp() {
@@ -290,13 +299,13 @@ export function SettingsPage() {
     const text = await file.text();
     const data = JSON.parse(text) as Record<string, unknown>;
     await api.post("/api/v1/admin/backups/restore", data);
-    toast.success("Restore applied");
+    toast.success(tr("Restore applied"));
     void qc.invalidateQueries({ queryKey: ["settings"] });
   }
 
   return (
     <div className="max-w-3xl space-y-6">
-      <PageHeader icon={Settings} title={t("settings.title")} tone="coral" description="Company, security, mail, and system options" />
+      <PageHeader icon={Settings} title={t("settings.title")} tone="coral" description={tr("Company, security, mail, and system options")} />
       <SectionCard title={t("settings.hostnameSection")} icon={Globe} tone="cyan" className="space-y-4">
         <TextField
           label={t("settings.hostname")}
@@ -330,7 +339,7 @@ export function SettingsPage() {
                     : ""
             }`}
           >
-            {sslStatus.data?.status ?? settings.data?.sslStatus ?? "none"}
+            {tr(SSL_STATUS_LABEL[sslStatus.data?.status ?? settings.data?.sslStatus ?? "none"] ?? "No certificate")}
           </span>
           {sslStatus.data?.expiresAt ? (
             <span className="text-[var(--text-muted)]">
@@ -353,7 +362,7 @@ export function SettingsPage() {
               .post<{ ok: boolean; error?: string; expiresAt?: string }>("/api/v1/admin/ssl/renew", {})
               .then((r) => {
                 if (r.ok) toast.success(t("settings.sslRenewOk"));
-                else toast.error(r.error ?? "SSL failed");
+                else toast.error(r.error ?? tr("SSL failed"));
                 void qc.invalidateQueries({ queryKey: ["ssl-status"] });
                 void qc.invalidateQueries({ queryKey: ["settings"] });
               })
@@ -373,10 +382,10 @@ export function SettingsPage() {
         />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={kvkk} onChange={(e) => setKvkk(e.target.checked)} />
-          KVKK announcement
+          {tr("KVKK announcement")}
         </label>
-        <SelectField label="KVKK prompt" value={kvkkPromptId} onChange={(e) => setKvkkPromptId(e.target.value)}>
-          <option value="">Beep (default)</option>
+        <SelectField label={tr("KVKK prompt")} value={kvkkPromptId} onChange={(e) => setKvkkPromptId(e.target.value)}>
+          <option value="">{tr("Beep (default)")}</option>
           {(prompts.data ?? [])
             .filter((p) => p.source !== "cache")
             .map((p) => (
@@ -386,7 +395,7 @@ export function SettingsPage() {
             ))}
         </SelectField>
         <SelectField
-          label="IVR TTS model"
+          label={tr("IVR TTS model")}
           icon={AudioLines}
           value={ttsVoice}
           onChange={(e) => setTtsVoice(e.target.value)}
@@ -395,9 +404,9 @@ export function SettingsPage() {
             <option key={v.value} value={v.value}>
               {v.label}
               {v.value === "ema-lightning"
-                ? " — Turkish offline"
+                ? ` — ${tr("Turkish offline")}`
                 : v.value === "kokoro"
-                  ? " — English offline"
+                  ? ` — ${tr("English offline")}`
                   : ""}
             </option>
           ))}
@@ -408,14 +417,13 @@ export function SettingsPage() {
             checked={ttsVoiceApplyAll}
             onChange={(e) => setTtsVoiceApplyAll(e.target.checked)}
           />
-          Apply TTS model to all IVR prompts (ignore per-node voice)
+          {tr("Apply TTS model to all IVR prompts (ignore per-node voice)")}
         </label>
         <p className="text-xs text-[var(--text-muted)]">
-          When enabled, live IVR speech uses this model without editing flow nodes. EMA is
-          Turkish-only; Kokoro is English-only.
+          {tr("When enabled, live IVR speech uses this model without editing flow nodes. EMA is Turkish-only; Kokoro is English-only.")}
         </p>
         <TextField
-          label="TTS cache retention (days)"
+          label={tr("TTS cache retention (days)")}
           type="number"
           min={1}
           max={90}
@@ -425,31 +433,30 @@ export function SettingsPage() {
           }
         />
         <p className="text-xs text-[var(--text-muted)]">
-          Dynamic IVR speech (announce/menu) is cached as WAV and listed under Prompts. Entries
-          auto-delete after this many days.
+          {tr("Dynamic IVR speech (announce/menu) is cached as WAV and listed under Prompts. Entries auto-delete after this many days.")}
         </p>
         <TextField
-          label="Allowed countries (ISO, comma — e.g. TR,DE or ALL)"
+          label={tr("Allowed countries (ISO, comma — e.g. TR,DE or ALL)")}
           value={countries}
           onChange={(e) => setCountries(e.target.value)}
         />
         <TextField
-          label="Blocked countries (ISO, comma — e.g. IR,SY)"
+          label={tr("Blocked countries (ISO, comma — e.g. IR,SY)")}
           value={blockedCountries}
           onChange={(e) => setBlockedCountries(e.target.value)}
         />
         <p className="text-xs text-[var(--text-muted)]">
-          Prefer the chip picker on SIP providers for country allow/block.
+          {tr("Prefer the chip picker on SIP providers for country allow/block.")}
         </p>
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Daily limit (min)"
+            label={tr("Daily limit (min)")}
             type="number"
             value={daily}
             onChange={(e) => setDaily(Number(e.target.value))}
           />
           <TextField
-            label="Monthly limit (min)"
+            label={tr("Monthly limit (min)")}
             type="number"
             value={monthly}
             onChange={(e) => setMonthly(Number(e.target.value))}
@@ -457,22 +464,22 @@ export function SettingsPage() {
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={blockAnon} onChange={(e) => setBlockAnon(e.target.checked)} />
-          Block anonymous inbound
+          {tr("Block anonymous inbound")}
         </label>
         <TextField
-          label="Max outbound calls / hour / extension"
+          label={tr("Max outbound calls / hour / extension")}
           type="number"
           value={maxPerHour}
           onChange={(e) => setMaxPerHour(Number(e.target.value))}
         />
         <TextField
-          label="Recording archive path (local/NAS mount)"
+          label={tr("Recording archive path (local/NAS mount)")}
           value={archivePath}
           onChange={(e) => setArchivePath(e.target.value)}
           placeholder="/data/archive"
         />
         <TextField
-          label="Recording archive SFTP"
+          label={tr("Recording archive SFTP")}
           value={archiveSftp}
           onChange={(e) => setArchiveSftp(e.target.value)}
           placeholder="sftp://user:pass@host:22/recordings"
@@ -487,11 +494,11 @@ export function SettingsPage() {
             onClick={() => {
               void api
                 .post<{ ok: boolean; archived: number }>("/api/v1/admin/archive/run", {})
-                .then((r) => toast.success(`Archived ${r.archived} recording(s)`))
+                .then((r) => toast.success(tr("Archived {{v0}} recording(s)", { v0: r.archived })))
                 .catch((e) => toast.error((e as Error).message));
             }}
           >
-            Run archive now
+            {tr("Run archive now")}
           </button>
           <button
             className="btn"
@@ -503,24 +510,24 @@ export function SettingsPage() {
                   uri: archiveSftp || undefined,
                 })
                 .then((r) =>
-                  r.ok ? toast.success("SFTP OK") : toast.error(r.error ?? "SFTP failed"),
+                  r.ok ? toast.success(tr("SFTP OK")) : toast.error(r.error ?? tr("SFTP failed")),
                 )
                 .catch((e) => toast.error((e as Error).message));
             }}
           >
-            Test SFTP
+            {tr("Test SFTP")}
           </button>
         </div>
       </SectionCard>
 
-      <SectionCard title="Security / IP" icon={Shield} tone="cyan" className="space-y-4">
+      <SectionCard title={tr("Security / IP")} icon={Shield} tone="cyan" className="space-y-4">
         <p className="text-xs text-[var(--text-muted)]">
-          Your IP: <code className="font-mono">{secStatus.data?.clientIp ?? "…"}</code>
+          {tr("Your IP:")} <code className="font-mono">{secStatus.data?.clientIp ?? "…"}</code>
           {" · "}
           {secStatus.data?.fail2banHint}
         </p>
         <TextAreaField
-          label="Admin IP allowlist (comma/CIDR, empty=all — applies to all admin API)"
+          label={tr("Admin IP allowlist (comma/CIDR, empty=all — applies to all admin API)")}
           className="font-mono text-sm"
           rows={2}
           value={ipAllow}
@@ -528,14 +535,14 @@ export function SettingsPage() {
           placeholder="10.0.0.0/8,192.168.1.10"
         />
         <TextAreaField
-          label="Portal IP allowlist (empty=open for remote softphones)"
+          label={tr("Portal IP allowlist (empty=open for remote softphones)")}
           className="font-mono text-sm"
           rows={2}
           value={portalIpAllow}
           onChange={(e) => setPortalIpAllow(e.target.value)}
         />
         <TextAreaField
-          label="SIP IP allowlist (empty=open; when set, only these + LOCAL_NETS + trunks may REGISTER)"
+          label={tr("SIP IP allowlist (empty=open; when set, only these + LOCAL_NETS + trunks may REGISTER)")}
           className="font-mono text-sm"
           rows={2}
           value={sipIpAllow}
@@ -543,7 +550,7 @@ export function SettingsPage() {
           placeholder="203.0.113.0/24"
         />
         <TextAreaField
-          label="SIP IP denylist"
+          label={tr("SIP IP denylist")}
           className="font-mono text-sm"
           rows={2}
           value={sipIpDeny}
@@ -551,7 +558,7 @@ export function SettingsPage() {
         />
         <div className="grid grid-cols-2 gap-3">
           <TextField
-            label="Login max retries"
+            label={tr("Login max retries")}
             type="number"
             min={3}
             max={50}
@@ -559,7 +566,7 @@ export function SettingsPage() {
             onChange={(e) => setLoginMaxRetry(Number(e.target.value))}
           />
           <TextField
-            label="Login ban (minutes)"
+            label={tr("Login ban (minutes)")}
             type="number"
             min={1}
             max={1440}
@@ -569,7 +576,7 @@ export function SettingsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
-            Save security settings
+            {tr("Save security settings")}
           </button>
           <button
             className="btn"
@@ -578,7 +585,7 @@ export function SettingsPage() {
               window.open("/api/v1/admin/security/firewall-export?format=nftables", "_blank");
             }}
           >
-            Download nftables
+            {tr("Download nftables")}
           </button>
           <button
             className="btn"
@@ -587,20 +594,20 @@ export function SettingsPage() {
               window.open("/api/v1/admin/security/firewall-export?format=ufw", "_blank");
             }}
           >
-            Download ufw script
+            {tr("Download ufw script")}
           </button>
         </div>
 
-        <h3 className="pt-2 text-sm font-medium">Active bans</h3>
+        <h3 className="pt-2 text-sm font-medium">{tr("Active bans")}</h3>
         <div className="toolbar">
           <TextField
-            label="IP to ban"
+            label={tr("IP to ban")}
             className="max-w-[12rem] font-mono text-sm"
             value={banIp}
             onChange={(e) => setBanIp(e.target.value)}
           />
           <TextField
-            label="Reason"
+            label={tr("Reason")}
             className="max-w-[14rem] text-sm"
             value={banReason}
             onChange={(e) => setBanReason(e.target.value)}
@@ -618,21 +625,21 @@ export function SettingsPage() {
                 .then(() => {
                   setBanIp("");
                   setBanReason("");
-                  toast.success("Banned");
+                  toast.success(tr("Banned"));
                   void qc.invalidateQueries({ queryKey: ["security-bans"] });
                 })
                 .catch((e) => toast.error(String(e)));
             }}
           >
-            Ban IP
+            {tr("Ban IP")}
           </button>
         </div>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[var(--text-muted)]">
-              <th className="py-1">IP</th>
-              <th>Source</th>
-              <th>Expires</th>
+              <th className="py-1">{tr("IP")}</th>
+              <th>{tr("Source")}</th>
+              <th>{tr("Expires")}</th>
               <th />
             </tr>
           </thead>
@@ -652,12 +659,12 @@ export function SettingsPage() {
                       void api
                         .delete(`/api/v1/admin/security/bans/${b.id}`)
                         .then(() => {
-                          toast.success("Unbanned");
+                          toast.success(tr("Unbanned"));
                           void qc.invalidateQueries({ queryKey: ["security-bans"] });
                         });
                     }}
                   >
-                    Remove
+                    {tr("Remove")}
                   </button>
                 </td>
               </tr>
@@ -665,7 +672,7 @@ export function SettingsPage() {
             {(bans.data?.memoryBans ?? []).map((m) => (
               <tr key={`mem-${m.ip}`} className="border-t border-[var(--border)] opacity-80">
                 <td className="py-1 font-mono text-xs">{m.ip}</td>
-                <td>{m.source} (memory)</td>
+                <td>{m.source} {tr("(memory)")}</td>
                 <td className="text-xs">{new Date(m.expiresAt).toLocaleString()}</td>
                 <td />
               </tr>
@@ -673,7 +680,7 @@ export function SettingsPage() {
             {!bans.data?.bans?.length && !bans.data?.memoryBans?.length && (
               <tr>
                 <td colSpan={4} className="py-2 text-[var(--text-muted)]">
-                  No active bans
+                  {tr("No active bans")}
                 </td>
               </tr>
             )}
@@ -681,31 +688,31 @@ export function SettingsPage() {
         </table>
       </SectionCard>
 
-      <SectionCard title="SMTP / daily reports" icon={Mail} tone="blue" className="space-y-3">
+      <SectionCard title={tr("SMTP / daily reports")} icon={Mail} tone="blue" className="space-y-3">
         {!smtpHost || !smtpTo ? (
           <p className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-            SMTP incomplete — daily/monthly reports stay log-only until host and smtpTo are set.
+            {tr("SMTP incomplete — daily/monthly reports stay log-only until host and smtpTo are set.")}
           </p>
         ) : (
-          <p className="text-xs text-[var(--text-muted)]">Reports will be emailed when the nightly job runs.</p>
+          <p className="text-xs text-[var(--text-muted)]">{tr("Reports will be emailed when the nightly job runs.")}</p>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
-          <TextField label="smtpHost" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
+          <TextField label={tr("smtpHost")} value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
           <TextField
-            label="smtpPort"
+            label={tr("smtpPort")}
             type="number"
             value={smtpPort}
             onChange={(e) => setSmtpPort(Number(e.target.value))}
           />
-          <TextField label="smtpUser" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} />
+          <TextField label={tr("smtpUser")} value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} />
           <TextField
-            label="smtpPassword"
+            label={tr("smtpPassword")}
             type="password"
             value={smtpPassword}
             onChange={(e) => setSmtpPassword(e.target.value)}
           />
-          <TextField label="smtpTo" value={smtpTo} onChange={(e) => setSmtpTo(e.target.value)} />
-          <TextField label="emailFrom" value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
+          <TextField label={tr("smtpTo")} value={smtpTo} onChange={(e) => setSmtpTo(e.target.value)} />
+          <TextField label={tr("emailFrom")} value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
         </div>
         <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
           {t("common.save")}
@@ -765,7 +772,7 @@ export function SettingsPage() {
                     onClick={() => {
                       void navigator.clipboard.writeText(totpSecret).then(
                         () => toast.success(t("settings.totpCopied")),
-                        () => toast.error("Copy failed"),
+                        () => toast.error(tr("Copy failed")),
                       );
                     }}
                   >
@@ -841,7 +848,7 @@ export function SettingsPage() {
           {t("settings.backup")}
         </button>
         <label className="btn cursor-pointer">
-          Restore backup
+          {tr("Restore backup")}
           <input
             type="file"
             accept="application/json,.json"
@@ -854,20 +861,20 @@ export function SettingsPage() {
         </label>
       </div>
 
-      <SectionCard title="Audit log" icon={ScrollText} tone="cyan" flush>
+      <SectionCard title={tr("Audit log")} icon={ScrollText} tone="cyan" flush>
         <table className="table">
           <thead>
             <tr>
-              <th>When</th>
-              <th>Action</th>
-              <th>Object</th>
+              <th>{tr("When")}</th>
+              <th>{tr("Action")}</th>
+              <th>{tr("Object")}</th>
             </tr>
           </thead>
           <tbody>
             {(audit.data ?? []).length === 0 ? (
               <tr>
                 <td colSpan={3} className="text-[var(--text-muted)]">
-                  No audit events yet.
+                  {tr("No audit events yet.")}
                 </td>
               </tr>
             ) : (

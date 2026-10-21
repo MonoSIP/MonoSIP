@@ -4,6 +4,7 @@ import { Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
 type Dev = {
@@ -42,7 +43,7 @@ export function DevicesPage() {
         provisioningProfile: profile,
       }),
     onSuccess: () => {
-      toast.success("Device added");
+      toast.success(tr("Device added"));
       setMac("");
       void qc.invalidateQueries({ queryKey: ["devices"] });
     },
@@ -58,11 +59,11 @@ export function DevicesPage() {
     <div className="space-y-6">
       <PageHeader
         icon={QrCode}
-        title="Devices / Softphone QR"
+        title={tr("Devices / Softphone QR")}
         tone="blue"
-        description="Provision desk phones and generate SIP QR codes for mobile softphones"
+        description={tr("Provision desk phones and generate SIP QR codes for mobile softphones")}
       />
-      <SectionCard title="Add device" icon={Smartphone} tone="blue">
+      <SectionCard title={tr("Add device")} icon={Smartphone} tone="blue">
         <form
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-end"
           onSubmit={(e) => {
@@ -71,13 +72,13 @@ export function DevicesPage() {
           }}
         >
           <SelectField
-            label="Extension"
+            label={tr("Extension")}
             icon={Smartphone}
             value={extensionId}
             onChange={(e) => setExtensionId(e.target.value)}
             required
           >
-            <option value="">Extension…</option>
+            <option value="">{tr("Extension…")}</option>
             {exts.data?.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.number} — {e.name}
@@ -85,22 +86,22 @@ export function DevicesPage() {
             ))}
           </SelectField>
           <TextField
-            label="Model"
+            label={tr("Model")}
             icon={Cpu}
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            placeholder="Model"
+            placeholder={tr("Model")}
           />
           <TextField
-            label="MAC"
+            label={tr("MAC")}
             icon={Network}
             className="font-mono"
             value={mac}
             onChange={(e) => setMac(e.target.value)}
-            placeholder="MAC (aa:bb:…)"
+            placeholder={tr("MAC (aa:bb:…)")}
           />
           <SelectField
-            label="Provisioning profile"
+            label={tr("Provisioning profile")}
             value={profile}
             onChange={(e) => setProfile(e.target.value)}
           >
@@ -111,23 +112,23 @@ export function DevicesPage() {
             ))}
           </SelectField>
           <button className="btn btn-primary w-fit" type="submit">
-            Add device
+            {tr("Add device")}
           </button>
         </form>
       </SectionCard>
       {qr && (
-        <SectionCard title="SIP QR" icon={QrCode} tone="cyan">
+        <SectionCard title={tr("SIP QR")} icon={QrCode} tone="cyan">
           <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />
         </SectionCard>
       )}
-      <SectionCard title="Devices" icon={List} tone="cyan" flush>
+      <SectionCard title={tr("Devices")} icon={List} tone="cyan" flush>
         <table className="table">
             <thead>
               <tr>
-                <th>Extension</th>
-                <th>Model</th>
-                <th>MAC</th>
-                <th>Profile</th>
+                <th>{tr("Extension")}</th>
+                <th>{tr("Model")}</th>
+                <th>{tr("MAC")}</th>
+                <th>{tr("Profile")}</th>
                 <th />
               </tr>
             </thead>
@@ -135,7 +136,7 @@ export function DevicesPage() {
               {(devices.data ?? []).length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-[var(--text-muted)]">
-                    No devices yet.
+                    {tr("No devices yet.")}
                   </td>
                 </tr>
               ) : (
@@ -149,10 +150,10 @@ export function DevicesPage() {
                       <td>{d.provisioningProfile ?? "—"}</td>
                       <td className="col-actions">
                         <div className="btn-icon-row">
-                          <IconBtn icon={QrCode} label="QR" onClick={() => void showQr(d.id)} />
+                          <IconBtn icon={QrCode} label={tr("QR")} onClick={() => void showQr(d.id)} />
                           <IconBtn
                             icon={Trash2}
-                            label="Delete"
+                            label={tr("Delete")}
                             danger
                             onClick={() =>
                               void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>

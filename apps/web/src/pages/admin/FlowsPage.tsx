@@ -6,6 +6,7 @@ import { GitBranch, Hash, List, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 export function FlowsPage() {
   const { t } = useTranslation();
@@ -45,7 +46,7 @@ export function FlowsPage() {
         icon={GitBranch}
         title={t("flows.title")}
         tone="cyan"
-        description="Visual IVR flows — assign a dialable extension for softphone testing"
+        description={tr("Visual IVR flows — assign a dialable extension for softphone testing")}
       />
       <SectionCard title={t("common.create")} icon={GitBranch} tone="cyan">
         <form
@@ -56,29 +57,29 @@ export function FlowsPage() {
           }}
         >
           <TextField
-            label="Name"
+            label={tr("Name")}
             icon={Tag}
             className="max-w-sm"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
+            placeholder={tr("Name")}
             required
           />
           <TextField
-            label="Extension"
+            label={tr("Extension")}
             icon={Hash}
             className="w-36"
             value={ext}
             onChange={(e) => setExt(e.target.value.replace(/\D/g, "").slice(0, 8))}
-            placeholder="Ext (900)"
-            title="Optional dialable extension for softphone testing"
+            placeholder={tr("Ext (900)")}
+            title={tr("Optional dialable extension for softphone testing")}
           />
           <button className="btn btn-primary" type="submit">
             {t("common.create")}
           </button>
         </form>
       </SectionCard>
-      <SectionCard title="All flows" icon={List} tone="blue">
+      <SectionCard title={tr("All flows")} icon={List} tone="blue">
         <div className="grid gap-3">
           {list.data?.map((f) => (
             <Link key={f.id} to={`/flows/${f.id}`} className="block rounded-lg border border-[var(--border)] p-4 transition hover:border-[var(--accent)]">

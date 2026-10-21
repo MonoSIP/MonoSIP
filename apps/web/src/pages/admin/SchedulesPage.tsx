@@ -6,6 +6,7 @@ import { CalendarClock, CalendarDays, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type Range = {
   id?: string;
@@ -158,7 +159,7 @@ export function SchedulesPage() {
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["schedules"] });
-      toast.success("Override updated");
+      toast.success(tr("Override updated"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -252,12 +253,12 @@ export function SchedulesPage() {
         icon={CalendarClock}
         title={t("schedules.title")}
         tone="cyan"
-        description="Open hours, overrides, and holiday routing"
+        description={tr("Open hours, overrides, and holiday routing")}
       />
 
-      <SectionCard title="Create schedule" icon={Plus} tone="cyan">
+      <SectionCard title={tr("Create schedule")} icon={Plus} tone="cyan">
         <p className="text-sm text-[var(--text-muted)]">
-          Name a schedule to get a weekday open-hours template. Pick it below to edit ranges, holidays, and destinations.
+          {tr("Name a schedule to get a weekday open-hours template. Pick it below to edit ranges, holidays, and destinations.")}
         </p>
         <form
           className="toolbar toolbar-wrap"
@@ -286,7 +287,7 @@ export function SchedulesPage() {
         </p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-[var(--text-muted)]">Schedules</span>
+          <span className="text-sm font-medium text-[var(--text-muted)]">{tr("Schedules")}</span>
           {list.data.map((s) => (
             <button
               key={s.id}
@@ -301,7 +302,7 @@ export function SchedulesPage() {
       )}
 
       {selected && (
-        <SectionCard title="Schedule details" icon={CalendarDays} tone="blue" className="space-y-6">
+        <SectionCard title={tr("Schedule details")} icon={CalendarDays} tone="blue" className="space-y-6">
           <ScheduleNowStatus scheduleId={selected.id} />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -314,7 +315,7 @@ export function SchedulesPage() {
                 label={t("schedules.timezone", { defaultValue: "Timezone" })}
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                placeholder="Europe/Istanbul"
+                placeholder={tr("Europe/Istanbul")}
               />
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -342,7 +343,7 @@ export function SchedulesPage() {
                 ))}
               </div>
               <label className="block text-xs text-[var(--text-muted)]">
-                Override until (optional)
+                {tr("Override until (optional)")}
                 <input
                   className="input mt-1"
                   type="datetime-local"
@@ -352,7 +353,7 @@ export function SchedulesPage() {
               </label>
               {selected.overrideUntil && (
                 <p className="text-xs text-[var(--text-muted)]">
-                  Active until {new Date(selected.overrideUntil).toLocaleString()}
+                  {tr("Active until")} {new Date(selected.overrideUntil).toLocaleString()}
                 </p>
               )}
             </div>
@@ -487,7 +488,7 @@ export function SchedulesPage() {
               }}
             >
               <label className="text-xs text-[var(--text-muted)]">
-                Date
+                {tr("Date")}
                 <input
                   className="input mt-1"
                   type="date"
@@ -497,7 +498,7 @@ export function SchedulesPage() {
                 />
               </label>
               <label className="text-xs text-[var(--text-muted)]">
-                Name
+                {tr("Name")}
                 <input
                   className="input mt-1"
                   value={holName}
@@ -594,7 +595,7 @@ function ScheduleNowStatus({ scheduleId }: { scheduleId: string }) {
   });
   return (
     <p className="text-sm text-[var(--text-muted)]">
-      Now:{" "}
+      {tr("Now:")}{" "}
       <span className="badge font-medium text-[var(--text)]">{status.data?.status ?? "…"}</span>
     </p>
   );

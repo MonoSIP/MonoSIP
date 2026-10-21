@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Download, Filter, History, Play, X } from "lucide-react";
 import { api } from "../../lib/api";
 import { IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { tr } from "../../i18n";
 
 type CdrRow = {
   id: string;
@@ -60,7 +61,7 @@ export function CdrPage() {
         icon={History}
         title={t("cdr.title")}
         tone="blue"
-        description="Call detail records and quality metrics"
+        description={tr("Call detail records and quality metrics")}
         actions={
           <a className="btn" href={exportHref}>
             <Download size={16} />
@@ -68,7 +69,7 @@ export function CdrPage() {
           </a>
         }
       />
-      <SectionCard title="Filters" icon={Filter} tone="cyan">
+      <SectionCard title={tr("Filters")} icon={Filter} tone="cyan">
         <form
           className="toolbar"
           onSubmit={(e) => {
@@ -76,40 +77,40 @@ export function CdrPage() {
             void list.refetch();
           }}
         >
-          <TextField label="From" type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <TextField label="To" type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
+          <TextField label={tr("From")} type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <TextField label={tr("To")} type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
           <TextField
             label={t("cdr.caller")}
             value={caller}
             onChange={(e) => setCaller(e.target.value)}
           />
           <SelectField label={t("cdr.disposition")} value={disposition} onChange={(e) => setDisposition(e.target.value)}>
-            <option value="">All dispositions</option>
-            <option value="ANSWERED">ANSWERED</option>
-            <option value="NOANSWER">NOANSWER</option>
-            <option value="BUSY">BUSY</option>
-            <option value="FAILED">FAILED</option>
+            <option value="">{tr("All dispositions")}</option>
+            <option value="ANSWERED">{tr("ANSWERED")}</option>
+            <option value="NOANSWER">{tr("NOANSWER")}</option>
+            <option value="BUSY">{tr("BUSY")}</option>
+            <option value="FAILED">{tr("FAILED")}</option>
           </SelectField>
           <button className="btn btn-primary" type="submit">
             <Filter size={16} />
-            Filter
+            {tr("Filter")}
           </button>
         </form>
       </SectionCard>
-      <SectionCard title="Call log" icon={History} tone="blue" flush>
+      <SectionCard title={tr("Call log")} icon={History} tone="blue" flush>
         <table className="table">
           <thead>
             <tr>
-              <th>Time</th>
-              <th className="col-narrow">Dir</th>
+              <th>{tr("Time")}</th>
+              <th className="col-narrow">{tr("Dir")}</th>
               <th>{t("cdr.caller")}</th>
               <th>{t("cdr.callee")}</th>
               <th className="col-narrow">{t("cdr.disposition")}</th>
               <th className="col-num">{t("cdr.duration")}</th>
-              <th className="col-narrow">Agent</th>
-              <th className="col-num">MOS</th>
-              <th className="col-num">DND</th>
-              <th className="col-narrow">Rec</th>
+              <th className="col-narrow">{tr("Agent")}</th>
+              <th className="col-num">{tr("MOS")}</th>
+              <th className="col-num">{tr("DND")}</th>
+              <th className="col-narrow">{tr("Rec")}</th>
               <th className="col-actions">{t("common.actions")}</th>
             </tr>
           </thead>
@@ -117,7 +118,7 @@ export function CdrPage() {
             {(list.data ?? []).length === 0 ? (
               <tr>
                 <td colSpan={11} className="text-[var(--text-muted)]">
-                  No call records yet. Dial 900 from softphone to create one.
+                  {tr("No call records yet. Dial 900 from softphone to create one.")}
                 </td>
               </tr>
             ) : (
@@ -138,13 +139,13 @@ export function CdrPage() {
                   <td>{r.dndFlag ? "yes" : "—"}</td>
                   <td>
                     {r.recordingId ? (
-                      <IconLink icon={Play} label="Play recording" href={`/recordings?id=${r.recordingId}`} />
+                      <IconLink icon={Play} label={tr("Play recording")} href={`/recordings?id=${r.recordingId}`} />
                     ) : (
                       "—"
                     )}
                   </td>
                   <td className="col-actions">
-                    <IconBtn icon={History} label="Timeline" onClick={() => setTimelineId(r.id)} />
+                    <IconBtn icon={History} label={tr("Timeline")} onClick={() => setTimelineId(r.id)} />
                   </td>
                 </tr>
               ))
@@ -154,13 +155,13 @@ export function CdrPage() {
       </SectionCard>
       {timelineId && (
         <SectionCard
-          title="Call timeline"
+          title={tr("Call timeline")}
           icon={History}
           tone="coral"
-          actions={<IconBtn icon={X} label="Close" onClick={() => setTimelineId(null)} />}
+          actions={<IconBtn icon={X} label={tr("Close")} onClick={() => setTimelineId(null)} />}
         >
           {(timeline.data?.events ?? []).length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">No IVR/flow events for this call.</p>
+            <p className="text-sm text-[var(--text-muted)]">{tr("No IVR/flow events for this call.")}</p>
           ) : (
             <ol className="space-y-1 text-sm">
               {timeline.data?.events.map((e) => (

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { List, PhoneMissed } from "lucide-react";
 import { api } from "../../lib/api";
 import { PageHeader, SectionCard } from "../../components/ui";
+import { tr } from "../../i18n";
 
 export function MissedPage() {
   const { t } = useTranslation();
@@ -56,16 +57,16 @@ export function MissedPage() {
         icon={PhoneMissed}
         title={t("nav.missed")}
         tone="coral"
-        description="Track missed calls and mark follow-up status"
+        description={tr("Track missed calls and mark follow-up status")}
         actions={tabButtons}
       />
-      <SectionCard title="Missed calls" icon={List} tone="coral" flush>
+      <SectionCard title={tr("Missed calls")} icon={List} tone="coral" flush>
         <table className="table">
             <thead>
               <tr>
                 <th>{t("cdr.caller")}</th>
-                <th>Target</th>
-                <th>Time</th>
+                <th>{tr("Target")}</th>
+                <th>{tr("Time")}</th>
                 <th>{t("common.status")}</th>
                 <th>{t("common.actions")}</th>
               </tr>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { tr } from "../../../i18n";
 
 /** Grouped block inside a node settings popup. */
 export function SettingsSection({
@@ -54,13 +55,13 @@ export function ExitsHint({ exits }: { exits: string[] }) {
   if (!exits.length) {
     return (
       <p className="text-[11px] text-[var(--text-muted)]">
-        This node ends the path — no exits to wire on the map.
+        {tr("This node ends the path — no exits to wire on the map.")}
       </p>
     );
   }
   return (
     <p className="text-[11px] text-[var(--text-muted)]">
-      Map exits:{" "}
+      {tr("Map exits:")}{" "}
       {exits.map((e, i) => (
         <span key={e}>
           {i > 0 ? ", " : ""}
