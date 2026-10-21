@@ -79,8 +79,12 @@ export function createSipGuard(opts: {
       hits.set(ip, recent);
       if (recent.length < threshold) return false;
       hits.delete(ip);
-      if (await opts.isExempt(ip)) return false;
+      // Claim the address before awaiting: a fast flood keeps arriving meanwhile
       banned.set(ip, t + banMs);
+      if (await opts.isExempt(ip)) {
+        banned.delete(ip);
+        return false;
+      }
       await opts.onBan(ip, recent.length);
       return true;
     },

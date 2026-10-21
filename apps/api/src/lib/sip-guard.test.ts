@@ -53,6 +53,17 @@ describe("createSipGuard", () => {
     expect(onBan).toHaveBeenCalledTimes(1);
   });
 
+  it("bans once even when a flood arrives while the ban is being decided", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const onBan = vi.fn(async () => undefined);
+    const guard = createSipGuard({ threshold: 3, isExempt: async () => (await gate, false), onBan });
+    const pending = Array.from({ length: 12 }, () => guard.observe(fail("9.9.9.9")));
+    release();
+    await Promise.all(pending);
+    expect(onBan).toHaveBeenCalledTimes(1);
+  });
+
   it("ignores failures spread wider than the window", async () => {
     const { guard, onBan, tick } = setup();
     for (let i = 0; i < 5; i++) {
