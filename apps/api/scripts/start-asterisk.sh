@@ -52,7 +52,10 @@ chmod 644 "$AST_CFG"/pjsip_munasip.conf "$AST_CFG"/acl_munasip.conf \
 # Prompt WAVs are written by the API as root (older images: umask 077). Asterisk must read them.
 # Every level counts: a single 700 subfolder (qpos/, qhold/, a MOH class) silently
 # mutes queue announcements or hold music.
-chmod 755 "$AST_CFG"/voicemail 2>/dev/null || true
+# Asterisk (runuser) must create the wav. 755 is not writable by that user,
+# so Record() fails and the caller hears the prompt then the line drops.
+mkdir -p "$AST_CFG"/voicemail
+chmod 777 "$AST_CFG"/voicemail 2>/dev/null || true
 find "$AST_CFG"/sounds "$AST_CFG"/moh -type d ! -perm -005 -exec chmod 755 {} + 2>/dev/null || true
 find "$AST_CFG"/sounds "$AST_CFG"/moh -type f ! -perm -004 -exec chmod 644 {} + 2>/dev/null || true
 

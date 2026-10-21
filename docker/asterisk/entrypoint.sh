@@ -14,7 +14,7 @@ mkdir -p /var/lib/asterisk/munasip /var/lib/asterisk/munasip/sounds/munasip \
   /var/lib/asterisk/sounds/en \
   /var/spool/asterisk/recording /var/lib/asterisk/sounds /etc/asterisk/keys \
   /var/log/asterisk
-chmod 777 /var/spool/asterisk/recording /var/log/asterisk 2>/dev/null || true
+chmod 777 /var/spool/asterisk/recording /var/lib/asterisk/munasip/voicemail /var/log/asterisk 2>/dev/null || true
 # Ensure log files exist for fail2ban before Asterisk starts
 touch /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security 2>/dev/null || true
 # Expose MunaSIP prompt WAVs as sound:munasip/<id>
