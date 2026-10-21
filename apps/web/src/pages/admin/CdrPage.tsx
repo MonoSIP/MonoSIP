@@ -46,6 +46,8 @@ function describeEvent(e: TimelineEvent): { title: string; detail: string } {
   return { title: e.type, detail: Object.keys(d).length ? JSON.stringify(d) : "" };
 }
 
+const DIRECTION_LABEL: Record<string, string> = { internal: "Internal", inbound: "Inbound", outbound: "Outbound" };
+
 const fmtTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString() : "—");
 
 export function CdrPage() {
@@ -161,7 +163,7 @@ export function CdrPage() {
                           {new Date(r.startedAt).toLocaleString()}
                         </span>
                       </td>
-                      <td className="text-xs uppercase text-[var(--text-muted)]">{r.direction}</td>
+                      <td className="text-xs uppercase text-[var(--text-muted)]">{tr(DIRECTION_LABEL[r.direction] ?? r.direction)}</td>
                       <td className="font-mono">{r.caller ?? "—"}</td>
                       <td className="font-mono">{r.callee ?? "—"}</td>
                       <td>
