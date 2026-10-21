@@ -2,7 +2,33 @@
 (() => {
   document.documentElement.classList.add("js");
 
-  const TOUR = {
+  const TOUR_TR = {
+    dashboard: {
+      caption: "Canlı pano — aktif çağrılar, cevaplanan ve cevapsızlar, dahili durumu ve kuyruklar WebSocket üzerinden; TV kipi.",
+      alt: "Canlı pano: aktif çağrılar, cevaplanan ve cevapsız sayılar, dahili durumu ve kuyruklar",
+    },
+    cdr: {
+      caption: "Çağrı kayıtları — tıklanan çağrı zaman çizelgesini açar: IVR adımları, tuşlar, bekleme, konuşma süresi, kalite.",
+      alt: "Çağrı kayıtları; bir çağrı açık: özet ve adım adım IVR zaman çizelgesi",
+    },
+    queues: {
+      caption: "Kuyruklar — düzen, süreler, anons dili ve ses modeli, taşma hedefleri, üyeler.",
+      alt: "Kuyruk düzenleyici: düzen, bekleme sınırları, anons dili, ses modeli ve taşma hedefleri",
+    },
+    extensions: {
+      caption: "Dahililer — kayıt sırasında kilitlenen rahatsız etmeyin anahtarları, portal ve SIP için tek şifre, CSV içe ve dışa aktarma.",
+      alt: "Rahatsız etmeyin anahtarlı dahili listesi",
+    },
+    reports: {
+      caption: "Raporlar — toplamlar, hizmet düzeyi, ses kalitesi (MOS, titreme, kayıp) ve kuyruk başına sayılar.",
+      alt: "Raporlar: özet, ses kalitesi ve kuyruk başına istatistik",
+    },
+    settings: {
+      caption: "Ayarlar — makine adı ve otomatik Let’s Encrypt SSL, şirket, saklama, gizlilik anonsu, TTS modeli, güvenlik.",
+      alt: "Ayarlar: makine adı ve SSL, şirket adı, saklama ve gizlilik anonsu",
+    },
+  };
+  const TOUR_EN = {
     dashboard: {
       caption: "Live dashboard — active calls, answered / missed, extension presence and queues over WebSocket; TV mode.",
       alt: "Live dashboard: active calls, answered and missed counts, extension presence and queues",
@@ -33,19 +59,21 @@
   const tabs = [...document.querySelectorAll('.tabs [role="tab"]')];
   const panels = [...document.querySelectorAll("#tour-img [data-panel]")];
   const tourCap = document.querySelector("[data-tour-caption]");
+  const tour = () => (document.documentElement.lang === "tr" ? TOUR_TR : TOUR_EN);
   function selectTab(btn, focus) {
     const key = btn.dataset.shot;
+    const copy = tour()[key];
     for (const b of tabs) {
       const on = b === btn;
       b.setAttribute("aria-selected", String(on));
       b.tabIndex = on ? 0 : -1;
     }
     if (focus) btn.focus();
-    if (tourCap) tourCap.textContent = TOUR[key].caption;
+    if (tourCap && copy) tourCap.textContent = copy.caption;
     for (const panel of panels) {
       const on = panel.dataset.panel === key;
       panel.toggleAttribute("hidden", !on);
-      if (on) panel.setAttribute("aria-label", TOUR[key].alt);
+      if (on && copy) panel.setAttribute("aria-label", copy.alt);
     }
   }
   tabs.forEach((b, i) => {
@@ -58,7 +86,12 @@
       selectTab(tabs[(i + d + tabs.length) % tabs.length], true);
     });
   });
-  if (tourCap) tourCap.textContent = TOUR.dashboard.caption;
+  const currentTab = () => tabs.find((b) => b.getAttribute("aria-selected") === "true") || tabs[0];
+  if (currentTab()) selectTab(currentTab(), false);
+  document.addEventListener("munasip-lang", () => {
+    const tab = currentTab();
+    if (tab) selectTab(tab, false);
+  });
 
   // ── reveal on scroll ──
   const reveals = document.querySelectorAll(".reveal");

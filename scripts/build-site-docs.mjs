@@ -376,17 +376,37 @@ function render(md) {
   return blocks.join("\n");
 }
 
+const navKey = {
+  "": "docs.overview",
+  install: "docs.install",
+  features: "docs.features",
+  architecture: "docs.architecture",
+  deploy: "docs.deploy",
+  "user-portal": "docs.portal",
+  ivr: "docs.ivr",
+  "data-model": "docs.data",
+  api: "docs.api",
+  screens: "docs.screens",
+  "test-plan": "docs.tests",
+  security: "docs.security",
+  "text-to-speech": "docs.speech",
+  roadmap: "docs.roadmap",
+};
+
 function crumbs(page) {
   const home = relTo(page.slug, null);
   const docs = page.slug === "" ? "./" : relTo(page.slug, "");
   const items = [
-    `<a href="${home}">Home</a>`,
+    `<a href="${home}" data-i18n="crumb.home">Home</a>`,
     page.slug === ""
-      ? `<span aria-current="page">Documentation</span>`
-      : `<a href="${docs}">Documentation</a>`,
+      ? `<span aria-current="page" data-i18n="nav.docs">Documentation</span>`
+      : `<a href="${docs}" data-i18n="nav.docs">Documentation</a>`,
   ];
-  if (page.slug !== "") items.push(`<span aria-current="page">${esc(page.nav)}</span>`);
-  return `<nav class="crumbs" aria-label="Breadcrumb">${items.join('<span aria-hidden="true">/</span>')}</nav>`;
+  if (page.slug !== "") {
+    const key = navKey[page.slug] ?? "";
+    items.push(`<span aria-current="page" data-i18n="${key}">${esc(page.nav)}</span>`);
+  }
+  return `<nav class="crumbs" data-i18n-aria="crumb.label" aria-label="Breadcrumb">${items.join('<span aria-hidden="true">/</span>')}</nav>`;
 }
 
 function jsonLd(page) {
@@ -428,18 +448,21 @@ function pageShell(page, body) {
   const home = relTo(page.slug, null);
   const docsHome = page.slug === "" ? "./" : relTo(page.slug, "");
   const links = [
-    ["#softphone", "Softphone"],
-    ["#features", "Features"],
-    ["#ivr", "IVR"],
-    ["#panel", "Panel"],
-    ["#install", "Install"],
+    ["#softphone", "Softphone", "nav.softphone"],
+    ["#features", "Features", "nav.features"],
+    ["#ivr", "IVR", "nav.ivr"],
+    ["#panel", "Panel", "nav.panel"],
+    ["#install", "Install", "nav.install"],
   ];
-  const sectionNav = links.map(([hash, label]) => `<a href="${home}${hash}">${label}</a>`).join("\n          ");
+  const sectionNav = links
+    .map(([hash, label, key]) => `<a href="${home}${hash}" data-i18n="${key}">${label}</a>`)
+    .join("\n          ");
   const side = pages
     .map((item) => {
       const href = item.slug === page.slug ? "./" : relTo(page.slug, item.slug);
       const current = item.slug === page.slug ? ' aria-current="page"' : "";
-      return `<a href="${href}"${current}>${esc(item.nav)}</a>`;
+      const key = navKey[item.slug] ?? "";
+      return `<a href="${href}"${current} data-i18n="${key}">${esc(item.nav)}</a>`;
     })
     .join("\n          ");
   const canonical = pageUrl(page.slug);
@@ -469,7 +492,7 @@ function pageShell(page, body) {
   </head>
   <body>
     <div class="flow-map" aria-hidden="true"><svg></svg></div>
-    <a class="skip" href="#doc">Skip to content</a>
+    <a class="skip" href="#doc" data-i18n="skip.doc">Skip to content</a>
     <header class="nav" id="top">
       <div class="wrap nav-row">
         <a class="brand" href="${home}">
@@ -477,13 +500,17 @@ function pageShell(page, body) {
           <span class="brand-name">MünaSIP</span>
           <span class="brand-ver">v${esc(version)}</span>
         </a>
-        <nav class="nav-links" aria-label="Sections">
+        <nav class="nav-links" data-i18n-aria="nav.sections" aria-label="Sections">
           ${sectionNav}
-          <a href="${docsHome}"${page.slug === "" ? ' aria-current="page"' : ""}>Docs</a>
+          <a href="${docsHome}" data-i18n="nav.docs"${page.slug === "" ? ' aria-current="page"' : ""}>Docs</a>
         </nav>
         <div class="nav-actions">
-          <a class="btn btn-ghost btn-sm nav-docs" href="${docsHome}">Docs</a>
-          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+          <div class="lang-switch" role="group" data-i18n-aria="lang.label" aria-label="Language">
+            <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
+            <button type="button" data-set-lang="tr" aria-pressed="false">TR</button>
+          </div>
+          <a class="btn btn-ghost btn-sm nav-docs" href="${docsHome}" data-i18n="nav.docs">Docs</a>
+          <a class="btn btn-ghost btn-sm nav-github" href="https://github.com/MunaSIP/MunaSIP">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
             GitHub
           </a>
@@ -492,7 +519,7 @@ function pageShell(page, body) {
     </header>
     <main id="doc">
       <div class="wrap doc-layout">
-        <nav class="doc-nav" aria-label="Documentation">
+        <nav class="doc-nav" data-i18n-aria="docs.nav" aria-label="Documentation">
           ${side}
         </nav>
         <article class="doc">
@@ -504,10 +531,11 @@ function pageShell(page, body) {
     <footer class="footer">
       <div class="wrap footer-row">
         <a class="brand" href="${home}"><img class="brand-mark" src="${asset}/brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
-        <span class="muted">Self-hosted company PBX · <a href="${docsHome}">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
-        <a href="#top" class="muted">Back to top ↑</a>
+        <span class="muted"><span data-i18n="footer.blurb">Self-hosted company PBX</span> · <a href="${docsHome}" data-i18n="nav.docs">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE" data-i18n="footer.mit">MIT License</a></span>
+        <a href="#top" class="muted" data-i18n="footer.top">Back to top ↑</a>
       </div>
     </footer>
+    <script src="${asset}/i18n.js" defer></script>
     <script src="${asset}/script.js" defer></script>
   </body>
 </html>

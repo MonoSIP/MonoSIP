@@ -60,7 +60,7 @@
   </head>
   <body>
     <div class="flow-map" aria-hidden="true"><svg></svg></div>
-    <a class="skip" href="#main">Skip to content</a>
+    <a class="skip" href="#main" data-i18n="skip.main">Skip to content</a>
 
     <!-- ───────────────────────── Navigation ───────────────────────── -->
     <header class="nav" id="top">
@@ -70,17 +70,21 @@
           <span class="brand-name">MünaSIP</span>
           <span class="brand-ver">v1.7.5</span>
         </a>
-        <nav class="nav-links" aria-label="Sections">
-          <a href="#softphone">Softphone</a>
-          <a href="#features">Features</a>
-          <a href="#ivr">IVR</a>
-          <a href="#panel">Panel</a>
-          <a href="#install">Install</a>
-          <a href="docs/">Docs</a>
+        <nav class="nav-links" data-i18n-aria="nav.sections" aria-label="Sections">
+          <a href="#softphone" data-i18n="nav.softphone">Softphone</a>
+          <a href="#features" data-i18n="nav.features">Features</a>
+          <a href="#ivr" data-i18n="nav.ivr">IVR</a>
+          <a href="#panel" data-i18n="nav.panel">Panel</a>
+          <a href="#install" data-i18n="nav.install">Install</a>
+          <a href="docs/" data-i18n="nav.docs">Docs</a>
         </nav>
         <div class="nav-actions">
-          <a class="btn btn-ghost btn-sm nav-docs" href="docs/">Docs</a>
-          <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
+          <div class="lang-switch" role="group" data-i18n-aria="lang.label" aria-label="Language">
+            <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
+            <button type="button" data-set-lang="tr" aria-pressed="false">TR</button>
+          </div>
+          <a class="btn btn-ghost btn-sm nav-docs" href="docs/" data-i18n="nav.docs">Docs</a>
+          <a class="btn btn-ghost btn-sm nav-github" href="https://github.com/MunaSIP/MunaSIP">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
             GitHub
           </a>
@@ -95,10 +99,10 @@
           <div class="hero-copy reveal">
             <p class="eyebrow">
               <span class="live-dot" aria-hidden="true"></span>
-              <span>Asterisk 22 · WebRTC · one Docker image</span>
+              <span data-i18n="hero.eyebrow">Asterisk 22 · WebRTC · one Docker image</span>
             </p>
-            <h1>The company PBX you <em>run yourself</em>.</h1>
-            <p class="lead">
+            <h1 data-i18n="hero.title">The company PBX you <em>run yourself</em>.</h1>
+            <p class="lead" data-i18n="hero.lead">
               A caller reaches your server. The IVR looks up a rate, speaks it, and the queue
               rings whoever is free. Extensions, the designer, the browser phone and the
               dashboard run in one Docker image on that server.
@@ -106,20 +110,20 @@
             <div class="cta-row">
               <a class="btn btn-primary" href="#install">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" /></svg>
-                <span>Pull the image</span>
+                <span data-i18n="hero.pull">Pull the image</span>
               </a>
-              <a class="btn btn-ghost" href="#features">See the phone system</a>
+              <a class="btn btn-ghost" href="#features" data-i18n="hero.see">See the phone system</a>
             </div>
             <ul class="hero-facts">
-              <li>Prebuilt image on GHCR — deploys pull, not build</li>
-              <li>Database, recordings and settings persist on <code>/data</code></li>
-              <li>Open source under the MIT License</li>
-              <li>Panel in English and Turkish, light and dark theme</li>
+              <li data-i18n="hero.fact1">Prebuilt image on GHCR — deploys pull, not build</li>
+              <li data-i18n="hero.fact2">Database, recordings and settings persist on <code>/data</code></li>
+              <li data-i18n="hero.fact3">Open source under the MIT License</li>
+              <li data-i18n="hero.fact4">Panel in English and Turkish, light and dark theme</li>
             </ul>
           </div>
 
           <!-- Live call path: caller → PBX → IVR / API / queue → agents -->
-          <figure class="hero-art reveal" aria-label="Animated diagram: a call enters the PBX, the IVR looks up data over an API, speaks it, and the queue rings the free agent.">
+          <figure class="hero-art reveal" data-i18n-aria="hero.map" aria-label="Animated diagram: a call enters the PBX, the IVR looks up data over an API, speaks it, and the queue rings the free agent.">
             <svg class="callmap" viewBox="0 76 560 324" preserveAspectRatio="xMidYMin meet" role="img" aria-hidden="true">
               <defs>
                 <linearGradient id="g-card" x1="0" y1="0" x2="0" y2="1">
@@ -216,7 +220,7 @@
               <g transform="translate(206 318)"><g class="bubble">
                 <path d="M0 12a12 12 0 0 1 12-12h148a12 12 0 0 1 12 12v30a12 12 0 0 1-12 12H40l-12 12v-12H12A12 12 0 0 1 0 42Z" fill="url(#g-card)" stroke="#2ee6c5" stroke-opacity=".55" />
                 <text x="14" y="22" class="tag" fill="#2ee6c5">TTS</text>
-                <text x="14" y="40" class="say">“One dollar is 0.89 euros”</text>
+                <text x="14" y="40" class="say" data-i18n="hero.say">“One dollar is 0.89 euros”</text>
               </g></g>
 
               <!-- packets riding the wires -->
@@ -228,18 +232,18 @@
                 <circle r="3.5" fill="#5b8cff"><animateMotion dur="1.6s" begin="2.4s" repeatCount="indefinite"><mpath href="#p-a1" /></animateMotion></circle>
               </g>
             </svg>
-            <figcaption class="hero-caption">
+            <figcaption class="hero-caption" data-i18n="hero.caption">
               A call reaches the PBX, the IVR fetches live data over an API and reads it out,
               and the queue rings the free agent — the busy one is skipped. This drawing does not place a call.
             </figcaption>
           </figure>
         </div>
 
-        <ul class="wrap stack-strip reveal" aria-label="Technology">
+        <ul class="wrap stack-strip reveal" data-i18n-aria="stack.label" aria-label="Technology">
           <li><b>Asterisk 22</b> PJSIP · ARI · AMI</li>
           <li><b>WebRTC</b> SIP.js over WSS</li>
           <li><b>Node 26</b> Fastify · Drizzle</li>
-          <li><b>PostgreSQL 17</b> <span>embedded</span></li>
+          <li><b>PostgreSQL 17</b> <span data-i18n="stack.embedded">embedded</span></li>
           <li><b>React 19</b> Vite · TanStack</li>
           <li><b>TTS</b> Edge Neural · EMA</li>
         </ul>
@@ -260,16 +264,16 @@
                 <rect x="292" y="26" width="8" height="28" rx="4"/><rect x="308" y="32" width="8" height="16" rx="4"/>
               </g>
             </svg>
-            <svg class="mock phone-shot" viewBox="0 0 340 668" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Browser softphone: registered as Alice 101, number display, Recents button, keypad, do-not-disturb and call buttons">
+            <svg class="mock phone-shot" viewBox="0 0 340 668" preserveAspectRatio="xMidYMin meet" role="img" data-i18n-aria="phone.label" aria-label="Browser softphone: registered as Alice 101, number display, Recents button, keypad, do-not-disturb and call buttons">
               <rect x="8" y="8" width="324" height="652" rx="48" fill="var(--bg-elevated)" stroke="var(--border)" stroke-width="2" />
               <rect x="128" y="20" width="84" height="8" rx="4" fill="var(--bg-soft)" />
               <rect x="26" y="40" width="288" height="188" rx="22" fill="var(--bg)" />
               <circle cx="46" cy="64" r="4" fill="var(--success)" />
-              <text class="dim" x="58" y="68">Registered</text>
+              <text class="dim" x="58" y="68" data-i18n="phone.registered">Registered</text>
               <text class="dim" x="294" y="68" text-anchor="end">Alice · 101</text>
-              <text class="name dim" x="170" y="128" text-anchor="middle">Enter a number</text>
-              <rect x="196" y="186" width="100" height="28" rx="14" fill="var(--bg-elevated)" stroke="var(--accent)" />
-              <text class="dim hot" x="246" y="205" text-anchor="middle">Recents</text>
+              <text class="name dim" x="170" y="128" text-anchor="middle" data-i18n="phone.enter">Enter a number</text>
+              <rect x="168" y="186" width="124" height="28" rx="14" fill="var(--bg-elevated)" stroke="var(--accent)" />
+              <text class="dim hot" x="230" y="205" text-anchor="middle" data-i18n="phone.recents">Recents</text>
               <circle cx="292" cy="186" r="8" fill="var(--danger)" />
               <text x="292" y="190" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Outfit, system-ui, sans-serif">1</text>
               <g>
@@ -323,23 +327,23 @@
                 <path d="M160 588c1.2 0 2.2 1 2.5 2.2l.6 2.4c.2.8-.1 1.5-.7 1.9l-1.2.8a10 10 0 0 0 5.2 5.2l.8-1.2c.4-.6 1.1-.9 1.9-.7l2.4.6c1.2.3 2.2 1.3 2.2 2.5v1.6c0 1.2-1 2.2-2.2 2.1-6-.4-13.2-7.6-13.6-13.6-.1-1.2 1-2.2 2.1-2.2Z" fill="#04211b" />
                 <circle cx="254" cy="596" r="22" fill="var(--bg)" stroke="var(--border)" />
                 <path d="M246 588l16 16M262 588l-16 16" stroke="var(--text-muted)" stroke-width="1.6" stroke-linecap="round" />
-                <text class="keyl" x="254" y="628">Clear</text>
+                <text class="keyl" x="254" y="628" data-i18n="phone.clear">Clear</text>
               </g>
             </svg>
           </div>
           <div class="reveal">
-            <p class="kicker">01 · Softphone</p>
-            <h2>Answer from the browser</h2>
-            <p class="section-lead">
+            <p class="kicker" data-i18n="soft.kicker">01 · Softphone</p>
+            <h2 data-i18n="soft.title">Answer from the browser</h2>
+            <p class="section-lead" data-i18n="soft.lead">
               Each extension signs in once and gets a softphone that stays on the call while they move through the portal. Desk phones use the same password.
             </p>
             <ul class="ticks">
-              <li><b>In the browser.</b> Each extension gets a softphone. No app to install.</li>
-              <li><b>Stays on the call.</b> Moving through the portal does not drop it.</li>
-              <li><b>One password</b> for the portal, the browser and the desk phone.</li>
-              <li><b>Their own pages:</b> directory, calls, recordings, voicemail and forwarding.</li>
+              <li data-i18n="soft.t1"><b>In the browser.</b> Each extension gets a softphone. No app to install.</li>
+              <li data-i18n="soft.t2"><b>Stays on the call.</b> Moving through the portal does not drop it.</li>
+              <li data-i18n="soft.t3"><b>One password</b> for the portal, the browser and the desk phone.</li>
+              <li data-i18n="soft.t4"><b>Their own pages:</b> directory, calls, recordings, voicemail and forwarding.</li>
             </ul>
-            <a class="more" href="docs/user-portal/">Open the portal and softphone guide</a>
+            <a class="more" href="docs/user-portal/" data-i18n="soft.more">Open the portal and softphone guide</a>
           </div>
         </div>
       </section>
@@ -348,110 +352,110 @@
       <section class="section" id="features">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker">02 · Phone system</p>
-            <h2>Run the office from one panel</h2>
-            <p class="section-lead">
+            <p class="kicker" data-i18n="feat.kicker">02 · Phone system</p>
+            <h2 data-i18n="feat.title">Run the office from one panel</h2>
+            <p class="section-lead" data-i18n="feat.lead">
               Built for about twenty desks. Extensions, queues, hours and trunks ship in the same image and are managed from the same admin.
             </p>
-            <a class="more" href="docs/features/">Read what each feature does</a>
+            <a class="more" href="docs/features/" data-i18n="feat.more">Read what each feature does</a>
           </header>
 
           <div class="cards">
             <article class="card reveal" style="--tone: var(--accent)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.4-.3 4.3 1.2 4.9 4.8"/></svg></span>
-              <h3>Give every desk a number</h3>
-              <p>One password covers the portal, the browser and the desk phone.</p>
+              <h3 data-i18n="card.ext.title">Give every desk a number</h3>
+              <p data-i18n="card.ext.body">One password covers the portal, the browser and the desk phone.</p>
               <ul class="chips">
-                <li>CSV import</li>
-                <li>Forwarding</li>
-                <li>Caller ID</li>
-                <li>Do not disturb</li>
+                <li data-i18n="card.ext.c1">CSV import</li>
+                <li data-i18n="card.ext.c2">Forwarding</li>
+                <li data-i18n="card.ext.c3">Caller ID</li>
+                <li data-i18n="card.ext.c4">Do not disturb</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--accent-3)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span>
-              <h3>Tell callers where they stand</h3>
-              <p>Six ring strategies, hold music, and a callback when the wait runs long.</p>
+              <h3 data-i18n="card.q.title">Tell callers where they stand</h3>
+              <p data-i18n="card.q.body">Six ring strategies, hold music, and a callback when the wait runs long.</p>
               <ul class="chips">
-                <li>Ring all</li>
-                <li>Least recent</li>
-                <li>Position</li>
-                <li>Callback</li>
+                <li data-i18n="card.q.c1">Ring all</li>
+                <li data-i18n="card.q.c2">Least recent</li>
+                <li data-i18n="card.q.c3">Position</li>
+                <li data-i18n="card.q.c4">Callback</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--accent-2)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1.5"/><rect x="15" y="4" width="6" height="5" rx="1.5"/><rect x="9" y="15" width="6" height="5" rx="1.5"/><path d="M6 9v3h12V9M12 12v3"/></svg></span>
-              <h3>Draw the path, then publish it</h3>
-              <p>Each step has its own shape. Live calls stay on the published version while you edit the draft.</p>
+              <h3 data-i18n="card.ivr.title">Draw the path, then publish it</h3>
+              <p data-i18n="card.ivr.body">Each step has its own shape. Live calls stay on the published version while you edit the draft.</p>
               <ul class="chips">
-                <li>Menu</li>
-                <li>API lookup</li>
-                <li>Transfer</li>
-                <li>Version history</li>
+                <li data-i18n="card.ivr.c1">Menu</li>
+                <li data-i18n="card.ivr.c2">API lookup</li>
+                <li data-i18n="card.ivr.c3">Transfer</li>
+                <li data-i18n="card.ivr.c4">Version history</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--violet-line)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2M21 12h0"/></svg></span>
-              <h3>Start speaking before the line is finished</h3>
-              <p>English and Turkish neural voices. A long readout begins while the rest is still being made.</p>
+              <h3 data-i18n="card.tts.title">Start speaking before the line is finished</h3>
+              <p data-i18n="card.tts.body">English and Turkish neural voices. A long readout begins while the rest is still being made.</p>
               <ul class="chips">
                 <li>Edge Neural</li>
                 <li>EMA</li>
-                <li>Cache</li>
-                <li>Type-ahead</li>
+                <li data-i18n="card.tts.c3">Cache</li>
+                <li data-i18n="card.tts.c4">Type-ahead</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--warning)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
-              <h3>Open and close with the clock</h3>
-              <p>Weekly hours, lunch, holidays, and a switch that opens or closes the office now.</p>
+              <h3 data-i18n="card.time.title">Open and close with the clock</h3>
+              <p data-i18n="card.time.body">Weekly hours, lunch, holidays, and a switch that opens or closes the office now.</p>
               <ul class="chips">
-                <li>Lunch</li>
-                <li>Holidays</li>
-                <li>Override</li>
+                <li data-i18n="card.time.c1">Lunch</li>
+                <li data-i18n="card.time.c2">Holidays</li>
+                <li data-i18n="card.time.c3">Override</li>
                 <li>Europe/Istanbul</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--success)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></span>
-              <h3>Send the call out the right trunk</h3>
-              <p>More than one provider, inbound numbers, failover and a daily spend stop.</p>
+              <h3 data-i18n="card.trunk.title">Send the call out the right trunk</h3>
+              <p data-i18n="card.trunk.body">More than one provider, inbound numbers, failover and a daily spend stop.</p>
               <ul class="chips">
                 <li>DID</li>
-                <li>Failover</li>
-                <li>Caller ID</li>
-                <li>Spend stop</li>
+                <li data-i18n="card.trunk.c2">Failover</li>
+                <li data-i18n="card.trunk.c3">Caller ID</li>
+                <li data-i18n="card.trunk.c4">Spend stop</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--info)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
-              <h3>See the path a call took</h3>
-              <p>Open a row and the IVR steps, the keys pressed and the recording are on the same page.</p>
+              <h3 data-i18n="card.cdr.title">See the path a call took</h3>
+              <p data-i18n="card.cdr.body">Open a row and the IVR steps, the keys pressed and the recording are on the same page.</p>
               <ul class="chips">
-                <li>Timeline</li>
+                <li data-i18n="card.cdr.c1">Timeline</li>
                 <li>CSV</li>
-                <li>Missed calls</li>
-                <li>Retention</li>
+                <li data-i18n="card.cdr.c3">Missed calls</li>
+                <li data-i18n="card.cdr.c4">Retention</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--danger)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-              <h3>Issue the certificate from Settings</h3>
-              <p>Sign-in protection and address limits ship with the panel. The hostname gets its certificate there too.</p>
+              <h3 data-i18n="card.sec.title">Issue the certificate from Settings</h3>
+              <p data-i18n="card.sec.body">Sign-in protection and address limits ship with the panel. The hostname gets its certificate there too.</p>
               <ul class="chips">
-                <li>Sign-in limits</li>
-                <li>Address limits</li>
+                <li data-i18n="card.sec.c1">Sign-in limits</li>
+                <li data-i18n="card.sec.c2">Address limits</li>
                 <li>SSL</li>
               </ul>
             </article>
             <article class="card reveal" style="--tone: var(--accent-dim)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M15 7l5 5-5 5"/></svg></span>
-              <h3>Hand the call to the tools you use</h3>
-              <p>Webhooks fire on ring, answer and hangup. An API key and a call button cover the company site.</p>
+              <h3 data-i18n="card.hook.title">Hand the call to the tools you use</h3>
+              <p data-i18n="card.hook.body">Webhooks fire on ring, answer and hangup. An API key and a call button cover the company site.</p>
               <ul class="chips">
                 <li>Webhooks</li>
-                <li>API key</li>
-                <li>Call button</li>
+                <li data-i18n="card.hook.c2">API key</li>
+                <li data-i18n="card.hook.c3">Call button</li>
               </ul>
             </article>
           </div>
@@ -462,15 +466,15 @@
       <section class="section section-alt" id="ivr">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker">03 · Call flow</p>
-            <h2>A menu, a lookup, then a sentence</h2>
-            <p class="section-lead">
+            <p class="kicker" data-i18n="ivr.kicker">03 · Call flow</p>
+            <h2 data-i18n="ivr.title">A menu, a lookup, then a sentence</h2>
+            <p class="section-lead" data-i18n="ivr.lead">
               The demo line on 902 welcomes the caller, offers sales and the support queue, then reads a live exchange rate. Drafts stay off the phones until you publish.
             </p>
           </header>
 
           <!-- animated mini flow -->
-          <figure class="flowline reveal" aria-label="Animated IVR path: start, welcome, menu, querying prompt, API lookup, spoken result, back to the menu.">
+          <figure class="flowline reveal" data-i18n-aria="ivr.flow" aria-label="Animated IVR path: start, welcome, menu, querying prompt, API lookup, spoken result, back to the menu.">
             <svg viewBox="0 0 1100 170" role="img" aria-hidden="true">
               <defs>
                 <path id="fl" d="M70 85H1030" />
@@ -490,18 +494,18 @@
           <div class="ivr-grid">
             <div class="reveal">
               <ul class="ticks">
-                <li><b>A shape for each step.</b> Start, announce, menu, transfer, queue, API, condition and hangup each have their own shape and color. Drag one onto the map, open it with the pencil, and draw the exit to the next step.</li>
-                <li><b>The demo call on 902.</b> It welcomes the caller, offers sales and the support queue, plays “one moment”, then fetches the exchange rate and reads it out. Pressing a key during a prompt stops the prompt and keeps the digit.</li>
-                <li><b>Live data.</b> An API node sends GET, POST, PUT, PATCH or DELETE. You set the URL, a timeout, a retry and auth — none, Basic, Bearer or a custom header. The secret stays encrypted in Settings and never lands in the flow file. A JSON path such as <code>$.rates.usd</code> becomes <code>rate</code>, and the next node speaks it.</li>
-                <li><b>The caller stays in the sentence.</b> <code>$caller</code>, <code>$did</code> and any digit you collect can be spoken, or sent onward in the request URL and body. Filters turn a plate code into a province, a price into words, or a number into digits read one by one.</li>
-                <li><b>Every exit is a branch.</b> A menu has a path per digit, plus timeout and invalid. A transfer has busy, no answer and unavailable. A busy extension is caught before the phone rings, so the caller hears the busy path and the desk does not ring.</li>
-                <li><b>Try it, then publish.</b> The test call walks the draft with a caller number, a time and keypresses, and highlights the nodes it visited. Live calls keep using the published version. An older one is a click away, and a call already in progress finishes on the version it started with.</li>
+                <li data-i18n="ivr.t1"><b>A shape for each step.</b> Start, announce, menu, transfer, queue, API, condition and hangup each have their own shape and color. Drag one onto the map, open it with the pencil, and draw the exit to the next step.</li>
+                <li data-i18n="ivr.t2"><b>The demo call on 902.</b> It welcomes the caller, offers sales and the support queue, plays “one moment”, then fetches the exchange rate and reads it out. Pressing a key during a prompt stops the prompt and keeps the digit.</li>
+                <li data-i18n="ivr.t3"><b>Live data.</b> An API node sends GET, POST, PUT, PATCH or DELETE. You set the URL, a timeout, a retry and auth — none, Basic, Bearer or a custom header. The secret stays encrypted in Settings and never lands in the flow file. A JSON path such as <code>$.rates.usd</code> becomes <code>rate</code>, and the next node speaks it.</li>
+                <li data-i18n="ivr.t4"><b>The caller stays in the sentence.</b> <code>$caller</code>, <code>$did</code> and any digit you collect can be spoken, or sent onward in the request URL and body. Filters turn a plate code into a province, a price into words, or a number into digits read one by one.</li>
+                <li data-i18n="ivr.t5"><b>Every exit is a branch.</b> A menu has a path per digit, plus timeout and invalid. A transfer has busy, no answer and unavailable. A busy extension is caught before the phone rings, so the caller hears the busy path and the desk does not ring.</li>
+                <li data-i18n="ivr.t6"><b>Try it, then publish.</b> The test call walks the draft with a caller number, a time and keypresses, and highlights the nodes it visited. Live calls keep using the published version. An older one is a click away, and a call already in progress finishes on the version it started with.</li>
               </ul>
-              <a class="more" href="docs/ivr/">Open the IVR designer guide</a>
+              <a class="more" href="docs/ivr/" data-i18n="ivr.more">Open the IVR designer guide</a>
             </div>
             <div class="shots reveal">
               <figure class="shot shot-main">
-                <svg class="mock" viewBox="0 0 960 520" role="img" aria-label="IVR designer with the Main line demo: welcome, menu, sales transfer, support queue, a one-moment prompt, the exchange-rate API, a condition and the read-out">
+                <svg class="mock" viewBox="0 0 960 520" role="img" data-i18n-aria="ivr.mock1" aria-label="IVR designer with the Main line demo: welcome, menu, sales transfer, support queue, a one-moment prompt, the exchange-rate API, a condition and the read-out">
                   <rect width="168" height="520" fill="var(--bg-elevated)" />
                   <path d="M168 0V520" stroke="var(--border)" />
                   <text class="k" x="20" y="32">NODES</text>
@@ -583,10 +587,10 @@
                     <text class="name" x="844" y="376" text-anchor="middle">Read the rate</text>
                   </g>
                 </svg>
-                <figcaption>Extension 902 — every node type has its own shape and color.</figcaption>
+                <figcaption data-i18n="ivr.cap1">Extension 902 — every node type has its own shape and color.</figcaption>
               </figure>
               <figure class="shot">
-                <svg class="mock" viewBox="0 0 640 460" role="img" aria-label="API request settings: method buttons, URL, timeout, retry, auth and JSON mappings">
+                <svg class="mock" viewBox="0 0 640 460" role="img" data-i18n-aria="ivr.mock2" aria-label="API request settings: method buttons, URL, timeout, retry, auth and JSON mappings">
                   <rect width="640" height="460" fill="var(--bg)" />
                   <text class="k" x="28" y="36">API REQUEST</text>
                   <text class="h" x="28" y="68">Exchange rates</text>
@@ -622,10 +626,10 @@
                   <text class="name" x="44" y="419">pair</text>
                   <text class="dim" x="160" y="419">← $.pair</text>
                 </svg>
-                <figcaption>API request settings: method, URL, retry, auth and JSON mappings.</figcaption>
+                <figcaption data-i18n="ivr.cap2">API request settings: method, URL, retry, auth and JSON mappings.</figcaption>
               </figure>
               <figure class="shot">
-                <svg class="mock" viewBox="0 0 640 460" role="img" aria-label="Main IVR on extension 900: welcome, menu, transfers with busy, no answer and unavailable exits to hangup">
+                <svg class="mock" viewBox="0 0 640 460" role="img" data-i18n-aria="ivr.mock3" aria-label="Main IVR on extension 900: welcome, menu, transfers with busy, no answer and unavailable exits to hangup">
                   <rect width="640" height="460" fill="var(--bg)" />
                   <text class="k hot" x="28" y="36">EXT 900</text>
                   <text class="h" x="28" y="66">Main line</text>
@@ -676,7 +680,7 @@
                     <text x="422" y="389" text-anchor="middle">Unavailable → hangup</text>
                   </g>
                 </svg>
-                <figcaption>Transfers branch on busy, no answer and unavailable.</figcaption>
+                <figcaption data-i18n="ivr.cap3">Transfers branch on busy, no answer and unavailable.</figcaption>
               </figure>
             </div>
           </div>
@@ -687,20 +691,20 @@
       <section class="section" id="panel">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker">04 · After go-live</p>
-            <h2>Watch the floor from the same panel</h2>
-            <p class="section-lead">Active calls, the path of a finished call, queue wait and the certificate sit on these screens. The drawings use sample names.</p>
-            <a class="more" href="docs/screens/">Look through the admin screens</a>
+            <p class="kicker" data-i18n="panel.kicker">04 · After go-live</p>
+            <h2 data-i18n="panel.title">Watch the floor from the same panel</h2>
+            <p class="section-lead" data-i18n="panel.lead">Active calls, the path of a finished call, queue wait and the certificate sit on these screens. The drawings use sample names.</p>
+            <a class="more" href="docs/screens/" data-i18n="panel.more">Look through the admin screens</a>
           </header>
 
           <div class="tour reveal">
-            <div class="tabs" role="tablist" aria-label="Panel screens">
-              <button role="tab" aria-selected="true" aria-controls="tour-img" data-shot="dashboard">Live dashboard</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="cdr">Call logs</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="queues">Queues</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="extensions">Extensions</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="reports">Reports</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="settings">Settings &amp; SSL</button>
+            <div class="tabs" role="tablist" data-i18n-aria="panel.tabs" aria-label="Panel screens">
+              <button role="tab" aria-selected="true" aria-controls="tour-img" data-shot="dashboard" data-i18n="panel.tab.dashboard">Live dashboard</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="cdr" data-i18n="panel.tab.cdr">Call logs</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="queues" data-i18n="panel.tab.queues">Queues</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="extensions" data-i18n="panel.tab.extensions">Extensions</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="reports" data-i18n="panel.tab.reports">Reports</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="settings" data-i18n="panel.tab.settings">Settings &amp; SSL</button>
             </div>
             <figure class="tour-frame" id="tour-img" role="tabpanel">
               <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>munasip.example.com</span></div>
@@ -972,21 +976,21 @@
       <section class="section section-alt" id="install">
         <div class="wrap install-grid">
           <div class="reveal">
-            <p class="kicker">05 · On your server</p>
-            <h2>Pull the image. The PBX is up.</h2>
-            <p class="section-lead">
+            <p class="kicker" data-i18n="install.kicker">05 · On your server</p>
+            <h2 data-i18n="install.title">Pull the image. The PBX is up.</h2>
+            <p class="section-lead" data-i18n="install.lead">
               Asterisk, the API, the panel, PostgreSQL and the speech engines live in one image on GitHub Container Registry. A deploy pulls it. It does not build it.
             </p>
             <ol class="steps">
-              <li>Point a hostname at the server and open TCP 80/443 and UDP 10000–10100 (RTP).</li>
-              <li>Run the image with a volume on <code>/data</code>.</li>
-              <li>Sign in, set the hostname in Settings and issue the certificate.</li>
+              <li data-i18n="install.s1">Point a hostname at the server and open TCP 80/443 and UDP 10000–10100 (RTP).</li>
+              <li data-i18n="install.s2">Run the image with a volume on <code>/data</code>.</li>
+              <li data-i18n="install.s3">Sign in, set the hostname in Settings and issue the certificate.</li>
             </ol>
-            <p class="note">Recommended: 2 vCPU and 4 GB RAM or more (neural speech runs on the PBX’s CPU). Expose SIP 5060 only if desk phones or trunks need it.</p>
+            <p class="note" data-i18n="install.note">Recommended: 2 vCPU and 4 GB RAM or more (neural speech runs on the PBX’s CPU). Expose SIP 5060 only if desk phones or trunks need it.</p>
           </div>
-          <div class="terminal reveal" aria-label="Install commands">
+          <div class="terminal reveal" data-i18n-aria="install.term" aria-label="Install commands">
             <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>bash</span></div>
-<pre><code><span class="c"># prebuilt image (linux/amd64)</span>
+<pre><code><span class="c"># <span data-i18n="install.c1">prebuilt image (linux/amd64)</span></span>
 docker run -d --name munasip --restart unless-stopped \
   -p 3000:3000 -p 10000-10100:10000-10100/udp \
   -v munasip-data:/data \
@@ -994,12 +998,12 @@ docker run -d --name munasip --restart unless-stopped \
   -e PUBLIC_HOST=<span class="v">pbx.example.com</span> \
   ghcr.io/munasip/munasip:latest
 
-<span class="c"># update: data stays in the munasip-data volume</span>
+<span class="c"># <span data-i18n="install.c2">update: data stays in the munasip-data volume</span></span>
 docker pull ghcr.io/munasip/munasip:latest</code></pre>
             <div class="term-links">
-              <a href="docs/install/">Follow the install guide</a>
-              <a href="docs/deploy/">Deploy on a VPS</a>
-              <a href="docs/features/">Read the feature list</a>
+              <a href="docs/install/" data-i18n="install.guide">Follow the install guide</a>
+              <a href="docs/deploy/" data-i18n="install.vps">Deploy on a VPS</a>
+              <a href="docs/features/" data-i18n="install.features">Read the feature list</a>
             </div>
           </div>
         </div>
@@ -1009,11 +1013,12 @@ docker pull ghcr.io/munasip/munasip:latest</code></pre>
     <footer class="footer">
       <div class="wrap footer-row">
         <span class="brand"><img class="brand-mark" src="brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></span>
-        <span class="muted">Self-hosted company PBX · <a href="docs/">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
-        <a href="#top" class="muted">Back to top ↑</a>
+        <span class="muted"><span data-i18n="footer.blurb">Self-hosted company PBX</span> · <a href="docs/" data-i18n="nav.docs">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE" data-i18n="footer.mit">MIT License</a></span>
+        <a href="#top" class="muted" data-i18n="footer.top">Back to top ↑</a>
       </div>
     </footer>
 
+    <script src="i18n.js" defer></script>
     <script src="script.js" defer></script>
   </body>
 </html>

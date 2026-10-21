@@ -19,8 +19,8 @@
   --mono: "JetBrains Mono", ui-monospace, monospace;
   --radius: 16px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  /* Shared page frame: fluid until the wide-screen band, always inside the viewport. */
-  --page-max: 1720px;
+  /* Content stops at 80rem (1280px). Wider monitors keep the margin; they do not stretch the page. */
+  --page-max: 80rem;
   --page-gutter: 1.25rem;
   --measure: 46rem;
   --measure-tight: 32rem;
@@ -161,6 +161,7 @@ main,
 .nav-links a {
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
   min-height: 44px;
   color: var(--text-muted);
   text-decoration: none;
@@ -181,6 +182,29 @@ main,
 }
 .nav-actions .nav-docs {
   display: none;
+}
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--bg-elevated) 70%, transparent);
+}
+.lang-switch button {
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: 600 13px var(--mono);
+}
+.lang-switch button + button {
+  border-left: 1px solid var(--border);
+}
+.lang-switch button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #04211b;
 }
 
 /* ── buttons ── */
@@ -1158,8 +1182,20 @@ h2 {
   .section {
     padding-block: var(--section-pad);
   }
+  .brand-ver {
+    display: none;
+  }
+  .nav-actions {
+    gap: 6px;
+  }
   .nav-actions .btn-sm {
     padding: 0 10px;
+  }
+  .nav-github {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
   }
   .stack-strip {
     justify-content: flex-start;
