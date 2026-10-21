@@ -14,9 +14,10 @@ The admin panel has 15 screens; the user portal has 5. Both live in the same Vit
 | IVR (flows) | List; designer: canvas, node palette, node settings, simulation panel, version history |
 | Trunks | SIP provider list, create form, live status |
 | Routes | Inbound and outbound routes, blacklist |
-| Prompts | Upload announces, generate via TTS, MOH classes |
+| Prompts | Upload announcements, generate via TTS, live TTS cache |
+| Music on hold | Classes (unique names), upload, preview, delete |
 | Recordings | Filtered list, waveform player, download, access log |
-| Call logs | Filtered CDR table, call timeline (including flow steps), Excel export |
+| Call logs | Filtered CDR table; a clicked row expands in place with call facts and the IVR step timeline; CSV export |
 | Missed calls | Waiting / called-back list |
 | Reports | Summary, queue, extension, IVR DTMF, quality; date range |
 | Integration | Webhooks, API keys |
@@ -26,7 +27,7 @@ The admin panel has 15 screens; the user portal has 5. Both live in the same Vit
 
 | Screen | Content |
 | --- | --- |
-| Phone | Softphone: keypad, active-call controls, recent calls |
+| Phone | Softphone: keypad, call on the phone screen, recent calls behind a button; a mini phone appears on every other portal page |
 | Directory | Coworkers and presence, dial |
 | My calls | Inbound, outbound, missed; callback |
 | My recordings | List and player (listen only) |

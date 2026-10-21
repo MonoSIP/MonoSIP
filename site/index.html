@@ -23,7 +23,7 @@
     />
   </head>
   <body>
-    <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+    <a class="skip" href="#main">Skip to content</a>
 
     <!-- ───────────────────────── Navigation ───────────────────────── -->
     <header class="nav" id="top">
@@ -34,16 +34,13 @@
           <span class="brand-ver">v1.4.0</span>
         </a>
         <nav class="nav-links" aria-label="Sections">
-          <a href="#features" data-i18n="nav.features">Features</a>
-          <a href="#ivr" data-i18n="nav.ivr">IVR</a>
-          <a href="#softphone" data-i18n="nav.softphone">Softphone</a>
-          <a href="#panel" data-i18n="nav.panel">Panel</a>
-          <a href="#install" data-i18n="nav.install">Install</a>
+          <a href="#features">Features</a>
+          <a href="#ivr">IVR</a>
+          <a href="#softphone">Softphone</a>
+          <a href="#panel">Panel</a>
+          <a href="#install">Install</a>
         </nav>
         <div class="nav-actions">
-          <button class="lang-toggle" type="button" aria-label="Türkçe / English">
-            <span data-lang-label>TR</span>
-          </button>
           <a class="btn btn-ghost btn-sm" href="https://github.com/diggyen/DSip">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
             GitHub
@@ -59,26 +56,26 @@
           <div class="hero-copy reveal">
             <p class="eyebrow">
               <span class="live-dot" aria-hidden="true"></span>
-              <span data-i18n="hero.eyebrow">Asterisk 22 · WebRTC · one Docker image</span>
+              <span>Asterisk 22 · WebRTC · one Docker image</span>
             </p>
-            <h1 data-i18n="hero.title">The company PBX you <em>run yourself</em>.</h1>
-            <p class="lead" data-i18n="hero.lead">
+            <h1>The company PBX you <em>run yourself</em>.</h1>
+            <p class="lead">
               Extensions, queues, a visual IVR designer with live API lookups and neural
-              Turkish speech, a browser softphone, call logs and a live dashboard — the
-              media plane and the control plane on your own server.
+              speech, a browser softphone, call logs and a live dashboard — the media
+              plane and the control plane on your own server.
             </p>
             <div class="cta-row">
               <a class="btn btn-primary" href="#install">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 19h14" /></svg>
-                <span data-i18n="hero.cta">Install in minutes</span>
+                <span>Install in minutes</span>
               </a>
-              <a class="btn btn-ghost" href="#features" data-i18n="hero.cta2">See what it does</a>
+              <a class="btn btn-ghost" href="#features">See what it does</a>
             </div>
             <ul class="hero-facts">
-              <li data-i18n="hero.f1">Prebuilt image on GHCR — deploys pull, not build</li>
-              <li data-i18n="hero.f2">Database, recordings and settings persist on <code>/data</code></li>
-              <li data-i18n="hero.f3">Open source under the MIT License</li>
-              <li data-i18n="hero.f4">English and Turkish panel, light and dark</li>
+              <li>Prebuilt image on GHCR — deploys pull, not build</li>
+              <li>Database, recordings and settings persist on <code>/data</code></li>
+              <li>Open source under the MIT License</li>
+              <li>Panel in English and Turkish, light and dark theme</li>
             </ul>
           </div>
 
@@ -124,7 +121,7 @@
                 <circle r="34" class="ring r2" />
                 <circle r="30" fill="url(#g-card)" stroke="#2ee6c5" stroke-width="1.5" />
                 <path d="M-9 -11c1.6 0 3 1.4 3.4 3l.9 3.6c.2 1-.2 2-1 2.6l-1.6 1.2a14 14 0 0 0 7.3 7.3l1.2-1.6c.6-.8 1.6-1.2 2.6-1l3.6.9c1.6.4 3 1.8 3 3.4V21c0 1.6-1.3 3-3 2.9C-1 23.2-15.2 9-16 -8c-.1-1.7 1.3-3 2.9-3Z" transform="scale(.8)" fill="none" stroke="#2ee6c5" stroke-width="2" stroke-linejoin="round"/>
-                <text y="52" class="lbl" text-anchor="middle">0532 …</text>
+                <text y="52" class="lbl" text-anchor="middle">+1 555 …</text>
               </g>
 
               <!-- PBX core -->
@@ -152,7 +149,7 @@
               <g transform="translate(388 207)">
                 <path d="M10 0H100L90 56H0Z" fill="url(#g-card)" stroke="#a78bfa" stroke-opacity=".9" />
                 <text x="16" y="23" class="tag" fill="#a78bfa">API</text>
-                <text x="12" y="42" class="ttl">GET /gold</text>
+                <text x="12" y="42" class="ttl">GET /rates</text>
                 <circle cx="88" cy="16" r="4" class="blink" fill="#a78bfa" />
               </g>
               <!-- Queue -->
@@ -180,8 +177,8 @@
               <!-- TTS bubble -->
               <g transform="translate(206 318)"><g class="bubble">
                 <path d="M0 12a12 12 0 0 1 12-12h148a12 12 0 0 1 12 12v30a12 12 0 0 1-12 12H40l-12 12v-12H12A12 12 0 0 1 0 42Z" fill="url(#g-card)" stroke="#2ee6c5" stroke-opacity=".55" />
-                <text x="14" y="22" class="tag" fill="#2ee6c5">EMA · TTS</text>
-                <text x="14" y="40" class="say">“kırk dokuz virgül elli sekiz”</text>
+                <text x="14" y="22" class="tag" fill="#2ee6c5">TTS</text>
+                <text x="14" y="40" class="say">“One dollar is 0.89 euros”</text>
               </g></g>
 
               <!-- packets riding the wires -->
@@ -193,8 +190,8 @@
                 <circle r="3.5" fill="#5b8cff"><animateMotion dur="1.6s" begin="2.4s" repeatCount="indefinite"><mpath href="#p-a1" /></animateMotion></circle>
               </g>
             </svg>
-            <figcaption class="hero-caption" data-i18n="hero.caption">
-              A call reaches the PBX, the IVR fetches live data over an API, speaks it in neural Turkish,
+            <figcaption class="hero-caption">
+              A call reaches the PBX, the IVR fetches live data over an API and reads it out,
               and the queue rings the free agent — the busy one is skipped.
             </figcaption>
           </figure>
@@ -204,7 +201,7 @@
           <li><b>Asterisk 22</b> PJSIP · ARI · AMI</li>
           <li><b>WebRTC</b> SIP.js over WSS</li>
           <li><b>Node 24</b> Fastify · Drizzle</li>
-          <li><b>PostgreSQL 17</b> <span data-i18n="strip.pg">embedded</span></li>
+          <li><b>PostgreSQL 17</b> <span>embedded</span></li>
           <li><b>React 19</b> Vite · TanStack</li>
           <li><b>TTS</b> Edge Neural · EMA</li>
         </ul>
@@ -214,9 +211,9 @@
       <section class="section" id="features">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker" data-i18n="feat.kicker">Everything a ~20-desk office needs</p>
-            <h2 data-i18n="feat.title">One panel for the whole phone system</h2>
-            <p class="section-lead" data-i18n="feat.lead">
+            <p class="kicker">Everything a ~20-desk office needs</p>
+            <h2>One panel for the whole phone system</h2>
+            <p class="section-lead">
               No hosted black box and no add-on modules. Everything below ships in the same image
               and is managed from the same admin panel.
             </p>
@@ -225,48 +222,48 @@
           <div class="cards">
             <article class="card reveal" style="--tone: var(--accent)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.4-.3 4.3 1.2 4.9 4.8"/></svg></span>
-              <h3 data-i18n="f.ext.t">Extensions</h3>
-              <p data-i18n="f.ext.d">CSV import and export, outbound caller ID, call permissions (local / mobile / 444 / international), no-answer · busy · unavailable forwarding, voicemail to email, server-side DND with a switch or <code>*78</code>/<code>*79</code>, and live presence everywhere. 112 is always allowed.</p>
+              <h3>Extensions</h3>
+              <p>CSV import and export, outbound caller ID, call permissions (local / mobile / 444 / international), no-answer · busy · unavailable forwarding, voicemail to email, server-side DND with a switch or <code>*78</code>/<code>*79</code>, and live presence everywhere. 112 is always allowed.</p>
             </article>
             <article class="card reveal" style="--tone: var(--accent-3)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span>
-              <h3 data-i18n="f.q.t">Queues &amp; ring groups</h3>
-              <p data-i18n="f.q.d">Six Asterisk strategies, penalty and wrap-up, busy agents skipped. Position and hold-time announcements with a per-queue language and voice model, hold-music class, overflow on timeout / full / empty, and “press 1 to keep your place” callback.</p>
+              <h3>Queues &amp; ring groups</h3>
+              <p>Six Asterisk strategies, penalty and wrap-up, busy agents skipped. Position and hold-time announcements with a per-queue language and voice model, hold-music class, overflow on timeout / full / empty, and “press 1 to keep your place” callback.</p>
             </article>
             <article class="card reveal" style="--tone: var(--accent-2)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1.5"/><rect x="15" y="4" width="6" height="5" rx="1.5"/><rect x="9" y="15" width="6" height="5" rx="1.5"/><path d="M6 9v3h12V9M12 12v3"/></svg></span>
-              <h3 data-i18n="f.ivr.t">Visual IVR designer</h3>
-              <p data-i18n="f.ivr.d">Sixteen node types on a map, each with its own shape: menu, get key, API, if, set variable, pause, language, schedule, directory, subflow, transfer, queue, voicemail and more. Validate, simulate, publish and roll back versions.</p>
+              <h3>Visual IVR designer</h3>
+              <p>Seventeen node types on a map, each with its own shape: menu, get key, API, if, set variable, pause, language, schedule, directory, subflow, transfer, queue, voicemail and more. Validate, simulate, publish and roll back versions.</p>
             </article>
             <article class="card reveal" style="--tone: var(--violet-line)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2M21 12h0"/></svg></span>
-              <h3 data-i18n="f.tts.t">Neural speech, sentence by sentence</h3>
-              <p data-i18n="f.tts.d">Edge Neural voices plus EMA, an offline Turkish neural model. Long text is split into sentences and synthesized while the previous one plays, so a read-out starts in about a second. Numbers are spoken in words; results are cached.</p>
+              <h3>Neural speech, sentence by sentence</h3>
+              <p>Edge Neural voices in English and Turkish, plus EMA, an offline Turkish neural model. Long text is split into sentences and synthesized while the previous one plays, so a read-out starts in about a second. Results are cached.</p>
             </article>
             <article class="card reveal" style="--tone: var(--warning)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
-              <h3 data-i18n="f.sch.t">Schedules &amp; holidays</h3>
-              <p data-i18n="f.sch.d">Weekly ranges with a lunch status, the Turkish holiday pack and company days, manual override (auto / open / closed) and a separate destination per status. Europe/Istanbul by default.</p>
+              <h3>Schedules &amp; holidays</h3>
+              <p>Weekly ranges with a lunch status, a national-holiday pack and company days, manual override (auto / open / closed) and a separate destination per status. Europe/Istanbul by default.</p>
             </article>
             <article class="card reveal" style="--tone: var(--success)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></span>
-              <h3 data-i18n="f.trk.t">Trunks &amp; routes</h3>
-              <p data-i18n="f.trk.d">Several SIP providers with failover, inbound DID and caller-pattern routes, outbound prefixes, blacklist, anonymous-call block, country allowlist, daily and monthly spend limits, and last-dial callback.</p>
+              <h3>Trunks &amp; routes</h3>
+              <p>Several SIP providers with failover, inbound DID and caller-pattern routes, outbound prefixes, blacklist, anonymous-call block, country allowlist, daily and monthly spend limits, and last-dial callback.</p>
             </article>
             <article class="card reveal" style="--tone: var(--info)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
-              <h3 data-i18n="f.cdr.t">Call logs &amp; recordings</h3>
-              <p data-i18n="f.cdr.d">Click a call to open its timeline right below the row: every IVR step, key pressed, wait and talk time, queue, MOS / jitter / loss. Recording with KVKK announcement, retention, Opus convert, NAS / SFTP archive.</p>
+              <h3>Call logs &amp; recordings</h3>
+              <p>Click a call to open its timeline right below the row: every IVR step, key pressed, wait and talk time, queue, MOS / jitter / loss. Recording with a privacy (KVKK) announcement, retention, Opus convert, NAS / SFTP archive.</p>
             </article>
             <article class="card reveal" style="--tone: var(--danger)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-              <h3 data-i18n="f.sec.t">Security built in</h3>
-              <p data-i18n="f.sec.d">Admin 2FA (TOTP), IP allowlists for admin, portal and SIP, login-flood ban, a SIP guard that records brute-force scanners from Asterisk security events, firewall export, and Let’s Encrypt certificates issued from Settings.</p>
+              <h3>Security built in</h3>
+              <p>Admin 2FA (TOTP), IP allowlists for admin, portal and SIP, login-flood ban, a SIP guard that records brute-force scanners from Asterisk security events, firewall export, and Let’s Encrypt certificates issued from Settings.</p>
             </article>
             <article class="card reveal" style="--tone: var(--accent-dim)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M15 7l5 5-5 5"/></svg></span>
-              <h3 data-i18n="f.int.t">Integrations</h3>
-              <p data-i18n="f.int.d">Webhooks for ringing, answered, ended and missed calls; REST API with API keys for click-to-call, CDR and recordings; an embeddable website call widget; daily and monthly email reports.</p>
+              <h3>Integrations</h3>
+              <p>Webhooks for ringing, answered, ended and missed calls; REST API with API keys for click-to-call, CDR and recordings; an embeddable website call widget; daily and monthly email reports.</p>
             </article>
           </div>
         </div>
@@ -276,12 +273,12 @@
       <section class="section section-alt" id="ivr">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker" data-i18n="ivr.kicker">IVR designer</p>
-            <h2 data-i18n="ivr.title">Draw the call. Fetch live data. Say it.</h2>
-            <p class="section-lead" data-i18n="ivr.lead">
-              A real example running in production: an info line that reads exchange rates, gold prices,
-              fuel prices, weather and on-duty pharmacies from an HTTP API — with a “querying” prompt
-              before every lookup.
+            <p class="kicker">IVR designer</p>
+            <h2>Draw the call. Fetch live data. Say it.</h2>
+            <p class="section-lead">
+              The demo “Main line” that ships with DSip: a welcome, a menu to sales and the support
+              queue, and live exchange rates fetched from an HTTP API — with a “one moment” prompt
+              before the lookup.
             </p>
           </header>
 
@@ -293,36 +290,36 @@
               </defs>
               <use href="#fl" class="fl-wire" />
               <use href="#fl" class="fl-run" />
-              <g class="fn n1" transform="translate(20 55)"><rect width="100" height="60" rx="30"/><text x="50" y="27" class="fn-tag">START</text><text x="50" y="45" class="fn-t">901</text></g>
-              <g class="fn n2" transform="translate(170 50)"><path d="M0 14a14 14 0 0 1 14-14h112a14 14 0 0 1 14 14v34a14 14 0 0 1-14 14H38l-12 10V62H14A14 14 0 0 1 0 48Z"/><text x="70" y="25" class="fn-tag">ANNOUNCE</text><text x="70" y="44" class="fn-t">Hoş geldiniz</text></g>
-              <g class="fn n3" transform="translate(360 50)"><path d="M0 0h130l10 35-10 35H0Z"/><text x="65" y="27" class="fn-tag">MENU</text><text x="65" y="46" class="fn-t">1·2·3·4·5·6·0</text></g>
-              <g class="fn n4" transform="translate(550 50)"><path d="M0 14a14 14 0 0 1 14-14h112a14 14 0 0 1 14 14v34a14 14 0 0 1-14 14H38l-12 10V62H14A14 14 0 0 1 0 48Z"/><text x="70" y="25" class="fn-tag">ANNOUNCE</text><text x="70" y="44" class="fn-t">Sorguluyorum…</text></g>
-              <g class="fn n5" transform="translate(740 55)"><path d="M14 0h126l-14 60H0Z"/><text x="70" y="25" class="fn-tag">API</text><text x="70" y="44" class="fn-t">GET /goldPrice</text></g>
-              <g class="fn n6" transform="translate(930 50)"><path d="M0 14a14 14 0 0 1 14-14h112a14 14 0 0 1 14 14v34a14 14 0 0 1-14 14H38l-12 10V62H14A14 14 0 0 1 0 48Z"/><text x="70" y="25" class="fn-tag">TTS · EMA</text><text x="70" y="44" class="fn-t">“altı bin…”</text></g>
+              <g class="fn n1" transform="translate(20 55)"><rect width="100" height="60" rx="30"/><text x="50" y="27" class="fn-tag">START</text><text x="50" y="45" class="fn-t">902</text></g>
+              <g class="fn n2" transform="translate(170 50)"><path d="M0 14a14 14 0 0 1 14-14h112a14 14 0 0 1 14 14v34a14 14 0 0 1-14 14H38l-12 10V62H14A14 14 0 0 1 0 48Z"/><text x="70" y="25" class="fn-tag">ANNOUNCE</text><text x="70" y="44" class="fn-t">Welcome</text></g>
+              <g class="fn n3" transform="translate(360 50)"><path d="M0 0h130l10 35-10 35H0Z"/><text x="65" y="27" class="fn-tag">MENU</text><text x="65" y="46" class="fn-t">1 · 2 · 3 · 0</text></g>
+              <g class="fn n4" transform="translate(550 50)"><path d="M0 14a14 14 0 0 1 14-14h112a14 14 0 0 1 14 14v34a14 14 0 0 1-14 14H38l-12 10V62H14A14 14 0 0 1 0 48Z"/><text x="70" y="25" class="fn-tag">ANNOUNCE</text><text x="70" y="44" class="fn-t">One moment…</text></g>
+              <g class="fn n5" transform="translate(740 55)"><path d="M14 0h126l-14 60H0Z"/><text x="70" y="25" class="fn-tag">API</text><text x="70" y="44" class="fn-t">GET /latest</text></g>
+              <g class="fn n6" transform="translate(930 50)"><path d="M0 14a14 14 0 0 1 14-14h112a14 14 0 0 1 14 14v34a14 14 0 0 1-14 14H38l-12 10V62H14A14 14 0 0 1 0 48Z"/><text x="70" y="25" class="fn-tag">TTS</text><text x="70" y="44" class="fn-t">“One dollar is…”</text></g>
               <circle r="7" class="fl-dot"><animateMotion dur="6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#fl" /></animateMotion></circle>
             </svg>
           </figure>
 
           <div class="ivr-grid">
             <ul class="ticks reveal">
-              <li data-i18n="ivr.p1"><b>Variables everywhere.</b> Digits from Get key, values from Set variable or API mappings expand as <code>$name</code> or <code>{{name}}</code> in prompts and URLs.</li>
-              <li data-i18n="ivr.p2"><b>Filters for speech.</b> <code>{{plate|il}}</code> turns 06 into “Ankara”, <code>{{phone|rakam}}</code> reads digit by digit, <code>{{price|tl}}</code> says “kırk dokuz virgül elli sekiz”.</li>
-              <li data-i18n="ivr.p3"><b>API node.</b> GET / POST / PUT / PATCH / DELETE, secrets stored encrypted (never in the flow), JSON path mappings, timeout, retry and a test request.</li>
-              <li data-i18n="ivr.p4"><b>Type-ahead keys.</b> Callers can press a key during a prompt; the digit is buffered and the speech stops.</li>
-              <li data-i18n="ivr.p5"><b>Safe to change.</b> Validate before publishing, simulate with sample keys and mock API data, roll back to any version.</li>
+              <li><b>Variables everywhere.</b> Digits from Get key, values from Set variable or API mappings expand as <code>$name</code> or <code>{{name}}</code> in prompts and URLs.</li>
+              <li><b>Filters for speech.</b> <code>{{phone|digits}}</code> reads a number digit by digit, <code>{{temp|round}}</code> rounds, <code>{{price|amount}}</code> speaks a price in words, <code>{{city|ascii}}</code> makes a value URL-safe.</li>
+              <li><b>API node.</b> GET / POST / PUT / PATCH / DELETE, secrets stored encrypted (never in the flow), JSON path mappings, timeout, retry and a test request.</li>
+              <li><b>Type-ahead keys.</b> Callers can press a key during a prompt; the digit is buffered and the speech stops.</li>
+              <li><b>Safe to change.</b> Validate before publishing, simulate with sample keys and mock API data, roll back to any version.</li>
             </ul>
             <div class="shots reveal">
               <figure class="shot shot-main">
-                <img src="images/ivr-designer.webp" width="1440" height="900" loading="lazy" decoding="async" alt="IVR designer with the info line: plate code, province lookup, API nodes and condition nodes in distinct shapes" data-alt-tr="IVR tasarımcısı: plaka kodu, il dönüşümü, farklı şekillerde API ve koşul düğümleri" />
-                <figcaption data-i18n="ivr.c1">Extension 901 — every node type has its own shape and color.</figcaption>
+                <img src="images/ivr-designer.webp" width="1440" height="900" loading="lazy" decoding="async" alt="IVR designer with the Main line demo: welcome, menu, sales transfer, support queue, a one-moment prompt, the exchange-rate API, a condition and the read-out" />
+                <figcaption>Extension 902 — every node type has its own shape and color.</figcaption>
               </figure>
               <figure class="shot">
-                <img src="images/ivr-api-settings.webp" width="1440" height="900" loading="lazy" decoding="async" alt="API request settings: method buttons, URL, timeout, retry, header auth with an encrypted secret" data-alt-tr="API isteği ayarları: yöntem, URL, zaman aşımı, tekrar deneme ve şifreli gizli anahtarla kimlik doğrulama" />
-                <figcaption data-i18n="ivr.c2">API request settings with an encrypted secret.</figcaption>
+                <img src="images/ivr-api-settings.webp" width="1440" height="900" loading="lazy" decoding="async" alt="API request settings: method buttons, URL, timeout, retry, auth and JSON mappings" />
+                <figcaption>API request settings: method, URL, retry, auth and JSON mappings.</figcaption>
               </figure>
               <figure class="shot">
-                <img src="images/ivr-main.webp" width="1440" height="900" loading="lazy" decoding="async" alt="Main IVR on extension 900: welcome, menu, transfers with busy / no answer / unavailable exits to hangup" data-alt-tr="900 numaralı ana IVR: karşılama, menü, meşgul / cevapsız / ulaşılamaz çıkışları olan aktarmalar" />
-                <figcaption data-i18n="ivr.c3">Transfers branch on busy, no answer and unavailable.</figcaption>
+                <img src="images/ivr-main.webp" width="1440" height="900" loading="lazy" decoding="async" alt="Main IVR on extension 900: welcome, menu, transfers with busy / no answer / unavailable exits to hangup" />
+                <figcaption>Transfers branch on busy, no answer and unavailable.</figcaption>
               </figure>
             </div>
           </div>
@@ -344,20 +341,22 @@
                 <rect x="292" y="26" width="8" height="28" rx="4"/><rect x="308" y="32" width="8" height="16" rx="4"/>
               </g>
             </svg>
-            <img class="phone-shot" src="images/softphone.webp" width="472" height="674" loading="lazy" decoding="async" alt="Browser softphone: registered as Alice 101, number display, Recents button, keypad, do-not-disturb and call buttons" data-alt-tr="Tarayıcı softphone: Alice 101 olarak kayıtlı, numara ekranı, Son aramalar düğmesi, tuş takımı, rahatsız etmeyin ve arama düğmeleri" />
+            <img class="phone-shot" src="images/softphone.webp" width="472" height="674" loading="lazy" decoding="async" alt="Browser softphone: registered as Alice 101, number display, Recents button, keypad, do-not-disturb and call buttons" />
           </div>
           <div class="reveal">
-            <p class="kicker" data-i18n="soft.kicker">Softphone &amp; portal</p>
-            <h2 data-i18n="soft.title">A phone in the browser, a portal for every desk</h2>
-            <p class="section-lead" data-i18n="soft.lead">
+            <p class="kicker">Softphone &amp; portal</p>
+            <h2>A phone in the browser, a portal for every desk</h2>
+            <p class="section-lead">
               Each extension signs in to its own portal and gets a full softphone — no app to install.
               Desk phones register to the same PBX.
             </p>
             <ul class="ticks">
-              <li data-i18n="soft.p1"><b>WebRTC over WSS</b> through the API’s own proxy; recovers from page reloads, several tabs and network drops.</li>
-              <li data-i18n="soft.p2"><b>Phone-like design</b> with the call on the screen, recents behind a button, DND and DTMF that never drops quick key presses — follows the light and dark theme.</li>
-              <li data-i18n="soft.p3"><b>Portal:</b> directory with live presence, my calls, my recordings, voicemail, forwarding and DND.</li>
-              <li data-i18n="soft.p4"><b>Desk phones:</b> Yealink / Fanvil / Grandstream MAC provisioning and QR setup for mobile softphones.</li>
+              <li><b>WebRTC over WSS</b> through the API’s own proxy; recovers from page reloads, several tabs and network drops.</li>
+              <li><b>Phone-like design</b> with the call on the screen, recents behind a button, DND and DTMF that never drops quick key presses — follows the light and dark theme.</li>
+              <li><b>Stays up while you work:</b> move between portal pages without dropping the call; a mini phone at the bottom of the menu answers, mutes and hangs up.</li>
+              <li><b>One password</b> per extension for the portal and SIP — set by the admin or generated.</li>
+              <li><b>Portal:</b> directory with live presence, my calls, my recordings, voicemail, forwarding and DND.</li>
+              <li><b>Desk phones:</b> Yealink / Fanvil / Grandstream MAC provisioning and QR setup for mobile softphones.</li>
             </ul>
           </div>
         </div>
@@ -367,19 +366,19 @@
       <section class="section section-alt" id="panel">
         <div class="wrap">
           <header class="section-head reveal">
-            <p class="kicker" data-i18n="panel.kicker">Admin panel</p>
-            <h2 data-i18n="panel.title">Day-two operations, in the same place</h2>
-            <p class="section-lead" data-i18n="panel.lead">Real screens from a running system.</p>
+            <p class="kicker">Admin panel</p>
+            <h2>Day-two operations, in the same place</h2>
+            <p class="section-lead">Real screens from a running system.</p>
           </header>
 
           <div class="tour reveal">
             <div class="tabs" role="tablist" aria-label="Panel screens">
-              <button role="tab" aria-selected="true" aria-controls="tour-img" data-shot="dashboard" data-i18n="tab.dash">Live dashboard</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="cdr" data-i18n="tab.cdr">Call logs</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="queues" data-i18n="tab.queues">Queues</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="extensions" data-i18n="tab.ext">Extensions</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="reports" data-i18n="tab.reports">Reports</button>
-              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="settings" data-i18n="tab.settings">Settings &amp; SSL</button>
+              <button role="tab" aria-selected="true" aria-controls="tour-img" data-shot="dashboard">Live dashboard</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="cdr">Call logs</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="queues">Queues</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="extensions">Extensions</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="reports">Reports</button>
+              <button role="tab" aria-selected="false" aria-controls="tour-img" data-shot="settings">Settings &amp; SSL</button>
             </div>
             <figure class="tour-frame" id="tour-img" role="tabpanel">
               <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>dsip.example.com</span></div>
@@ -394,19 +393,19 @@
       <section class="section" id="install">
         <div class="wrap install-grid">
           <div class="reveal">
-            <p class="kicker" data-i18n="inst.kicker">Install</p>
-            <h2 data-i18n="inst.title">One container. Pull and run.</h2>
-            <p class="section-lead" data-i18n="inst.lead">
+            <p class="kicker">Install</p>
+            <h2>One container. Pull and run.</h2>
+            <p class="section-lead">
               Asterisk, the API, the panel, PostgreSQL and the TTS engines live in a single image,
               published to GitHub Container Registry on every release. Deploys pull it in about a
               minute instead of building.
             </p>
             <ol class="steps">
-              <li data-i18n="inst.s1">Point a hostname at the server and open TCP 80/443 and UDP 10000–10100 (RTP).</li>
-              <li data-i18n="inst.s2">Run the image with a volume on <code>/data</code>.</li>
-              <li data-i18n="inst.s3">Sign in, set the hostname in Settings and issue the certificate.</li>
+              <li>Point a hostname at the server and open TCP 80/443 and UDP 10000–10100 (RTP).</li>
+              <li>Run the image with a volume on <code>/data</code>.</li>
+              <li>Sign in, set the hostname in Settings and issue the certificate.</li>
             </ol>
-            <p class="note" data-i18n="inst.note">Recommended: 2 vCPU and 4 GB RAM or more (neural speech runs on the PBX’s CPU). Expose SIP 5060 only if desk phones or trunks need it.</p>
+            <p class="note">Recommended: 2 vCPU and 4 GB RAM or more (neural speech runs on the PBX’s CPU). Expose SIP 5060 only if desk phones or trunks need it.</p>
           </div>
           <div class="terminal reveal" aria-label="Install commands">
             <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>bash</span></div>
@@ -421,9 +420,9 @@ docker run -d --name dsip --restart unless-stopped \
 <span class="c"># update: data stays in the dsip-data volume</span>
 docker pull ghcr.io/diggyen/dsip:latest</code></pre>
             <div class="term-links">
-              <a href="https://github.com/diggyen/DSip/blob/main/docs/INSTALL.md" data-i18n="inst.l1">Install guide</a>
-              <a href="https://github.com/diggyen/DSip/blob/main/docs/DEPLOY-VPS.md" data-i18n="inst.l2">VPS / Compose</a>
-              <a href="https://github.com/diggyen/DSip/blob/main/docs/FEATURES.md" data-i18n="inst.l3">Full feature list</a>
+              <a href="https://github.com/diggyen/DSip/blob/main/docs/INSTALL.md">Install guide</a>
+              <a href="https://github.com/diggyen/DSip/blob/main/docs/DEPLOY-VPS.md">VPS / Compose</a>
+              <a href="https://github.com/diggyen/DSip/blob/main/docs/FEATURES.md">Full feature list</a>
             </div>
           </div>
         </div>
@@ -433,8 +432,8 @@ docker pull ghcr.io/diggyen/dsip:latest</code></pre>
     <footer class="footer">
       <div class="wrap footer-row">
         <span class="brand"><span class="brand-mark" aria-hidden="true">DS</span><span class="brand-name">DSip</span></span>
-        <span class="muted" data-i18n="foot">Self-hosted company PBX · <a href="https://github.com/diggyen/DSip/blob/main/LICENSE">MIT License</a> · source on GitHub</span>
-        <a href="#top" class="muted" data-i18n="foot.top">Back to top ↑</a>
+        <span class="muted">Self-hosted company PBX · <a href="https://github.com/diggyen/DSip/blob/main/LICENSE">MIT License</a> · source on GitHub</span>
+        <a href="#top" class="muted">Back to top ↑</a>
       </div>
     </footer>
 

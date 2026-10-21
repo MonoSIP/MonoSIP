@@ -42,7 +42,9 @@ docker exec <container> curl -fsS http://127.0.0.1:5500/health
 
 ## Notes
 
-- Offline TR/EN works with no outbound network after the image is built.
+- Offline Turkish (EMA) works with no outbound network after the image is built; English needs Edge.
+- IVR speech is split into sentences and synthesized while the previous sentence plays; results are cached on disk.
+- Neural synthesis runs on the PBX CPU: plan 2 vCPU / 4 GB RAM. Under memory pressure the model is swapped out and fresh sentences become slow.
 - Edge needs outbound HTTPS when selected (or when `auto` reaches Microsoft).
 - Output is always 8 kHz mono WAV for Asterisk.
 - Optional standalone image remains at `docker/tts/` for debugging only.

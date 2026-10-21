@@ -58,7 +58,7 @@ for (const [num, name] of [["291", "Test Agent 1"], ["292", "Test Agent 2"], ["2
   }
 }
 const queueBody = {
-  name: "E2E Test Kuyruk",
+  name: "E2E test queue",
   number: QUEUE,
   strategy: "ringall",
   memberTimeout: 8,

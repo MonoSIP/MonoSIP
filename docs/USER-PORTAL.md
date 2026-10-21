@@ -1,17 +1,22 @@
 # User portal and softphone
 
-Each employee signs in with their extension number and portal password; they dial from the browser, see their own calls, and listen to their own recordings only. The portal ships in the first release.
+Each employee signs in with their extension number and password; they call from the browser, see their own calls, and listen to their own recordings only.
 
 ## Sign-in
 
-- Username is the extension number. Portal password is separate from the SIP secret.
-- SIP secret is long and random; the backend issues softphone credentials only after a portal session.
-- A leaked portal password does not expose desk phones; changing the portal password does not require re-provisioning phones.
-- Admin resets passwords; portal access can be enabled/disabled per extension.
+- Username is the extension number.
+- **One password per extension** for the portal and SIP (browser softphone, desk phone). The admin sets it on the extension or generates one (14 characters, no look-alike letters); leaving it empty on create generates one.
+- Rules: 8–64 characters, no spaces, quotes, `;` or `\` (the secret is written into `pjsip.conf`).
+- Changing the password (admin edit, “Generate new password”, or the portal) updates the portal login and the SIP secret together; desk phones then need the new password, browser softphones pick it up on their next sign-in.
+- Extensions created before this change keep their separate random SIP secret until the password is changed.
+- Portal access can be enabled / disabled per extension. Generated passwords prefer length over memorability — the password is also exposed to SIP brute force.
 
 ## Softphone
 
-- Dial, answer, DTMF keypad
+- **One phone for the whole portal:** the softphone lives in the portal layout, so moving between pages keeps the registration and any active call.
+- **Mini phone** on every other portal page (bottom of the menu; a bar above the bottom navigation on phones): registration state, answer / decline an incoming call, peer and timer, mute and hang up. Tapping it opens the full phone.
+- Phone-like design: the call appears on the phone’s screen, recent calls open from a button on the screen, follows the light / dark theme
+- Dial, answer, DTMF keypad (quick key presses are never dropped)
 - Hold, mute, blind and attended transfer
 - Microphone, speaker, and ringtone device selection
 - Directory and live presence (idle, on a call, DND); click a name to dial
@@ -38,7 +43,8 @@ Each employee signs in with their extension number and portal password; they dia
 
 ## Technical notes
 
-- Browser connects to Asterisk over WSS; media is DTLS-SRTP, Opus codec
+- Browser connects to Asterisk over WSS (proxied by the API); media is DTLS-SRTP
+- Reloading the browser tab ends the call (the call belongs to the page); moving between portal pages does not
 - Microphone requires HTTPS; Let’s Encrypt (or equivalent) is required
 - coturn (TURN) on the same host for off-site use
 - Mobile browsers suspend background tabs; inbound while the screen is off is unreliable. Users who must stay reachable on mobile should use a QR-provisioned native softphone

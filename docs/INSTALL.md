@@ -107,7 +107,7 @@ No env is required for a first boot:
 - Embedded **Asterisk** starts unless `ASTERISK_ARI_URL` points at another host (Compose sets `http://asterisk:8088`)
 - `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets` — **do not lose this file** or encrypted SIP secrets become unreadable
 - Asterisk dialplan/PJSIP config persists under `/data/asterisk`
-- Mount a persistent volume at `/data` (~2.5 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
+- Mount a persistent volume at `/data` (4 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
 - **NineDeploy:** set Service → Volume mount path to `/data` in the UI (the `.ninedeploy` `volume.mount` entry only configures backups — it does **not** attach the disk). Without this, every Deploy recreates an empty `/data` on the overlay and all settings/trunks vanish
 - Boot **never wipes** an existing Postgres cluster on start failure (set `DSIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
 - Demo SIP trunk is **not** auto-seeded (set `DSIP_LAB_SEED=1` for lab only)

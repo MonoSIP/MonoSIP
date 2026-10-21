@@ -18,7 +18,8 @@ export const TR_PROVINCES = [
 ] as const;
 
 /**
- * `{{var|filter}}` transforms for phone menus (keypad in, speech out):
+ * `{{var|filter}}` transforms for phone menus (keypad in, speech out). English
+ * aliases: province = il, digits = rakam, round = tamsayi, amount = tl.
  *   il       plate code ("6", "06", "34") → province name ("Ankara", "İstanbul"); "" if invalid
  *   rakam    "03128440695" → "0 3 1 2 8 4 4 0 6 9 5" so TTS reads a phone number digit by digit
  *   tamsayi  "15.72" → "16"
@@ -81,6 +82,12 @@ const TEMPLATE_FILTERS: Record<string, (v: string) => string> = {
     return `${sign}${numberToTurkishWords(Number(whole))}${decimals}`;
   },
 };
+
+// English names (used in the docs); the short Turkish ones keep working.
+TEMPLATE_FILTERS.province = TEMPLATE_FILTERS.il!;
+TEMPLATE_FILTERS.digits = TEMPLATE_FILTERS.rakam!;
+TEMPLATE_FILTERS.round = TEMPLATE_FILTERS.tamsayi!;
+TEMPLATE_FILTERS.amount = TEMPLATE_FILTERS.tl!;
 
 export function expandTemplate(tpl: string, vars: Record<string, unknown>): string {
   return String(tpl ?? "")

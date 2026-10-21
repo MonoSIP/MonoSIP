@@ -229,3 +229,13 @@ describe("numberToTurkishWords", () => {
     expect(numberToTurkishWords(1_000_000)).toBe("bir milyon");
   });
 });
+
+describe("template filter English aliases", () => {
+  it("province / digits / round / amount behave like il / rakam / tamsayi / tl", () => {
+    const v = { p: "6", t: "0312 844", n: "15.72", a: "49.578" };
+    expect(expandTemplate("{{p|province}}", v)).toBe(expandTemplate("{{p|il}}", v));
+    expect(expandTemplate("{{t|digits}}", v)).toBe("0 3 1 2 8 4 4");
+    expect(expandTemplate("{{n|round}}", v)).toBe("16");
+    expect(expandTemplate("{{a|amount}}", v)).toBe(expandTemplate("{{a|tl}}", v));
+  });
+});

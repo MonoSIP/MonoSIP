@@ -24,7 +24,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Queues: strategies (ringall, leastrecent, fewestcalls, rrmemory, linear, random)
 - Members added/removed from the panel only; admin can pause a member
 - Agent ring time, wrap-up, penalty
-- Caller side: MOH, position and estimated wait announce
+- Caller side: MOH, position and estimated wait announce — with a per-queue announcement language and voice model (e.g. Turkish + EMA)
 - Overflow: max wait, queue full, no agents
 - Callback: “Press 1 to keep your place and be called back”
 - Priority queue: a flow variable (e.g. `vip=true`) moves the caller ahead
@@ -37,6 +37,22 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Manual override: Auto / Open now / Closed now, optional end time
 - Separate destination or menu per status (open, lunch, after hours, holiday)
 - Timezone: Europe/Istanbul
+
+## IVR and speech
+
+- Visual flow designer: 17 node types, each with its own shape — announce, TTS, menu, get key, API request, if, set variable, pause, language, schedule, directory, subflow, transfer, queue, voicemail, hangup
+- API request node with encrypted secrets, JSON path mappings, timeout, retry, error exit and a test request
+- Template filters for speech and URLs: `province`, `digits`, `round`, `amount`, `ascii`
+- Speech: Edge Neural voices and EMA (offline Turkish neural); sentence-by-sentence synthesis, cache, type-ahead DTMF, clean audio at the start and end of a call
+- Validate, simulate (mock API data), publish, version history and rollback, JSON import / export
+- Details: [FLOW-DESIGNER.md](FLOW-DESIGNER.md)
+
+## User portal
+
+- Browser softphone that stays up while the user moves between portal pages, plus a mini phone (answer, decline, mute, hang up) on every page
+- One password per extension for portal and SIP, set by the admin or generated
+- Directory with live presence, own calls, own recordings (listen only), voicemail, forwarding, DND
+- Details: [USER-PORTAL.md](USER-PORTAL.md)
 
 ## Trunks and routes
 
@@ -56,6 +72,8 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Waveform player in the panel; admin can download
 - CDR: filters, CSV export, link to recording, DND inbound flagged
 - Missed calls: list, email notify, auto “called back” when returned
+- Call log rows expand in place: call facts plus the step-by-step IVR timeline (nodes, keys pressed)
+- Hold-music classes: upload, preview, delete (refused while a queue or flow uses the class); names are unique
 
 ## Monitoring and reports
 
@@ -92,7 +110,6 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 | Hot desking, LDAP / AD | Overkill for ~20 extensions and one admin |
 | Hotel module | Out of scope |
 | Call park, camp-on, paging / intercom, boss–secretary | Out of scope |
-| AI transcript (Whisper), AI voice-assistant node | Out of scope |
 | SMS node | Out of scope |
 
 ## Technical stack
@@ -115,4 +132,4 @@ Persistence: Docker named volumes (`pgdata`, `recordings`, …) — see [INSTALL
 - Webhooks + API keys (originate, CDR, recordings)
 - Backup / restore JSON; Asterisk config reload from panel
 - **Hostname & automatic SSL** — Let’s Encrypt HTTP-01, install into nginx certs, periodic renew check
-- Security: admin 2FA (TOTP + Apple Passwords link), IP allowlists, login flood ban, optional fail2ban profile, firewall export
+- Security: admin 2FA (TOTP + Apple Passwords link), IP allowlists, login flood ban, SIP guard (records brute-force SIP scanners from Asterisk security events), optional fail2ban profile, firewall export

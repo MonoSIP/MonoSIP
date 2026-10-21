@@ -156,20 +156,6 @@ code {
   gap: 10px;
   align-items: center;
 }
-.lang-toggle {
-  min-width: 44px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-elevated);
-  color: var(--text);
-  font: 600 13px var(--mono);
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-.lang-toggle:hover {
-  border-color: var(--accent);
-}
 
 /* ── buttons ── */
 .btn {

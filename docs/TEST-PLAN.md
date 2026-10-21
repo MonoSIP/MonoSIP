@@ -16,7 +16,7 @@ Related docs: [FEATURES.md](FEATURES.md), [SCREENS.md](SCREENS.md), [FLOW-DESIGN
 
 ### Out of scope (from FEATURES.md — do not test as product requirements)
 
-Card payments, e-commerce plugins, predictive dialer / mass SMS, ticketing/CRM forms, AI transcript/assistant, WhatsApp/live chat/video, hot desking / LDAP, hotel module, call park / paging / DISA, digital fax / GSM, first-party mobile apps.
+Card payments, e-commerce plugins, predictive dialer / mass SMS, ticketing/CRM forms, WhatsApp/live chat/video, hot desking / LDAP, hotel module, call park / paging / DISA, digital fax / GSM, first-party mobile apps.
 
 ---
 

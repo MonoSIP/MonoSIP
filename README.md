@@ -1,12 +1,26 @@
 # DSip
 
-**Company PBX** — open-source Asterisk VoIP with an admin panel and browser softphone. Built for small offices (~20 extensions). Runs as Docker Compose on a Linux VM.
+**Company PBX** — open-source Asterisk VoIP with an admin panel, a visual IVR designer and a browser softphone. Built for small offices (~20 extensions). Runs as one prebuilt Docker image (or Docker Compose) on a Linux VM.
 
 [Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.4.0](https://github.com/diggyen/DSip/releases/tag/v1.4.0) · [MIT License](LICENSE)
 
 Default UI language: **English** (Turkish available in the app).
 
 ## Quick start
+
+Prebuilt image (linux/amd64, published on every release):
+
+```bash
+docker run -d --name dsip --restart unless-stopped \
+  -p 3000:3000 -p 10000-10100:10000-10100/udp \
+  -v dsip-data:/data \
+  -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
+  ghcr.io/diggyen/dsip:latest
+```
+
+Recommended: 2 vCPU and 4 GB RAM (neural speech runs on the PBX CPU).
+
+From source with Docker Compose:
 
 ```bash
 git clone https://github.com/diggyen/DSip.git
@@ -27,12 +41,13 @@ Lab passwords only — change them for production.
 
 ## What you get
 
-- Extensions, trunks, inbound/outbound routes, blacklist  
-- Ring groups, queues (announce + callback), schedules & holidays  
-- Visual IVR / flow designer (ARI)  
-- Portal softphone (SIP.js + coturn), desk-phone provisioning  
-- Live dashboard, spy/whisper, CDR, recordings, reports  
-- Hostname + automatic Let’s Encrypt SSL from Settings  
+- Extensions with one password for portal and SIP, trunks, inbound/outbound routes, blacklist  
+- Ring groups, queues (position / hold-time announcements per language and voice, callback), schedules & holidays  
+- Visual IVR designer: 17 node types, API lookups with encrypted secrets, speech filters, simulation, versions  
+- Speech: Edge Neural voices and EMA (offline Turkish), sentence by sentence  
+- Portal softphone that survives page changes, mini phone on every page, desk-phone provisioning  
+- Live dashboard, spy/whisper, call logs with inline IVR timeline, recordings, reports  
+- Security: 2FA, IP allowlists, login-flood ban, SIP guard; automatic Let’s Encrypt SSL from Settings  
 
 Full list: **[docs/FEATURES.md](docs/FEATURES.md)**
 
