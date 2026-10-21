@@ -31,6 +31,13 @@ export default defineConfig({
         secure: false,
         changeOrigin: true,
       },
+      // Softphone SIP over WebSocket (Fastify proxy → Asterisk /ws)
+      "/asterisk-ws": {
+        target: process.env.VITE_WS_PROXY ?? "wss://localhost",
+        ws: true,
+        secure: false,
+        changeOrigin: true,
+      },
     },
   },
   build: {

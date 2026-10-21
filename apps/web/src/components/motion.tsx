@@ -42,39 +42,44 @@ export function LiveDot({ live, tone = "ok" }: { live: boolean; tone?: "ok" | "e
 }
 
 /**
- * Softphone call visual: rings radiate while dialing/ringing, a voice
- * waveform moves while connected, and it draws a flat line when the call ends.
+ * Softphone in-screen call art (lives inside the phone "screen", fixed size):
+ * rings radiate from the contact avatar while dialing/ringing, the avatar
+ * breathes with live audio bars while connected, and it greys out when ended.
  */
-export function CallPulse({ phase }: { phase: "dialing" | "ringing" | "active" | "ended" | "idle" }) {
+export function CallPulse({
+  phase,
+  label,
+}: {
+  phase: "dialing" | "ringing" | "active" | "ended" | "idle";
+  label: string;
+}) {
   if (phase === "idle") return null;
   const calling = phase === "dialing" || phase === "ringing";
   return (
-    <svg className={`mo-call mo-call--${phase}`} width="160" height="44" viewBox="0 0 160 44" aria-hidden>
-      {calling && (
-        <g>
-          {[0, 1, 2].map((i) => (
-            <circle key={i} className="mo-call-ring" cx="80" cy="22" r="20" style={{ animationDelay: `${i * 0.5}s` }} />
-          ))}
-          <circle cx="80" cy="22" r="6" className="mo-call-core" />
-        </g>
-      )}
-      {phase === "active" &&
-        Array.from({ length: 15 }, (_, i) => {
-          const x = 24 + i * 8;
-          const h = 8 + ((i * 7) % 5) * 5;
-          return (
-            <line
-              key={i}
-              className="mo-call-bar"
-              x1={x}
-              x2={x}
-              y1={22 - h / 2}
-              y2={22 + h / 2}
-              style={{ animationDelay: `${(i % 5) * 0.12}s` }}
-            />
-          );
-        })}
-      {phase === "ended" && <path className="mo-call-flat" d="M16 22h128" pathLength={1} />}
+    <svg className={`mo-call mo-call--${phase}`} width="76" height="76" viewBox="0 0 76 76" aria-hidden>
+      {calling &&
+        [0, 1, 2].map((i) => (
+          <circle key={i} className="mo-call-ring" cx="38" cy="38" r="36" style={{ animationDelay: `${i * 0.55}s` }} />
+        ))}
+      {phase === "active" && <circle className="mo-call-halo" cx="38" cy="38" r="33" />}
+      <circle className="mo-call-avatar" cx="38" cy="38" r="26" />
+      {/* Contact silhouette (the number is shown under the avatar) */}
+      <g className="mo-call-person">
+        <circle cx="38" cy="32.5" r="7" />
+        <path d="M24.5 53.5a13.5 11 0 0 1 27 0" />
+      </g>
+      <title>{label}</title>
+    </svg>
+  );
+}
+
+/** Inline live-audio bars next to the in-call timer. */
+export function CallBars() {
+  return (
+    <svg className="mo-bars" width="18" height="12" viewBox="0 0 18 12" aria-hidden>
+      {[0, 1, 2, 3].map((i) => (
+        <rect key={i} className="mo-bar" x={i * 5} y="0" width="3" height="12" rx="1.5" style={{ animationDelay: `${i * 0.13}s` }} />
+      ))}
     </svg>
   );
 }

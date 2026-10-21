@@ -251,7 +251,15 @@
     "dialing": "Calling",
     "ended": "Ended",
     "callEnded": "Call ended ({{time}})",
-    "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then DSIP_RTP_PUBLISHED=1."
+    "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then DSIP_RTP_PUBLISHED=1.",
+    "incoming": "Incoming call",
+    "enterNumber": "Enter a number",
+    "transfer": "Transfer",
+    "clear": "Clear",
+    "recents": "Recents",
+    "keypad": "Keypad",
+    "noRecents": "No recent calls",
+    "yesterday": "Yesterday"
   },
   "langs": {
     "en": "English",

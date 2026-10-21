@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -193,7 +193,7 @@ async function enterCall(phase: "active" | "ringing" = "active") {
     SoftphoneMock.last.onSession!({ id: "s-1" });
     SoftphoneMock.last.onCallPhase?.(phase, { seconds: 0 });
   });
-  await screen.findByRole("button", { name: "Mute" });
+  await screen.findByRole("button", { name: "portal.mute" });
 }
 
 describe("PhonePage in-call controls", () => {
@@ -202,9 +202,9 @@ describe("PhonePage in-call controls", () => {
 
     expect(screen.queryByRole("button", { name: "portal.dial" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "portal.answer" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Mute" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Hold" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Transfer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "portal.mute" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "portal.hold" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "portal.transfer" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "portal.hangup" })).toBeInTheDocument();
     expect(screen.getByText("0:00")).toBeInTheDocument();
   });
@@ -229,7 +229,7 @@ describe("PhonePage in-call controls", () => {
 
   it("toggles mute both ways", async () => {
     await enterCall();
-    const mute = screen.getByRole("button", { name: "Mute" });
+    const mute = screen.getByRole("button", { name: "portal.mute" });
     expect(mute).not.toHaveClass("btn-primary");
 
     await userEvent.click(mute);
@@ -243,7 +243,7 @@ describe("PhonePage in-call controls", () => {
 
   it("toggles hold and marks the button", async () => {
     await enterCall();
-    const hold = screen.getByRole("button", { name: "Hold" });
+    const hold = screen.getByRole("button", { name: "portal.hold" });
 
     await userEvent.click(hold);
     expect(SoftphoneMock.last.setHold).toHaveBeenLastCalledWith(true);
@@ -261,8 +261,8 @@ describe("PhonePage in-call controls", () => {
 
   it("returns to the idle layout and clears mute/hold when the session ends", async () => {
     await enterCall();
-    await userEvent.click(screen.getByRole("button", { name: "Mute" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Mute" })).toHaveClass("btn-primary"));
+    await userEvent.click(screen.getByRole("button", { name: "portal.mute" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "portal.mute" })).toHaveClass("btn-primary"));
 
     act(() => {
       SoftphoneMock.last.onCallPhase?.("idle");
@@ -271,14 +271,14 @@ describe("PhonePage in-call controls", () => {
 
     // Back to the not-in-call layout, and the transient flags were reset.
     expect(await screen.findByRole("button", { name: "portal.dial" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mute" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "portal.mute" })).not.toBeInTheDocument();
   });
 });
 
 describe("PhonePage transfer panel", () => {
   async function openPanel() {
     await enterCall();
-    await userEvent.click(screen.getByRole("button", { name: "Transfer" }));
+    await userEvent.click(screen.getByRole("button", { name: "portal.transfer" }));
     return screen.findByPlaceholderText("Transfer to extension…");
   }
 
@@ -337,7 +337,7 @@ describe("PhonePage transfer panel", () => {
       expect(toastMessage).toHaveBeenCalledWith("Consult ringing — Complete when answered"),
     );
     // A consult is mid-call, so the in-call layout stays.
-    expect(screen.getByRole("button", { name: "Mute" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "portal.mute" })).toBeInTheDocument();
   });
 
   it("reports a failed consult", async () => {
@@ -362,18 +362,18 @@ describe("PhonePage transfer panel", () => {
 
   it("cancels a consult and clears hold", async () => {
     await openPanel();
-    await userEvent.click(screen.getByRole("button", { name: "Hold" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Hold" })).toHaveClass("btn-primary"));
+    await userEvent.click(screen.getByRole("button", { name: "portal.hold" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "portal.hold" })).toHaveClass("btn-primary"));
 
     await userEvent.click(screen.getByRole("button", { name: "Cancel consult" }));
 
     expect(SoftphoneMock.last.cancelConsult).toHaveBeenCalled();
     await waitFor(() => expect(toastMessage).toHaveBeenCalledWith("Consult cancelled"));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Hold" })).not.toHaveClass("btn-primary"),
+      expect(screen.getByRole("button", { name: "portal.hold" })).not.toHaveClass("btn-primary"),
     );
     // Cancelling does not end the call.
-    expect(screen.getByRole("button", { name: "Mute" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "portal.mute" })).toBeInTheDocument();
   });
 });
 
@@ -385,7 +385,7 @@ async function renderRegistered(entry = "/") {
     SoftphoneMock.last.onStatus!("registered");
   });
   await screen.findByText("portal.registered");
-  return screen.getByPlaceholderText("…");
+  return screen.getByLabelText("portal.enterNumber");
 }
 
 describe("PhonePage keypad", () => {
@@ -412,7 +412,7 @@ describe("PhonePage keypad", () => {
     const input = await renderRegistered();
     await userEvent.type(input, "100");
 
-    const clear = screen.getByTitle("Clear (Esc)");
+    const clear = screen.getByRole("button", { name: "portal.clear" });
     expect(clear).toBeEnabled();
     await userEvent.click(clear);
 
@@ -529,5 +529,54 @@ describe("PhonePage ?dial= prefill", () => {
     const input = await renderRegistered();
     expect(input).toHaveValue("");
     expect(screen.getByRole("button", { name: "portal.dial" })).toBeDisabled();
+  });
+});
+
+describe("PhonePage recents (inside the phone)", () => {
+  const now = new Date().toISOString();
+  function seedCalls() {
+    const base = get.getMockImplementation()!;
+    get.mockImplementation(async (path: string) => {
+      if (path === "/api/v1/me/calls") {
+        return [
+          { id: "1", caller: "101", callee: "900", startedAt: now, direction: "internal", disposition: "ANSWERED" },
+          { id: "2", caller: "102", callee: "101", startedAt: now, direction: "internal", disposition: "NOANSWER" },
+          { id: "3", caller: "101", callee: "900", startedAt: now, direction: "internal", disposition: "ANSWERED" },
+        ];
+      }
+      return base(path);
+    });
+  }
+
+  it("swaps the keypad for recents and dials a number on tap", async () => {
+    seedCalls();
+    renderPage();
+    await waitFor(() => expect(SoftphoneMock.last.onStatus).toBeTypeOf("function"));
+    act(() => {
+      SoftphoneMock.last.onStatus!("registered");
+    });
+
+    await userEvent.click(await screen.findByRole("button", { name: "portal.recents" }));
+    // keypad replaced by the list (same area), grouped by number
+    expect(screen.queryByRole("button", { name: "5" })).not.toBeInTheDocument();
+    const list = screen.getByRole("list", { name: "portal.recents" });
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent("900");
+    expect(rows[0]).toHaveTextContent("(2)");
+    expect(rows[1]).toHaveClass("is-missed");
+
+    await userEvent.click(rows[0]!);
+    expect(SoftphoneMock.last.dial).toHaveBeenCalledWith("900", "sip.example");
+    // back on the keypad after dialing
+    expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
+  });
+
+  it("toggles back to the keypad", async () => {
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: "portal.recents" }));
+    expect(screen.getByText("portal.noRecents")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "portal.keypad" }));
+    expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
   });
 });
