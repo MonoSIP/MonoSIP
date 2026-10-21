@@ -7,6 +7,7 @@ import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
+import { SPEECH_VOICES, voiceOptions } from "./flow/nodeMeta";
 
 type Ext = { id: string; number: string; name: string };
 type Member = { extensionId: string; penalty: number; paused?: boolean };
@@ -24,6 +25,7 @@ type Queue = {
   announceHoldtime?: boolean;
   announcePosition?: boolean;
   language?: "tr" | "en" | null;
+  voice?: string | null;
   timeoutDestType?: string | null;
   timeoutDestId?: string | null;
   fullDestType?: string | null;
@@ -49,6 +51,7 @@ export function QueuesPage() {
   const [announceHold, setAnnounceHold] = useState(true);
   const [announcePos, setAnnouncePos] = useState(true);
   const [language, setLanguage] = useState<"" | "tr" | "en">("");
+  const [voice, setVoice] = useState("");
   const [timeoutDestType, setTimeoutDestType] = useState("hangup");
   const [timeoutDestId, setTimeoutDestId] = useState<string | null>(null);
   const [fullDestType, setFullDestType] = useState("hangup");
@@ -85,6 +88,7 @@ export function QueuesPage() {
     announceHoldtime: announceHold,
     announcePosition: announcePos,
     language: language || null,
+    voice: voice || null,
     timeoutDestType: timeoutDestType || null,
     timeoutDestId: timeoutDestId,
     fullDestType: fullDestType || null,
@@ -129,6 +133,7 @@ export function QueuesPage() {
     setAnnounceHold(true);
     setAnnouncePos(true);
     setLanguage("");
+    setVoice("");
     setTimeoutDestType("hangup");
     setTimeoutDestId(null);
     setFullDestType("hangup");
@@ -178,6 +183,7 @@ export function QueuesPage() {
     setAnnounceHold(q.announceHoldtime ?? true);
     setAnnouncePos(q.announcePosition ?? true);
     setLanguage(q.language ?? "");
+    setVoice(q.voice ?? "");
     setTimeoutDestType(q.timeoutDestType ?? "hangup");
     setTimeoutDestId(q.timeoutDestId ?? null);
     setFullDestType(q.fullDestType ?? "hangup");
@@ -284,11 +290,31 @@ export function QueuesPage() {
             label={tr("Announcement language")}
             className="w-[10rem]"
             value={language}
-            onChange={(e) => setLanguage(e.target.value as "" | "tr" | "en")}
+            onChange={(e) => {
+              const next = e.target.value as "" | "tr" | "en";
+              setLanguage(next);
+              // EMA is TR-only, Kokoro EN-only
+              if (next && voice && !voiceOptions(next).some((v) => v.value === voice)) setVoice("");
+            }}
           >
             <option value="">{tr("System default")}</option>
             <option value="tr">Türkçe</option>
             <option value="en">English</option>
+          </SelectField>
+          <SelectField
+            label={tr("Voice model")}
+            className="w-[10rem]"
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+          >
+            <option value="">{tr("Default")}</option>
+            {(language ? voiceOptions(language) : SPEECH_VOICES.map((v) => ({ value: v.value, label: tr(v.label) }))).map(
+              (v) => (
+                <option key={v.value} value={v.value}>
+                  {v.label}
+                </option>
+              ),
+            )}
           </SelectField>
           <SelectField label={tr("MOH class")} className="w-[10rem]" value={mohId} onChange={(e) => setMohId(e.target.value)}>
             <option value="">default</option>

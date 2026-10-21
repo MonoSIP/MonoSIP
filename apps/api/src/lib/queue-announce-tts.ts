@@ -3,10 +3,13 @@
  * Missing files are synthesized; existing files are reused (cache).
  * While announcing, Asterisk pauses MOH, then resumes.
  */
-import { existsSync, statSync } from "node:fs";
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { existsSync, lstatSync, statSync } from "node:fs";
+import { mkdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config.js";
+import { db } from "../db/client.js";
+import { queues } from "../db/schema.js";
+import { queueSoundLanguage, queueVoiceLanguages } from "../asterisk/queue-lang.js";
 import { synthesizeSpeech, type TtsLanguage } from "./tts.js";
 
 type Pack = {
@@ -151,13 +154,14 @@ async function writeClip(
   text: string,
   lang: TtsLanguage,
   force = false,
+  voice?: string,
 ): Promise<boolean> {
   // Cache: reuse existing WAV if present
   if (!force && existsSync(filePath) && statSync(filePath).size > 200) {
     return false;
   }
   await mkdir(path.dirname(filePath), { recursive: true });
-  const wav = await synthesizeSpeech(text, lang, lang === "tr" ? 0.98 : 1.0);
+  const wav = await synthesizeSpeech(text, lang, lang === "tr" ? 0.98 : 1.0, voice);
   await writeFile(filePath, wav);
   return true;
 }
@@ -171,6 +175,18 @@ async function readVersion(verPath: string): Promise<string> {
 }
 
 export async function ensureQueueAnnounceSounds(): Promise<{ written: number; skipped: number }> {
+  // One build at a time: boot and every queue save both ask for it.
+  const run = building.then(buildAllPacks);
+  building = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+let building: Promise<unknown> = Promise.resolve();
+
+async function buildAllPacks(): Promise<{ written: number; skipped: number }> {
   if (!config.ttsUrl) {
     console.warn("[queue-tts] TTS_URL unset — skip announce pack");
     return { written: 0, skipped: 0 };
@@ -178,89 +194,145 @@ export async function ensureQueueAnnounceSounds(): Promise<{ written: number; sk
   let written = 0;
   let skipped = 0;
   const root = soundsRoot();
+  const add = (r: { written: number; skipped: number }) => {
+    written += r.written;
+    skipped += r.skipped;
+  };
 
-  for (const pack of PACKS) {
-    const langDir = path.join(root, pack.lang);
-    const digitDir = path.join(langDir, "digits");
-    await mkdir(digitDir, { recursive: true });
+  // Base packs (default voice) → sounds/<lang>
+  for (const pack of PACKS) add(await buildPack(root, pack, pack.lang));
 
-    const verPath = path.join(langDir, ".announce-version");
-    const forcePack = pack.lang === "tr" && (await readVersion(verPath)) !== PACK_VERSION;
-
-    for (const [name, text] of Object.entries(pack.phrases)) {
-      const fp = path.join(langDir, `${name}.wav`);
-      try {
-        if (forcePack && existsSync(fp)) {
-          try {
-            await unlink(fp);
-          } catch {
-            /* ignore */
-          }
-        }
-        if (await writeClip(fp, text, pack.lang, forcePack)) written++;
-        else skipped++;
-      } catch (e) {
-        console.warn(`[queue-tts] ${pack.lang}/${name}:`, (e as Error).message);
-      }
+  // Voices chosen on queues → sounds/<lang>_<voice> (Asterisk falls back to <lang>)
+  const used = await db.select({ language: queues.language, voice: queues.voice }).from(queues).catch(() => []);
+  const variants = new Map<string, { pack: Pack; voice: string }>();
+  for (const q of used) {
+    for (const lang of queueVoiceLanguages(q.language, q.voice)) {
+      const dirName = queueSoundLanguage(lang, q.voice);
+      const pack = PACKS.find((p) => p.lang === lang);
+      if (pack && dirName !== lang) variants.set(dirName, { pack, voice: q.voice! });
     }
-
-    for (const [n, text] of Object.entries(pack.digits)) {
-      const fp = path.join(digitDir, `${n}.wav`);
-      try {
-        // Digits rarely change — always cache unless missing
-        if (await writeClip(fp, text, pack.lang, false)) written++;
-        else skipped++;
-      } catch (e) {
-        console.warn(`[queue-tts] ${pack.lang}/digits/${n}:`, (e as Error).message);
-      }
-    }
-
-    // Position sentences (Playback(qpos/N))
-    const qposDir = path.join(langDir, "qpos");
-    await mkdir(qposDir, { recursive: true });
-    for (let i = 1; i <= POS_MAX; i++) {
-      const fp = path.join(qposDir, `${i}.wav`);
-      try {
-        if (forcePack && existsSync(fp)) {
-          try {
-            await unlink(fp);
-          } catch {
-            /* ignore */
-          }
-        }
-        if (await writeClip(fp, positionSentence(pack.lang, i), pack.lang, forcePack)) written++;
-        else skipped++;
-      } catch (e) {
-        console.warn(`[queue-tts] ${pack.lang}/qpos/${i}:`, (e as Error).message);
-      }
-    }
-
-    // Hold-time sentences (optional Playback / future use; also warms cache)
-    const qholdDir = path.join(langDir, "qhold");
-    await mkdir(qholdDir, { recursive: true });
-    for (let m = 1; m <= HOLD_MAX; m++) {
-      const fp = path.join(qholdDir, `${m}.wav`);
-      try {
-        if (forcePack && existsSync(fp)) {
-          try {
-            await unlink(fp);
-          } catch {
-            /* ignore */
-          }
-        }
-        if (await writeClip(fp, holdSentence(pack.lang, m), pack.lang, forcePack)) written++;
-        else skipped++;
-      } catch (e) {
-        console.warn(`[queue-tts] ${pack.lang}/qhold/${m}:`, (e as Error).message);
-      }
-    }
-
-    if (forcePack) {
-      await writeFile(verPath, `${PACK_VERSION}\n`);
-      await writeFile(path.join(qposDir, ".version"), `${PACK_VERSION}\n`);
+  }
+  for (const [dirName, { pack, voice }] of variants) {
+    try {
+      add(await buildPack(root, pack, dirName, voice));
+      await linkIntoAsteriskSounds(root, dirName);
+    } catch (e) {
+      console.warn(`[queue-tts] ${dirName} skipped (falls back to ${pack.lang}):`, (e as Error).message);
     }
   }
 
   console.log(`[queue-tts] announce pack written=${written} skipped=${skipped}`);
+  return { written, skipped };
+}
+
+/**
+ * Embedded Asterisk reads sounds/<lang> under /var/lib/asterisk/sounds; make the new
+ * variant folder visible there (start-asterisk links them too, at boot / reload).
+ */
+async function linkIntoAsteriskSounds(root: string, dirName: string): Promise<void> {
+  const sounds = "/var/lib/asterisk/sounds";
+  const link = path.join(sounds, dirName);
+  if (!existsSync(sounds) || path.resolve(root) === path.resolve(sounds)) return;
+  try {
+    lstatSync(link);
+    return; // already there
+  } catch {
+    /* missing */
+  }
+  await symlink(path.join(root, dirName), link).catch(() => undefined);
+}
+
+async function buildPack(
+  root: string,
+  pack: Pack,
+  dirName: string,
+  voice?: string,
+): Promise<{ written: number; skipped: number }> {
+  let written = 0;
+  let skipped = 0;
+  const langDir = path.join(root, dirName);
+  const digitDir = path.join(langDir, "digits");
+  await mkdir(digitDir, { recursive: true });
+
+  const verPath = path.join(langDir, ".announce-version");
+  // A voice variant is built once in full; the base TR pack follows PACK_VERSION.
+  const forcePack = (voice !== undefined || pack.lang === "tr") && (await readVersion(verPath)) !== PACK_VERSION;
+
+  for (const [name, text] of Object.entries(pack.phrases)) {
+    const fp = path.join(langDir, `${name}.wav`);
+    try {
+      if (forcePack && existsSync(fp)) {
+        try {
+          await unlink(fp);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (await writeClip(fp, text, pack.lang, forcePack, voice)) written++;
+      else skipped++;
+    } catch (e) {
+      if (voice) throw e;
+      console.warn(`[queue-tts] ${dirName}/${name}:`, (e as Error).message);
+    }
+  }
+
+  for (const [n, text] of Object.entries(pack.digits)) {
+    const fp = path.join(digitDir, `${n}.wav`);
+    try {
+      // Digits rarely change — always cache unless missing
+      if (await writeClip(fp, text, pack.lang, false, voice)) written++;
+      else skipped++;
+    } catch (e) {
+      if (voice) throw e;
+      console.warn(`[queue-tts] ${dirName}/digits/${n}:`, (e as Error).message);
+    }
+  }
+
+  // Position sentences (Playback(qpos/N))
+  const qposDir = path.join(langDir, "qpos");
+  await mkdir(qposDir, { recursive: true });
+  for (let i = 1; i <= POS_MAX; i++) {
+    const fp = path.join(qposDir, `${i}.wav`);
+    try {
+      if (forcePack && existsSync(fp)) {
+        try {
+          await unlink(fp);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (await writeClip(fp, positionSentence(pack.lang, i), pack.lang, forcePack, voice)) written++;
+      else skipped++;
+    } catch (e) {
+      if (voice) throw e;
+      console.warn(`[queue-tts] ${dirName}/qpos/${i}:`, (e as Error).message);
+    }
+  }
+
+  // Hold-time sentences (optional Playback / future use; also warms cache)
+  const qholdDir = path.join(langDir, "qhold");
+  await mkdir(qholdDir, { recursive: true });
+  for (let m = 1; m <= HOLD_MAX; m++) {
+    const fp = path.join(qholdDir, `${m}.wav`);
+    try {
+      if (forcePack && existsSync(fp)) {
+        try {
+          await unlink(fp);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (await writeClip(fp, holdSentence(pack.lang, m), pack.lang, forcePack, voice)) written++;
+      else skipped++;
+    } catch (e) {
+      if (voice) throw e;
+      console.warn(`[queue-tts] ${dirName}/qhold/${m}:`, (e as Error).message);
+    }
+  }
+
+  if (forcePack) {
+    await writeFile(verPath, `${PACK_VERSION}\n`);
+    await writeFile(path.join(qposDir, ".version"), `${PACK_VERSION}\n`);
+  }
   return { written, skipped };
 }

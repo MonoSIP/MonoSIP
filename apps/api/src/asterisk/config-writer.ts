@@ -25,7 +25,7 @@ import {
 import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
 import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
-import { queueLanguage } from "./queue-lang.js";
+import { queueLanguage, queueSoundLanguage } from "./queue-lang.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -1001,7 +1001,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // Hangup handler `h` posts the CDR if the caller leaves before Queue() returns
       ` same => n,Set(DSIP_QUEUE=${q.number})`,
       ` same => n,Set(DSIP_QSTART=)`,
-      ` same => n,Set(CHANNEL(language)=${qLang})`,
+      // tr_ema / en_kokoro … = that voice's clips, falling back to tr / en
+      ` same => n,Set(CHANNEL(language)=${queueSoundLanguage(qLang, q.voice)})`,
       ` same => n,Set(CHANNEL(musicclass)=${mohName})`,
       ` same => n,PauseQueueMember(${q.number},PJSIP/\${CALLERID(num)})`,
       ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?qkvkk)`,

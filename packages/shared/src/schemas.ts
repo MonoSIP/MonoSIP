@@ -119,6 +119,8 @@ export const QueueSchema = z.object({
   callbackEnabled: z.boolean().default(false),
   /** Announcement language; null = system default */
   language: z.enum(["tr", "en"]).optional().nullable(),
+  /** Announcement voice/model; null = default voice. EMA is TR-only, Kokoro EN-only. */
+  voice: z.enum(["female", "male", "ema-lightning", "kokoro"]).optional().nullable(),
   members: z
     .array(
       z.object({

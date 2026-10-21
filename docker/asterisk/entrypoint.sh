@@ -28,6 +28,11 @@ overlay_en_sounds() {
     [ -f "$f" ] || continue
     ln -sfn "$f" "/var/lib/asterisk/sounds/en/$(basename "$f")"
   done
+  # Per-queue voice packs (sounds/tr_ema, en_kokoro …) — Asterisk language variants
+  for d in /var/lib/asterisk/dsip/sounds/*_*; do
+    [ -d "$d" ] || continue
+    ln -sfn "$d" "/var/lib/asterisk/sounds/$(basename "$d")"
+  done
   for d in digits qpos qhold; do
     mkdir -p "/var/lib/asterisk/sounds/en/$d"
     for f in /var/lib/asterisk/dsip/sounds/en/$d/*.wav; do

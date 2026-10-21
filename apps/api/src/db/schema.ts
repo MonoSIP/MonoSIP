@@ -126,6 +126,8 @@ export const queues = pgTable("queues", {
   callbackEnabled: boolean("callback_enabled").notNull().default(false),
   /** Announcement language (tr/en); null = system default */
   language: varchar("language", { length: 8 }),
+  /** Announcement voice/model (female | male | ema-lightning | kokoro); null = default voice */
+  voice: varchar("voice", { length: 40 }),
 });
 
 export const queueMembers = pgTable("queue_members", {
