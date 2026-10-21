@@ -197,8 +197,12 @@ describe("expandTemplate filters", () => {
   it("formats phone digits, integers and Turkish money", () => {
     expect(expandTemplate("{{t|rakam}}", { t: "0312 844 06" })).toBe("0 3 1 2 8 4 4 0 6");
     expect(expandTemplate("{{d|tamsayi}}", { d: "15.72" })).toBe("16");
-    expect(expandTemplate("{{c|tl}}", { c: "49.578" })).toBe("49,58");
-    expect(expandTemplate("{{g|tl}}", { g: "6566.77" })).toBe("6.566,77");
+    expect(expandTemplate("{{c|tl}}", { c: "49.578" })).toBe("49 virgül 58");
+    expect(expandTemplate("{{g|tl}}", { g: "6566.77" })).toBe("6566 virgül 77");
+    expect(expandTemplate("{{g|tl}}", { g: "6566,7" })).toBe("6566 virgül 70");
+    expect(expandTemplate("{{d|tl}}", { d: "-1.25" })).toBe("eksi 1 virgül 25");
+    expect(expandTemplate("{{d|tl}}", { d: "-0.001" })).toBe("0 virgül 00");
+    expect(expandTemplate("{{d|tl}}", { d: "42" })).toBe("42 virgül 00");
     expect(expandTemplate("{{g|tl}}", { g: "-" })).toBe("-");
     expect(expandTemplate("{{c|ascii}}", { c: "İzmir" })).toBe("izmir");
     expect(expandTemplate("{{c|ascii}}", { c: "Şanlıurfa" })).toBe("sanliurfa");

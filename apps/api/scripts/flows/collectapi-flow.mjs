@@ -73,6 +73,9 @@ const add = (id, type, data, pos) => nodes.push({ id, type, position: pos, data:
 const link = (source, target, handle = "next") =>
   edges.push({ id: `e-${source}-${handle}-${target}`, source, target, sourceHandle: handle, label: handle });
 const say = (id, text, pos, label) => add(id, "announce", { text, language: "tr", gender: VOICE, label }, pos);
+/** Spoken before a lookup so the caller knows the pause is the query. */
+const QUERYING = "Sorguluyorum, lütfen bekleyin.";
+const querying = (id, pos) => say(id, QUERYING, pos, "Sorguluyorum");
 const api = (id, url, mappings, pos, label) =>
   add(
     id,
@@ -151,7 +154,9 @@ function provinceChain(key, row, digit, title, buildApiNodes) {
   link(`${key}IlYok`, `${key}PlakaHata`, "true");
   link(`${key}PlakaHata`, p);
   const first = buildApiNodes(row);
-  link(`${key}IlYok`, first, "false");
+  querying(`${key}Sorgu`, at(4.5, row - 0.6));
+  link(`${key}IlYok`, `${key}Sorgu`, "false");
+  link(`${key}Sorgu`, first);
 }
 
 // 1 · Nöbetçi eczane
@@ -268,7 +273,9 @@ say(
   at(3, 4),
   "Kurları oku",
 );
-link("menu", "dovizApi", "4");
+querying("dovizSorgu", at(1.5, 4 + 0.5));
+link("menu", "dovizSorgu", "4");
+link("dovizSorgu", "dovizApi");
 link("dovizApi", "dovizSoyle", "success");
 link("dovizApi", "apiHata", "error");
 link("dovizSoyle", "menu");
@@ -291,7 +298,9 @@ say(
   at(3, 5),
   "Altını oku",
 );
-link("menu", "altinApi", "5");
+querying("altinSorgu", at(1.5, 5 + 0.5));
+link("menu", "altinSorgu", "5");
+link("altinSorgu", "altinApi");
 link("altinApi", "altinSoyle", "success");
 link("altinApi", "apiHata", "error");
 link("altinSoyle", "menu");
@@ -313,7 +322,9 @@ say(
   at(3, 6),
   "Borsayı oku",
 );
-link("menu", "borsaApi", "6");
+querying("borsaSorgu", at(1.5, 6 + 0.5));
+link("menu", "borsaSorgu", "6");
+link("borsaSorgu", "borsaApi");
 link("borsaApi", "borsaSoyle", "success");
 link("borsaApi", "apiHata", "error");
 link("borsaSoyle", "menu");

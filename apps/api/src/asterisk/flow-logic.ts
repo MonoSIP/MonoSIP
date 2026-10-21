@@ -22,7 +22,8 @@ export const TR_PROVINCES = [
  *   il       plate code ("6", "06", "34") → province name ("Ankara", "İstanbul"); "" if invalid
  *   rakam    "03128440695" → "0 3 1 2 8 4 4 0 6 9 5" so TTS reads a phone number digit by digit
  *   tamsayi  "15.72" → "16"
- *   tl       "49.578" / "6566.77" → "49,58" / "6.566,77" (Turkish decimals, 2 places)
+ *   tl       "49.578" / "6566.77" / "-1.5" → "49 virgül 58" / "6566 virgül 77" / "eksi 1 virgül 50"
+ *            (2 places, spoken: TTS skips "," and reads a thousands "." as nothing)
  *   ascii    "İzmir" / "Şanlıurfa" → "izmir" / "sanliurfa" (APIs that reject Turkish letters in a URL)
  */
 const TEMPLATE_FILTERS: Record<string, (v: string) => string> = {
@@ -45,9 +46,9 @@ const TEMPLATE_FILTERS: Record<string, (v: string) => string> = {
   },
   tl: (v) => {
     const n = Number(v.replace(",", "."));
-    return Number.isFinite(n) && v.trim() !== ""
-      ? n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : v;
+    if (!Number.isFinite(n) || v.trim() === "") return v;
+    const [whole, frac] = Math.abs(n).toFixed(2).split(".");
+    return `${n < 0 && Number(`${whole}.${frac}`) !== 0 ? "eksi " : ""}${whole} virgül ${frac}`;
   },
 };
 
