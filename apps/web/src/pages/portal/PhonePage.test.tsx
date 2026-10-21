@@ -111,7 +111,7 @@ describe("PhonePage softphone lifecycle", () => {
   it("connects with the fetched SIP credentials on mount", async () => {
     renderPage();
 
-    expect(await screen.findByRole("heading", { name: "nav.phone" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "nav.phone" })).toHaveClass("sr-only");
     await waitFor(() => expect(SoftphoneMock.last.connect).toHaveBeenCalled());
     expect(SoftphoneMock.last.connect).toHaveBeenCalledWith({
       extension: "101",
@@ -570,6 +570,19 @@ describe("PhonePage recents (inside the phone)", () => {
     expect(SoftphoneMock.last.dial).toHaveBeenCalledWith("900", "sip.example");
     // back on the keypad after dialing
     expect(screen.getByRole("button", { name: "5" })).toBeInTheDocument();
+  });
+
+  it("badges missed calls on the screen tab until recents are opened", async () => {
+    localStorage.removeItem("dsip.recentsSeenAt");
+    seedCalls();
+    renderPage();
+    const tab = await screen.findByRole("button", { name: "portal.recents" });
+    await waitFor(() => expect(within(tab).getByText("1")).toBeInTheDocument());
+
+    await userEvent.click(tab);
+    await userEvent.click(screen.getByRole("button", { name: "portal.keypad" }));
+    // seen → no badge any more
+    expect(within(screen.getByRole("button", { name: "portal.recents" })).queryByText("1")).not.toBeInTheDocument();
   });
 
   it("toggles back to the keypad", async () => {

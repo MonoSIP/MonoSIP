@@ -12,7 +12,6 @@ import {
   MicOff,
   Moon,
   Pause,
-  Phone,
   Phone as PhoneIcon,
   PhoneIncoming,
   PhoneMissed,
@@ -24,8 +23,9 @@ import {
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { Softphone, type CallPhase } from "../../lib/softphone";
-import { PageHeader } from "../../components/ui";
 import { CallBars, CallPulse } from "../../components/motion";
+
+const RECENTS_SEEN_KEY = "dsip.recentsSeenAt";
 
 /** Keypad: digit + letters, as on a phone. */
 const KEYS: Array<[string, string]> = [
@@ -279,6 +279,33 @@ export function PhonePage() {
     return [...byPeer.values()].slice(0, 30);
   })();
 
+  // Missed calls since the recents list was last opened → badge on the screen tab.
+  const [recentsSeenAt, setRecentsSeenAt] = useState<number>(() => {
+    try {
+      return Number(localStorage.getItem(RECENTS_SEEN_KEY) ?? 0) || 0;
+    } catch {
+      return 0;
+    }
+  });
+  const missedNew = (recent.data ?? []).filter((c) => {
+    const outgoing = (c.caller ?? "").trim() === me.data?.number || c.direction === "outbound";
+    return !outgoing && c.disposition && c.disposition !== "ANSWERED" && Date.parse(c.startedAt) > recentsSeenAt;
+  }).length;
+  function toggleRecents() {
+    if (view === "recents") {
+      setView("keypad");
+      return;
+    }
+    setView("recents");
+    const now = Date.now();
+    setRecentsSeenAt(now);
+    try {
+      localStorage.setItem(RECENTS_SEEN_KEY, String(now));
+    } catch {
+      /* private mode — badge just won't persist */
+    }
+  }
+
   function recentTime(iso: string) {
     const d = new Date(iso);
     const now = new Date();
@@ -342,9 +369,7 @@ export function PhonePage() {
   const actionSlots: Array<ReactNode | null> = !showCallUi
     ? [
         dndAct,
-        view === "recents"
-          ? act(t("portal.keypad"), <Grid3x3 size={18} />, () => setView("keypad"), { on: true })
-          : act(t("portal.recents"), <History size={18} />, () => setView("recents")),
+        null,
         mainCall,
         null,
         act(t("portal.clear"), <X size={18} />, clearDigits, { disabled: !digits }),
@@ -377,12 +402,8 @@ export function PhonePage() {
 
   return (
     <div className="mx-auto max-w-md space-y-4">
-      <PageHeader
-        icon={Phone}
-        title={t("nav.phone")}
-        tone="cyan"
-        description={me.data ? `${me.data.name} · ${me.data.number}` : undefined}
-      />
+      {/* The phone itself carries the identity; keep a page title for screen readers */}
+      <h1 className="sr-only">{t("nav.phone")}</h1>
       {showMediaBanner && bannerText && (
         <div
           className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
@@ -408,7 +429,12 @@ export function PhonePage() {
             </span>
             <span className="flex items-center gap-1.5">
               {dnd && <span className="sp-chip">DND</span>}
-              {me.data?.number && <span className="font-mono">{me.data.number}</span>}
+              {me.data?.number && (
+                <span className="sp-identity">
+                  {me.data.name ? `${me.data.name} · ` : ""}
+                  <span className="font-mono">{me.data.number}</span>
+                </span>
+              )}
             </span>
           </div>
           {!showCallUi ? (
@@ -427,7 +453,7 @@ export function PhonePage() {
                       clearDigits();
                     }
                   }}
-                  placeholder=" "
+                  placeholder={t("portal.enterNumber")}
                 />
                 <button
                   className="sp-backspace"
@@ -440,8 +466,24 @@ export function PhonePage() {
                   <Delete size={20} />
                 </button>
               </div>
-              <div className="sp-hint">{digits ? "" : t("portal.enterNumber")}</div>
             </div>
+          ) : null}
+          {!showCallUi ? (
+            <button
+              type="button"
+              className={`sp-screen-tab${view === "recents" ? " is-open" : ""}`}
+              aria-label={view === "recents" ? t("portal.keypad") : t("portal.recents")}
+              aria-pressed={view === "recents"}
+              onClick={toggleRecents}
+            >
+              {view === "recents" ? <Grid3x3 size={14} /> : <History size={14} />}
+              <span>{view === "recents" ? t("portal.keypad") : t("portal.recents")}</span>
+              {view !== "recents" && missedNew > 0 && (
+                <span className="sp-screen-tab-badge" aria-label={`${missedNew}`}>
+                  {missedNew > 9 ? "9+" : missedNew}
+                </span>
+              )}
+            </button>
           ) : (
             <div className="sp-call" aria-live="polite">
               <CallPulse phase={callPhase} label={avatarLabel} />

@@ -1108,7 +1108,7 @@ html.light .sp-device {
 }
 .sp-dial {
   position: absolute;
-  inset: 2rem 0.6rem 0.6rem;
+  inset: 1.8rem 0.6rem 1.8rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1150,7 +1150,47 @@ html.light .sp-device {
 }
 .sp-backspace:hover:not(:disabled) { background: rgb(255 255 255 / 0.1); color: var(--sp-ink); }
 .sp-backspace:disabled { opacity: 0; }
-.sp-hint { font-size: 0.72rem; color: var(--sp-ink-muted); min-height: 1rem; }
+.sp-identity { color: var(--sp-ink); font-weight: 500; }
+/* Recents tab: a small glass tab docked in the screen's bottom-right corner */
+.sp-screen-tab {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.6rem;
+  border-radius: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: color-mix(in oklab, var(--sp-accent) 70%, var(--sp-ink));
+  background: color-mix(in oklab, var(--sp-accent) 14%, transparent);
+  border: 1px solid color-mix(in oklab, var(--sp-accent) 32%, transparent);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+}
+.sp-screen-tab:hover { background: color-mix(in oklab, var(--sp-accent) 24%, transparent); }
+.sp-screen-tab:active { transform: scale(0.96); }
+.sp-screen-tab.is-open {
+  background: var(--sp-accent);
+  color: var(--sp-screen);
+  border-color: transparent;
+  box-shadow: 0 4px 14px -6px var(--sp-accent);
+}
+.sp-screen-tab-badge {
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--sp-end);
+  box-shadow: 0 0 0 2px var(--sp-screen);
+}
 .sp-call {
   position: absolute;
   inset: 1.6rem 0.6rem 0.5rem;
