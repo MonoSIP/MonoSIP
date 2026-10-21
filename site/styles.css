@@ -111,16 +111,10 @@ code {
   font-weight: 700;
 }
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 800;
-  color: #062019;
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-  box-shadow: 0 0 18px color-mix(in oklab, var(--accent) 40%, transparent);
+  filter: drop-shadow(0 4px 12px rgb(4 120 87 / 0.4));
 }
 .brand-name {
   font-size: 19px;

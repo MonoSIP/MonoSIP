@@ -21,9 +21,7 @@ export function AppBrand({
   return (
     <div className={className}>
       <div className="flex items-center gap-2.5">
-        <span className="brand-mark" aria-hidden>
-          DS
-        </span>
+        <img className="brand-mark" src="/munasip-mark.svg" width={36} height={36} alt="" aria-hidden />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <TitleTag

@@ -549,21 +549,13 @@ textarea.input {
   border-right: 1px solid color-mix(in oklab, var(--border) 80%, var(--accent) 20%);
 }
 
+/* MunaSIP mark (public/munasip-mark.svg) — the tile and its corners are in the SVG */
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: block;
+  flex: none;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 12px;
-  background: linear-gradient(145deg, var(--accent), var(--accent-3));
-  color: #042f2e;
-  font-weight: 800;
-  font-size: 0.85rem;
-  letter-spacing: -0.04em;
-  box-shadow: 0 8px 20px color-mix(in oklab, var(--accent) 30%, transparent);
-}
-html.light .brand-mark {
-  color: #fff;
+  filter: drop-shadow(0 6px 14px rgb(4 120 87 / 0.35));
 }
 
 .login-shell {
