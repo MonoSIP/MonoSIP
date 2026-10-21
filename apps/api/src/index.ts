@@ -106,6 +106,9 @@ async function main() {
   startArchiveJob();
   const { startOpusConvertJob } = await import("./jobs/opus-convert.js");
   startOpusConvertJob();
+  // Ban addresses that brute-force SIP (AMI security events → SIP ACL deny)
+  const { startSipGuard } = await import("./lib/sip-guard.js");
+  startSipGuard();
   const { startTrunkMonitorJob } = await import("./jobs/trunk-monitor.js");
   startTrunkMonitorJob();
   const { startNightlyBackupJob } = await import("./jobs/nightly-backup.js");

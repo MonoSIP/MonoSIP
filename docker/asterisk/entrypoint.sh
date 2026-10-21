@@ -190,4 +190,19 @@ EOF
   done
 ) &
 
+# Keep Asterisk logs bounded: a SIP scanner alone writes hundreds of MB a day.
+# Over 50 MB a file keeps its newest 5 MB (in place — Asterisk appends on).
+(
+  while true; do
+    for f in /var/log/asterisk/console.log /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security; do
+      [ -f "$f" ] || continue
+      if [ "$(stat -c %s "$f" 2>/dev/null || echo 0)" -gt 52428800 ]; then
+        tail -c 5242880 "$f" > "$f.trim" && cat "$f.trim" > "$f"
+        rm -f "$f.trim"
+      fi
+    done
+    sleep 600
+  done
+) &
+
 exec asterisk -f -vvv

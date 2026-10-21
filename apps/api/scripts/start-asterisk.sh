@@ -187,7 +187,10 @@ queue_log = no
 rotatestrategy = sequential
 
 [logfiles]
-console => notice,warning,error
+; No notices on the console: failed SIP requests from scanners are notices and
+; flooded console.log (900 MB/h). They still reach messages (capped) and the
+; security channel, which the API's SIP guard turns into bans.
+console => warning,error
 messages => notice,warning,error
 full => notice,warning,error,verbose
 security => security
@@ -249,6 +252,21 @@ EOF
 # Stop stale instance if volume/reuse left a pid
 asterisk -rx "core stop now" >/dev/null 2>&1 || true
 sleep 1
+
+# Keep Asterisk logs bounded: a SIP scanner alone writes hundreds of MB a day.
+# Over 50 MB a file keeps its newest 5 MB (in place — Asterisk appends on).
+(
+  while true; do
+    for f in /var/log/asterisk/console.log /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security; do
+      [ -f "$f" ] || continue
+      if [ "$(stat -c %s "$f" 2>/dev/null || echo 0)" -gt 52428800 ]; then
+        tail -c 5242880 "$f" > "$f.trim" && cat "$f.trim" > "$f"
+        rm -f "$f.trim"
+      fi
+    done
+    sleep 600
+  done
+) &
 
 echo "Starting embedded Asterisk…"
 asterisk -f -vvv >>/var/log/asterisk/console.log 2>&1 &
