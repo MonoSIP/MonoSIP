@@ -16,7 +16,7 @@ DSip runs as a **Docker Compose** stack. Supported production path: Linux VM (De
 ```bash
 git clone https://github.com/diggyen/DSip.git
 cd DSip
-git checkout v1.3.1   # or main
+git checkout v1.4.0   # or main
 
 cp .env.example .env
 chmod +x scripts/gen-certs.sh
