@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Create / update the "Bilgi Hattı" IVR: Turkish public-info services from
+ * Create / update the Turkish info-line IVR ("Bilgi Hattı"): public-info services from
  * CollectAPI (https://collectapi.com/tr) read out over the phone.
  *
- *   1 Nöbetçi eczane   2 Akaryakıt   3 Hava durumu   (caller keys the province plate code)
- *   4 Döviz            5 Altın       6 Borsa İstanbul
- *   0 Çıkış
+ *   1 On-duty pharmacy   2 Fuel prices   3 Weather   (caller keys the province plate code)
+ *   4 Exchange rates     5 Gold          6 Borsa Istanbul
+ *   0 Exit
  *
  * The API key is stored encrypted in DSip's secrets table (sent as
  * `authorization: apikey <key>`), never in the flow JSON or in git.
@@ -159,7 +159,7 @@ function provinceChain(key, row, digit, title, buildApiNodes) {
   link(`${key}Sorgu`, first);
 }
 
-// 1 · Nöbetçi eczane
+// 1 · On-duty pharmacy
 provinceChain("ecz", 0, "1", "Nöbetçi eczane", (row) => {
   api(
     "eczApi",
@@ -194,7 +194,7 @@ provinceChain("ecz", 0, "1", "Nöbetçi eczane", (row) => {
   return "eczApi";
 });
 
-// 2 · Akaryakıt (3 calls, a spoken line between each — 1 req/s limit)
+// 2 · Fuel prices (3 calls, a spoken line between each — 1 req/s limit)
 provinceChain("aka", 1, "2", "Akaryakıt", (row) => {
   api("akaBenzin", `${API}/gasPrice/turkeyGasoline?city={{il|ascii}}`, [["$.result.0.benzin", "benzin"], ["$.result.0.marka", "marka"]], at(5, row), "Benzin API");
   add("akaBos", "condition", { label: "Sonuç var mı?", variable: "benzin", op: "empty", value: "" }, at(6, row));
@@ -251,7 +251,7 @@ provinceChain("hava", 2, "3", "Hava durumu", (row) => {
   return "havaApi";
 });
 
-// 4 · Döviz (allCurrency: 0 USD, 1 EUR, 2 GBP)
+// 4 · Exchange rates (allCurrency: 0 USD, 1 EUR, 2 GBP)
 api(
   "dovizApi",
   `${API}/economy/allCurrency`,
@@ -280,7 +280,7 @@ link("dovizApi", "dovizSoyle", "success");
 link("dovizApi", "apiHata", "error");
 link("dovizSoyle", "menu");
 
-// 5 · Altın (goldPrice: 0 gram, 2 çeyrek, 4 tam)
+// 5 · Gold (goldPrice: 0 gram, 2 quarter, 4 full coin)
 api(
   "altinApi",
   `${API}/economy/goldPrice`,
@@ -305,7 +305,7 @@ link("altinApi", "altinSoyle", "success");
 link("altinApi", "apiHata", "error");
 link("altinSoyle", "menu");
 
-// 6 · Borsa İstanbul (BIST 100)
+// 6 · Borsa Istanbul (BIST 100)
 api(
   "borsaApi",
   `${API}/economy/borsaIstanbul`,

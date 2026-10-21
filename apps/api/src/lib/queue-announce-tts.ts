@@ -119,7 +119,7 @@ const PACKS: Pack[] = [
   },
 ];
 
-/** Full-sentence position clips: “Bekleyenler arasında 3. sıradasınız.” */
+/** Full-sentence position clips, e.g. Turkish “Bekleyenler arasında 3. sıradasınız.” (“You are 3rd in line.”) */
 const POS_MAX = 30;
 const HOLD_MAX = 30;
 /** Bump when sentence/phrase templates change so WAVs regenerate. */

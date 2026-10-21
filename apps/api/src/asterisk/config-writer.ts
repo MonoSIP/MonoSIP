@@ -971,7 +971,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ` same => n,Hangup()`,
     ];
     // QUEUE_PRIO (set by flow VIP / priority var) is honored by Queue()
-    // MEMBERINTERFACE=PJSIP/101 → agent extension for portal "Çağrılarım"
+    // MEMBERINTERFACE=PJSIP/101 → agent extension for the portal call history
     const queueCdrLines = [
       ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
       ` same => n,Set(DSIP_DISP=\${IF($["\${QUEUESTATUS}"=""]?ANSWER:\${QUEUESTATUS})})`,
@@ -1014,11 +1014,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ` same => n,Set(__KVKK_DONE=1)`,
       kvkkEnabled ? kvkkPlaybackLine(kvkkPromptId) : ` same => n,NoOp(KVKK off)`,
       ` same => n(qkvkk),MixMonitor(${qRecFile})`,
-      // Fon müziği hemen başlasın
+      // Hold music starts right away
       ` same => n,StartMusicOnHold(${mohName})`,
       ` same => n,Wait(1)`,
     ];
-    // İlk anons: tek cümle TTS (cache); MOH Playback sırasında durur, Queue ile yeniden başlar
+    // First announcement: one cached TTS sentence; MOH pauses during Playback and resumes with Queue()
     if (q.announcePosition) {
       queueHead.push(
         ` same => n,Set(MYQPOS=$[$\{QUEUE_WAITING_COUNT(${q.number})} + 1])`,
@@ -1027,7 +1027,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ` same => n,Playback(qpos/\${MYQPOS})`,
       );
     }
-    // İsteğe bağlı ilk bekleme süresi anonsu (kabaca sıra × 1 dk, 1–30)
+    // Optional first hold-time announcement (roughly position × 1 min, 1–30)
     if (q.announceHoldtime) {
       queueHead.push(
         ` same => n(qannhold),Set(MYQHOLD=$[$\{QUEUE_WAITING_COUNT(${q.number})} + 1])`,
