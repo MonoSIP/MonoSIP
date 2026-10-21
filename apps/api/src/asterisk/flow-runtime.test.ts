@@ -1077,7 +1077,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     await running;
     // KVKK TTS uses Settings ttsVoice (default female).
     expect(ensureSpeechMedia).toHaveBeenCalledWith(
-      "Bu gorusme kaydedilebilir.",
+      "Bu görüşme kaydedilebilir.",
       "tr",
       1.05,
       "female",

@@ -10,7 +10,7 @@
 # Compose still runs a separate asterisk service and sets ASTERISK_ARI_URL=http://asterisk:8088
 # so the embedded PBX is skipped in that mode.
 
-FROM node:24-bookworm-slim AS builder
+FROM node:26.12.1-bookworm-slim AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
 
@@ -31,7 +31,7 @@ LABEL org.opencontainers.image.licenses="MIT" \
 
 USER root
 ARG TARGETARCH
-ARG NODE_VERSION=24.11.0
+ARG NODE_VERSION=26.12.1
 
 # Pin major Postgres so image rebuilds do not silently break /data/postgres clusters.
 # python3-pip + libsndfile: embedded TTS (Edge / EMA) — no sidecar.

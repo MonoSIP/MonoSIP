@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS build
+FROM node:26.12.1-bookworm-slim AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
 COPY package.json pnpm-workspace.yaml ./

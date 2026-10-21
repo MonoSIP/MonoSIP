@@ -29,6 +29,7 @@
     <link rel="icon" type="image/svg+xml" href="brand/munasip-mark.svg" />
   </head>
   <body>
+    <div class="flow-map" aria-hidden="true"><svg></svg></div>
     <a class="skip" href="#main">Skip to content</a>
 
     <!-- ───────────────────────── Navigation ───────────────────────── -->
@@ -40,11 +41,12 @@
           <span class="brand-ver">v1.6.0</span>
         </a>
         <nav class="nav-links" aria-label="Sections">
+          <a href="#softphone">Softphone</a>
           <a href="#features">Features</a>
           <a href="#ivr">IVR</a>
-          <a href="#softphone">Softphone</a>
           <a href="#panel">Panel</a>
           <a href="#install">Install</a>
+          <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/README.md">Docs</a>
         </nav>
         <div class="nav-actions">
           <a class="btn btn-ghost btn-sm" href="https://github.com/MunaSIP/MunaSIP">
@@ -87,7 +89,7 @@
 
           <!-- Live call path: caller → PBX → IVR / API / queue → agents -->
           <figure class="hero-art reveal" aria-label="Animated diagram: a call enters the PBX, the IVR looks up data over an API, speaks it, and the queue rings the free agent.">
-            <svg class="callmap" viewBox="0 0 560 470" role="img" aria-hidden="true">
+            <svg class="callmap" viewBox="0 76 560 324" preserveAspectRatio="xMidYMin meet" role="img" aria-hidden="true">
               <defs>
                 <linearGradient id="g-card" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stop-color="#11222f" />
@@ -205,11 +207,111 @@
         <ul class="wrap stack-strip reveal" aria-label="Technology">
           <li><b>Asterisk 22</b> PJSIP · ARI · AMI</li>
           <li><b>WebRTC</b> SIP.js over WSS</li>
-          <li><b>Node 24</b> Fastify · Drizzle</li>
+          <li><b>Node 26</b> Fastify · Drizzle</li>
           <li><b>PostgreSQL 17</b> <span>embedded</span></li>
           <li><b>React 19</b> Vite · TanStack</li>
           <li><b>TTS</b> Edge Neural · EMA</li>
         </ul>
+      </section>
+
+      <!-- ───────────────────────── Softphone ───────────────────────── -->
+      <section class="section section-alt" id="softphone">
+        <div class="wrap soft-grid">
+          <div class="phone-stage reveal">
+            <svg class="voice" viewBox="0 0 320 80" aria-hidden="true">
+              <g class="bars">
+                <rect x="4" y="30" width="8" height="20" rx="4"/><rect x="20" y="22" width="8" height="36" rx="4"/><rect x="36" y="12" width="8" height="56" rx="4"/>
+                <rect x="52" y="26" width="8" height="28" rx="4"/><rect x="68" y="18" width="8" height="44" rx="4"/><rect x="84" y="8" width="8" height="64" rx="4"/>
+                <rect x="100" y="24" width="8" height="32" rx="4"/><rect x="116" y="30" width="8" height="20" rx="4"/><rect x="132" y="16" width="8" height="48" rx="4"/>
+                <rect x="148" y="10" width="8" height="60" rx="4"/><rect x="164" y="22" width="8" height="36" rx="4"/><rect x="180" y="28" width="8" height="24" rx="4"/>
+                <rect x="196" y="14" width="8" height="52" rx="4"/><rect x="212" y="24" width="8" height="32" rx="4"/><rect x="228" y="6" width="8" height="68" rx="4"/>
+                <rect x="244" y="20" width="8" height="40" rx="4"/><rect x="260" y="28" width="8" height="24" rx="4"/><rect x="276" y="18" width="8" height="44" rx="4"/>
+                <rect x="292" y="26" width="8" height="28" rx="4"/><rect x="308" y="32" width="8" height="16" rx="4"/>
+              </g>
+            </svg>
+            <svg class="mock phone-shot" viewBox="0 0 340 668" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Browser softphone: registered as Alice 101, number display, Recents button, keypad, do-not-disturb and call buttons">
+              <rect x="8" y="8" width="324" height="652" rx="48" fill="var(--bg-elevated)" stroke="var(--border)" stroke-width="2" />
+              <rect x="128" y="20" width="84" height="8" rx="4" fill="var(--bg-soft)" />
+              <rect x="26" y="40" width="288" height="188" rx="22" fill="var(--bg)" />
+              <circle cx="46" cy="64" r="4" fill="var(--success)" />
+              <text class="dim" x="58" y="68">Registered</text>
+              <text class="dim" x="294" y="68" text-anchor="end">Alice · 101</text>
+              <text class="name dim" x="170" y="128" text-anchor="middle">Enter a number</text>
+              <rect x="196" y="186" width="100" height="28" rx="14" fill="var(--bg-elevated)" stroke="var(--accent)" />
+              <text class="dim hot" x="246" y="205" text-anchor="middle">Recents</text>
+              <circle cx="292" cy="186" r="8" fill="var(--danger)" />
+              <text x="292" y="190" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="Outfit, system-ui, sans-serif">1</text>
+              <g>
+                <g>
+                  <circle cx="86" cy="286" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="86" y="294">1</text>
+                  <circle cx="170" cy="286" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="170" y="290">2</text>
+                  <text class="keyl" x="170" y="306">ABC</text>
+                  <circle cx="254" cy="286" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="254" y="290">3</text>
+                  <text class="keyl" x="254" y="306">DEF</text>
+                </g>
+                <g>
+                  <circle cx="86" cy="366" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="86" y="370">4</text>
+                  <text class="keyl" x="86" y="386">GHI</text>
+                  <circle cx="170" cy="366" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="170" y="370">5</text>
+                  <text class="keyl" x="170" y="386">JKL</text>
+                  <circle cx="254" cy="366" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="254" y="370">6</text>
+                  <text class="keyl" x="254" y="386">MNO</text>
+                </g>
+                <g>
+                  <circle cx="86" cy="446" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="86" y="450">7</text>
+                  <text class="keyl" x="86" y="466">PQRS</text>
+                  <circle cx="170" cy="446" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="170" y="450">8</text>
+                  <text class="keyl" x="170" y="466">TUV</text>
+                  <circle cx="254" cy="446" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="254" y="450">9</text>
+                  <text class="keyl" x="254" y="466">WXYZ</text>
+                </g>
+                <g>
+                  <circle cx="86" cy="526" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="86" y="534">*</text>
+                  <circle cx="170" cy="526" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="170" y="530">0</text>
+                  <text class="keyl" x="170" y="546">+</text>
+                  <circle cx="254" cy="526" r="32" fill="var(--bg)" stroke="var(--border)" />
+                  <text class="keyn" x="254" y="534">#</text>
+                </g>
+              </g>
+              <g>
+                <circle cx="86" cy="596" r="22" fill="var(--bg)" stroke="var(--border)" />
+                <path d="M78 594a8 8 0 0 1 8-6 6 6 0 0 1 6 3" fill="none" stroke="var(--text-muted)" stroke-width="1.6" stroke-linecap="round" />
+                <text class="keyl" x="86" y="628">DND</text>
+                <circle cx="170" cy="592" r="26" fill="var(--success)" />
+                <path d="M160 588c1.2 0 2.2 1 2.5 2.2l.6 2.4c.2.8-.1 1.5-.7 1.9l-1.2.8a10 10 0 0 0 5.2 5.2l.8-1.2c.4-.6 1.1-.9 1.9-.7l2.4.6c1.2.3 2.2 1.3 2.2 2.5v1.6c0 1.2-1 2.2-2.2 2.1-6-.4-13.2-7.6-13.6-13.6-.1-1.2 1-2.2 2.1-2.2Z" fill="#04211b" />
+                <circle cx="254" cy="596" r="22" fill="var(--bg)" stroke="var(--border)" />
+                <path d="M246 588l16 16M262 588l-16 16" stroke="var(--text-muted)" stroke-width="1.6" stroke-linecap="round" />
+                <text class="keyl" x="254" y="628">Clear</text>
+              </g>
+            </svg>
+          </div>
+          <div class="reveal">
+            <p class="kicker">Softphone &amp; portal</p>
+            <h2>A phone in the browser, a portal for every desk</h2>
+            <p class="section-lead">
+              Each extension signs in to its own portal and gets a full softphone — no app to install.
+              Desk phones register to the same PBX.
+            </p>
+            <ul class="ticks">
+              <li><b>In the browser.</b> Each extension gets a softphone. No app to install.</li>
+              <li><b>Stays on the call.</b> Moving through the portal does not drop it.</li>
+              <li><b>One password</b> for the portal, the browser and the desk phone.</li>
+              <li><b>Their own pages:</b> directory, calls, recordings, voicemail and forwarding.</li>
+            </ul>
+            <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/USER-PORTAL.md">Portal and softphone guide</a>
+          </div>
+        </div>
       </section>
 
       <!-- ───────────────────────── Features ───────────────────────── -->
@@ -219,56 +321,57 @@
             <p class="kicker">Everything a ~20-desk office needs</p>
             <h2>One panel for the whole phone system</h2>
             <p class="section-lead">
-              No hosted black box and no add-on modules. Everything below ships in the same image
-              and is managed from the same admin panel.
+              Everything ships in the same image and is managed from the same admin panel.
+              The field-by-field list lives in the docs.
             </p>
+            <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/FEATURES.md">Feature guide</a>
           </header>
 
           <div class="cards">
             <article class="card reveal" style="--tone: var(--accent)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 14.2c2.4-.3 4.3 1.2 4.9 4.8"/></svg></span>
               <h3>Extensions</h3>
-              <p>CSV import and export, outbound caller ID, call permissions (local / mobile / 444 / international), no-answer · busy · unavailable forwarding, voicemail to email, server-side DND with a switch or <code>*78</code>/<code>*79</code>, and live presence everywhere. 112 is always allowed.</p>
+              <p>Desks, who may call where, forwarding and who is free right now.</p>
             </article>
             <article class="card reveal" style="--tone: var(--accent-3)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span>
               <h3>Queues &amp; ring groups</h3>
-              <p>Six Asterisk strategies, penalty and wrap-up, busy agents skipped. Position and hold-time announcements with a per-queue language and voice model, hold-music class, overflow on timeout / full / empty, and “press 1 to keep your place” callback.</p>
+              <p>How the group rings, what callers hear while they wait, and where the call goes when it cannot.</p>
             </article>
             <article class="card reveal" style="--tone: var(--accent-2)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1.5"/><rect x="15" y="4" width="6" height="5" rx="1.5"/><rect x="9" y="15" width="6" height="5" rx="1.5"/><path d="M6 9v3h12V9M12 12v3"/></svg></span>
               <h3>Visual IVR designer</h3>
-              <p>Seventeen node types on a map, each with its own shape: menu, get key, API, if, set variable, pause, language, schedule, directory, subflow, transfer, queue, voicemail and more. Validate, simulate, publish and roll back versions.</p>
+              <p>Draw the call, then check it, try it and publish it.</p>
             </article>
             <article class="card reveal" style="--tone: var(--violet-line)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2M21 12h0"/></svg></span>
               <h3>Neural speech, sentence by sentence</h3>
-              <p>Edge Neural voices in English and Turkish, plus EMA, an offline Turkish neural model. Long text is split into sentences and synthesized while the previous one plays, so a read-out starts in about a second. Results are cached.</p>
+              <p>English and Turkish neural voices. A long read-out starts while the rest is still being spoken.</p>
             </article>
             <article class="card reveal" style="--tone: var(--warning)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>
               <h3>Schedules &amp; holidays</h3>
-              <p>Weekly ranges with a lunch status, a national-holiday pack and company days, manual override (auto / open / closed) and a separate destination per status. Europe/Istanbul by default.</p>
+              <p>Office hours, lunch, holidays and a switch to open or close the office now.</p>
             </article>
             <article class="card reveal" style="--tone: var(--success)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg></span>
               <h3>Trunks &amp; routes</h3>
-              <p>Several SIP providers with failover, inbound DID and caller-pattern routes, outbound prefixes, blacklist, anonymous-call block, country allowlist, daily and monthly spend limits, and last-dial callback.</p>
+              <p>More than one provider, inbound numbers and outbound rules with a spend stop.</p>
             </article>
             <article class="card reveal" style="--tone: var(--info)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
               <h3>Call logs &amp; recordings</h3>
-              <p>Click a call to open its timeline right below the row: every IVR step, key pressed, wait and talk time, queue, MOS / jitter / loss. Recording with a privacy (KVKK) announcement, retention, Opus convert, NAS / SFTP archive.</p>
+              <p>Open a call and see the path it took, then listen to the recording.</p>
             </article>
             <article class="card reveal" style="--tone: var(--danger)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
               <h3>Security built in</h3>
-              <p>Admin 2FA (TOTP), IP allowlists for admin, portal and SIP, login-flood ban, a SIP guard that records brute-force scanners from Asterisk security events, firewall export, and Let’s Encrypt certificates issued from Settings.</p>
+              <p>Sign-in protection, address limits and certificates issued from Settings.</p>
             </article>
             <article class="card reveal" style="--tone: var(--accent-dim)">
               <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M15 7l5 5-5 5"/></svg></span>
               <h3>Integrations</h3>
-              <p>Webhooks for ringing, answered, ended and missed calls; REST API with API keys for click-to-call, CDR and recordings; an embeddable website call widget; daily and monthly email reports.</p>
+              <p>Webhooks, an API key and a call button you can put on the company site.</p>
             </article>
           </div>
         </div>
@@ -306,24 +409,194 @@
           </figure>
 
           <div class="ivr-grid">
-            <ul class="ticks reveal">
-              <li><b>Variables everywhere.</b> Digits from Get key, values from Set variable or API mappings expand as <code>$name</code> or <code>{{name}}</code> in prompts and URLs.</li>
-              <li><b>Filters for speech.</b> <code>{{phone|digits}}</code> reads a number digit by digit, <code>{{temp|round}}</code> rounds, <code>{{price|amount}}</code> speaks a price in words, <code>{{city|ascii}}</code> makes a value URL-safe.</li>
-              <li><b>API node.</b> GET / POST / PUT / PATCH / DELETE, secrets stored encrypted (never in the flow), JSON path mappings, timeout, retry and a test request.</li>
-              <li><b>Type-ahead keys.</b> Callers can press a key during a prompt; the digit is buffered and the speech stops.</li>
-              <li><b>Safe to change.</b> Validate before publishing, simulate with sample keys and mock API data, roll back to any version.</li>
-            </ul>
+            <div class="reveal">
+              <ul class="ticks">
+                <li><b>A shape for each step.</b> Start, announce, menu, transfer, queue, API, condition and hangup each have their own shape and color. Drag one onto the map, open it with the pencil, and draw the exit to the next step.</li>
+                <li><b>The demo call on 902.</b> It welcomes the caller, offers sales and the support queue, plays “one moment”, then fetches the exchange rate and reads it out. Pressing a key during a prompt stops the prompt and keeps the digit.</li>
+                <li><b>Live data.</b> An API node sends GET, POST, PUT, PATCH or DELETE. You set the URL, a timeout, a retry and auth — none, Basic, Bearer or a custom header. The secret stays encrypted in Settings and never lands in the flow file. A JSON path such as <code>$.rates.usd</code> becomes <code>rate</code>, and the next node speaks it.</li>
+                <li><b>The caller stays in the sentence.</b> <code>$caller</code>, <code>$did</code> and any digit you collect can be spoken, or sent onward in the request URL and body. Filters turn a plate code into a province, a price into words, or a number into digits read one by one.</li>
+                <li><b>Every exit is a branch.</b> A menu has a path per digit, plus timeout and invalid. A transfer has busy, no answer and unavailable. A busy extension is caught before the phone rings, so the caller hears the busy path and the desk does not ring.</li>
+                <li><b>Try it, then publish.</b> The test call walks the draft with a caller number, a time and keypresses, and highlights the nodes it visited. Live calls keep using the published version. An older one is a click away, and a call already in progress finishes on the version it started with.</li>
+              </ul>
+              <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/FLOW-DESIGNER.md">IVR designer guide</a>
+            </div>
             <div class="shots reveal">
               <figure class="shot shot-main">
-                <img src="images/ivr-designer.webp" width="1440" height="900" loading="lazy" decoding="async" alt="IVR designer with the Main line demo: welcome, menu, sales transfer, support queue, a one-moment prompt, the exchange-rate API, a condition and the read-out" />
+                <svg class="mock" viewBox="0 0 960 520" role="img" aria-label="IVR designer with the Main line demo: welcome, menu, sales transfer, support queue, a one-moment prompt, the exchange-rate API, a condition and the read-out">
+                  <rect width="168" height="520" fill="var(--bg-elevated)" />
+                  <path d="M168 0V520" stroke="var(--border)" />
+                  <text class="k" x="20" y="32">NODES</text>
+                  <g class="dim">
+                    <rect x="20" y="48" width="128" height="32" rx="16" fill="none" stroke="var(--accent)" />
+                    <text x="84" y="69" text-anchor="middle">Start</text>
+                    <rect x="20" y="96" width="128" height="32" rx="10" fill="none" stroke="var(--accent-2)" />
+                    <text x="84" y="117" text-anchor="middle">Announce</text>
+                    <rect x="20" y="144" width="128" height="32" rx="8" fill="none" stroke="var(--accent-3)" />
+                    <text x="84" y="165" text-anchor="middle">Menu</text>
+                    <rect x="20" y="192" width="128" height="32" rx="8" fill="none" stroke="var(--success)" />
+                    <text x="84" y="213" text-anchor="middle">Transfer</text>
+                    <rect x="20" y="240" width="128" height="32" rx="8" fill="none" stroke="var(--accent-3)" />
+                    <text x="84" y="261" text-anchor="middle">Queue</text>
+                    <rect x="20" y="288" width="128" height="32" rx="8" fill="none" stroke="var(--violet-line)" />
+                    <text x="84" y="309" text-anchor="middle">API</text>
+                    <rect x="20" y="336" width="128" height="32" rx="8" fill="none" stroke="var(--warning)" />
+                    <text x="84" y="357" text-anchor="middle">If</text>
+                    <rect x="20" y="384" width="128" height="32" rx="8" fill="none" stroke="var(--danger)" />
+                    <text x="84" y="405" text-anchor="middle">Hangup</text>
+                  </g>
+                  <g fill="none" stroke="var(--border)" stroke-width="1.5">
+                    <path d="M292 88H348M478 88H536M672 88H734" />
+                    <path d="M596 116V150H274V192" />
+                    <path d="M596 150H484V192" />
+                    <path d="M274 248V344" />
+                    <path d="M804 128V300H494V332" />
+                    <path d="M560 360H600V376H620" />
+                    <path d="M724 376H742V360H760" />
+                  </g>
+                  <g>
+                    <rect x="188" y="60" width="104" height="56" rx="28" fill="var(--bg-elevated)" stroke="var(--accent)" />
+                    <text class="k hot" x="240" y="82" text-anchor="middle">START</text>
+                    <text class="name" x="240" y="102" text-anchor="middle">902</text>
+                  </g>
+                  <g>
+                    <path d="M348 64h118a12 12 0 0 1 12 12v28a12 12 0 0 1-12 12H378l-14 12v-12h-16a12 12 0 0 1-12-12V76a12 12 0 0 1 12-12Z" fill="var(--bg-elevated)" stroke="var(--accent-2)" />
+                    <text class="k coral" x="418" y="86" text-anchor="middle">ANNOUNCE</text>
+                    <text class="name" x="418" y="106" text-anchor="middle">Welcome</text>
+                  </g>
+                  <g>
+                    <path d="M536 60h120l16 28-16 28H536Z" fill="var(--bg-elevated)" stroke="var(--accent-3)" />
+                    <text class="k info" x="598" y="82" text-anchor="middle">MENU</text>
+                    <text class="name" x="598" y="102" text-anchor="middle">1 · 2 · 3</text>
+                  </g>
+                  <g>
+                    <path d="M734 64h118a12 12 0 0 1 12 12v28a12 12 0 0 1-12 12H764l-14 12v-12h-16a12 12 0 0 1-12-12V76a12 12 0 0 1 12-12Z" fill="var(--bg-elevated)" stroke="var(--accent-2)" />
+                    <text class="k coral" x="804" y="86" text-anchor="middle">ANNOUNCE</text>
+                    <text class="name" x="804" y="106" text-anchor="middle">One moment</text>
+                  </g>
+                  <g>
+                    <rect x="196" y="192" width="156" height="56" rx="10" fill="var(--bg-elevated)" stroke="var(--success)" />
+                    <text class="k ok" x="274" y="214" text-anchor="middle">TRANSFER</text>
+                    <text class="name" x="274" y="234" text-anchor="middle">Sales · 101</text>
+                  </g>
+                  <g>
+                    <rect x="406" y="192" width="156" height="56" rx="10" fill="var(--bg-elevated)" stroke="var(--accent-3)" />
+                    <text class="k info" x="484" y="214" text-anchor="middle">QUEUE</text>
+                    <text class="name" x="484" y="234" text-anchor="middle">Support · 300</text>
+                  </g>
+                  <g>
+                    <rect x="196" y="344" width="140" height="48" rx="10" fill="var(--bg-elevated)" stroke="var(--danger)" />
+                    <text class="k bad" x="266" y="364" text-anchor="middle">HANGUP</text>
+                    <text class="name" x="266" y="382" text-anchor="middle">Busy</text>
+                  </g>
+                  <g>
+                    <path d="M420 332h148l-16 56H404Z" fill="var(--bg-elevated)" stroke="var(--violet-line)" />
+                    <text class="k vio" x="486" y="356" text-anchor="middle">API</text>
+                    <text class="name" x="486" y="376" text-anchor="middle">GET /latest</text>
+                  </g>
+                  <g>
+                    <path d="M620 376l52-32 52 32-52 32Z" fill="var(--bg-elevated)" stroke="var(--warning)" />
+                    <text class="k warn" x="672" y="372" text-anchor="middle">IF</text>
+                    <text class="name" x="672" y="390" text-anchor="middle">rate</text>
+                  </g>
+                  <g>
+                    <path d="M760 332h150a12 12 0 0 1 12 12v32a12 12 0 0 1-12 12H790l-14 12v-12h-16a12 12 0 0 1-12-12v-32a12 12 0 0 1 12-12Z" fill="var(--bg-elevated)" stroke="var(--accent)" />
+                    <text class="k hot" x="844" y="356" text-anchor="middle">TTS</text>
+                    <text class="name" x="844" y="376" text-anchor="middle">Read the rate</text>
+                  </g>
+                </svg>
                 <figcaption>Extension 902 — every node type has its own shape and color.</figcaption>
               </figure>
               <figure class="shot">
-                <img src="images/ivr-api-settings.webp" width="1440" height="900" loading="lazy" decoding="async" alt="API request settings: method buttons, URL, timeout, retry, auth and JSON mappings" />
+                <svg class="mock" viewBox="0 0 640 460" role="img" aria-label="API request settings: method buttons, URL, timeout, retry, auth and JSON mappings">
+                  <rect width="640" height="460" fill="var(--bg)" />
+                  <text class="k" x="28" y="36">API REQUEST</text>
+                  <text class="h" x="28" y="68">Exchange rates</text>
+                  <g>
+                    <rect x="28" y="92" width="72" height="32" rx="8" fill="var(--accent)" />
+                    <text x="64" y="113" text-anchor="middle" fill="#04211b" font-size="13" font-weight="600" font-family="Outfit, system-ui, sans-serif">GET</text>
+                    <rect x="108" y="92" width="72" height="32" rx="8" fill="none" stroke="var(--border)" />
+                    <text class="dim" x="144" y="113" text-anchor="middle">POST</text>
+                    <rect x="188" y="92" width="72" height="32" rx="8" fill="none" stroke="var(--border)" />
+                    <text class="dim" x="224" y="113" text-anchor="middle">PUT</text>
+                    <rect x="268" y="92" width="88" height="32" rx="8" fill="none" stroke="var(--border)" />
+                    <text class="dim" x="312" y="113" text-anchor="middle">PATCH</text>
+                    <rect x="364" y="92" width="96" height="32" rx="8" fill="none" stroke="var(--border)" />
+                    <text class="dim" x="412" y="113" text-anchor="middle">DELETE</text>
+                  </g>
+                  <text class="k" x="28" y="160">URL</text>
+                  <rect x="28" y="172" width="584" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="44" y="198">https://api.example.com/latest</text>
+                  <text class="k" x="28" y="248">TIMEOUT</text>
+                  <text class="k" x="220" y="248">RETRY</text>
+                  <text class="k" x="400" y="248">AUTH</text>
+                  <rect x="28" y="260" width="160" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="44" y="286">8 seconds</text>
+                  <rect x="220" y="260" width="148" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="236" y="286">2</text>
+                  <rect x="400" y="260" width="212" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="416" y="286">Bearer · secret</text>
+                  <text class="k" x="28" y="340">JSON MAPPINGS</text>
+                  <rect x="28" y="352" width="584" height="36" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="44" y="375">rate</text>
+                  <text class="dim" x="160" y="375">← $.rates.usd</text>
+                  <rect x="28" y="396" width="584" height="36" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="44" y="419">pair</text>
+                  <text class="dim" x="160" y="419">← $.pair</text>
+                </svg>
                 <figcaption>API request settings: method, URL, retry, auth and JSON mappings.</figcaption>
               </figure>
               <figure class="shot">
-                <img src="images/ivr-main.webp" width="1440" height="900" loading="lazy" decoding="async" alt="Main IVR on extension 900: welcome, menu, transfers with busy / no answer / unavailable exits to hangup" />
+                <svg class="mock" viewBox="0 0 640 460" role="img" aria-label="Main IVR on extension 900: welcome, menu, transfers with busy, no answer and unavailable exits to hangup">
+                  <rect width="640" height="460" fill="var(--bg)" />
+                  <text class="k hot" x="28" y="36">EXT 900</text>
+                  <text class="h" x="28" y="66">Main line</text>
+                  <g fill="none" stroke="var(--border)" stroke-width="1.5">
+                    <path d="M118 128H168M300 128H350" />
+                    <path d="M412 156V184H230V208" />
+                    <path d="M412 184H422V208" />
+                    <path d="M230 260V288" />
+                    <path d="M422 260V288" />
+                  </g>
+                  <g>
+                    <rect x="28" y="100" width="90" height="56" rx="28" fill="var(--bg-elevated)" stroke="var(--accent)" />
+                    <text class="k hot" x="73" y="122" text-anchor="middle">START</text>
+                    <text class="name" x="73" y="142" text-anchor="middle">900</text>
+                  </g>
+                  <g>
+                    <path d="M168 96h120a10 10 0 0 1 10 10v28a10 10 0 0 1-10 10H198l-12 10v-10h-18a10 10 0 0 1-10-10v-28a10 10 0 0 1 10-10Z" fill="var(--bg-elevated)" stroke="var(--accent-2)" />
+                    <text class="k coral" x="234" y="120" text-anchor="middle">ANNOUNCE</text>
+                    <text class="name" x="234" y="138" text-anchor="middle">Welcome</text>
+                  </g>
+                  <g>
+                    <path d="M350 100h112l14 28-14 28H350Z" fill="var(--bg-elevated)" stroke="var(--accent-3)" />
+                    <text class="k info" x="412" y="122" text-anchor="middle">MENU</text>
+                    <text class="name" x="412" y="142" text-anchor="middle">1 · 2</text>
+                  </g>
+                  <g>
+                    <rect x="150" y="208" width="160" height="52" rx="10" fill="var(--bg-elevated)" stroke="var(--success)" />
+                    <text class="k ok" x="230" y="228" text-anchor="middle">1 · TRANSFER</text>
+                    <text class="name" x="230" y="248" text-anchor="middle">Sales · 101</text>
+                  </g>
+                  <g>
+                    <rect x="342" y="208" width="160" height="52" rx="10" fill="var(--bg-elevated)" stroke="var(--success)" />
+                    <text class="k ok" x="422" y="228" text-anchor="middle">2 · TRANSFER</text>
+                    <text class="name" x="422" y="248" text-anchor="middle">Front · 102</text>
+                  </g>
+                  <g class="dim">
+                    <rect x="148" y="288" width="164" height="32" rx="8" fill="var(--bg-elevated)" stroke="var(--danger)" />
+                    <text x="230" y="309" text-anchor="middle">Busy → hangup</text>
+                    <rect x="148" y="328" width="164" height="32" rx="8" fill="var(--bg-elevated)" stroke="var(--danger)" />
+                    <text x="230" y="349" text-anchor="middle">No answer → hangup</text>
+                    <rect x="148" y="368" width="164" height="32" rx="8" fill="var(--bg-elevated)" stroke="var(--danger)" />
+                    <text x="230" y="389" text-anchor="middle">Unavailable → hangup</text>
+                    <rect x="340" y="288" width="164" height="32" rx="8" fill="var(--bg-elevated)" stroke="var(--danger)" />
+                    <text x="422" y="309" text-anchor="middle">Busy → hangup</text>
+                    <rect x="340" y="328" width="164" height="32" rx="8" fill="var(--bg-elevated)" stroke="var(--warning)" />
+                    <text x="422" y="349" text-anchor="middle">No answer → 300</text>
+                    <rect x="340" y="368" width="164" height="32" rx="8" fill="var(--bg-elevated)" stroke="var(--danger)" />
+                    <text x="422" y="389" text-anchor="middle">Unavailable → hangup</text>
+                  </g>
+                </svg>
                 <figcaption>Transfers branch on busy, no answer and unavailable.</figcaption>
               </figure>
             </div>
@@ -331,49 +604,14 @@
         </div>
       </section>
 
-      <!-- ───────────────────────── Softphone ───────────────────────── -->
-      <section class="section" id="softphone">
-        <div class="wrap soft-grid">
-          <div class="phone-stage reveal">
-            <svg class="voice" viewBox="0 0 320 80" aria-hidden="true">
-              <g class="bars">
-                <rect x="4" y="30" width="8" height="20" rx="4"/><rect x="20" y="22" width="8" height="36" rx="4"/><rect x="36" y="12" width="8" height="56" rx="4"/>
-                <rect x="52" y="26" width="8" height="28" rx="4"/><rect x="68" y="18" width="8" height="44" rx="4"/><rect x="84" y="8" width="8" height="64" rx="4"/>
-                <rect x="100" y="24" width="8" height="32" rx="4"/><rect x="116" y="30" width="8" height="20" rx="4"/><rect x="132" y="16" width="8" height="48" rx="4"/>
-                <rect x="148" y="10" width="8" height="60" rx="4"/><rect x="164" y="22" width="8" height="36" rx="4"/><rect x="180" y="28" width="8" height="24" rx="4"/>
-                <rect x="196" y="14" width="8" height="52" rx="4"/><rect x="212" y="24" width="8" height="32" rx="4"/><rect x="228" y="6" width="8" height="68" rx="4"/>
-                <rect x="244" y="20" width="8" height="40" rx="4"/><rect x="260" y="28" width="8" height="24" rx="4"/><rect x="276" y="18" width="8" height="44" rx="4"/>
-                <rect x="292" y="26" width="8" height="28" rx="4"/><rect x="308" y="32" width="8" height="16" rx="4"/>
-              </g>
-            </svg>
-            <img class="phone-shot" src="images/softphone.webp" width="472" height="674" loading="lazy" decoding="async" alt="Browser softphone: registered as Alice 101, number display, Recents button, keypad, do-not-disturb and call buttons" />
-          </div>
-          <div class="reveal">
-            <p class="kicker">Softphone &amp; portal</p>
-            <h2>A phone in the browser, a portal for every desk</h2>
-            <p class="section-lead">
-              Each extension signs in to its own portal and gets a full softphone — no app to install.
-              Desk phones register to the same PBX.
-            </p>
-            <ul class="ticks">
-              <li><b>WebRTC over WSS</b> through the API’s own proxy; recovers from page reloads, several tabs and network drops.</li>
-              <li><b>Phone-like design</b> with the call on the screen, recents behind a button, DND and DTMF that never drops quick key presses — follows the light and dark theme.</li>
-              <li><b>Stays up while you work:</b> move between portal pages without dropping the call; a mini phone at the bottom of the menu answers, mutes and hangs up.</li>
-              <li><b>One password</b> per extension for the portal and SIP — set by the admin or generated.</li>
-              <li><b>Portal:</b> directory with live presence, my calls, my recordings, voicemail, forwarding and DND.</li>
-              <li><b>Desk phones:</b> Yealink / Fanvil / Grandstream MAC provisioning and QR setup for mobile softphones.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
       <!-- ───────────────────────── Panel tour ───────────────────────── -->
-      <section class="section section-alt" id="panel">
+      <section class="section" id="panel">
         <div class="wrap">
           <header class="section-head reveal">
             <p class="kicker">Admin panel</p>
             <h2>Day-two operations, in the same place</h2>
-            <p class="section-lead">Real screens from a running system.</p>
+            <p class="section-lead">Illustrated views of the dashboard, call logs, queues and the rest of day-two work.</p>
+            <a class="more" href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/SCREENS.md">Screen by screen</a>
           </header>
 
           <div class="tour reveal">
@@ -387,7 +625,264 @@
             </div>
             <figure class="tour-frame" id="tour-img" role="tabpanel">
               <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>munasip.example.com</span></div>
-              <img src="images/dashboard.webp" width="1440" height="900" decoding="async" alt="Live dashboard: active calls, answered and missed counts, extension presence and queues" />
+              <svg class="mock-defs" aria-hidden="true">
+                <symbol id="panel-shell" viewBox="0 0 960 540">
+                  <rect width="960" height="540" fill="#071018" />
+                  <rect width="188" height="540" fill="#0e1a24" />
+                  <path d="M188 0V540M188 56H960" stroke="#243847" />
+                  <circle cx="32" cy="28" r="10" fill="none" stroke="#2ee6c5" stroke-width="1.6" />
+                  <path d="M32 23v10M27 28h10" stroke="#2ee6c5" stroke-width="1.4" />
+                  <text x="50" y="33" fill="#eaf2f7" font-size="15" font-weight="600" font-family="Outfit, system-ui, sans-serif">MünaSIP</text>
+                  <g fill="#8aa0b2" font-size="13" font-family="Outfit, system-ui, sans-serif">
+                    <text x="28" y="93">Dashboard</text>
+                    <text x="28" y="129">Extensions</text>
+                    <text x="28" y="165">Queues</text>
+                    <text x="28" y="201">IVR</text>
+                    <text x="28" y="237">Calls</text>
+                    <text x="28" y="273">Reports</text>
+                    <text x="28" y="309">Settings</text>
+                  </g>
+                  <text x="212" y="34" fill="#8aa0b2" font-size="12" font-family="JetBrains Mono, ui-monospace, monospace">pbx.example.com</text>
+                  <circle cx="918" cy="28" r="5" fill="#3ddc97" />
+                  <text x="906" y="32" fill="#8aa0b2" font-size="12" font-family="Outfit, system-ui, sans-serif" text-anchor="end">Live</text>
+                </symbol>
+              </svg>
+              <div class="tour-stage">
+                <svg class="mock" data-panel="dashboard" viewBox="0 0 960 540" role="img" aria-label="Live dashboard: active calls, answered and missed counts, extension presence and queues">
+                  <use href="#panel-shell" width="960" height="540" />
+                  <rect x="14" y="74" width="160" height="28" rx="8" fill="#152636" stroke="#2ee6c5" stroke-opacity="0.55" />
+                  <text class="name" x="28" y="93">Dashboard</text>
+                  <g>
+                    <rect x="212" y="80" width="172" height="96" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="228" y="106">ACTIVE</text>
+                    <text class="num" x="228" y="150">3</text>
+                    <rect x="398" y="80" width="172" height="96" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="414" y="106">ANSWERED</text>
+                    <text class="num ok" x="414" y="150">128</text>
+                    <rect x="584" y="80" width="172" height="96" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="600" y="106">MISSED</text>
+                    <text class="num bad" x="600" y="150">7</text>
+                    <rect x="770" y="80" width="166" height="96" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="786" y="106">QUEUES</text>
+                    <text class="num info" x="786" y="150">2</text>
+                  </g>
+                  <rect x="212" y="196" width="358" height="312" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="228" y="228">Extensions</text>
+                  <g class="dim">
+                    <circle cx="240" cy="268" r="5" fill="var(--success)" />
+                    <text class="name" x="256" y="273">Alice</text>
+                    <text x="520" y="273" text-anchor="end">101 · on a call</text>
+                    <circle cx="240" cy="312" r="5" fill="var(--warning)" />
+                    <text class="name" x="256" y="317">Bob</text>
+                    <text x="520" y="317" text-anchor="end">102 · ringing</text>
+                    <circle cx="240" cy="356" r="5" fill="var(--success)" />
+                    <text class="name" x="256" y="361">Carol</text>
+                    <text x="520" y="361" text-anchor="end">103 · idle</text>
+                    <circle cx="240" cy="400" r="5" fill="var(--text-muted)" />
+                    <text class="name" x="256" y="405">Dave</text>
+                    <text x="520" y="405" text-anchor="end">104 · do not disturb</text>
+                    <circle cx="240" cy="444" r="5" fill="var(--danger)" />
+                    <text class="name" x="256" y="449">Eve</text>
+                    <text x="520" y="449" text-anchor="end">105 · offline</text>
+                  </g>
+                  <rect x="586" y="196" width="350" height="312" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="602" y="228">Queues</text>
+                  <text class="dim" x="602" y="268">Support · 300</text>
+                  <text class="k" x="900" y="268" text-anchor="end">2 waiting</text>
+                  <rect x="602" y="280" width="310" height="8" rx="4" fill="var(--bg)" />
+                  <rect x="602" y="280" width="210" height="8" rx="4" fill="var(--accent-3)" />
+                  <text class="dim" x="602" y="328">Sales · 200</text>
+                  <text class="k" x="900" y="328" text-anchor="end">idle</text>
+                  <rect x="602" y="340" width="310" height="8" rx="4" fill="var(--bg)" />
+                  <rect x="602" y="340" width="48" height="8" rx="4" fill="var(--accent)" />
+                  <text class="dim" x="602" y="400">Longest wait</text>
+                  <text class="num" x="602" y="444">0:42</text>
+                </svg>
+                <svg class="mock" data-panel="cdr" viewBox="0 0 960 540" role="img" hidden aria-label="Call detail records with one call expanded: facts and a step-by-step IVR timeline">
+                  <use href="#panel-shell" width="960" height="540" />
+                  <rect x="14" y="218" width="160" height="28" rx="8" fill="#152636" stroke="#2ee6c5" stroke-opacity="0.55" />
+                  <text class="name" x="28" y="237">Calls</text>
+                  <text class="h" x="212" y="104">Call logs</text>
+                  <rect x="212" y="124" width="724" height="36" rx="8" fill="var(--bg-soft)" />
+                  <text class="k" x="228" y="147">TIME</text>
+                  <text class="k" x="340" y="147">FROM</text>
+                  <text class="k" x="520" y="147">TO</text>
+                  <text class="k" x="680" y="147">DURATION</text>
+                  <text class="k" x="840" y="147">RESULT</text>
+                  <g class="dim">
+                    <text class="name" x="228" y="186">09:14</text>
+                    <text x="340" y="186">+1 555 0142</text>
+                    <text x="520" y="186">Alice · 101</text>
+                    <text x="680" y="186">2:14</text>
+                    <text class="ok" x="840" y="186">Answered</text>
+                  </g>
+                  <rect x="212" y="206" width="724" height="132" rx="10" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="k" x="228" y="230">TIMELINE</text>
+                  <g>
+                    <path d="M256 276H384M396 276H524M536 276H684" stroke="var(--border)" />
+                    <circle cx="250" cy="276" r="6" fill="var(--accent-2)" />
+                    <text class="dim" x="266" y="280">Welcome</text>
+                    <circle cx="390" cy="276" r="6" fill="var(--accent-3)" />
+                    <text class="dim" x="406" y="280">Menu · 1</text>
+                    <circle cx="530" cy="276" r="6" fill="var(--violet-line)" />
+                    <text class="dim" x="546" y="280">API · rate</text>
+                    <circle cx="690" cy="276" r="6" fill="var(--accent)" />
+                    <text class="dim" x="706" y="280">“One dollar…”</text>
+                    <text class="k" x="228" y="316">WAIT 18s · TALK 2:14 · MOS 4.3</text>
+                  </g>
+                  <g class="dim">
+                    <text class="name" x="228" y="378">09:02</text>
+                    <text x="340" y="378">+1 555 0190</text>
+                    <text x="520" y="378">Queue · 300</text>
+                    <text x="680" y="378">0:40</text>
+                    <text class="bad" x="840" y="378">Missed</text>
+                    <text class="name" x="228" y="422">08:41</text>
+                    <text x="340" y="422">Bob · 102</text>
+                    <text x="520" y="422">Carol · 103</text>
+                    <text x="680" y="422">6:02</text>
+                    <text class="ok" x="840" y="422">Answered</text>
+                    <text class="name" x="228" y="466">08:11</text>
+                    <text x="340" y="466">+1 555 0108</text>
+                    <text x="520" y="466">IVR · 902</text>
+                    <text x="680" y="466">0:22</text>
+                    <text x="840" y="466">Hangup</text>
+                  </g>
+                </svg>
+                <svg class="mock" data-panel="queues" viewBox="0 0 960 540" role="img" hidden aria-label="Queue editor with strategy, wait limits, announcement language, voice model and overflow destinations">
+                  <use href="#panel-shell" width="960" height="540" />
+                  <rect x="14" y="146" width="160" height="28" rx="8" fill="#152636" stroke="#2ee6c5" stroke-opacity="0.55" />
+                  <text class="name" x="28" y="165">Queues</text>
+                  <text class="h" x="212" y="104">Support · 300</text>
+                  <text class="k" x="212" y="148">STRATEGY</text>
+                  <rect x="212" y="160" width="110" height="32" rx="8" fill="var(--accent)" />
+                  <text x="267" y="181" text-anchor="middle" fill="#04211b" font-size="13" font-weight="600" font-family="Outfit, system-ui, sans-serif">Ring all</text>
+                  <rect x="332" y="160" width="130" height="32" rx="8" fill="none" stroke="var(--border)" />
+                  <text class="dim" x="397" y="181" text-anchor="middle">Least recent</text>
+                  <rect x="472" y="160" width="130" height="32" rx="8" fill="none" stroke="var(--border)" />
+                  <text class="dim" x="537" y="181" text-anchor="middle">Fewest calls</text>
+                  <rect x="612" y="160" width="100" height="32" rx="8" fill="none" stroke="var(--border)" />
+                  <text class="dim" x="662" y="181" text-anchor="middle">Random</text>
+                  <text class="k" x="212" y="232">TIMEOUT</text>
+                  <text class="k" x="400" y="232">WRAP-UP</text>
+                  <text class="k" x="588" y="232">ANNOUNCEMENT</text>
+                  <rect x="212" y="244" width="160" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="228" y="270">20 seconds</text>
+                  <rect x="400" y="244" width="160" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="416" y="270">5 seconds</text>
+                  <rect x="588" y="244" width="348" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="604" y="270">English · neural voice</text>
+                  <text class="k" x="212" y="328">MEMBERS</text>
+                  <g>
+                    <rect x="212" y="340" width="120" height="32" rx="16" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="dim" x="272" y="361" text-anchor="middle">Alice · 101</text>
+                    <rect x="344" y="340" width="110" height="32" rx="16" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="dim" x="399" y="361" text-anchor="middle">Bob · 102</text>
+                    <rect x="466" y="340" width="120" height="32" rx="16" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="dim" x="526" y="361" text-anchor="middle">Carol · 103</text>
+                  </g>
+                  <text class="k" x="212" y="416">OVERFLOW</text>
+                  <rect x="212" y="428" width="280" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="228" y="454">IVR · Main line 902</text>
+                </svg>
+                <svg class="mock" data-panel="extensions" viewBox="0 0 960 540" role="img" hidden aria-label="Extensions list with do-not-disturb switches">
+                  <use href="#panel-shell" width="960" height="540" />
+                  <rect x="14" y="110" width="160" height="28" rx="8" fill="#152636" stroke="#2ee6c5" stroke-opacity="0.55" />
+                  <text class="name" x="28" y="129">Extensions</text>
+                  <text class="h" x="212" y="104">Extensions</text>
+                  <rect x="760" y="78" width="176" height="36" rx="8" fill="var(--accent)" />
+                  <text x="848" y="101" text-anchor="middle" fill="#04211b" font-size="14" font-weight="600" font-family="Outfit, system-ui, sans-serif">Add extension</text>
+                  <rect x="212" y="128" width="724" height="36" rx="8" fill="var(--bg-soft)" />
+                  <text class="k" x="228" y="151">EXT</text>
+                  <text class="k" x="320" y="151">NAME</text>
+                  <text class="k" x="520" y="151">DO NOT DISTURB</text>
+                  <text class="k" x="760" y="151">STATUS</text>
+                  <g>
+                    <text class="name" x="228" y="196">101</text>
+                    <text class="dim" x="320" y="196">Alice</text>
+                    <rect x="520" y="180" width="40" height="22" rx="11" fill="var(--bg)" stroke="var(--border)" />
+                    <circle cx="532" cy="191" r="7" fill="var(--text-muted)" />
+                    <text class="dim ok" x="760" y="196">Registered</text>
+                    <text class="name" x="228" y="244">102</text>
+                    <text class="dim" x="320" y="244">Bob</text>
+                    <rect x="520" y="228" width="40" height="22" rx="11" fill="var(--accent)" />
+                    <circle cx="548" cy="239" r="7" fill="#04211b" />
+                    <text class="dim ok" x="760" y="244">Registered</text>
+                    <text class="name" x="228" y="292">103</text>
+                    <text class="dim" x="320" y="292">Carol</text>
+                    <rect x="520" y="276" width="40" height="22" rx="11" fill="var(--bg)" stroke="var(--border)" />
+                    <circle cx="532" cy="287" r="7" fill="var(--text-muted)" />
+                    <text class="dim ok" x="760" y="292">Registered</text>
+                    <text class="name" x="228" y="340">104</text>
+                    <text class="dim" x="320" y="340">Dave</text>
+                    <rect x="520" y="324" width="40" height="22" rx="11" fill="var(--accent)" />
+                    <circle cx="548" cy="335" r="7" fill="#04211b" />
+                    <text class="dim warn" x="760" y="340">Do not disturb</text>
+                    <text class="name" x="228" y="388">105</text>
+                    <text class="dim" x="320" y="388">Eve</text>
+                    <rect x="520" y="372" width="40" height="22" rx="11" fill="var(--bg)" stroke="var(--border)" />
+                    <circle cx="532" cy="383" r="7" fill="var(--text-muted)" />
+                    <text class="dim" x="760" y="388">Offline</text>
+                  </g>
+                  <text class="k" x="212" y="440">ONE PASSWORD FOR THE PORTAL AND SIP · CSV IMPORT AND EXPORT</text>
+                </svg>
+                <svg class="mock" data-panel="reports" viewBox="0 0 960 540" role="img" hidden aria-label="Reports: summary, voice quality and per-queue statistics">
+                  <use href="#panel-shell" width="960" height="540" />
+                  <rect x="14" y="254" width="160" height="28" rx="8" fill="#152636" stroke="#2ee6c5" stroke-opacity="0.55" />
+                  <text class="name" x="28" y="273">Reports</text>
+                  <text class="h" x="212" y="104">This week</text>
+                  <g>
+                    <rect x="212" y="124" width="230" height="88" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="228" y="150">CALLS</text>
+                    <text class="num" x="228" y="190">1,284</text>
+                    <rect x="458" y="124" width="230" height="88" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="474" y="150">ANSWER RATE</text>
+                    <text class="num ok" x="474" y="190">94%</text>
+                    <rect x="704" y="124" width="232" height="88" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                    <text class="k" x="720" y="150">MOS</text>
+                    <text class="num" x="720" y="190">4.3</text>
+                  </g>
+                  <rect x="212" y="232" width="724" height="160" rx="12" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="k" x="228" y="256">CALLS BY DAY</text>
+                  <g>
+                    <rect x="250" y="300" width="36" height="64" rx="6" fill="var(--accent)" opacity="0.45" />
+                    <rect x="330" y="276" width="36" height="88" rx="6" fill="var(--accent)" opacity="0.7" />
+                    <rect x="410" y="288" width="36" height="76" rx="6" fill="var(--accent)" />
+                    <rect x="490" y="264" width="36" height="100" rx="6" fill="var(--accent)" />
+                    <rect x="570" y="292" width="36" height="72" rx="6" fill="var(--accent)" opacity="0.8" />
+                    <rect x="650" y="308" width="36" height="56" rx="6" fill="var(--accent)" opacity="0.55" />
+                    <rect x="730" y="320" width="36" height="44" rx="6" fill="var(--accent)" opacity="0.4" />
+                  </g>
+                  <text class="k" x="212" y="424">PER QUEUE</text>
+                  <text class="dim" x="212" y="456">Support · 300</text>
+                  <text class="name" x="520" y="456">640 calls · 91%</text>
+                  <text class="dim" x="212" y="492">Sales · 200</text>
+                  <text class="name" x="520" y="492">310 calls · 97%</text>
+                </svg>
+                <svg class="mock" data-panel="settings" viewBox="0 0 960 540" role="img" hidden aria-label="Settings: hostname and SSL, company name, retention and privacy announcement">
+                  <use href="#panel-shell" width="960" height="540" />
+                  <rect x="14" y="290" width="160" height="28" rx="8" fill="#152636" stroke="#2ee6c5" stroke-opacity="0.55" />
+                  <text class="name" x="28" y="309">Settings</text>
+                  <text class="h" x="212" y="104">System</text>
+                  <text class="k" x="212" y="148">HOSTNAME</text>
+                  <rect x="212" y="160" width="420" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="228" y="186">pbx.example.com</text>
+                  <rect x="648" y="160" width="120" height="40" rx="8" fill="color-mix(in oklab, var(--success) 16%, var(--bg-elevated))" stroke="var(--success)" />
+                  <text class="name ok" x="708" y="186" text-anchor="middle">SSL issued</text>
+                  <text class="k" x="212" y="240">COMPANY</text>
+                  <rect x="212" y="252" width="420" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="228" y="278">Northwind</text>
+                  <text class="k" x="212" y="332">RECORDING RETENTION</text>
+                  <rect x="212" y="344" width="200" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="228" y="370">90 days</text>
+                  <text class="k" x="212" y="424">PRIVACY ANNOUNCEMENT</text>
+                  <rect x="212" y="436" width="44" height="24" rx="12" fill="var(--accent)" />
+                  <circle cx="244" cy="448" r="8" fill="#04211b" />
+                  <text class="dim" x="270" y="452">Played before recording</text>
+                  <text class="k" x="500" y="332">VOICE</text>
+                  <rect x="500" y="344" width="280" height="40" rx="8" fill="var(--bg-elevated)" stroke="var(--border)" />
+                  <text class="name" x="516" y="370">Neural · English</text>
+                </svg>
+              </div>
               <figcaption data-tour-caption></figcaption>
             </figure>
           </div>
@@ -395,7 +890,7 @@
       </section>
 
       <!-- ───────────────────────── Install ───────────────────────── -->
-      <section class="section" id="install">
+      <section class="section section-alt" id="install">
         <div class="wrap install-grid">
           <div class="reveal">
             <p class="kicker">Install</p>
@@ -437,7 +932,7 @@ docker pull ghcr.io/munasip/munasip:latest</code></pre>
     <footer class="footer">
       <div class="wrap footer-row">
         <span class="brand"><img class="brand-mark" src="brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></span>
-        <span class="muted">Self-hosted company PBX · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a> · source on GitHub</span>
+        <span class="muted">Self-hosted company PBX · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/docs/README.md">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE">MIT License</a></span>
         <a href="#top" class="muted">Back to top ↑</a>
       </div>
     </footer>

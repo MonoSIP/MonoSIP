@@ -117,7 +117,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 | Layer | Technology |
 | --- | --- |
 | Media / SIP | Asterisk 22, PJSIP, ARI, AMI, WebRTC |
-| API | Node 24, Fastify, Drizzle, PostgreSQL 17 |
+| API | Node 26, Fastify, Drizzle, PostgreSQL 17 |
 | UI | React, Vite, TanStack Query, SIP.js |
 | Edge | nginx (TLS, WSS), coturn |
 | TTS | Edge Neural + EMA (TR) offline |

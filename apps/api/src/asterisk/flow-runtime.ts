@@ -256,7 +256,7 @@ export async function runFlowOnChannel(
           const lang = vars.language === "tr" ? "tr" : "en";
           const text =
             lang === "tr"
-              ? "Bu gorusme kaydedilebilir."
+              ? "Bu görüşme kaydedilebilir."
               : "This call may be recorded.";
           const { media, cached, ms } = await ensureSpeechMedia(
             text,
@@ -448,7 +448,7 @@ export async function executeFlowLoop(
           }
           await playSpeech(
             channelId,
-            lang === "tr" ? "Gecersiz tus. Lutfen tekrar deneyin." : "Invalid entry. Please try again.",
+            lang === "tr" ? "Geçersiz tuş. Lütfen tekrar deneyin." : "Invalid entry. Please try again.",
             lang,
             gender,
           ).catch(() => undefined);
@@ -684,7 +684,7 @@ export async function executeFlowLoop(
         await playSpeech(
           channelId,
           lang === "tr"
-            ? "Aradiginiz kisinin soyadini tuslayin, sonra diyez basin."
+            ? "Aradığınız kişinin soyadını tuşlayın, sonra diyez basın."
             : "Enter the last name on your keypad, then press pound.",
           lang,
           vars.__ttsVoice || "female",
@@ -704,7 +704,7 @@ export async function executeFlowLoop(
             await playSpeech(
               channelId,
               lang === "tr"
-                ? `${hit.name}, baglaniyor.`
+                ? `${hit.name}, bağlanıyor.`
                 : `Connecting to ${hit.name}.`,
               lang,
               vars.__ttsVoice || "female",
@@ -716,7 +716,7 @@ export async function executeFlowLoop(
         handle = "not_found";
         await playSpeech(
           channelId,
-          lang === "tr" ? "Eslesme bulunamadi." : "No match found.",
+          lang === "tr" ? "Eşleşme bulunamadı." : "No match found.",
           lang,
           vars.__ttsVoice || "female",
         );
@@ -758,7 +758,7 @@ export async function executeFlowLoop(
           await playSpeech(
             channelId,
             lang === "tr"
-              ? "Kendinize aktarim yapilamaz. Ana menuye donuluyor."
+              ? "Kendinize aktarım yapılamaz. Ana menüye dönülüyor."
               : "You cannot transfer to yourself. Returning to the main menu.",
             lang,
             vars.__ttsVoice || "female",
@@ -778,7 +778,7 @@ export async function executeFlowLoop(
             await playSpeech(
               channelId,
               lang === "tr"
-                ? `Dahili ${dest} kayitli degil.`
+                ? `Dahili ${dest} kayıtlı değil.`
                 : `Extension ${dest} is not registered.`,
               lang,
               vars.__ttsVoice || "female",
@@ -797,7 +797,7 @@ export async function executeFlowLoop(
             console.warn(`[flow] ${channelId} target ${dest} busy`);
             await playSpeech(
               channelId,
-              lang === "tr" ? `Dahili ${dest} su anda mesgul.` : `Extension ${dest} is busy.`,
+              lang === "tr" ? `Dahili ${dest} şu anda meşgul.` : `Extension ${dest} is busy.`,
               lang,
               vars.__ttsVoice || "female",
             );
@@ -811,7 +811,7 @@ export async function executeFlowLoop(
           }
           await playSpeech(
             channelId,
-            lang === "tr" ? `Dahili ${dest} araniyor.` : `Calling extension ${dest}.`,
+            lang === "tr" ? `Dahili ${dest} aranıyor.` : `Calling extension ${dest}.`,
             lang,
             vars.__ttsVoice || "female",
           );
@@ -830,7 +830,7 @@ export async function executeFlowLoop(
         // Non-extension destinations: redirect (no DialStatus edges)
         await playSpeech(
           channelId,
-          lang === "tr" ? "Aktariliyor." : "Transferring.",
+          lang === "tr" ? "Aktarılıyor." : "Transferring.",
           lang,
           vars.__ttsVoice || "female",
         );

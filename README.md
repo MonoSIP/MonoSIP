@@ -78,7 +78,3 @@ All docs live under **[docs/](docs/README.md)**. Static product site: **[site/](
 ## License
 
 MunaSIP is released under the **[MIT License](LICENSE)** — use, modify and redistribute it freely, keeping the copyright notice.
-
-## Maintenance
-
-Canonical repo: **[github.com/MunaSIP/MunaSIP](https://github.com/MunaSIP/MunaSIP)**, maintained by **[@diggyen](https://github.com/diggyen)**. This repository does not take third-party pull requests (see [.github/MAINTENANCE.md](.github/MAINTENANCE.md)); fork it freely under the MIT License.

@@ -42,6 +42,7 @@ html {
   scroll-padding-top: 80px;
 }
 body {
+  position: relative;
   margin: 0;
   font-family: var(--font);
   font-size: 17px;
@@ -100,6 +101,12 @@ code {
 }
 
 /* ── nav ── */
+.nav,
+main,
+.footer {
+  position: relative;
+  z-index: 1;
+}
 .nav {
   position: sticky;
   top: 0;
@@ -212,7 +219,54 @@ code {
 
 /* ── hero ── */
 .hero {
+  position: relative;
   padding: var(--hero-pad-top) 0 var(--hero-pad-bottom);
+}
+.flow-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--accent) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--accent) 9%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+.flow-map svg {
+  display: block;
+  overflow: visible;
+}
+.flow-wire {
+  fill: none;
+  stroke: color-mix(in oklab, var(--accent) 38%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1.5 8;
+}
+.flow-packet {
+  fill: none;
+  stroke: color-mix(in oklab, var(--accent) 88%, white);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 16 148;
+  animation: flow-down 2.6s linear infinite;
+}
+@keyframes flow-down {
+  to {
+    stroke-dashoffset: -164;
+  }
+}
+.flow-port {
+  fill: var(--bg);
+  stroke: color-mix(in oklab, var(--accent) 75%, transparent);
+  stroke-width: 1.5;
+}
+.flow-port-dot {
+  fill: var(--accent);
 }
 .hero-grid {
   display: grid;
@@ -306,6 +360,7 @@ h1 em {
   transform: rotate(-45deg);
 }
 .hero-art {
+  position: relative;
   width: 100%;
   max-width: 46rem;
   justify-self: end;
@@ -483,7 +538,7 @@ h1 em {
   padding-block: var(--section-pad);
 }
 .section-alt {
-  background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--bg-elevated) 55%, transparent) 20%, color-mix(in oklab, var(--bg-elevated) 55%, transparent) 80%, transparent);
+  background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--bg-elevated) 28%, transparent) 18%, color-mix(in oklab, var(--bg-elevated) 28%, transparent) 82%, transparent);
 }
 .section-head {
   max-width: var(--measure);
@@ -680,9 +735,10 @@ h2 {
 .shot {
   margin: 0;
 }
-.shot img {
+.shot .mock {
   border-radius: 12px;
   border: 1px solid var(--border);
+  background: var(--bg);
   box-shadow: 0 18px 50px rgb(0 0 0 / 0.4);
 }
 .shot-main {
@@ -697,15 +753,14 @@ h2 {
 /* softphone */
 .soft-grid {
   display: grid;
-  grid-template-columns: minmax(17rem, 24rem) minmax(0, 1fr);
+  grid-template-columns: minmax(12rem, 17.5rem) minmax(0, 1fr);
   gap: var(--split-gap);
-  align-items: center;
+  align-items: stretch;
 }
 .phone-stage {
   position: relative;
-  display: grid;
-  place-items: center;
-  padding: 40px 0 0;
+  min-height: 0;
+  height: 100%;
 }
 .phone-stage::before {
   content: "";
@@ -716,15 +771,22 @@ h2 {
   filter: blur(20px);
 }
 .phone-shot {
-  position: relative;
-  width: min(360px, 100%);
-  border-radius: 38px;
-  box-shadow: 0 30px 80px rgb(0 0 0 / 0.55);
+  position: absolute;
+  top: 1.15rem;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 1.15rem);
+  max-height: calc(100% - 1.15rem);
+  filter: drop-shadow(0 22px 36px rgb(0 0 0 / 0.45));
 }
 .voice {
   position: absolute;
   top: 0;
-  width: min(300px, 80%);
+  left: 50%;
+  width: min(12rem, 92%);
+  transform: translateX(-50%);
   z-index: 1;
 }
 .voice rect {
@@ -787,11 +849,12 @@ h2 {
   overflow: hidden;
   box-shadow: 0 30px 80px rgb(0 0 0 / 0.45);
 }
-.tour-frame img {
-  transition: opacity 0.25s var(--ease);
+.tour-stage .mock {
+  display: block;
+  background: var(--bg);
 }
-.tour-frame img.is-swapping {
-  opacity: 0.15;
+.tour-stage .mock[hidden] {
+  display: none;
 }
 .tour-frame figcaption {
   padding: 12px 18px;
@@ -934,14 +997,6 @@ h2 {
   transform: none;
 }
 
-/* Softphone notes split into two columns once the text side has room for both. */
-@container page (min-width: 68rem) {
-  .soft-grid .ticks {
-    grid-template-columns: 1fr 1fr;
-    column-gap: clamp(1.25rem, 2vw, 2.5rem);
-    max-width: 70rem;
-  }
-}
 /* One more card column once each card stays about as wide as the old 3-up row. */
 @container page (min-width: 96rem) {
   .cards {
@@ -951,6 +1006,29 @@ h2 {
 @media (min-width: 1025px) {
   :root {
     --page-gutter: clamp(1.25rem, 4.8vw - 1.85rem, 5.5rem);
+  }
+  .hero-grid {
+    align-items: stretch;
+  }
+  .hero-art {
+    height: 100%;
+    min-height: 0;
+  }
+  .callmap {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    bottom: 3.4rem;
+    left: 18px;
+    width: auto;
+    height: auto;
+  }
+  .hero-caption {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    left: 18px;
+    margin: 0;
   }
 }
 @media (min-width: 1500px) {
@@ -982,6 +1060,23 @@ h2 {
   }
   .soft-grid .phone-stage {
     order: 2;
+    height: auto;
+    display: grid;
+    justify-items: center;
+    padding-top: 1.75rem;
+  }
+  .soft-grid .phone-shot {
+    position: relative;
+    inset: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: min(260px, 72%);
+    height: auto;
+  }
+  .voice {
+    width: min(180px, 52%);
   }
 }
 @media (max-width: 640px) {
@@ -1022,7 +1117,8 @@ h2 {
     transition: none !important;
   }
   .packets,
-  .fl-dot {
+  .fl-dot,
+  .flow-packet {
     display: none;
   }
   .fl-run {
@@ -1037,3 +1133,70 @@ h2 {
 .section-lead + .ticks {
   margin-top: 26px;
 }
+.more {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 22px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.more:hover {
+  text-decoration: underline;
+}
+.section-head .more {
+  margin-top: 16px;
+}
+
+/* vector UI mocks — same ink as the hero diagram */
+.mock {
+  display: block;
+}
+.mock:not(.phone-shot) {
+  width: 100%;
+  height: auto;
+}
+.mock-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.mock .h {
+  font: 600 20px var(--font);
+  fill: var(--text);
+}
+.mock .name {
+  font: 600 15px var(--font);
+  fill: var(--text);
+}
+.mock .dim {
+  font: 500 13px var(--font);
+  fill: var(--text-muted);
+}
+.mock .k {
+  font: 600 11px var(--mono);
+  letter-spacing: 0.08em;
+  fill: var(--text-muted);
+}
+.mock .num {
+  font: 600 28px var(--font);
+  fill: var(--text);
+}
+.mock .keyn {
+  font: 600 22px var(--font);
+  fill: var(--text);
+  text-anchor: middle;
+}
+.mock .keyl {
+  font: 500 9px var(--mono);
+  fill: var(--text-muted);
+  text-anchor: middle;
+  letter-spacing: 0.12em;
+}
+.mock text.hot { fill: var(--accent); }
+.mock text.coral { fill: var(--accent-2); }
+.mock text.info { fill: var(--accent-3); }
+.mock text.ok { fill: var(--success); }
+.mock text.bad { fill: var(--danger); }
+.mock text.warn { fill: var(--warning); }
+.mock text.vio { fill: var(--violet-line); }
