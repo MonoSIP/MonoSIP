@@ -27,7 +27,7 @@ RUN pnpm install --filter @munasip/api... --filter @munasip/web... --frozen-lock
 # --- Runtime: Asterisk base + Node + Postgres ---
 FROM andrius/asterisk:22
 LABEL org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.source="https://github.com/diggyen/MunaSIP"
+      org.opencontainers.image.source="https://github.com/MunaSIP/MunaSIP"
 
 USER root
 ARG TARGETARCH

@@ -1,4 +1,9 @@
-name: Deploy GitHub Pages
+name: Publish website
+
+# site/ is served at https://munasip.github.io from the MunaSIP/munasip.github.io
+# repository (an organization's root Pages site must live in that repo). This
+# job copies site/ there; the deploy key (secret SITE_DEPLOY_KEY) can only write
+# to that repository.
 
 on:
   push:
@@ -10,24 +15,36 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Push site/ to MunaSIP/munasip.github.io
+        env:
+          SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SITE_DEPLOY_KEY" > ~/.ssh/site_deploy
+          chmod 600 ~/.ssh/site_deploy
+          ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_deploy -o IdentitiesOnly=yes"
+          git clone --depth 1 git@github.com:MunaSIP/munasip.github.io.git out
+          find out -mindepth 1 -maxdepth 1 ! -name .git ! -name README.md -exec rm -rf {} +
+          cp -R site/. out/
+          cd out
+          # site/README.md is for this repo; the target keeps its own
+          git checkout -- README.md
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Site unchanged."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Publish site from ${GITHUB_SHA::7}"
+          git push origin main

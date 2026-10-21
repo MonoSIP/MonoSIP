@@ -14,7 +14,7 @@ MunaSIP runs as a **Docker Compose** stack. Supported production path: Linux VM 
 ## Lab install (localhost)
 
 ```bash
-git clone https://github.com/diggyen/MunaSIP.git
+git clone https://github.com/MunaSIP/MunaSIP.git
 cd MunaSIP
 git checkout v1.4.0   # or main
 
@@ -67,7 +67,7 @@ docker run -d --name munasip --restart unless-stopped \
   -p 3000:3000 -p 10000-10100:10000-10100/udp \
   -v munasip-data:/data \
   -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
-  ghcr.io/diggyen/munasip:latest
+  ghcr.io/munasip/munasip:latest
 ```
 
 | Tag | Source |
@@ -76,11 +76,11 @@ docker run -d --name munasip --restart unless-stopped \
 | `main` | tip of `main` |
 | `sha-<short>` | a specific commit |
 
-Update: `docker pull ghcr.io/diggyen/munasip:latest`, then recreate the container — data
+Update: `docker pull ghcr.io/munasip/munasip:latest`, then recreate the container — data
 stays in the `munasip-data` volume.
 
 **PaaS without building (NineDeploy, Coolify, …):** create the service from the
-image `ghcr.io/diggyen/munasip:latest` instead of the Git repository, mount `/data`,
+image `ghcr.io/munasip/munasip:latest` instead of the Git repository, mount `/data`,
 expose port 3000 (+ UDP 10000-10100) and set `PUBLIC_HOST` / `EXTERNAL_IP`. Deploys
 then only pull (~1 min) instead of building torch + TTS models (~10 min, ~4 GB of
 build layers left on the host per deploy). On NineDeploy enable **Auto-update** so a
@@ -186,7 +186,7 @@ finds under the old name: `/data/.dsip-secrets`, the embedded Postgres role and
 database `dsip`, the generated `*_dsip.conf` files and the `sounds/dsip` folder
 (stored file paths are updated by a migration). `DSIP_*` environment variables
 keep working; `MUNASIP_*` wins when both are set. Browser sessions and saved
-preferences carry over. Point your deployment at `ghcr.io/diggyen/munasip`.
+preferences carry over. Point your deployment at `ghcr.io/munasip/munasip`.
 
 **Docker Compose:** the Postgres service keeps its existing user and database,
 so either keep the old names in `.env`
