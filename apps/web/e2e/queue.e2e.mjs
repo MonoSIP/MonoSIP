@@ -1,8 +1,9 @@
 /**
  * Queue end-to-end test against a running DSip, with real browser softphones.
  *
- * Creates (or updates) test extensions 291/292 (agents) and 293 (caller) and a
- * ringall queue 790 with both agents, short timeouts and hangup overflow, then:
+ * Creates (or updates) test extensions 291/292 (agents) and 293 (caller) and its
+ * own ringall queue (QUEUE, default 791 — never a queue people use) with both
+ * agents, short timeouts, hangup overflow and Turkish EMA announcements, then:
  *   Q1 an agent answers → connected, CDR has queue + agent + wait time
  *   Q2 one agent busy on another call → only the free agent rings
  *   Q3 no agent registered → join-empty overflow hangs up at once
@@ -17,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const BASE = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const QUEUE = "790";
+const QUEUE = process.env.QUEUE ?? "791";
 const AGENTS = ["291", "292"];
 const CALLER = "293";
 const PASS = (ext) => `testpass${ext}`;
@@ -57,15 +58,17 @@ for (const [num, name] of [["291", "Test Agent 1"], ["292", "Test Agent 2"], ["2
   }
 }
 const queueBody = {
-  name: "Test Kuyruk",
+  name: "E2E Test Kuyruk",
   number: QUEUE,
   strategy: "ringall",
   memberTimeout: 8,
   wrapup: 0,
   maxWait: MAX_WAIT,
   maxCallers: 10,
-  announceHoldtime: false,
-  announcePosition: false,
+  announceHoldtime: true,
+  announcePosition: true,
+  language: "tr",
+  voice: "ema-lightning",
   timeoutDestType: "hangup",
   fullDestType: "hangup",
   joinemptyDestType: "hangup",
@@ -146,7 +149,8 @@ await scenario("Q1", "An agent answers the queue call", async () => {
   const c = await phone(CALLER);
   const since = new Date(Date.now() - 2000);
   await dial(c, QUEUE);
-  const r1 = await waitSip(a1, /^<< INVITE /, 20000);
+  // Agents ring after the entry announcements (position + hold time)
+  const r1 = await waitSip(a1, /^<< INVITE /, 30000);
   const r2 = await waitSip(a2, /^<< INVITE /, 1000);
   if (r1) await answer(a1);
   const up = r1 ? await waitSip(a1, /^>> SIP\/2\.0 200 OK/, 8000) : null;
@@ -169,7 +173,7 @@ await scenario("Q2", "Busy agent is skipped, free agent rings", async () => {
   const from1 = (await sip(a1)).length;
   const c = await phone(CALLER);
   await dial(c, QUEUE);
-  const r2 = await waitSip(a2, /^<< INVITE /, 20000);
+  const r2 = await waitSip(a2, /^<< INVITE /, 30000);
   const r1 = (await sip(a1)).slice(from1).some((l) => /^<< INVITE /.test(l.m));
   if (r2) await answer(a2);
   const up = r2 ? await waitSip(a2, /^>> SIP\/2\.0 200 OK/, 8000) : null;
@@ -181,7 +185,8 @@ await scenario("Q3", "No agent registered → join-empty overflow hangs up", asy
   const from = (await sip(c)).length;
   await dial(c, QUEUE);
   const bye = await waitSip(c, /^<< BYE /, 20000, from);
-  return { ok: !!bye && bye.after < 15000, evidence: { hungUpAfterMs: bye?.after ?? null } };
+  // Entry announcements play first, then the empty queue overflows to hangup
+  return { ok: !!bye && bye.after < 20000, evidence: { hungUpAfterMs: bye?.after ?? null } };
 });
 
 await scenario("Q4", `Nobody answers → timeout overflow after maxWait ${MAX_WAIT}s`, async () => {
@@ -190,9 +195,10 @@ await scenario("Q4", `Nobody answers → timeout overflow after maxWait ${MAX_WA
   const c = await phone(CALLER);
   const from = (await sip(c)).length;
   await dial(c, QUEUE);
-  const bye = await waitSip(c, /^<< BYE /, (MAX_WAIT + 25) * 1000, from);
+  const bye = await waitSip(c, /^<< BYE /, (MAX_WAIT + 35) * 1000, from);
   const s = bye ? Math.round(bye.after / 1000) : null;
-  return { ok: !!bye && s >= MAX_WAIT - 3 && s <= MAX_WAIT + 15, evidence: { hungUpAfterS: s } };
+  // maxWait counts from joining, after the ~5 s entry announcements
+  return { ok: !!bye && s >= MAX_WAIT - 3 && s <= MAX_WAIT + 20, evidence: { hungUpAfterS: s } };
 });
 
 await browser.close();
