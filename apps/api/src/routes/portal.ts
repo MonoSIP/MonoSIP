@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { and, desc, eq, or } from "drizzle-orm";
 import { z } from "zod";
-import { ExtensionPasswordSchema, ForwardingRuleSchema } from "@dsip/shared";
+import { ExtensionPasswordSchema, ForwardingRuleSchema } from "@munasip/shared";
 import { db } from "../db/client.js";
 import {
   cdr,

@@ -5,9 +5,9 @@ set -e
 # Asterisk drops to runuser=asterisk: everything created here must be readable.
 umask 022
 
-ARI_USER="${ASTERISK_ARI_USER:-dsip}"
+ARI_USER="${ASTERISK_ARI_USER:-munasip}"
 ARI_PASS="${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}"
-AMI_USER="${ASTERISK_AMI_USER:-dsip}"
+AMI_USER="${ASTERISK_AMI_USER:-munasip}"
 AMI_PASS="${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}"
 
 if ! command -v asterisk >/dev/null 2>&1; then
@@ -23,32 +23,32 @@ case "${ASTERISK_ARI_URL:-}" in
     ;;
 esac
 
-DATA_DIR="${DSIP_DATA_DIR:-/data}"
+DATA_DIR="${MUNASIP_DATA_DIR:-/data}"
 AST_CFG="${ASTERISK_CONFIG_DIR:-$DATA_DIR/asterisk}"
 
 mkdir -p "$AST_CFG" /var/lib/asterisk /var/spool/asterisk /etc/asterisk/keys \
-  /var/lib/asterisk/dsip/sounds/dsip \
-  /var/lib/asterisk/dsip/sounds/tr/digits /var/lib/asterisk/dsip/sounds/tr/qpos \
-  /var/lib/asterisk/dsip/sounds/en/digits /var/lib/asterisk/dsip/sounds/en/qpos \
-  /var/lib/asterisk/dsip/voicemail \
+  /var/lib/asterisk/munasip/sounds/munasip \
+  /var/lib/asterisk/munasip/sounds/tr/digits /var/lib/asterisk/munasip/sounds/tr/qpos \
+  /var/lib/asterisk/munasip/sounds/en/digits /var/lib/asterisk/munasip/sounds/en/qpos \
+  /var/lib/asterisk/munasip/voicemail \
   /var/lib/asterisk/moh/default \
   /var/lib/asterisk/sounds/en \
   /var/log/asterisk
 
 # Persist generated dialplan/PJSIP on the NineDeploy volume.
-if [ -e /var/lib/asterisk/dsip ] && [ ! -L /var/lib/asterisk/dsip ]; then
+if [ -e /var/lib/asterisk/munasip ] && [ ! -L /var/lib/asterisk/munasip ]; then
   # Move any seed files into the data dir once, then replace with symlink.
-  cp -a /var/lib/asterisk/dsip/. "$AST_CFG/" 2>/dev/null || true
-  rm -rf /var/lib/asterisk/dsip
+  cp -a /var/lib/asterisk/munasip/. "$AST_CFG/" 2>/dev/null || true
+  rm -rf /var/lib/asterisk/munasip
 fi
-ln -sfn "$AST_CFG" /var/lib/asterisk/dsip
+ln -sfn "$AST_CFG" /var/lib/asterisk/munasip
 
 # Asterisk drops to runuser=asterisk — /data must be traversable and confs readable.
 # World-readable is enough; never chown -R (hangs NineDeploy volumes).
 chmod 755 "$DATA_DIR" "$AST_CFG" 2>/dev/null || true
-chmod 644 "$AST_CFG"/pjsip_dsip.conf "$AST_CFG"/acl_dsip.conf \
-  "$AST_CFG"/queues_dsip.conf "$AST_CFG"/extensions_dsip.conf \
-  "$AST_CFG"/musiconhold_dsip.conf "$AST_CFG"/reload.flag 2>/dev/null || true
+chmod 644 "$AST_CFG"/pjsip_munasip.conf "$AST_CFG"/acl_munasip.conf \
+  "$AST_CFG"/queues_munasip.conf "$AST_CFG"/extensions_munasip.conf \
+  "$AST_CFG"/musiconhold_munasip.conf "$AST_CFG"/reload.flag 2>/dev/null || true
 # Prompt WAVs are written by the API as root (older images: umask 077). Asterisk must read them.
 # Every level counts: a single 700 subfolder (qpos/, qhold/, a MOH class) silently
 # mutes queue announcements or hold music.
@@ -66,23 +66,23 @@ ln -sfn "${RECORDINGS_DIR:-$DATA_DIR/recordings}" /var/spool/asterisk/recording
 chmod 777 "${RECORDINGS_DIR:-$DATA_DIR/recordings}" /var/log/asterisk 2>/dev/null || true
 touch /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security 2>/dev/null || true
 
-ln -sfn /var/lib/asterisk/dsip/sounds/dsip /var/lib/asterisk/sounds/dsip
+ln -sfn /var/lib/asterisk/munasip/sounds/munasip /var/lib/asterisk/sounds/munasip
 rm -rf /var/lib/asterisk/sounds/tr
-ln -sfn /var/lib/asterisk/dsip/sounds/tr /var/lib/asterisk/sounds/tr
+ln -sfn /var/lib/asterisk/munasip/sounds/tr /var/lib/asterisk/sounds/tr
 
 overlay_en_sounds() {
-  for f in /var/lib/asterisk/dsip/sounds/en/*.wav; do
+  for f in /var/lib/asterisk/munasip/sounds/en/*.wav; do
     [ -f "$f" ] || continue
     ln -sfn "$f" "/var/lib/asterisk/sounds/en/$(basename "$f")"
   done
   # Per-queue voice packs (sounds/tr_ema, en_male …) — Asterisk language variants
-  for d in /var/lib/asterisk/dsip/sounds/*_*; do
+  for d in /var/lib/asterisk/munasip/sounds/*_*; do
     [ -d "$d" ] || continue
     ln -sfn "$d" "/var/lib/asterisk/sounds/$(basename "$d")"
   done
   for d in digits qpos qhold; do
     mkdir -p "/var/lib/asterisk/sounds/en/$d"
-    for f in /var/lib/asterisk/dsip/sounds/en/$d/*.wav; do
+    for f in /var/lib/asterisk/munasip/sounds/en/$d/*.wav; do
       [ -f "$f" ] || continue
       ln -sfn "$f" "/var/lib/asterisk/sounds/en/$d/$(basename "$f")"
     done
@@ -113,14 +113,14 @@ def write_tone(path: Path, secs: float, freq: float, duty: float = 1.0):
             frames += struct.pack("<h", max(-32767, min(32767, sample)))
         w.writeframes(frames)
 
-moh = Path("/var/lib/asterisk/dsip/moh/default/wait.wav")
+moh = Path("/var/lib/asterisk/munasip/moh/default/wait.wav")
 if not moh.is_file():
     write_tone(moh, 4.0, 440, duty=0.2)
 Path("/var/lib/asterisk/moh").mkdir(parents=True, exist_ok=True)
 legacy = Path("/var/lib/asterisk/moh/default")
 if not legacy.exists():
     try:
-        os.symlink("/var/lib/asterisk/dsip/moh/default", str(legacy))
+        os.symlink("/var/lib/asterisk/munasip/moh/default", str(legacy))
     except OSError:
         pass
 beep = Path("/var/lib/asterisk/sounds/en/beep.wav")
@@ -166,18 +166,18 @@ else
   sed -i "s|;externaddr=__EXTERNAL_IP__||g" /etc/asterisk/rtp.conf
 fi
 
-touch /var/lib/asterisk/dsip/pjsip_dsip.conf
-touch /var/lib/asterisk/dsip/acl_dsip.conf
-touch /var/lib/asterisk/dsip/queues_dsip.conf
-touch /var/lib/asterisk/dsip/extensions_dsip.conf
-touch /var/lib/asterisk/dsip/musiconhold_dsip.conf
+touch /var/lib/asterisk/munasip/pjsip_munasip.conf
+touch /var/lib/asterisk/munasip/acl_munasip.conf
+touch /var/lib/asterisk/munasip/queues_munasip.conf
+touch /var/lib/asterisk/munasip/extensions_munasip.conf
+touch /var/lib/asterisk/munasip/musiconhold_munasip.conf
 
 cat > /etc/asterisk/acl.conf <<'EOF'
 ;
-; Named Access Control Lists — DSip generated rules are included below.
+; Named Access Control Lists — MunaSIP generated rules are included below.
 ;
 
-#include /var/lib/asterisk/dsip/acl_dsip.conf
+#include /var/lib/asterisk/munasip/acl_munasip.conf
 EOF
 
 cat > /etc/asterisk/logger.conf <<'EOF'
@@ -199,7 +199,7 @@ EOF
 cat > /etc/asterisk/musiconhold.conf <<'EOF'
 [general]
 
-#include /var/lib/asterisk/dsip/musiconhold_dsip.conf
+#include /var/lib/asterisk/munasip/musiconhold_munasip.conf
 
 [default]
 mode=files
@@ -213,17 +213,17 @@ EOF
   # trigger a reload, and nothing may reload before Asterisk is fully booted —
   # `module reload res_pjsip.so` during startup deadlocks the module loader
   # (SIP over WebSocket then never answers).
-  LAST="$(cat /var/lib/asterisk/dsip/reload.flag 2>/dev/null || true)"
+  LAST="$(cat /var/lib/asterisk/munasip/reload.flag 2>/dev/null || true)"
   until asterisk -rx "core waitfullybooted" >/dev/null 2>&1; do sleep 2; done
   while true; do
-    if [ -f /var/lib/asterisk/dsip/reload.flag ]; then
-      CUR="$(cat /var/lib/asterisk/dsip/reload.flag 2>/dev/null || true)"
+    if [ -f /var/lib/asterisk/munasip/reload.flag ]; then
+      CUR="$(cat /var/lib/asterisk/munasip/reload.flag 2>/dev/null || true)"
       if [ "$CUR" != "$LAST" ] && [ -n "$CUR" ]; then
         LAST="$CUR"
         sleep 1
         # Same lock as the API's CLI reload (config-writer.ts): overlapping
         # `module reload res_pjsip.so` runs deadlock Asterisk's module loader.
-        exec 9>/var/lib/asterisk/dsip/reload.lock
+        exec 9>/var/lib/asterisk/munasip/reload.lock
         flock -w 60 9 || true
         overlay_en_sounds 2>/dev/null || true
         # Fallback path only (the API reloads over the CLI itself). Never
@@ -240,7 +240,7 @@ EOF
         rl "module reload res_musiconhold.so"
         rl "module load pbx_config.so"
         rl "module reload pbx_config.so"
-        echo "DSip: Asterisk reloaded"
+        echo "MunaSIP: Asterisk reloaded"
         flock -u 9 || true
         exec 9>&-
       fi

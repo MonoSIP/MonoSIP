@@ -1,5 +1,5 @@
-import type { FlowJson } from "@dsip/shared";
-import { SettingsSchema } from "@dsip/shared";
+import type { FlowJson } from "@munasip/shared";
+import { SettingsSchema } from "@munasip/shared";
 import { and, eq, gte } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { config } from "../config.js";
@@ -51,7 +51,7 @@ async function notifyMissedCall(caller: string, did: string) {
         from: s.emailFrom,
         to: s.smtpTo,
       },
-      `DSip missed call from ${caller}`,
+      `MunaSIP missed call from ${caller}`,
       `Missed call\nCaller: ${caller}\nDID: ${did}\nAt: ${new Date().toISOString()}`,
     );
   } catch (e) {
@@ -66,7 +66,7 @@ type PendingTransfer = {
   depth: number;
 };
 
-/** Resume flow after dsip-flow-dial returns to Stasis with dial-failed. */
+/** Resume flow after munasip-flow-dial returns to Stasis with dial-failed. */
 const pendingTransfers = new Map<string, PendingTransfer>();
 
 /**
@@ -822,9 +822,9 @@ export async function executeFlowLoop(
             vars: { ...vars },
             depth,
           });
-          await ari.setChannelVar(channelId, "DSIP_DIAL_TARGET", dest);
-          await ari.setChannelVar(channelId, "DSIP_DIAL_TIMEOUT", String(ringTimeout));
-          await ari.redirect(channelId, "s", "dsip-flow-dial");
+          await ari.setChannelVar(channelId, "MUNASIP_DIAL_TARGET", dest);
+          await ari.setChannelVar(channelId, "MUNASIP_DIAL_TIMEOUT", String(ringTimeout));
+          await ari.redirect(channelId, "s", "munasip-flow-dial");
           return "left";
         }
         // Non-extension destinations: redirect (no DialStatus edges)
@@ -863,7 +863,7 @@ export async function executeFlowLoop(
       }
       case "voicemail": {
         const ext = String(data.extensionId ?? data.extension ?? "");
-        if (ext) await ari.redirect(channelId, `*${ext}`, "dsip-voicemail");
+        if (ext) await ari.redirect(channelId, `*${ext}`, "munasip-voicemail");
         else await ari.hangup(channelId);
         return "left";
       }
@@ -999,14 +999,14 @@ export async function handleOutbound(channelId: string, dialed: string, caller: 
   console.log(
     `[flow] outbound ${caller} → ${route.dialNumber}@${route.trunkEndpoint} (route=${route.routeId})`,
   );
-  // Provider failover: dsip-trunk-dial retries these on CHANUNAVAIL / CONGESTION
+  // Provider failover: munasip-trunk-dial retries these on CHANUNAVAIL / CONGESTION
   if (route.fallbackEndpoints?.length) {
-    await ari.setChannelVar(channelId, "DSIP_TRUNK_FALLBACK", route.fallbackEndpoints.join("&"));
+    await ari.setChannelVar(channelId, "MUNASIP_TRUNK_FALLBACK", route.fallbackEndpoints.join("&"));
   }
   await rememberLastDial();
   // Dialplan: Dial(PJSIP/num@trunk) then /internal/cdr with real ANSWEREDTIME
   await cdrAnswered(channelId);
-  await ari.redirect(channelId, `${route.trunkEndpoint}_${route.dialNumber}`, "dsip-trunk-dial");
+  await ari.redirect(channelId, `${route.trunkEndpoint}_${route.dialNumber}`, "munasip-trunk-dial");
 }
 
 export function attachFlowRuntime(): void {
@@ -1037,21 +1037,21 @@ export function attachFlowRuntime(): void {
           const args = ev.args ?? [];
           const caller = ev.channel.caller?.number ?? "";
 
-          if (ev.application === "dsip-flow" && args[0] === "bridge" && args[1]) {
+          if (ev.application === "munasip-flow" && args[0] === "bridge" && args[1]) {
             await ari.answer(channelId);
             const ok = await ari.addToBridge(args[1], channelId);
             console.log(`[flow] ${channelId} joined bridge ${args[1]} ok=${ok}`);
             return;
           }
 
-          if (ev.application === "dsip-flow" && args[0] === "snoop-wait") {
+          if (ev.application === "munasip-flow" && args[0] === "snoop-wait") {
             // Snoop channel parked in Stasis until bridge attach from chanspy()
             console.log(`[flow] snoop channel ready ${channelId}`);
             return;
           }
 
           // Transfer Dial failed → resume flow on noanswer/busy/chanunavail edge
-          if (ev.application === "dsip-flow" && args[0] === "dial-failed") {
+          if (ev.application === "munasip-flow" && args[0] === "dial-failed") {
             const pending = pendingTransfers.get(channelId);
             pendingTransfers.delete(channelId);
             if (!pending) {
@@ -1081,14 +1081,14 @@ export function attachFlowRuntime(): void {
 
           void dispatchWebhooks("call.ringing", { channelId, ...vars });
 
-          if (ev.application === "dsip-outbound") {
+          if (ev.application === "munasip-outbound") {
             await ari.answer(channelId);
             await handleOutbound(channelId, args[0] ?? "", caller);
             void dispatchWebhooks("call.ended", { channelId, direction: "outbound", ...vars });
             return;
           }
 
-          if (ev.application === "dsip-inbound") {
+          if (ev.application === "munasip-inbound") {
             vars.did = args[0] ?? "default";
             if (args[1]) vars.caller = args[1];
             const callerNum = vars.caller || caller;
@@ -1194,7 +1194,7 @@ export function attachFlowRuntime(): void {
             return;
           }
 
-          if (ev.application === "dsip-flow") {
+          if (ev.application === "munasip-flow") {
             const key = args[0] ?? "main";
             const flow =
               key === "main" ? await loadPublishedFlow() : await loadPublishedFlow(key);

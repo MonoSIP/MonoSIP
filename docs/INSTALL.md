@@ -1,6 +1,6 @@
 # Installation
 
-DSip runs as a **Docker Compose** stack. Supported production path: Linux VM (Debian/Ubuntu). Local Mac is fine for the admin panel; desk phones and RTP work best on a real VPS.
+MunaSIP runs as a **Docker Compose** stack. Supported production path: Linux VM (Debian/Ubuntu). Local Mac is fine for the admin panel; desk phones and RTP work best on a real VPS.
 
 ## Requirements
 
@@ -14,8 +14,8 @@ DSip runs as a **Docker Compose** stack. Supported production path: Linux VM (De
 ## Lab install (localhost)
 
 ```bash
-git clone https://github.com/diggyen/DSip.git
-cd DSip
+git clone https://github.com/diggyen/MunaSIP.git
+cd MunaSIP
 git checkout v1.4.0   # or main
 
 cp .env.example .env
@@ -53,8 +53,8 @@ Docker-based host (Render, Railway, Fly.io, Coolify, Dokploy, CapRover,
 DigitalOcean App Platform, NineDeploy, a plain VM, …) with no platform-specific config:
 
 ```bash
-docker build -t dsip .
-docker run -d -p 3000:3000 -p 10000-10100:10000-10100/udp -v dsip-data:/data dsip
+docker build -t munasip .
+docker run -d -p 3000:3000 -p 10000-10100:10000-10100/udp -v munasip-data:/data munasip
 ```
 
 ### Prebuilt image (GitHub Container Registry)
@@ -63,11 +63,11 @@ Every push to `main` and every `vX.Y.Z` tag publishes the same image to GHCR
 (`.github/workflows/docker.yml`, linux/amd64), so you can skip the build:
 
 ```bash
-docker run -d --name dsip --restart unless-stopped \
+docker run -d --name munasip --restart unless-stopped \
   -p 3000:3000 -p 10000-10100:10000-10100/udp \
-  -v dsip-data:/data \
+  -v munasip-data:/data \
   -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
-  ghcr.io/diggyen/dsip:latest
+  ghcr.io/diggyen/munasip:latest
 ```
 
 | Tag | Source |
@@ -76,11 +76,11 @@ docker run -d --name dsip --restart unless-stopped \
 | `main` | tip of `main` |
 | `sha-<short>` | a specific commit |
 
-Update: `docker pull ghcr.io/diggyen/dsip:latest`, then recreate the container — data
-stays in the `dsip-data` volume.
+Update: `docker pull ghcr.io/diggyen/munasip:latest`, then recreate the container — data
+stays in the `munasip-data` volume.
 
 **PaaS without building (NineDeploy, Coolify, …):** create the service from the
-image `ghcr.io/diggyen/dsip:latest` instead of the Git repository, mount `/data`,
+image `ghcr.io/diggyen/munasip:latest` instead of the Git repository, mount `/data`,
 expose port 3000 (+ UDP 10000-10100) and set `PUBLIC_HOST` / `EXTERNAL_IP`. Deploys
 then only pull (~1 min) instead of building torch + TTS models (~10 min, ~4 GB of
 build layers left on the host per deploy). On NineDeploy enable **Auto-update** so a
@@ -105,23 +105,23 @@ No env is required for a first boot:
 
 - If `DATABASE_URL` is unset, the image starts **embedded Postgres** under `/data/postgres` (persists **only** if the **/data volume is persistent**)
 - Embedded **Asterisk** starts unless `ASTERISK_ARI_URL` points at another host (Compose sets `http://asterisk:8088`)
-- `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.dsip-secrets` — **do not lose this file** or encrypted SIP secrets become unreadable
+- `SESSION_SECRET` / `ENCRYPTION_KEY` / ARI·AMI passwords are generated and stored in `/data/.munasip-secrets` — **do not lose this file** or encrypted SIP secrets become unreadable
 - Asterisk dialplan/PJSIP config persists under `/data/asterisk`
 - Mount a persistent volume at `/data` (4 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
 - **NineDeploy:** set Service → Volume mount path to `/data` in the UI (the `.ninedeploy` `volume.mount` entry only configures backups — it does **not** attach the disk). Without this, every Deploy recreates an empty `/data` on the overlay and all settings/trunks vanish
-- Boot **never wipes** an existing Postgres cluster on start failure (set `DSIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
-- Demo SIP trunk is **not** auto-seeded (set `DSIP_LAB_SEED=1` for lab only)
-- With `PUBLIC_HOST` set (or `DSIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `DSIP_ALLOW_EPHEMERAL_DATA=1`
+- Boot **never wipes** an existing Postgres cluster on start failure (set `MUNASIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
+- Demo SIP trunk is **not** auto-seeded (set `MUNASIP_LAB_SEED=1` for lab only)
+- With `PUBLIC_HOST` set (or `MUNASIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `MUNASIP_ALLOW_EPHEMERAL_DATA=1`
 
 Default admin (change after login): `admin@example.com` / `Admin123!`
 
-**Vault (recommended for a public host such as `dsip.gatex.uk`):**
+**Vault (recommended for a public host such as `pbx.example.com`):**
 
 ```env
-PUBLIC_HOST=dsip.gatex.uk
-PUBLIC_URL=https://dsip.gatex.uk
-SIP_DOMAIN=dsip.gatex.uk
-SIP_WSS_URL=wss://dsip.gatex.uk/asterisk-ws
+PUBLIC_HOST=pbx.example.com
+PUBLIC_URL=https://pbx.example.com
+SIP_DOMAIN=pbx.example.com
+SIP_WSS_URL=wss://pbx.example.com/asterisk-ws
 EXTERNAL_IP=<public IPv4 of the host>
 ADMIN_PASSWORD=<strong password>
 ```
@@ -130,7 +130,7 @@ ADMIN_PASSWORD=<strong password>
 
 **Docker Compose:** nginx multiplexes TLS on `:443` by ALPN — browsers (HTTPS/WSS) vs TURNS (empty ALPN → coturn `:5349`). Set `TURN_SECRET` (shared with the API) and `EXTERNAL_IP`. Softphone fetches `/api/v1/ice-servers` automatically.
 
-**PaaS edge without ALPN mux (e.g. Traefik):** publish host **UDP 10000–10100** for RTP, set `EXTERNAL_IP`, then `DSIP_RTP_PUBLISHED=1`. Optionally set `DSIP_TURNS_ON_443=0` and skip `TURN_SECRET` (STUN-only). Deploy logs and `/api/v1/health.media` warn when RTP ports are missing.
+**PaaS edge without ALPN mux (e.g. Traefik):** publish host **UDP 10000–10100** for RTP, set `EXTERNAL_IP`, then `MUNASIP_RTP_PUBLISHED=1`. Optionally set `MUNASIP_TURNS_ON_443=0` and skip `TURN_SECRET` (STUN-only). Deploy logs and `/api/v1/health.media` warn when RTP ports are missing.
 
 **Website widgets:** Admin → Integrations → create a widget, copy the embed `<script src="https://…/widget.js" data-widget="w_…">`.
 
@@ -179,6 +179,28 @@ Compose **named volumes** keep state across rebuilds:
 
 `docker compose up --build` does **not** wipe volumes. Only `docker compose down -v` does.
 
+## Upgrading from DSip (before the MunaSIP rename)
+
+**Single image:** nothing to do. On the first start the image renames what it
+finds under the old name: `/data/.dsip-secrets`, the embedded Postgres role and
+database `dsip`, the generated `*_dsip.conf` files and the `sounds/dsip` folder
+(stored file paths are updated by a migration). `DSIP_*` environment variables
+keep working; `MUNASIP_*` wins when both are set. Browser sessions and saved
+preferences carry over. Point your deployment at `ghcr.io/diggyen/munasip`.
+
+**Docker Compose:** the Postgres service keeps its existing user and database,
+so either keep the old names in `.env`
+
+```env
+POSTGRES_USER=dsip
+POSTGRES_DB=dsip
+```
+
+or rename them once (`ALTER ROLE dsip RENAME TO munasip;` and
+`ALTER DATABASE dsip RENAME TO munasip;` while the API is stopped). The Asterisk
+config volume is now mounted at `/var/lib/asterisk/munasip`; the API renames the
+old `*_dsip.conf` files and the `sounds/dsip` folder on its next start.
+
 ## Optional services
 
 ```bash
@@ -190,11 +212,11 @@ docker compose --profile fail2ban up -d
 
 ```bash
 pnpm install
-pnpm --filter @dsip/shared build
+pnpm --filter @munasip/shared build
 docker compose up -d postgres asterisk coturn tts
-export DATABASE_URL=postgresql://dsip:dsip_secret_change_me@localhost:5432/dsip
-pnpm --filter @dsip/api run db:migrate
-pnpm --filter @dsip/api run db:seed
+export DATABASE_URL=postgresql://munasip:munasip_secret_change_me@localhost:5432/munasip
+pnpm --filter @munasip/api run db:migrate
+pnpm --filter @munasip/api run db:seed
 pnpm dev
 ```
 

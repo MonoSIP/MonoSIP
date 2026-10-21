@@ -245,7 +245,7 @@ describe("SettingsPage", () => {
   function seedSettings() {
     apiGet.mockImplementation(async (path: string) => {
       if (path === "/api/v1/admin/settings") {
-        return { companyName: "DSip", recordingRetentionMonths: 12 };
+        return { companyName: "MunaSIP", recordingRetentionMonths: 12 };
       }
       if (path === "/api/v1/admin/audit") return [];
       if (path === "/api/v1/admin/auth/totp/status") return { enabled: false };
@@ -288,7 +288,7 @@ describe("SettingsPage", () => {
     const [path, payload] = apiPatch.mock.calls[0] as [string, Record<string, unknown>];
     expect(path).toBe("/api/v1/admin/settings");
     // Seeded from the GET response, then round-tripped by the save.
-    expect(payload.companyName).toBe("DSip");
+    expect(payload.companyName).toBe("MunaSIP");
     expect(payload).toHaveProperty("recordingRetentionMonths");
     expect(toastSuccess).toHaveBeenCalledWith("Saved");
   });
@@ -326,7 +326,7 @@ function seedAdmin() {
       return [{ id: "w1", url: "https://x.test/hook", active: true }];
     }
     if (path.includes("/admin/api-keys")) {
-      return [{ id: "k1", name: "ci", keyPrefix: "dsip_ab", permissions: ["read"] }];
+      return [{ id: "k1", name: "ci", keyPrefix: "munasip_ab", permissions: ["read"] }];
     }
     if (path.includes("/admin/ring-groups")) {
       return [{ id: "g1", name: "Sales ring", number: "700", strategy: "ringall", memberIds: ["e1"] }];
@@ -975,7 +975,7 @@ describe("IntegrationsPage API-key permissions", () => {
     apiGet.mockImplementation(async (path: string) => {
       if (path.includes("/admin/webhooks")) return [];
       if (path.includes("/admin/api-keys")) {
-        return [{ id: "k1", name: "ci", keyPrefix: "dsip_ab", permissions: ["read"] }];
+        return [{ id: "k1", name: "ci", keyPrefix: "munasip_ab", permissions: ["read"] }];
       }
       return [];
     });

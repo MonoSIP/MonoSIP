@@ -464,7 +464,7 @@ export function FlowDesignerPage() {
               const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
               const a = document.createElement("a");
               a.href = URL.createObjectURL(blob);
-              a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.dsip-flow.json`;
+              a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.munasip-flow.json`;
               a.click();
               URL.revokeObjectURL(a.href);
               toast.success(tr("Exported"));

@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from "node:fs";
 import https from "node:https";
 import http from "node:http";
 
-const BASE = process.env.DSIP_BASE || "https://localhost";
+const BASE = process.env.MUNASIP_BASE || "https://localhost";
 const insecure = new https.Agent({ rejectUnauthorized: false });
 
 let pass = 0;
@@ -40,7 +40,7 @@ function loadEnv() {
 }
 
 const ENV = loadEnv();
-const SECRET = ENV.INTERNAL_API_SECRET || "dsip_internal_change_me";
+const SECRET = ENV.INTERNAL_API_SECRET || "munasip_internal_change_me";
 
 async function req(method, path, { cookie, body, headers = {}, raw = false } = {}) {
   const url = new URL(path.startsWith("http") ? path : BASE + path);
@@ -246,8 +246,8 @@ async function main() {
   await expectStatus("system reload", "POST", "/api/v1/admin/system/reload", { cookie: admin, body: {} }, 200);
 
   // Dialplan greps
-  const conf = docker("asterisk sh -c 'cat /var/lib/asterisk/dsip/extensions_dsip.conf'");
-  const qconf = docker("asterisk sh -c 'cat /var/lib/asterisk/dsip/queues_dsip.conf'");
+  const conf = docker("asterisk sh -c 'cat /var/lib/asterisk/munasip/extensions_munasip.conf'");
+  const qconf = docker("asterisk sh -c 'cat /var/lib/asterisk/munasip/queues_munasip.conf'");
   const greps = [
     ["DND *78", /\*78/],
     ["DND *79", /\*79/],
@@ -278,14 +278,14 @@ async function main() {
   else bad("internal secret required", `HTTP ${noSec.status}`);
 
   const withSec = await req("POST", "/api/v1/internal/dnd", {
-    headers: { "x-dsip-internal": SECRET },
+    headers: { "x-munasip-internal": SECRET },
     body: { extension: "101", dnd: false },
   });
   if (withSec.status === 200) ok("internal DND");
   else bad("internal DND", withSec.text);
 
   const qcb = await req("POST", "/api/v1/internal/queue-callback", {
-    headers: { "x-dsip-internal": SECRET },
+    headers: { "x-munasip-internal": SECRET },
     body: { queue: "300", number: "05321118888", place: 2 },
   });
   if (qcb.status === 200 && qcb.json?.ok) ok("internal queue-callback place");
@@ -492,7 +492,7 @@ async function main() {
 
   // Unit tests
   try {
-    execSync("pnpm --filter @dsip/api test", { encoding: "utf8", cwd: process.cwd(), stdio: "pipe" });
+    execSync("pnpm --filter @munasip/api test", { encoding: "utf8", cwd: process.cwd(), stdio: "pipe" });
     ok("vitest suite");
   } catch (e) {
     bad("vitest suite", e.stdout?.toString?.().slice(-200) || e.message);

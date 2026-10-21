@@ -9,7 +9,8 @@ export type Actor =
   | { type: "admin"; id: string; email: string }
   | { type: "extension"; id: string; number: string; name: string };
 
-const COOKIE = "dsip_session";
+const COOKIE = "munasip_session";
+const LEGACY_COOKIE = "dsip_session";
 
 export async function createSession(
   actorType: "admin" | "extension",
@@ -51,7 +52,8 @@ export async function resolveActor(token?: string): Promise<Actor | null> {
 }
 
 export function getSessionToken(req: FastifyRequest): string | undefined {
-  const raw = req.cookies?.[COOKIE];
+  // dsip_session: sessions issued before the rename stay valid
+  const raw = req.cookies?.[COOKIE] ?? req.cookies?.[LEGACY_COOKIE];
   if (raw) return raw;
   const auth = req.headers.authorization;
   if (auth?.startsWith("Bearer ")) return auth.slice(7);
@@ -107,4 +109,4 @@ export async function loginExtension(
   return { token };
 }
 
-export { COOKIE };
+export { COOKIE, LEGACY_COOKIE };

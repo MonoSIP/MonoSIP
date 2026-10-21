@@ -71,6 +71,13 @@
       "when": 1792563600000,
       "tag": "0009_queue_voice",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792602000000,
+      "tag": "0010_rename_sounds_dir",
+      "breakpoints": true
     }
   ]
 }

@@ -19,7 +19,7 @@ import { config } from "../config.js";
  * Happy-path coverage for the dialplan -> API ingestion hooks.
  *
  * These are the routes the Asterisk dialplan curls after a call ends. They are
- * guarded by the shared `X-DSip-Internal` secret rather than a session, so the
+ * guarded by the shared `X-MunaSIP-Internal` secret rather than a session, so the
  * contract under test is: correct secret => the call is ingested correctly;
  * bad/missing secret => 401 (already covered in admin-resources.int.test.ts).
  */
@@ -70,7 +70,7 @@ afterEach(async () => {
 });
 
 /** Header carrying the configured shared secret. */
-const SECRET = () => ({ "x-dsip-internal": config.internalApiSecret });
+const SECRET = () => ({ "x-munasip-internal": config.internalApiSecret });
 
 const postInternal = (path_: string, payload: unknown) =>
   app.inject({ method: "POST", url: path_, headers: SECRET(), payload });
@@ -228,7 +228,7 @@ describe("POST /api/v1/internal/cdr", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/internal/cdr",
-      headers: { "x-dsip-internal": "wrong" },
+      headers: { "x-munasip-internal": "wrong" },
       payload: { callId: id },
     });
     expect(res.statusCode).toBe(401);
@@ -437,7 +437,7 @@ describe("POST /api/v1/internal/dnd", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/internal/dnd",
-      headers: { "x-dsip-internal": "wrong" },
+      headers: { "x-munasip-internal": "wrong" },
       payload: { extension: number, dnd: true },
     });
     expect(res.statusCode).toBe(401);
@@ -487,7 +487,7 @@ describe("POST /api/v1/internal/missed", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/internal/missed",
-      headers: { "x-dsip-internal": "wrong" },
+      headers: { "x-munasip-internal": "wrong" },
       payload: { caller, target: "101" },
     });
     expect(res.statusCode).toBe(401);
@@ -590,7 +590,7 @@ describe("POST /api/v1/internal/queue-callback", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/internal/queue-callback",
-      headers: { "x-dsip-internal": "wrong" },
+      headers: { "x-munasip-internal": "wrong" },
       payload: { queue: "100", number },
     });
     expect(res.statusCode).toBe(401);

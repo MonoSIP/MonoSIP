@@ -91,12 +91,12 @@ export async function securityRoutes(app: FastifyInstance) {
     const format = (req.query as { format?: string }).format ?? "json";
     if (format === "nftables") {
       reply.header("content-type", "text/plain; charset=utf-8");
-      reply.header("content-disposition", 'attachment; filename="dsip-nftables.conf"');
+      reply.header("content-disposition", 'attachment; filename="munasip-nftables.conf"');
       return exp.nftables;
     }
     if (format === "ufw") {
       reply.header("content-type", "text/plain; charset=utf-8");
-      reply.header("content-disposition", 'attachment; filename="dsip-ufw.sh"');
+      reply.header("content-disposition", 'attachment; filename="munasip-ufw.sh"');
       return exp.ufw;
     }
     return exp;

@@ -5,7 +5,7 @@ export type MediaReadiness = {
   /** Softphone SIP/WSS can work; RTP may still need host UDP. */
   signalingOk: boolean;
   /**
-   * True only when operator opted in (`DSIP_RTP_PUBLISHED=1`) or local lab
+   * True only when operator opted in (`MUNASIP_RTP_PUBLISHED=1`) or local lab
    * (no public host). Otherwise softphone audio needs host UDP 10000–10100.
    */
   rtpPortsPublished: boolean;
@@ -36,7 +36,7 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
   const isPublic =
     !!publicHost && publicHost !== "localhost" && publicHost !== "127.0.0.1";
   const rtpPortsPublished =
-    process.env.DSIP_RTP_PUBLISHED === "1" || process.env.DSIP_RTP_PUBLISHED === "true"
+    process.env.MUNASIP_RTP_PUBLISHED === "1" || process.env.MUNASIP_RTP_PUBLISHED === "true"
       ? true
       : !embedded || !isPublic;
 
@@ -46,8 +46,8 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
   if (embedded && isPublic && !rtpPortsPublished) {
     warnings.push({
       code: "rtp_udp_ports",
-      en: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env DSIP_RTP_PUBLISHED=1.",
-      tr: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env DSIP_RTP_PUBLISHED=1.",
+      en: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env MUNASIP_RTP_PUBLISHED=1.",
+      tr: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env MUNASIP_RTP_PUBLISHED=1.",
     });
   }
   if (isPublic && !externalIp) {
@@ -70,24 +70,24 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
 /** Loud banner for NineDeploy / docker logs at boot (English). */
 export function formatMediaDeployBanner(m: MediaReadiness): string {
   if (!m.warnings.length) {
-    return "[DSip] Softphone media: OK (RTP ports marked published or local lab).";
+    return "[MunaSIP] Softphone media: OK (RTP ports marked published or local lab).";
   }
   const lines = [
     "",
     "╔══════════════════════════════════════════════════════════════════════╗",
-    "║  DSip — Softphone AUDIO needs host UDP ports                         ║",
+    "║  MunaSIP — Softphone AUDIO needs host UDP ports                         ║",
     "╠══════════════════════════════════════════════════════════════════════╣",
     "║  Publish UDP 10000-10100 to this container                            ║",
     "║  Env: EXTERNAL_IP=<server public IPv4>                               ║",
-    "║       DSIP_RTP_PUBLISHED=1   (after ports are open)                  ║",
+    "║       MUNASIP_RTP_PUBLISHED=1   (after ports are open)                  ║",
     "║  Without this: calls connect but stay SILENT.                        ║",
     "╚══════════════════════════════════════════════════════════════════════╝",
     "",
   ];
   for (const w of m.warnings) {
-    lines.push(`[DSip] WARN ${w.code}: ${w.en}`);
+    lines.push(`[MunaSIP] WARN ${w.code}: ${w.en}`);
   }
-  if (m.externalIp) lines.push(`[DSip] EXTERNAL_IP effective: ${m.externalIp}`);
+  if (m.externalIp) lines.push(`[MunaSIP] EXTERNAL_IP effective: ${m.externalIp}`);
   lines.push("");
   return lines.join("\n");
 }

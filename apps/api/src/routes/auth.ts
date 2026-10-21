@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
-import { AdminLoginSchema, PortalLoginSchema } from "@dsip/shared";
+import { AdminLoginSchema, PortalLoginSchema } from "@munasip/shared";
 import {
-  COOKIE,
+  COOKIE, LEGACY_COOKIE,
   destroySession,
   getSessionToken,
   loginAdmin,
@@ -175,13 +175,18 @@ export async function authRoutes(app: FastifyInstance) {
   app.post("/api/v1/auth/logout", async (req, reply) => {
     const token = getSessionToken(req);
     if (token) await destroySession(token);
+    // A session cookie from before the rename must end too
+    const legacy = req.cookies?.[LEGACY_COOKIE];
+    if (legacy && legacy !== token) await destroySession(legacy);
     // Must match setCookie attrs or browsers keep the Secure cookie
-    reply.clearCookie(COOKIE, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-    });
+    for (const name of [COOKIE, LEGACY_COOKIE]) {
+      reply.clearCookie(name, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: true,
+      });
+    }
     return { ok: true };
   });
 

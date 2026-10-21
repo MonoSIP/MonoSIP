@@ -1,4 +1,4 @@
-import type { FlowJson } from "@dsip/shared";
+import type { FlowJson } from "@munasip/shared";
 
 /**
  * Expand variable placeholders from the flow bag.

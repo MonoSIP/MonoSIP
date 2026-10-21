@@ -8,7 +8,7 @@ export type IceServer = {
 };
 
 /** Coturn REST (time-limited) credentials — RFC draft / coturn --use-auth-secret. */
-export function mintTurnCredentials(userId = "dsip", ttlSec = 6 * 3600): {
+export function mintTurnCredentials(userId = "munasip", ttlSec = 6 * 3600): {
   username: string;
   credential: string;
   ttl: number;
@@ -32,7 +32,7 @@ export function buildIceServers(opts?: {
 }): { iceServers: IceServer[]; turnsOn443: boolean; turnEnabled: boolean } {
   const host = (opts?.host || config.publicHost || "localhost").replace(/:\d+$/, "");
   const iceServers: IceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
-  const creds = mintTurnCredentials(opts?.userId ?? "dsip");
+  const creds = mintTurnCredentials(opts?.userId ?? "munasip");
   const turnEnabled = Boolean(creds);
   const turnsOn443 = turnEnabled && config.turnsOn443;
 

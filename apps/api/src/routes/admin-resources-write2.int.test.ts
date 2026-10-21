@@ -615,7 +615,7 @@ describe("API keys", () => {
     const body = res.json() as { id: string; key: string; keyPrefix: string; permissions: string[] };
     created.apiKeyIds.push(body.id);
 
-    expect(body.key.startsWith("dsip_")).toBe(true);
+    expect(body.key.startsWith("munasip_")).toBe(true);
     expect(body.keyPrefix).toBe(body.key.slice(0, 12));
     expect(body.permissions).toEqual(["cdr", "originate"]);
 

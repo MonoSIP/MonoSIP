@@ -50,11 +50,11 @@ afterEach(async () => {
 const ADMIN_LOGIN = "/api/v1/admin/auth/login";
 const PORTAL_LOGIN = "/api/v1/auth/login";
 
-/** Pull the dsip_session cookie out of a Set-Cookie header. */
+/** Pull the munasip_session cookie out of a Set-Cookie header. */
 function sessionCookie(res: { headers: Record<string, unknown> }): string | undefined {
   const raw = res.headers["set-cookie"];
   const list = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
-  const hit = list.find((c) => c.startsWith("dsip_session="));
+  const hit = list.find((c) => c.startsWith("munasip_session="));
   return hit?.split(";")[0];
 }
 

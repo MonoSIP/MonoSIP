@@ -13,7 +13,7 @@ type Store = {
   toggleTheme: () => void;
 };
 
-const savedTheme = (localStorage.getItem("dsip_theme") as "dark" | "light") || "dark";
+const savedTheme = (localStorage.getItem("munasip_theme") as "dark" | "light") || "dark";
 if (typeof document !== "undefined") {
   document.documentElement.classList.toggle("light", savedTheme === "light");
 }
@@ -23,7 +23,7 @@ export const useStore = create<Store>((set, get) => ({
   theme: savedTheme,
   setActor: (actor) => set({ actor }),
   setTheme: (theme) => {
-    localStorage.setItem("dsip_theme", theme);
+    localStorage.setItem("munasip_theme", theme);
     document.documentElement.classList.toggle("light", theme === "light");
     set({ theme });
   },

@@ -1,6 +1,6 @@
 import { and, eq, lt } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
-import { SettingsSchema } from "@dsip/shared";
+import { SettingsSchema } from "@munasip/shared";
 import { db } from "../db/client.js";
 import { recordings, settings } from "../db/schema.js";
 

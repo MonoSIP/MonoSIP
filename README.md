@@ -1,8 +1,8 @@
-# DSip
+# MunaSIP
 
 **Company PBX** — open-source Asterisk VoIP with an admin panel, a visual IVR designer and a browser softphone. Built for small offices (~20 extensions). Runs as one prebuilt Docker image (or Docker Compose) on a Linux VM.
 
-[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.4.0](https://github.com/diggyen/DSip/releases/tag/v1.4.0) · [MIT License](LICENSE)
+[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.4.0](https://github.com/diggyen/MunaSIP/releases/tag/v1.4.0) · [MIT License](LICENSE)
 
 Default UI language: **English** (Turkish available in the app).
 
@@ -11,11 +11,11 @@ Default UI language: **English** (Turkish available in the app).
 Prebuilt image (linux/amd64, published on every release):
 
 ```bash
-docker run -d --name dsip --restart unless-stopped \
+docker run -d --name munasip --restart unless-stopped \
   -p 3000:3000 -p 10000-10100:10000-10100/udp \
-  -v dsip-data:/data \
+  -v munasip-data:/data \
   -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
-  ghcr.io/diggyen/dsip:latest
+  ghcr.io/diggyen/munasip:latest
 ```
 
 Recommended: 2 vCPU and 4 GB RAM (neural speech runs on the PBX CPU).
@@ -23,8 +23,8 @@ Recommended: 2 vCPU and 4 GB RAM (neural speech runs on the PBX CPU).
 From source with Docker Compose:
 
 ```bash
-git clone https://github.com/diggyen/DSip.git
-cd DSip
+git clone https://github.com/diggyen/MunaSIP.git
+cd MunaSIP
 cp .env.example .env
 chmod +x scripts/gen-certs.sh && ./scripts/gen-certs.sh
 docker compose up --build -d
@@ -77,8 +77,8 @@ All docs live under **[docs/](docs/README.md)**. Static product site: **[site/](
 
 ## License
 
-DSip is released under the **[MIT License](LICENSE)** — use, modify and redistribute it freely, keeping the copyright notice.
+MunaSIP is released under the **[MIT License](LICENSE)** — use, modify and redistribute it freely, keeping the copyright notice.
 
 ## Maintenance
 
-Canonical repo: **[github.com/diggyen/DSip](https://github.com/diggyen/DSip)**, maintained by **[@diggyen](https://github.com/diggyen)**. This repository does not take third-party pull requests (see [.github/MAINTENANCE.md](.github/MAINTENANCE.md)); fork it freely under the MIT License.
+Canonical repo: **[github.com/diggyen/MunaSIP](https://github.com/diggyen/MunaSIP)**, maintained by **[@diggyen](https://github.com/diggyen)**. This repository does not take third-party pull requests (see [.github/MAINTENANCE.md](.github/MAINTENANCE.md)); fork it freely under the MIT License.

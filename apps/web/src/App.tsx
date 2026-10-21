@@ -11,7 +11,7 @@ function lazyNamed<M extends Record<string, unknown>>(loader: () => Promise<M>, 
       mod = await loader();
     } catch (err) {
       // After a redeploy the old chunk hashes are gone: reload once to pick up the new build.
-      const key = "dsip:chunk-reload";
+      const key = "munasip:chunk-reload";
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, "1");
         window.location.reload();
@@ -19,7 +19,7 @@ function lazyNamed<M extends Record<string, unknown>>(loader: () => Promise<M>, 
       }
       throw err;
     }
-    sessionStorage.removeItem("dsip:chunk-reload");
+    sessionStorage.removeItem("munasip:chunk-reload");
     return { default: mod[exportName] as React.ComponentType };
   });
 }
@@ -52,7 +52,7 @@ const MyCallsPage = lazyNamed(() => import("./pages/portal/MyCallsPage"), "MyCal
 const MyRecordingsPage = lazyNamed(() => import("./pages/portal/MyRecordingsPage"), "MyRecordingsPage");
 const MySettingsPage = lazyNamed(() => import("./pages/portal/MySettingsPage"), "MySettingsPage");
 
-function BootScreen({ label = "Loading DSip…" }: { label?: string }) {
+function BootScreen({ label = "Loading MunaSIP…" }: { label?: string }) {
   return (
     <div className="grid h-full place-items-center text-[var(--text-muted)]">
       <div className="flex flex-col items-center gap-3 text-sm">

@@ -185,7 +185,7 @@ export const WebhookSchema = z.object({
 });
 
 export const SettingsSchema = z.object({
-  companyName: z.string().default("DSip"),
+  companyName: z.string().default("MunaSIP"),
   defaultLocale: z.enum(["en", "tr"]).default("en"),
   recordingRetentionMonths: z.number().int().min(1).max(84).default(12),
   kvkkAnnouncementEnabled: z.boolean().default(true),

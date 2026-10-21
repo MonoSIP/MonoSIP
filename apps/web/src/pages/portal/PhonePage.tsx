@@ -25,7 +25,7 @@ import { callPeer } from "../../lib/call-peer";
 import { formatCallTime, usePhone } from "../../lib/phone-context";
 import { CallBars, CallPulse } from "../../components/motion";
 
-const RECENTS_SEEN_KEY = "dsip.recentsSeenAt";
+const RECENTS_SEEN_KEY = "munasip.recentsSeenAt";
 
 /** Keypad: digit + letters, as on a phone. */
 const KEYS: Array<[string, string]> = [

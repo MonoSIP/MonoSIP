@@ -58,7 +58,7 @@ import { sipFromDomain } from "./config-writer.js";
 
 describe("sipFromDomain", () => {
   it("keeps valid hostnames and IPv4 addresses", () => {
-    expect(sipFromDomain("dsip.gatex.uk")).toBe("dsip.gatex.uk");
+    expect(sipFromDomain("pbx.example.com")).toBe("pbx.example.com");
     expect(sipFromDomain("PBX.Example.com.")).toBe("pbx.example.com");
     expect(sipFromDomain("46.20.6.254")).toBe("46.20.6.254");
     expect(sipFromDomain("3cx.example.com")).toBe("3cx.example.com");

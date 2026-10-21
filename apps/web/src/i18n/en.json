@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "DSip",
+    "name": "MunaSIP",
     "tagline": "Company PBX"
   },
   "common": {
@@ -211,7 +211,7 @@
     "hostnameSection": "Hostname & SSL",
     "hostname": "Public hostname",
     "autoSsl": "Automatic SSL (Let's Encrypt)",
-    "autoSslHint": "When on, DSip requests a certificate for the hostname, installs it for nginx, and renews it before expiry. Port 80 must reach this server.",
+    "autoSslHint": "When on, MunaSIP requests a certificate for the hostname, installs it for nginx, and renews it before expiry. Port 80 must reach this server.",
     "sslEmail": "SSL contact email",
     "sslExpires": "Expires",
     "sslRenewNow": "Issue / renew now",
@@ -251,7 +251,7 @@
     "dialing": "Calling",
     "ended": "Ended",
     "callEnded": "Call ended ({{time}})",
-    "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then DSIP_RTP_PUBLISHED=1.",
+    "noRtp": "No call audio. Open host UDP 10000–10100 on this server, set EXTERNAL_IP, then MUNASIP_RTP_PUBLISHED=1.",
     "incoming": "Incoming call",
     "enterNumber": "Enter a number",
     "transfer": "Transfer",

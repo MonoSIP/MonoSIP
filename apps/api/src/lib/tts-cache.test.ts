@@ -15,7 +15,7 @@ type CacheRow = {
 };
 
 const { AST_DIR, state } = vi.hoisted(() => ({
-  AST_DIR: "/tmp/dsip-tts-cache-test",
+  AST_DIR: "/tmp/munasip-tts-cache-test",
   state: {
     cacheRows: [] as CacheRow[],
     settingsData: { ttsCacheRetentionDays: 7 } as Record<string, unknown>,
@@ -190,7 +190,7 @@ describe("ensureSpeechMedia cache", () => {
   it("hits when DB row is fresh and WAV exists", async () => {
     const text = "Welcome to support";
     const key = speechCacheId(text, "en", 1.05, "female");
-    const filePath = path.join(AST_DIR, "sounds", "dsip", `${key}.wav`);
+    const filePath = path.join(AST_DIR, "sounds", "munasip", `${key}.wav`);
     state.files.add(filePath);
     state.cacheRows.push({
       id: "row-1",
@@ -206,7 +206,7 @@ describe("ensureSpeechMedia cache", () => {
 
     const result = await ensureSpeechMedia(text, "en", 1.05, "female");
     expect(result.cached).toBe(true);
-    expect(result.media).toBe(`sound:dsip/${key}`);
+    expect(result.media).toBe(`sound:munasip/${key}`);
     expect(state.fetchCount).toBe(0);
     expect(state.inserts).toBe(0);
   });
@@ -217,7 +217,7 @@ describe("ensureSpeechMedia cache", () => {
 
     const result = await ensureSpeechMedia(text, "en", 1.05, "female");
     expect(result.cached).toBe(false);
-    expect(result.media).toBe(`sound:dsip/${key}`);
+    expect(result.media).toBe(`sound:munasip/${key}`);
     expect(state.fetchCount).toBe(1);
     expect(state.inserts).toBe(1);
     expect(state.cacheRows[0]!.cacheKey).toBe(key);
@@ -227,7 +227,7 @@ describe("ensureSpeechMedia cache", () => {
   it("expired row with missing file resynthesizes", async () => {
     const text = "Goodbye";
     const key = speechCacheId(text, "en", 1.05, "female");
-    const filePath = path.join(AST_DIR, "sounds", "dsip", `${key}.wav`);
+    const filePath = path.join(AST_DIR, "sounds", "munasip", `${key}.wav`);
     state.cacheRows.push({
       id: "row-gone",
       cacheKey: key,
@@ -249,12 +249,12 @@ describe("ensureSpeechMedia cache", () => {
   it("orphan WAV (no DB row) is adopted without synth", async () => {
     const text = "Your call is important";
     const key = speechCacheId(text, "en", 1.05, "female");
-    const filePath = path.join(AST_DIR, "sounds", "dsip", `${key}.wav`);
+    const filePath = path.join(AST_DIR, "sounds", "munasip", `${key}.wav`);
     state.files.add(filePath);
 
     const result = await ensureSpeechMedia(text, "en", 1.05, "female");
     expect(result.cached).toBe(true);
-    expect(result.media).toBe(`sound:dsip/${key}`);
+    expect(result.media).toBe(`sound:munasip/${key}`);
     expect(state.fetchCount).toBe(0);
     expect(state.inserts).toBe(1);
     expect(state.cacheRows[0]!.cacheKey).toBe(key);
@@ -269,7 +269,7 @@ describe("purgeExpiredTtsCache", () => {
   });
 
   it("removes expired WAV + row when forced", async () => {
-    const filePath = path.join(AST_DIR, "sounds", "dsip", "c-deadbeef.wav");
+    const filePath = path.join(AST_DIR, "sounds", "munasip", "c-deadbeef.wav");
     state.files.add(filePath);
     state.cacheRows.push({
       id: "exp-1",

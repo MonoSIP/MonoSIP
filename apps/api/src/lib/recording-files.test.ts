@@ -37,11 +37,11 @@ afterEach(() => {
 
 describe("wavDurationSeconds", () => {
   it("returns 0 for missing / tiny files", () => {
-    expect(wavDurationSeconds("/tmp/dsip-no-such-file.wav")).toBe(0);
+    expect(wavDurationSeconds("/tmp/munasip-no-such-file.wav")).toBe(0);
   });
 
   it("reads PCM duration", () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "dsip-wav-"));
+    const dir = mkdtempSync(path.join(tmpdir(), "munasip-wav-"));
     dirs.push(dir);
     const file = path.join(dir, "t.wav");
     // 8000 samples @ 8kHz = 1s
@@ -50,7 +50,7 @@ describe("wavDurationSeconds", () => {
   });
 
   it("returns 0 for empty data chunk", () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "dsip-wav-"));
+    const dir = mkdtempSync(path.join(tmpdir(), "munasip-wav-"));
     dirs.push(dir);
     const file = path.join(dir, "empty.wav");
     writeFileSync(file, makeWav(8000, 0));
@@ -60,7 +60,7 @@ describe("wavDurationSeconds", () => {
 
 describe("deleteRecordingFile", () => {
   it("removes existing file without throwing", () => {
-    const dir = mkdtempSync(path.join(tmpdir(), "dsip-wav-"));
+    const dir = mkdtempSync(path.join(tmpdir(), "munasip-wav-"));
     dirs.push(dir);
     const file = path.join(dir, "x.wav");
     writeFileSync(file, makeWav(8000, 10));

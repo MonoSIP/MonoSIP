@@ -188,7 +188,7 @@ async function main() {
   }
 
   await app.listen({ port: config.port, host: "0.0.0.0" });
-  app.log.info(`DSip API listening on :${config.port}`);
+  app.log.info(`MunaSIP API listening on :${config.port}`);
 
   // NineDeploy logs: tell operators softphone needs host UDP RTP (no port-forward expertise assumed).
   void import("./lib/media-readiness.js")

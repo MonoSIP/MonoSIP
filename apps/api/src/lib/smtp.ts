@@ -28,7 +28,7 @@ export async function sendSmtpMail(
   attachments: SmtpAttachment[] = [],
 ): Promise<void> {
   const port = cfg.port || 587;
-  const from = cfg.from || cfg.user || "dsip@localhost";
+  const from = cfg.from || cfg.user || "munasip@localhost";
   const useStartTls = port === 587 || port === 25;
 
   const loaded: Array<{ filename: string; contentType: string; data: Buffer }> = [];
@@ -89,7 +89,7 @@ export async function sendSmtpMail(
 
     async function run() {
       await expect(220);
-      write(`EHLO dsip`);
+      write(`EHLO munasip`);
       await expect(250);
 
       if (useStartTls) {
@@ -101,7 +101,7 @@ export async function sendSmtpMail(
           (secure as tls.TLSSocket).once("secureConnect", () => r());
           secure.once("error", j);
         });
-        write(`EHLO dsip`);
+        write(`EHLO munasip`);
         await expect(250);
       }
 
@@ -123,7 +123,7 @@ export async function sendSmtpMail(
       write("DATA");
       await expect(354);
 
-      const boundary = `dsip_${Date.now().toString(36)}`;
+      const boundary = `munasip_${Date.now().toString(36)}`;
       const headers = [
         `From: ${from}`,
         `To: ${cfg.to}`,

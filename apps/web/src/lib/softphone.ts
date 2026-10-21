@@ -41,7 +41,7 @@ function sipWsUrl(): string {
   return `${proto}://${window.location.host}/asterisk-ws`;
 }
 
-const AUDIO_DEVICES_KEY = "dsip.audioDevices";
+const AUDIO_DEVICES_KEY = "munasip.audioDevices";
 
 export class Softphone {
   status: SoftphoneStatus = "idle";
@@ -384,7 +384,7 @@ export class Softphone {
     if (turnUrl && !iceServers.some((s) => String(s.urls).includes("turn"))) {
       iceServers.push({
         urls: turnUrl,
-        username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) || "dsip",
+        username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) || "munasip",
         credential: (import.meta.env.VITE_TURN_CREDENTIAL as string | undefined) || "turnpass",
       });
     }
@@ -807,9 +807,9 @@ export class Softphone {
       const from = remote?.uri?.user || remote?.displayName || "Unknown";
       const show = () => {
         if (document.visibilityState === "visible") return;
-        const n = new Notification("DSip — Incoming call", {
+        const n = new Notification("MunaSIP — Incoming call", {
           body: `From ${from}`,
-          tag: "dsip-incoming",
+          tag: "munasip-incoming",
           requireInteraction: true,
         });
         n.onclick = () => {

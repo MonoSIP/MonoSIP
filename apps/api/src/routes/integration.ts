@@ -54,7 +54,7 @@ export async function integrationRoutes(app: FastifyInstance) {
         callerId: z.string().optional(),
       })
       .parse(req.body);
-    const { SettingsSchema } = await import("@dsip/shared");
+    const { SettingsSchema } = await import("@munasip/shared");
     const { settings } = await import("../db/schema.js");
     const { checkExtensionOutbound, isAnonymousCaller } = await import("../lib/call-policy.js");
     const { isBlacklisted } = await import("../asterisk/routing.js");

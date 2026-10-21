@@ -15,7 +15,7 @@ import {
   FlowCreateSchema,
   FlowUpdateSchema,
   FlowJsonSchema,
-} from "@dsip/shared";
+} from "@munasip/shared";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import {
@@ -784,7 +784,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         language: z.enum(["en", "tr"]).default("en"),
         ttsText: z.string().optional(),
         filePath: z.string().optional(),
-        /** base64 audio (wav) — written under Asterisk sounds/dsip */
+        /** base64 audio (wav) — written under Asterisk sounds/munasip */
         audioBase64: z.string().optional(),
         /** Generate WAV via TTS from ttsText */
         synthesize: z.boolean().optional(),
@@ -1347,7 +1347,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
             from: s.emailFrom,
             to: s.smtpTo,
           },
-          `DSip missed call from ${body.caller}`,
+          `MunaSIP missed call from ${body.caller}`,
           `Missed call\nCaller: ${body.caller}\nTarget: ${body.target}\nAt: ${new Date().toISOString()}`,
         );
       }
@@ -1404,7 +1404,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
               from: s.emailFrom,
               to: ext.email,
             },
-            `DSip voicemail for ${ext.number}`,
+            `MunaSIP voicemail for ${ext.number}`,
             `New voicemail\nFrom: ${body.caller ?? "unknown"}\nExt: ${ext.number}\nAt: ${new Date().toISOString()}`,
             [{ filename: fname, contentType: "audio/wav", path: body.file }],
           );
@@ -2121,7 +2121,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   app.post("/api/v1/admin/api-keys", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const body = z.object({ name: z.string(), permissions: z.array(z.string()).optional() }).parse(req.body);
-    const raw = `dsip_${randomSecret(32)}`;
+    const raw = `munasip_${randomSecret(32)}`;
     const [row] = await db
       .insert(apiKeys)
       .values({
@@ -2226,7 +2226,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     try {
       const { readFile } = await import("node:fs/promises");
       const conf = await readFile(
-        path.join(config.asterisk.configDir, "pjsip_dsip.conf"),
+        path.join(config.asterisk.configDir, "pjsip_munasip.conf"),
         "utf8",
       );
       confReadable = true;
@@ -2340,7 +2340,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const data = await buildBackup();
     reply.header("content-type", "application/json");
-    reply.header("content-disposition", `attachment; filename="dsip-backup-${Date.now()}.json"`);
+    reply.header("content-disposition", `attachment; filename="munasip-backup-${Date.now()}.json"`);
     return data;
   });
 
@@ -2348,7 +2348,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const data = await buildBackup();
     reply.header("content-type", "application/json");
-    reply.header("content-disposition", `attachment; filename="dsip-backup-${Date.now()}.json"`);
+    reply.header("content-disposition", `attachment; filename="munasip-backup-${Date.now()}.json"`);
     return data;
   });
 
@@ -2797,7 +2797,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const [row] = await db.select().from(flows).where(eq(flows.id, id)).limit(1);
     if (!row) return reply.code(404).send({ error: "Not found" });
     return {
-      format: "dsip-flow-v1",
+      format: "munasip-flow-v1",
       exportedAt: new Date().toISOString(),
       name: row.name,
       extensionNumber: row.extensionNumber,
@@ -2844,8 +2844,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-dsip-signature": sig,
-          "x-dsip-event": "call.ringing",
+          "x-munasip-signature": sig,
+          "x-munasip-event": "call.ringing",
         },
         body,
         signal: AbortSignal.timeout(5000),

@@ -86,7 +86,7 @@ type BanRow = {
 export function SettingsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const [companyName, setCompanyName] = useState("DSip");
+  const [companyName, setCompanyName] = useState("MunaSIP");
   const [retention, setRetention] = useState(12);
   const [kvkk, setKvkk] = useState(true);
   const [kvkkPromptId, setKvkkPromptId] = useState("");
@@ -163,7 +163,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (settings.data) {
-      setCompanyName(settings.data.companyName ?? "DSip");
+      setCompanyName(settings.data.companyName ?? "MunaSIP");
       setRetention(settings.data.recordingRetentionMonths ?? 12);
       setKvkk(settings.data.kvkkAnnouncementEnabled ?? true);
       setKvkkPromptId(settings.data.kvkkPromptId ?? "");
@@ -293,7 +293,7 @@ export function SettingsPage() {
     const blob = await res.blob();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `dsip-backup-${Date.now()}.json`;
+    a.download = `munasip-backup-${Date.now()}.json`;
     a.click();
   }
 

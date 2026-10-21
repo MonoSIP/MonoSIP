@@ -33,8 +33,8 @@ export async function dispatchWebhooks(
               method: "POST",
               headers: {
                 "content-type": "application/json",
-                "x-dsip-signature": sig,
-                "x-dsip-event": event,
+                "x-munasip-signature": sig,
+                "x-munasip-event": event,
               },
               body,
               signal: AbortSignal.timeout(5000),

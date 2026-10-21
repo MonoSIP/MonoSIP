@@ -195,7 +195,7 @@ describe("internal hooks require the shared secret", () => {
       method: method as "POST",
       url,
       payload: {},
-      headers: { "x-dsip-internal": "wrong" },
+      headers: { "x-munasip-internal": "wrong" },
     });
     expect(res.statusCode).toBe(401);
   });

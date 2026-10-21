@@ -4,7 +4,7 @@ import en from "./en.json";
 import trJson from "./tr.json";
 import uiTr from "./ui.tr.json";
 
-const saved = localStorage.getItem("dsip_locale") ?? "en";
+const saved = localStorage.getItem("munasip_locale") ?? "en";
 
 void i18n.use(initReactI18next).init({
   resources: {

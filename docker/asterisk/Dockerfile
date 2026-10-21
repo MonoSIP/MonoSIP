@@ -1,7 +1,7 @@
 FROM andrius/asterisk:22
 
 USER root
-RUN mkdir -p /var/lib/asterisk/dsip /etc/asterisk
+RUN mkdir -p /var/lib/asterisk/munasip /etc/asterisk
 
 COPY conf/ /etc/asterisk/
 COPY entrypoint.sh /entrypoint.sh

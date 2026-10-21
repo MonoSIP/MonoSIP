@@ -1,5 +1,5 @@
 /**
- * Live SIP + IVR end-to-end suite against a running DSip (all-in-one image).
+ * Live SIP + IVR end-to-end suite against a running MunaSIP (all-in-one image).
  *
  * Every phone is a real headless Chromium (fake mic, real WebRTC) running the
  * actual portal softphone, each in its own browser context (own login/cookies).
@@ -433,7 +433,7 @@ await browser.close();
 /* ------------------------------------------------------------------ */
 const passed = results.filter((r) => r.ok).length;
 const md = [
-  `# DSip SIP + IVR e2e — ${new Date().toISOString()}`,
+  `# MunaSIP SIP + IVR e2e — ${new Date().toISOString()}`,
   ``,
   `Target: ${BASE} · ${passed}/${results.length} passed`,
   ``,

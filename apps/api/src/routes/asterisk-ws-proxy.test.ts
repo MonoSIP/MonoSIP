@@ -55,14 +55,14 @@ describe("asterisk-ws proxy", () => {
     });
     // SIP.js sends REGISTER the moment its own socket opens.
     client.once("open", () => {
-      client.send("REGISTER sip:dsip SIP/2.0");
-      client.send("OPTIONS sip:dsip SIP/2.0");
+      client.send("REGISTER sip:munasip SIP/2.0");
+      client.send("OPTIONS sip:munasip SIP/2.0");
     });
 
     expect(await reply).toContain("REGISTER");
     await expect.poll(() => asterisk!.received).toEqual([
-      "REGISTER sip:dsip SIP/2.0",
-      "OPTIONS sip:dsip SIP/2.0",
+      "REGISTER sip:munasip SIP/2.0",
+      "OPTIONS sip:munasip SIP/2.0",
     ]);
     client.close();
   });

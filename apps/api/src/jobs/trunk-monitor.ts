@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { SettingsSchema } from "@dsip/shared";
+import { SettingsSchema } from "@munasip/shared";
 import { ari } from "../asterisk/ari.js";
 import { db } from "../db/client.js";
 import { settings, trunks } from "../db/schema.js";
@@ -57,7 +57,7 @@ export function startTrunkMonitorJob(intervalMs = 60_000) {
                 from: s.emailFrom,
                 to: s.smtpTo,
               },
-              `DSip trunk down: ${t.name}`,
+              `MunaSIP trunk down: ${t.name}`,
               `Trunk ${t.name} (${endpoint}) is down (AMI: ${live.status}).\nAt: ${new Date().toISOString()}`,
             );
           } catch (e) {

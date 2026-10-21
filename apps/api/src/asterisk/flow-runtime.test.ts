@@ -142,7 +142,7 @@ vi.mock("../lib/call-policy.js", () => ({
 }));
 
 vi.mock("../lib/silence.js", () => ({
-  silenceMedia: vi.fn(async (ms: number) => `sound:dsip/silence-${ms}`),
+  silenceMedia: vi.fn(async (ms: number) => `sound:munasip/silence-${ms}`),
 }));
 
 vi.mock("../lib/smtp.js", () => ({ sendSmtpMail: vi.fn(async () => undefined) }));
@@ -153,14 +153,14 @@ vi.mock("../lib/tts.js", () => ({
   synthesizeSpeech: vi.fn(async () => Buffer.from("wav")),
   writePromptWav: vi.fn(async (id: string) => ({
     filePath: `/tmp/${id}.wav`,
-    media: `sound:dsip/${id}`,
+    media: `sound:munasip/${id}`,
   })),
   ensureSpeechMedia: vi.fn(async () => ({
-    media: "sound:dsip/cached",
+    media: "sound:munasip/cached",
     cached: false,
     ms: 1,
   })),
-  promptMediaUri: vi.fn(() => "sound:dsip/p1"),
+  promptMediaUri: vi.fn(() => "sound:munasip/p1"),
 }));
 
 import { ari } from "./ari.js";
@@ -292,9 +292,9 @@ describe("attachFlowRuntime", () => {
 describe("stasisStart dispatch table", () => {
   beforeEach(() => attachFlowRuntime());
 
-  it("answers and bridges a channel sent to dsip-flow/bridge", async () => {
+  it("answers and bridges a channel sent to munasip-flow/bridge", async () => {
     await stasis({
-      application: "dsip-flow",
+      application: "munasip-flow",
       channel: { id: "ch-100" },
       args: ["bridge", "BRIDGE-1"],
     });
@@ -304,19 +304,19 @@ describe("stasisStart dispatch table", () => {
   });
 
   it("ignores a bridge join with no bridge id", async () => {
-    await stasis({ application: "dsip-flow", channel: { id: "ch-101" }, args: ["bridge"] });
+    await stasis({ application: "munasip-flow", channel: { id: "ch-101" }, args: ["bridge"] });
     expect(ari.addToBridge).not.toHaveBeenCalled();
   });
 
   it("parks a snoop-wait channel without acting on it", async () => {
-    await stasis({ application: "dsip-flow", channel: { id: "ch-102" }, args: ["snoop-wait"] });
+    await stasis({ application: "munasip-flow", channel: { id: "ch-102" }, args: ["snoop-wait"] });
     expect(ari.answer).not.toHaveBeenCalled();
     expect(ari.hangup).not.toHaveBeenCalled();
   });
 
   it("hangs up a transfer that fails with no pending transfer", async () => {
     await stasis({
-      application: "dsip-flow",
+      application: "munasip-flow",
       channel: { id: "ch-103" },
       args: ["dial-failed", "NOANSWER"],
     });
@@ -332,10 +332,10 @@ describe("stasisStart dispatch table", () => {
     );
     // Transfer parks the call in the dial context (pending transfer recorded)...
     await executeFlowLoop("ch-200", flow, { caller: "101" }, 0, t as never, new Set(), async () => undefined);
-    expect(ari.redirect).toHaveBeenCalledWith("ch-200", "s", "dsip-flow-dial");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-200", "s", "munasip-flow-dial");
     vi.mocked(ari.redirect).mockClear();
     // ...and the dialplan returns BUSY to Stasis.
-    await stasis({ application: "dsip-flow", channel: { id: "ch-200" }, args: ["dial-failed", "BUSY"] });
+    await stasis({ application: "munasip-flow", channel: { id: "ch-200" }, args: ["dial-failed", "BUSY"] });
     expect(ari.hangup).toHaveBeenCalledWith("ch-200");
     expect(ari.redirect).not.toHaveBeenCalled();
   });
@@ -345,9 +345,9 @@ describe("stasisStart dispatch table", () => {
     expect(ari.hangup).toHaveBeenCalledWith("ch-104");
   });
 
-  it("hangs up a dsip-flow main entry when no published flow exists", async () => {
+  it("hangs up a munasip-flow main entry when no published flow exists", async () => {
     vi.mocked(loadPublishedFlow).mockResolvedValue(null);
-    await stasis({ application: "dsip-flow", channel: { id: "ch-105" }, args: ["main"] });
+    await stasis({ application: "munasip-flow", channel: { id: "ch-105" }, args: ["main"] });
 
     expect(loadPublishedFlow).toHaveBeenCalled();
     expect(ari.hangup).toHaveBeenCalledWith("ch-105");
@@ -361,7 +361,7 @@ describe("stasisStart dispatch table", () => {
       variables: ["caller"],
     });
     await stasis({
-      application: "dsip-flow",
+      application: "munasip-flow",
       channel: { id: "ch-106", caller: { number: "101" } },
       args: ["flow-abc"],
     });
@@ -370,7 +370,7 @@ describe("stasisStart dispatch table", () => {
 
   it("answers an outbound channel before dispatching", async () => {
     await stasis({
-      application: "dsip-outbound",
+      application: "munasip-outbound",
       channel: { id: "ch-107", caller: { number: "101" } },
       args: ["05321112233"],
     });
@@ -490,7 +490,7 @@ describe("executeFlowLoop — variable and branching nodes", () => {
     await runLoop(node("c", "condition", { op: "=", variable: "tier", value: "gold" }), flow, {
       tier: "gold",
     });
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
   });
 
   it("condition takes the false edge when the comparison fails", async () => {
@@ -513,7 +513,7 @@ describe("executeFlowLoop — variable and branching nodes", () => {
     );
     await runLoop(node("t", "time_condition", { scheduleId: "sched-1" }), flow);
     expect(evaluateScheduleStatus).toHaveBeenCalledWith("sched-1");
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
   });
 
   it("time_condition without a schedule is treated as closed", async () => {
@@ -531,7 +531,7 @@ describe("executeFlowLoop — terminal nodes", () => {
   it("voicemail redirects to the extension's voicemail", async () => {
     const flow = flowOf([node("v", "voicemail", { extension: "101" })]);
     const { result } = await runLoop(node("v", "voicemail", { extension: "101" }), flow);
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
     expect(result).toBe("left");
   });
 
@@ -623,7 +623,7 @@ describe("executeFlowLoop — menu node", () => {
     const { vars, result } = await runLoop(node("m", "menu", { prompt: "Press one" }), flow);
     expect(ari.playCollectDtmf).toHaveBeenCalled();
     expect(vars.dtmf).toBe("1");
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
     expect(result).toBe("left");
   });
 
@@ -740,7 +740,7 @@ describe("executeFlowLoop — subflow node", () => {
     const { result } = await runLoop(node("s", "subflow", { flowId: "flow-2" }), flow);
     expect(loadPublishedFlow).toHaveBeenCalledWith("flow-2");
     expect(result).toBe("left");
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
   });
 
   it("continues when the referenced flow does not exist", async () => {
@@ -760,9 +760,9 @@ describe("executeFlowLoop — transfer node", () => {
     const { result } = await runLoop(node("t", "transfer", { destType: "extension", destId: "102", timeout: 25 }), flow, {
       caller: "101",
     });
-    expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TARGET", "102");
-    expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TIMEOUT", "25");
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "s", "dsip-flow-dial");
+    expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TARGET", "102");
+    expect(ari.setChannelVar).toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TIMEOUT", "25");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "s", "munasip-flow-dial");
     expect(result).toBe("left");
   });
 
@@ -775,8 +775,8 @@ describe("executeFlowLoop — transfer node", () => {
     // The contract is "never self-dial": no dial redirect and no dial target are
     // set. The call is not hung up here — the chanunavail edge continues into
     // the menu, which is free to end the call afterwards.
-    expect(ari.redirect).not.toHaveBeenCalledWith("ch-n", "s", "dsip-flow-dial");
-    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TARGET", "101");
+    expect(ari.redirect).not.toHaveBeenCalledWith("ch-n", "s", "munasip-flow-dial");
+    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TARGET", "101");
   });
 
   it("reports chanunavail when the target extension is offline", async () => {
@@ -786,8 +786,8 @@ describe("executeFlowLoop — transfer node", () => {
       [edge("t", "v", "chanunavail")],
     );
     await runLoop(node("t", "transfer", { destType: "extension", destId: "102" }), flow, { caller: "101" });
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
-    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TARGET", "102");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
+    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TARGET", "102");
   });
 
   it("takes the busy exit without dialing when the extension is already on a call", async () => {
@@ -803,7 +803,7 @@ describe("executeFlowLoop — transfer node", () => {
     const { result } = await runLoop(node("t", "transfer", { destType: "extension", destId: "102" }), flow, {
       caller: "101",
     });
-    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "DSIP_DIAL_TARGET", "102");
+    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-n", "MUNASIP_DIAL_TARGET", "102");
     expect(ari.redirect).not.toHaveBeenCalled();
     expect(ari.hangup).toHaveBeenCalledWith("ch-n");
     expect(result).toBe("left");
@@ -816,7 +816,7 @@ describe("executeFlowLoop — transfer node", () => {
       [edge("t", "v", "noanswer")],
     );
     await runLoop(node("t", "transfer", { destType: "extension", destId: "102" }), flow, { caller: "101" });
-    expect(ari.redirect).not.toHaveBeenCalledWith("ch-n", "*102", "dsip-voicemail");
+    expect(ari.redirect).not.toHaveBeenCalledWith("ch-n", "*102", "munasip-voicemail");
     expect(ari.hangup).toHaveBeenCalledWith("ch-n");
   });
 
@@ -879,7 +879,7 @@ describe("handleOutbound", () => {
     expect(ari.redirect).toHaveBeenCalledWith(
       "ch-o",
       "trunk_abcdef12_05321112233",
-      "dsip-trunk-dial",
+      "munasip-trunk-dial",
     );
     expect(cdrStart).toHaveBeenCalled();
   });
@@ -894,24 +894,24 @@ describe("handleOutbound", () => {
     await handleOutbound("ch-o", "05321112233", "101");
     expect(ari.setChannelVar).toHaveBeenCalledWith(
       "ch-o",
-      "DSIP_TRUNK_FALLBACK",
+      "MUNASIP_TRUNK_FALLBACK",
       "trunk_22222222&trunk_33333333",
     );
   });
 
   it("sets no failover list when the route has a single trunk", async () => {
     await handleOutbound("ch-o", "05321112233", "101");
-    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-o", "DSIP_TRUNK_FALLBACK", expect.anything());
+    expect(ari.setChannelVar).not.toHaveBeenCalledWith("ch-o", "MUNASIP_TRUNK_FALLBACK", expect.anything());
   });
 });
 
-describe("stasisStart — dsip-inbound branches", () => {
+describe("stasisStart — munasip-inbound branches", () => {
   beforeEach(() => attachFlowRuntime());
 
   /** An inbound Stasis event; `callerArg` overrides the channel caller. */
   const inbound = (callerArg?: string, channelCaller = "1000") =>
     stasis({
-      application: "dsip-inbound",
+      application: "munasip-inbound",
       channel: { id: "ch-in", caller: { number: channelCaller } },
       args: callerArg === undefined ? ["1000"] : ["1000", callerArg],
     });
@@ -1048,7 +1048,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
-    expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:dsip/p1", 60_000);
+    expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:munasip/p1", 60_000);
   });
 
   it("plays nothing when the announcement is disabled", async () => {
@@ -1058,7 +1058,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     await running;
     // only the silence that keeps RTP flowing — no announcement
     const media = vi.mocked(ari.playAndWait).mock.calls.map((c) => String(c[1]));
-    expect(media.every((m) => m.startsWith("sound:dsip/silence-"))).toBe(true);
+    expect(media.every((m) => m.startsWith("sound:munasip/silence-"))).toBe(true);
   });
 
   it("falls back to live TTS when no prompt is configured", async () => {
@@ -1067,7 +1067,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ensureSpeechMedia).toHaveBeenCalled();
-    expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:dsip/cached", 60_000);
+    expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:munasip/cached", 60_000);
   });
 
   it("speaks the Turkish notice when the flow language is tr", async () => {
@@ -1227,7 +1227,7 @@ describe("stasisStart — handler error tail", () => {
   it("ends the CDR as FAILED and hangs up when routing throws", async () => {
     vi.mocked(resolveInbound).mockRejectedValue(new Error("routing exploded"));
     await stasis({
-      application: "dsip-inbound",
+      application: "munasip-inbound",
       channel: { id: "ch-err" },
       args: ["1000"],
     });
@@ -1239,7 +1239,7 @@ describe("stasisStart — handler error tail", () => {
     vi.mocked(resolveInbound).mockRejectedValue(new Error("boom"));
     vi.mocked(cdrEnd).mockRejectedValueOnce(new Error("db gone"));
     await stasis({
-      application: "dsip-inbound",
+      application: "munasip-inbound",
       channel: { id: "ch-err2" },
       args: ["1000"],
     });
@@ -1254,7 +1254,7 @@ describe("executeFlowLoop — api hold-while-requesting", () => {
     const data = { url: "https://api.test/x", waitPromptId: "p1" };
     const flow = flowOf([node("a", "api", data), node("h", "hangup")]);
     await runLoop(node("a", "api", data), flow);
-    expect(ari.play).toHaveBeenCalledWith("ch-n", "sound:dsip/p1");
+    expect(ari.play).toHaveBeenCalledWith("ch-n", "sound:munasip/p1");
     expect(ari.stopPlayback).toHaveBeenCalledWith("pb-1");
     fetchSpy.mockRestore();
   });
@@ -1318,7 +1318,7 @@ describe("executeFlowLoop — menu retry and exit digits", () => {
     const { vars } = await runLoop(node("m", "menu", { retries: 2 }), flow);
     expect(ari.playCollectDtmf).toHaveBeenCalledTimes(2);
     expect(vars.dtmf).toBe("2");
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
   });
 
   it("resolves to 'invalid' when retries run out and an invalid edge exists", async () => {
@@ -1329,7 +1329,7 @@ describe("executeFlowLoop — menu retry and exit digits", () => {
     );
     const { vars } = await runLoop(node("m", "menu", { retries: 0 }), flow);
     expect(vars.dtmf).toBe("invalid");
-    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "dsip-voicemail");
+    expect(ari.redirect).toHaveBeenCalledWith("ch-n", "*101", "munasip-voicemail");
   });
 
   it("resolves to 'timeout' when retries run out with no invalid edge", async () => {
@@ -1434,7 +1434,7 @@ describe("executeFlowLoop — wait node", () => {
     await runLoop(w, flow);
     const media = vi.mocked(ari.playAndWait).mock.calls.map((c) => String(c[1]));
     // 3 × 1 s for the wait, then the 800 ms tail before the hangup node
-    expect(media).toEqual(["sound:dsip/silence-1000", "sound:dsip/silence-1000", "sound:dsip/silence-1000", "sound:dsip/silence-800"]);
+    expect(media).toEqual(["sound:munasip/silence-1000", "sound:munasip/silence-1000", "sound:munasip/silence-1000", "sound:munasip/silence-800"]);
     expect(ari.hangup).toHaveBeenCalledWith("ch-n");
     expect(ari.startMoh).not.toHaveBeenCalled();
   });

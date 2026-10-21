@@ -1,4 +1,4 @@
-# Deploy DSip on a VPS (Docker)
+# Deploy MunaSIP on a VPS (Docker)
 
 **Use Docker on Linux.** Do not install Asterisk / Node / Postgres by hand unless you have a strong reason. The Mac Docker Desktop NAT issue does not apply to a normal Linux VM with published UDP ports.
 
@@ -41,7 +41,7 @@ ASTERISK_AMI_PASSWORD=…
 
 ## 2. TLS certificate
 
-**Preferred:** after the stack is up, open **Admin → Settings → Hostname & SSL**, set the public hostname, turn on **Automatic SSL**, and save. DSip uses Let's Encrypt (HTTP-01 on port 80), writes `docker/nginx/certs/cert.pem` + `key.pem`, and renews automatically.
+**Preferred:** after the stack is up, open **Admin → Settings → Hostname & SSL**, set the public hostname, turn on **Automatic SSL**, and save. MunaSIP uses Let's Encrypt (HTTP-01 on port 80), writes `docker/nginx/certs/cert.pem` + `key.pem`, and renews automatically.
 
 Lab / offline only:
 
@@ -127,7 +127,7 @@ Register two extensions (e.g. 101 and 102), dial `102` from 101. Asterisk log sh
 | | Docker (this project) | Manual install |
 | --- | --- | --- |
 | Asterisk + API + DB + nginx + TURN | One `compose up` | Many packages, paths, systemd units |
-| Config sync | API writes `/var/lib/asterisk/dsip` | You wire it yourself |
+| Config sync | API writes `/var/lib/asterisk/munasip` | You wire it yourself |
 | Upgrades | Rebuild images | Mix of apt + Node versions |
 | NAT | Set `EXTERNAL_IP` | Same Asterisk knobs, more footguns |
 

@@ -1,4 +1,4 @@
-# DSip full product test plan
+# MunaSIP full product test plan
 
 Exhaustive checklist for verifying every in-scope feature and call path. Use this before a release, after major refactors, or when validating a new environment (lab Compose or VPS).
 
@@ -35,8 +35,8 @@ Card payments, e-commerce plugins, predictive dialer / mass SMS, ticketing/CRM f
 
 ```bash
 pnpm test
-# or targeted: pnpm --filter @dsip/api exec vitest run
-#              pnpm --filter @dsip/web exec vitest run
+# or targeted: pnpm --filter @munasip/api exec vitest run
+#              pnpm --filter @munasip/web exec vitest run
 ```
 
 ---
@@ -417,7 +417,7 @@ Simulate alone is insufficient. Mark LIVE.
 
 | ID | Steps | Expected | Type | Result |
 | --- | --- | --- | --- | --- |
-| O-01 | Load settings | Defaults sensible (company DSip, locale en, …) | AUTO | |
+| O-01 | Load settings | Defaults sensible (company MunaSIP, locale en, …) | AUTO | |
 | O-02 | Patch companyName / locale / retention | Persists | AUTO | |
 | O-03 | KVKK on/off + prompt | Affects recording path | LIVE | |
 | O-04 | Country allowlist / spend / maxOutboundPerHour / blockAnonymous | Enforced on calls | LIVE | |

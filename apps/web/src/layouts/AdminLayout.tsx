@@ -100,7 +100,7 @@ export function AdminLayout() {
               type="button"
               onClick={() => {
                 const next = i18n.language === "en" ? "tr" : "en";
-                localStorage.setItem("dsip_locale", next);
+                localStorage.setItem("munasip_locale", next);
                 void i18n.changeLanguage(next);
               }}
             >

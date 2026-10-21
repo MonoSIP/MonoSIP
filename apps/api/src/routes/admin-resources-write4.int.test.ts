@@ -404,7 +404,7 @@ describe("flow import", () => {
 
     const res = await get(`/api/v1/admin/flows/${id}/export`);
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ format: "dsip-flow-v1", name: "Exportable" });
+    expect(res.json()).toMatchObject({ format: "munasip-flow-v1", name: "Exportable" });
   });
 });
 

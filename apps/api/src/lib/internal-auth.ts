@@ -1,9 +1,11 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { config } from "../config.js";
 
-/** Validate X-DSip-Internal header from dialplan curls. */
+/** Validate X-MunaSIP-Internal header from dialplan curls. */
 export function requireInternalSecret(req: FastifyRequest, reply: FastifyReply): boolean {
   const hdr =
+    (req.headers["x-munasip-internal"] as string | undefined) ??
+    // name before the rename (older fail2ban actions)
     (req.headers["x-dsip-internal"] as string | undefined) ??
     (req.headers["x-internal-secret"] as string | undefined);
   if (!hdr || hdr !== config.internalApiSecret) {

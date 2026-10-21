@@ -4,7 +4,7 @@ import {
   ExtensionCreateSchema,
   ExtensionUpdateSchema,
   ForwardingRuleSchema,
-} from "@dsip/shared";
+} from "@munasip/shared";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import { extensionForwarding, extensions, spendLimits } from "../db/schema.js";

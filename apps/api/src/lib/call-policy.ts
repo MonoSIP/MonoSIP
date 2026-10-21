@@ -1,4 +1,4 @@
-import { CallPermissionsSchema, SettingsSchema, type Settings } from "@dsip/shared";
+import { CallPermissionsSchema, SettingsSchema, type Settings } from "@munasip/shared";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { cdr, extensions, outboundRoutes, spendLimits, trunks } from "../db/schema.js";
@@ -236,7 +236,7 @@ export async function checkExtensionOutbound(
                 from: settings.emailFrom,
                 to: settings.smtpTo,
               },
-              `DSip rate-limit: extension ${callerExt} suspended`,
+              `MunaSIP rate-limit: extension ${callerExt} suspended`,
               `Extension ${callerExt} hit maxOutboundPerHour (${maxPerHour}) and was set to DND.\nAt: ${new Date().toISOString()}`,
             );
           }
@@ -272,7 +272,7 @@ export async function checkExtensionOutbound(
             from: settings.emailFrom,
             to: settings.smtpTo,
           },
-          `DSip daily spend limit hit`,
+          `MunaSIP daily spend limit hit`,
           `Outbound blocked for ${callerExt} → ${dialed}\nReason: daily-spend\nAt: ${new Date().toISOString()}`,
         );
       }
@@ -294,7 +294,7 @@ export async function checkExtensionOutbound(
             from: settings.emailFrom,
             to: settings.smtpTo,
           },
-          `DSip monthly spend limit hit`,
+          `MunaSIP monthly spend limit hit`,
           `Outbound blocked for ${callerExt} → ${dialed}\nReason: monthly-spend\nAt: ${new Date().toISOString()}`,
         );
       }

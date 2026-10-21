@@ -1,5 +1,5 @@
 {
-  "name": "@dsip/web",
+  "name": "@munasip/web",
   "version": "1.4.0",
   "license": "MIT",
   "private": true,
@@ -18,7 +18,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@dsip/shared": "workspace:*",
+    "@munasip/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.2",
     "@xyflow/react": "^12.8.6",
     "i18next": "^25.5.3",

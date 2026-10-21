@@ -2,15 +2,19 @@
 set -e
 cd /app
 
-# Image already builds @dsip/shared — only rebuild if dist is missing (dev/override images).
+# Image already builds @munasip/shared — only rebuild if dist is missing (dev/override images).
 if [ ! -f /app/packages/shared/dist/index.js ]; then
-  pnpm --filter @dsip/shared build
+  pnpm --filter @munasip/shared build
 fi
 
 cd /app/apps/api
 
 # shellcheck disable=SC1091
 . /app/apps/api/scripts/bootstrap-runtime.sh
+
+# Files named before the MunaSIP rename (configs, sounds folder) move once.
+# shellcheck disable=SC1091
+. /app/apps/api/scripts/migrate-legacy-names.sh
 
 # Embedded Asterisk (NineDeploy all-in-one). Skipped when ASTERISK_ARI_URL points at `asterisk` host (Compose).
 # shellcheck disable=SC1091

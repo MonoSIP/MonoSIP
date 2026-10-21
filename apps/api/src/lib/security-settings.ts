@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { SettingsSchema, type Settings } from "@dsip/shared";
+import { SettingsSchema, type Settings } from "@munasip/shared";
 import { db } from "../db/client.js";
 import { settings } from "../db/schema.js";
 

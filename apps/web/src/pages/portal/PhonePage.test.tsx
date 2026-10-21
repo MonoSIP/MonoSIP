@@ -578,7 +578,7 @@ describe("PhonePage recents (inside the phone)", () => {
   });
 
   it("badges missed calls on the screen tab until recents are opened", async () => {
-    localStorage.removeItem("dsip.recentsSeenAt");
+    localStorage.removeItem("munasip.recentsSeenAt");
     seedCalls();
     renderPage();
     const tab = await screen.findByRole("button", { name: "portal.recents" });

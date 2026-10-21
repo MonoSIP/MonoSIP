@@ -72,7 +72,7 @@ class AriClient extends EventEmitter {
   async start() {
     await this.health();
     this.pollTimer = setInterval(() => void this.poll(), 5000);
-    this.connectApps(["dsip-inbound", "dsip-flow", "dsip-outbound"]);
+    this.connectApps(["munasip-inbound", "munasip-flow", "munasip-outbound"]);
   }
 
   stop() {
@@ -302,7 +302,7 @@ class AriClient extends EventEmitter {
    * `snoop-wait`); it follows the caller through dialplan and ends at hangup.
    */
   async record(channelId: string, name: string): Promise<string | null> {
-    const snoopParams = new URLSearchParams({ spy: "both", app: "dsip-flow", appArgs: "snoop-wait" });
+    const snoopParams = new URLSearchParams({ spy: "both", app: "munasip-flow", appArgs: "snoop-wait" });
     const snoopRes = await fetch(`${this.baseUrl()}/ari/channels/${channelId}/snoop?${snoopParams}`, {
       method: "POST",
       headers: { Authorization: this.authHeader() },
@@ -365,7 +365,7 @@ class AriClient extends EventEmitter {
     const snoopParams = new URLSearchParams({
       spy,
       whisper,
-      app: "dsip-flow",
+      app: "munasip-flow",
       appArgs: "snoop-wait",
     });
     const snoopRes = await fetch(
@@ -390,10 +390,10 @@ class AriClient extends EventEmitter {
 
       const origParams = new URLSearchParams({
         endpoint: opts.listenerEndpoint,
-        app: "dsip-flow",
+        app: "munasip-flow",
         appArgs: `bridge,${bridge.id}`,
         timeout: "30",
-        callerId: `"DSip Spy" <${ext}>`,
+        callerId: `"MunaSIP Spy" <${ext}>`,
       });
       const orig = await fetch(`${this.baseUrl()}/ari/channels?${origParams}`, {
         method: "POST",
@@ -699,7 +699,7 @@ class AriClient extends EventEmitter {
       endpoint: opts.endpoint,
       extension: opts.extension,
       context: opts.context ?? "from-internal",
-      callerId: opts.callerId ?? "DSip",
+      callerId: opts.callerId ?? "MunaSIP",
       timeout: "30",
     });
     const res = await fetch(`${this.baseUrl()}/ari/channels?${params}`, {

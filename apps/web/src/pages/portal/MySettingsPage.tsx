@@ -21,7 +21,7 @@ type Fwd = {
   destId: string | null;
 };
 
-const DEVICE_KEY = "dsip.audioDevices";
+const DEVICE_KEY = "munasip.audioDevices";
 
 export function MySettingsPage() {
   const { t } = useTranslation();

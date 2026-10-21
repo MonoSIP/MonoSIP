@@ -3,11 +3,11 @@
 # Sourced from docker-entrypoint.sh. No sidecar / no external TTS host required.
 # Set TTS_EMBEDDED=0 to skip (e.g. point TTS_URL at an external service).
 
-DATA_DIR="${DSIP_DATA_DIR:-/data}"
+DATA_DIR="${MUNASIP_DATA_DIR:-/data}"
 TTS_DIR="${TTS_DIR:-/app/docker/tts}"
 TTS_HOST_BIND="${TTS_HOST_BIND:-127.0.0.1}"
 TTS_PORT_BIND="${TTS_PORT_BIND:-5500}"
-TTS_PID_FILE="${TTS_PID_FILE:-/tmp/dsip-tts.pid}"
+TTS_PID_FILE="${TTS_PID_FILE:-/tmp/munasip-tts.pid}"
 TTS_LOG="${TTS_LOG:-$DATA_DIR/logs/tts.log}"
 
 if [ "${TTS_EMBEDDED:-1}" = "0" ] || [ "${TTS_EMBEDDED:-1}" = "false" ]; then

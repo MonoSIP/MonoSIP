@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FlowJson } from "@dsip/shared";
+import type { FlowJson } from "@munasip/shared";
 import { simulateFlow, validateFlow } from "./flow-engine.js";
 
 function ivrFlow(): FlowJson {

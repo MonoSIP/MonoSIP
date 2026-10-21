@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgresql://dsip:dsip_secret_change_me@localhost:5432/dsip",
+    url: process.env.DATABASE_URL ?? "postgresql://munasip:munasip_secret_change_me@localhost:5432/munasip",
   },
 });

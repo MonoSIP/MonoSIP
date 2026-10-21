@@ -73,11 +73,11 @@ describe("internal hook form parser", () => {
 
 describe("internalPost dialplan", () => {
   it("posts in-process with CURL (no System fork) to the internal API URL", () => {
-    const line = internalPost("cdr", '{"callId":"${UNIQUEID}","billsec":${DSIP_BILL}}');
+    const line = internalPost("cdr", '{"callId":"${UNIQUEID}","billsec":${MUNASIP_BILL}}');
     expect(line).not.toMatch(/System\(|SHELL\(/);
     expect(line).toContain(`\${CURL(${config.internalApiUrl}/api/v1/internal/cdr,`);
     // The JSON is URIENCODE()d inside CURL so its commas never split CURL's arguments.
-    expect(line).toContain('payload=${URIENCODE({"callId":"${UNIQUEID}","billsec":${DSIP_BILL}})}');
+    expect(line).toContain('payload=${URIENCODE({"callId":"${UNIQUEID}","billsec":${MUNASIP_BILL}})}');
   });
 
   it("targets 127.0.0.1 when Asterisk is embedded (no `api` host in the all-in-one image)", () => {
