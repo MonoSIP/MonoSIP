@@ -20,7 +20,7 @@ const { SoftphoneMock } = vi.hoisted(() => {
     status = "idle";
     onStatus?: (s: string, d?: string) => void;
     onSession?: (s: unknown) => void;
-    onCallPhase?: (phase: string, info?: { seconds?: number }) => void;
+    onCallPhase?: (phase: string, info?: { seconds?: number; peer?: string }) => void;
     onMediaWarning?: (code: string) => void;
 
     connect = vi.fn(async () => {});
