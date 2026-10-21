@@ -772,7 +772,12 @@ async function writeAsteriskConfigNow(): Promise<void> {
             ` same => n(kvkkdone),NoOp(KVKK)`,
           ]
         : [];
-    const rec = wantRec ? ` same => n,MixMonitor(${recFile})` : null;
+    const rec = wantRec
+      ? [
+          ` same => n,Set(MUNASIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
+          ` same => n,MixMonitor(${recFile})`,
+        ]
+      : [];
 
     extensionsConf.push(
       `exten => ${ext.number},hint,PJSIP/${ext.number}`,
@@ -781,7 +786,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ` same => n,GotoIf($["\${DB(DND/${ext.number})}" = "1"]?dndbusy)`,
     );
     extensionsConf.push(...kvkkLines);
-    if (rec) extensionsConf.push(rec);
+    extensionsConf.push(...rec);
     if (alwaysExternal) {
       extensionsConf.push(
         ` same => n,Stasis(munasip-outbound,${alwaysExternal})`,
@@ -806,7 +811,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ...qosPrepLines(),
         // Ring time before answer (DIALEDTIME includes talk time)
         ` same => n,Set(MUNASIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${MUNASIP_DUR} - \${MUNASIP_BILL}]:)})`,
-        ...(rec ? [` same => n,StopMixMonitor()`, ` same => n,${recRegister}`] : []),
+        ...(rec.length
+          ? [
+              ` same => n,StopMixMonitor()`,
+              ` same => n,${recRegister}`,
+              ` same => n,Set(MUNASIP_REC_DONE=1)`,
+            ]
+          : []),
         ` same => n,${cdrPost}`,
         ` same => n,Set(MUNASIP_CDR_DONE=1)`,
         // ANSWER: hang up cleanly. Failures jump to per-status forward/missed handlers.
@@ -886,6 +897,15 @@ async function writeAsteriskConfigNow(): Promise<void> {
     ` same => n,GotoIf($["\${MUNASIP_QUEUE}" != ""]?hqueue)`,
     ` same => n,GotoIf($["\${MUNASIP_CALLEE}" = ""]?cdrdone)`,
     ...qosPrepLines(),
+    // Caller BYE aborts the lines after Dial(), so the MixMonitor file never reached the panel.
+    ` same => n,GotoIf($["\${MUNASIP_REC_DONE}" = "1" | "\${MUNASIP_RECFILE}" = ""]?reccdr)`,
+    ` same => n,StopMixMonitor()`,
+    ` same => n,${internalPost(
+      "recording",
+      `{"callId":"\${UNIQUEID}","file":"\${MUNASIP_RECFILE}","duration":\${MUNASIP_BILL}}`,
+    )}`,
+    ` same => n,Set(MUNASIP_REC_DONE=1)`,
+    ` same => n(reccdr),NoOp(Recording)`,
     ` same => n,Set(MUNASIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER" | "\${DIALSTATUS}" = ""]?$[\${MUNASIP_DUR} - \${MUNASIP_BILL}]:)})`,
     ` same => n,Set(MUNASIP_DISP=\${IF($["\${DIALSTATUS}"=""]?ANSWER:\${DIALSTATUS})})`,
     ` same => n,${internalPost(

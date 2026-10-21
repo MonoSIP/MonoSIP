@@ -71,19 +71,47 @@ export function deleteRecordingFile(filePath: string): void {
   }
 }
 
+function siblingRecordingPath(filePath: string): string {
+  return filePath.includes("/data/recordings/")
+    ? filePath.replace("/data/recordings/", "/var/spool/asterisk/recording/")
+    : filePath.replace("/var/spool/asterisk/recording/", "/data/recordings/");
+}
+
+/** Spool and /data/recordings are the same volume; use whichever path exists. */
+function locatedRecording(filePath: string): { path: string; size: number } | null {
+  for (const candidate of [filePath, siblingRecordingPath(filePath)]) {
+    if (!candidate || !existsSync(candidate)) continue;
+    try {
+      return { path: candidate, size: statSync(candidate).size };
+    } catch {
+      return { path: candidate, size: 0 };
+    }
+  }
+  return null;
+}
+
 /** Remove DB row + file for a call when recording is empty / 0s. */
 export async function discardEmptyRecordingsForCall(callId: string): Promise<number> {
   const rows = await db.select().from(recordings).where(eq(recordings.callId, callId));
   let n = 0;
   for (const rec of rows) {
-    const dur = Math.max(rec.duration ?? 0, wavDurationSeconds(rec.filePath));
-    if (dur >= 1 && (rec.sizeBytes ?? 0) >= 500) {
-      if (dur !== rec.duration) {
-        await db.update(recordings).set({ duration: dur }).where(eq(recordings.id, rec.id));
-      }
+    const found = locatedRecording(rec.filePath);
+    const dur = Math.max(rec.duration ?? 0, found ? wavDurationSeconds(found.path) : 0);
+    const size = Math.max(rec.sizeBytes ?? 0, found?.size ?? 0);
+    // IVR rows are inserted with duration 0 and size 0 before the wav is measured.
+    // Keep them when the file itself has audio; the stored size is not the signal.
+    if (dur >= 1 || size >= 500) {
+      const stored = found?.path.includes("/var/spool/asterisk/recording/")
+        ? found.path.replace("/var/spool/asterisk/recording/", "/data/recordings/")
+        : (found?.path ?? rec.filePath);
+      await db
+        .update(recordings)
+        .set({ duration: dur, sizeBytes: size, filePath: stored })
+        .where(eq(recordings.id, rec.id));
       continue;
     }
-    deleteRecordingFile(rec.filePath);
+    if (found) deleteRecordingFile(found.path);
+    else deleteRecordingFile(rec.filePath);
     await db.delete(recordings).where(eq(recordings.id, rec.id));
     n++;
   }

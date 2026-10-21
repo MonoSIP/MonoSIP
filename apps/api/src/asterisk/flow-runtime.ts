@@ -323,6 +323,11 @@ export async function runFlowOnChannel(
     }
   };
 
+  // Snoop recording does not block IVR playback. Start it with the call so the
+  // menu and the later transfer are both kept. A transfer/queue calls this again;
+  // the flag makes that a no-op.
+  if (!asSubflow) await startRecordingOnce();
+
   let node = flow.nodes.find((n) => n.type === "start");
   const visited = new Set<string>();
   return executeFlowLoop(channelId, flow, vars, depth, node, visited, startRecordingOnce, asSubflow);
@@ -1008,7 +1013,8 @@ export function attachFlowRuntime(): void {
       try {
         const { cdrEnd, cdrIsOpen } = await import("../lib/cdr.js");
         if (cdrIsOpen(channelId)) await cdrEnd(channelId);
-        // Finalize or discard ARI/MixMonitor rows that are still 0s
+        // The wav is still being closed when the channel dies. Measure it after that.
+        await sleep(1500);
         const { discardEmptyRecordingsForCall } = await import("../lib/recording-files.js");
         await discardEmptyRecordingsForCall(channelId);
       } catch {
