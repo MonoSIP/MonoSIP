@@ -12,7 +12,8 @@
 
 FROM node:26.12.1-bookworm-slim AS builder
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
+# Node 26 no longer ships corepack. Install pnpm the same way the runtime stage does.
+RUN npm install -g pnpm@12.14.0
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared ./packages/shared
