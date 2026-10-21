@@ -439,7 +439,13 @@ class AriClient extends EventEmitter {
     return body.id ?? null;
   }
 
-  async playAndWait(channelId: string, media: string, timeoutMs = 30000): Promise<boolean> {
+  async playAndWait(
+    channelId: string,
+    media: string,
+    timeoutMs = 30000,
+    /** interruptible: a DTMF digit stops this playback (digit stays buffered). */
+    opts: { interruptible?: boolean } = {},
+  ): Promise<boolean> {
     let id = await this.play(channelId, media);
     if (!id) {
       // One retry after brief settle (ICE / media path)
@@ -447,6 +453,7 @@ class AriClient extends EventEmitter {
       id = await this.play(channelId, media);
     }
     if (!id) return false;
+    if (opts.interruptible) this.activePlaybackByChannel.set(channelId, id);
     await new Promise<void>((resolve) => {
       const timer = setTimeout(() => {
         this.playbackWaiters.delete(id!);
@@ -460,6 +467,9 @@ class AriClient extends EventEmitter {
         },
       });
     });
+    if (opts.interruptible && this.activePlaybackByChannel.get(channelId) === id) {
+      this.activePlaybackByChannel.delete(channelId);
+    }
     return true;
   }
 
@@ -477,6 +487,11 @@ class AriClient extends EventEmitter {
     } catch {
       /* ignore */
     }
+  }
+
+  /** A digit arrived that nobody has read yet (type-ahead / barge-in). */
+  hasBufferedDtmf(channelId: string): boolean {
+    return (this.dtmfBuffers.get(channelId)?.length ?? 0) > 0;
   }
 
   waitDtmf(channelId: string, timeoutMs = 5000): Promise<string | null> {

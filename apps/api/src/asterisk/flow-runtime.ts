@@ -14,6 +14,7 @@ import {
 } from "../db/schema.js";
 import { dispatchWebhooks } from "../lib/webhooks.js";
 import { ari } from "./ari.js";
+import { speakChunked, speakThenCollectDigit } from "./speech.js";
 import {
   evaluateScheduleStatus,
   isBlacklisted,
@@ -120,10 +121,7 @@ async function playSpeech(
   gender: string = "female",
 ): Promise<void> {
   try {
-    const { ensureSpeechMedia } = await import("../lib/tts.js");
-    const { media, cached, ms } = await ensureSpeechMedia(text, lang, 1.05, gender);
-    console.log(`[flow] ${channelId} tts ${cached ? "cache" : "synth"} ${ms}ms`);
-    await ari.playAndWait(channelId, media, 60_000);
+    await speakChunked(channelId, text, lang, gender, { tag: "tts" });
   } catch (e) {
     console.warn(`[flow] playSpeech failed`, (e as Error).message);
     await ari.playAndWait(channelId, "sound:beep", 2000).catch(() => sleep(300));
@@ -348,13 +346,11 @@ export async function executeFlowLoop(
         }
         if (!played && text) {
           try {
-            const { ensureSpeechMedia } = await import("../lib/tts.js");
             const lang = resolveSpeechLang(data, vars);
             const gender = resolveTtsVoice(data, vars);
-            const { media, cached, ms } = await ensureSpeechMedia(text, lang, 1.05, gender);
-            console.log(`[flow] ${channelId} live-tts ${cached ? "cache" : "synth"} ${ms}ms`);
-            await ari.playAndWait(channelId, media, 60_000);
-            played = true;
+            // Sentence by sentence: playback starts after the first chunk, not the whole text
+            const r = await speakChunked(channelId, text, lang, gender, { tag: "live-tts" });
+            played = r.played;
           } catch (e) {
             console.warn(`[flow] live TTS failed`, (e as Error).message);
           }
@@ -375,42 +371,25 @@ export async function executeFlowLoop(
         const retries = Math.max(0, Math.min(5, Number(data.retries ?? 2) || 0));
         const lang = resolveSpeechLang(data, vars);
         const gender = resolveTtsVoice(data, vars);
-        // Synthesize once (cached); retries must not pay Edge/EMA latency again.
-        let menuMedia: string | null = null;
-        try {
-          const { ensureSpeechMedia } = await import("../lib/tts.js");
-          const { media, cached, ms } = await ensureSpeechMedia(prompt, lang, 1.05, gender);
-          console.log(`[flow] ${channelId} menu-tts ${cached ? "cache" : "synth"} ${ms}ms`);
-          menuMedia = media;
-        } catch (e) {
-          console.warn(`[flow] menu prompt failed`, (e as Error).message);
-        }
+        // Prompt is spoken in chunks (cached per chunk, so retries are instant);
+        // a key pressed while it plays stops it and is taken as the choice.
         let attempt = 0;
         let chosen: string | null = null;
         while (attempt <= retries) {
           let collected = "";
           try {
-            if (menuMedia) {
-              if (maxDigits <= 1) {
-                collected =
-                  (await ari.playCollectDtmf(channelId, menuMedia, timeoutMs, { clear: attempt > 0 })) ?? "";
-              } else {
-                await ari.playAndWait(channelId, menuMedia, 60_000).catch(() => undefined);
-                collected = await ari.waitDtmfDigits(channelId, {
-                  maxDigits,
-                  firstTimeoutMs: timeoutMs,
-                  interDigitMs: 2500,
-                });
-              }
-            } else {
-              await ari.playAndWait(channelId, "sound:beep", 2000).catch(() => sleep(300));
+            if (maxDigits <= 1) {
               collected =
-                maxDigits <= 1
-                  ? ((await ari.waitDtmf(channelId, timeoutMs)) ?? "")
-                  : await ari.waitDtmfDigits(channelId, {
-                      maxDigits,
-                      firstTimeoutMs: timeoutMs,
-                    });
+                (await speakThenCollectDigit(channelId, prompt, lang, gender, timeoutMs, { clear: attempt > 0 })) ??
+                "";
+            } else {
+              if (attempt > 0) ari.clearDtmfBuffer(channelId);
+              await speakChunked(channelId, prompt, lang, gender, { interruptible: true, tag: "menu-tts" });
+              collected = await ari.waitDtmfDigits(channelId, {
+                maxDigits,
+                firstTimeoutMs: timeoutMs,
+                interDigitMs: 2500,
+              });
             }
           } catch (e) {
             console.warn(`[flow] menu collect failed`, (e as Error).message);
@@ -476,15 +455,10 @@ export async function executeFlowLoop(
         // Clear stale digits on entry; digits typed during the prompt count (type-ahead).
         ari.clearDtmfBuffer(channelId);
         if (prompt) {
-          try {
-            const { ensureSpeechMedia } = await import("../lib/tts.js");
-            const { media, cached, ms } = await ensureSpeechMedia(prompt, lang, 1.05, gender);
-            console.log(`[flow] ${channelId} get_key-tts ${cached ? "cache" : "synth"} ${ms}ms`);
-            await ari.playAndWait(channelId, media, 60_000).catch(() => undefined);
-          } catch (e) {
-            console.warn(`[flow] get_key prompt failed`, (e as Error).message);
-            await playSpeech(channelId, prompt, lang, gender).catch(() => undefined);
-          }
+          // Typing the code while the prompt plays stops it (digits stay buffered).
+          await speakChunked(channelId, prompt, lang, gender, { interruptible: true, tag: "get_key-tts" }).catch(
+            (e: unknown) => console.warn(`[flow] get_key prompt failed`, (e as Error).message),
+          );
         }
         const collected = await ari.waitDtmfDigits(channelId, {
           maxDigits,

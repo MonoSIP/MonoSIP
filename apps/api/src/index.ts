@@ -123,6 +123,21 @@ async function main() {
     .then(({ purgeExpiredTtsCache }) => purgeExpiredTtsCache(true))
     .catch((e) => console.warn("[tts-cache]", (e as Error).message));
 
+  // Warm the neural TTS models: the first synth after boot loads them (~25 s),
+  // which the first caller after a deploy would otherwise hear as silence.
+  void (async () => {
+    const { synthesizeSpeech } = await import("./lib/tts.js");
+    for (const [text, lang, voice] of [
+      ["Merhaba.", "tr", "ema-lightning"],
+      ["Hello.", "en", "kokoro"],
+    ] as const) {
+      const t0 = Date.now();
+      await synthesizeSpeech(text, lang, 1.05, voice)
+        .then(() => console.log(`[tts] warm ${voice} ${Date.now() - t0}ms`))
+        .catch((e) => console.warn(`[tts] warm ${voice} skipped:`, (e as Error).message));
+    }
+  })();
+
   // NineDeploy / single-container: serve the Vite SPA next to the API.
   const webDist =
     process.env.WEB_DIST?.trim() ||

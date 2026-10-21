@@ -36,6 +36,7 @@ vi.mock("./ari.js", () => {
     waitDtmf: vi.fn(async () => "1"),
     waitDtmfDigits: vi.fn(async () => "1"),
     clearDtmfBuffer: vi.fn(() => undefined),
+    hasBufferedDtmf: vi.fn(() => false),
     stopPlayback: vi.fn(async () => undefined),
     isEndpointOnline: vi.fn(async () => true),
     endpointState: vi.fn(async () => ({ online: true, busy: false })),
