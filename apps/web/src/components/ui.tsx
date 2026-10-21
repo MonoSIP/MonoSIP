@@ -227,7 +227,7 @@ export function SectionCard({
   /** Flush body padding — use for tables so headers align cleanly */
   flush = false,
 }: {
-  title: string;
+  title?: string;
   icon?: LucideIcon;
   tone?: Tone;
   children: ReactNode;
@@ -237,13 +237,19 @@ export function SectionCard({
 }) {
   return (
     <section className={`card section-card ${flush ? "section-card-flush" : ""} ${className ?? ""}`}>
-      <div className="section-card-head">
-        <h2 className="section-card-title">
-          {Icon ? <Icon size={16} strokeWidth={2.25} /> : null}
-          {title}
-        </h2>
-        {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}
-      </div>
+      {title || actions ? (
+        <div className="section-card-head">
+          {title ? (
+            <h2 className="section-card-title">
+              {Icon ? <Icon size={16} strokeWidth={2.25} /> : null}
+              {title}
+            </h2>
+          ) : (
+            <span />
+          )}
+          {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}
+        </div>
+      ) : null}
       <div className={`section-card-body ${flush ? "section-card-body-flush" : "space-y-3"}`}>{children}</div>
     </section>
   );

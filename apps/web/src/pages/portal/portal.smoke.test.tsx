@@ -29,7 +29,28 @@ vi.mock("react-router-dom", async () => {
 // Return the key so assertions do not depend on a loaded translation bundle.
 vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 // jsdom has no Media/Audio stack that WaveSurfer needs.
-vi.mock("wavesurfer.js", () => ({ default: class { destroy() {} } }));
+vi.mock("wavesurfer.js", () => ({
+  default: {
+    create() {
+      return {
+        on() {
+          return this;
+        },
+        destroy() {},
+        play() {
+          return Promise.resolve();
+        },
+        pause() {},
+        isPlaying() {
+          return false;
+        },
+        getDuration() {
+          return 1;
+        },
+      };
+    },
+  },
+}));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import { DirectoryPage } from "./DirectoryPage";
@@ -156,7 +177,8 @@ describe("portal smoke tests", () => {
     renderPage(<MyVoicemailPage />);
 
     expect((await screen.findAllByRole("heading", { name: "nav.voicemail" })).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: /90555/ })).toBeInTheDocument();
+    expect(await screen.findByText("90555")).toBeInTheDocument();
+    expect(document.querySelector(".vm-wave")).not.toBeNull();
   });
 
   it("MySettingsPage mounts and shows its forwarding controls", async () => {

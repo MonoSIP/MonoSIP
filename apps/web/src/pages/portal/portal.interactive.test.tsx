@@ -37,7 +37,45 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (k: string) => k }),
   initReactI18next: { type: "3rdParty", init: () => undefined },
 }));
-vi.mock("wavesurfer.js", () => ({ default: class { destroy() {} } }));
+const { waveLast } = vi.hoisted(() => ({
+  waveLast: {
+    current: null as null | {
+      url?: string;
+      fetchParams?: { credentials?: string };
+      handlers: Record<string, () => void>;
+      time?: number;
+    },
+  },
+}));
+vi.mock("wavesurfer.js", () => ({
+  default: {
+    create(opts: { url?: string; fetchParams?: { credentials?: string } }) {
+      const handlers: Record<string, () => void> = {};
+      const player = {
+        on(ev: string, fn: () => void) {
+          handlers[ev] = fn;
+          return player;
+        },
+        destroy() {},
+        setTime(time: number) {
+          if (waveLast.current) waveLast.current.time = time;
+        },
+        play() {
+          return Promise.resolve();
+        },
+        pause() {},
+        isPlaying() {
+          return false;
+        },
+        getDuration() {
+          return 1;
+        },
+      };
+      waveLast.current = { ...opts, handlers };
+      return player;
+    },
+  },
+}));
 vi.mock("sonner", () => ({
   toast: { success: (...a: unknown[]) => toastSuccess(...a), error: (...a: unknown[]) => toastError(...a) },
 }));
@@ -262,15 +300,8 @@ describe("password and voicemail error handling", () => {
 const VOICEMAIL = { id: "v1", caller: "4444", at: "2026-01-01T09:00:00Z", read: false };
 
 describe("voicemail inbox", () => {
-  const fetchMock = vi.fn(
-    async () => new Response(new Uint8Array(256), { status: 200, headers: { "content-type": "audio/wav" } }),
-  );
-
   beforeEach(() => {
-    fetchMock.mockClear();
-    vi.stubGlobal("fetch", fetchMock);
-    URL.createObjectURL = vi.fn(() => "blob:vm");
-    URL.revokeObjectURL = vi.fn();
+    waveLast.current = null;
   });
 
   function seed(rows: unknown[] = [VOICEMAIL]) {
@@ -280,42 +311,44 @@ describe("voicemail inbox", () => {
     });
   }
 
-  it("still opens the row when marking it read fails", async () => {
+  it("marks the message read when the wave starts, and keeps the row if that fails", async () => {
     seed();
     patch.mockRejectedValueOnce(new Error("voicemail gone"));
 
     renderPage(<MyVoicemailPage />);
 
-    const row = await screen.findByRole("button", { name: /4444/ });
-    await userEvent.click(row);
+    expect(await screen.findByText("4444")).toBeInTheDocument();
+    await waitFor(() => expect(waveLast.current?.handlers.play).toBeTypeOf("function"));
+    waveLast.current!.handlers.play();
 
     expect(patch).toHaveBeenCalledWith("/api/v1/me/voicemails/v1", { read: true });
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("voicemail gone"));
-    expect(within(row.closest("li")!).getByText("portal.callerId")).toBeInTheDocument();
+    expect(screen.getByText("4444")).toBeInTheDocument();
   });
 
-  it("opens the recording under the row once the message is read", async () => {
+  it("shows the wave on the row, with delete beside it and no play button", async () => {
     seed();
-    patch.mockResolvedValueOnce({});
 
     renderPage(<MyVoicemailPage />);
 
-    const row = await screen.findByRole("button", { name: /4444/ });
-    await userEvent.click(row);
+    expect(await screen.findByText("1/1")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "nav.voicemail" })).toHaveLength(1);
+    const caller = await screen.findByText("4444");
+    const item = caller.closest("li")!;
+    const wave = within(item).getByRole("button", { name: "portal.play" });
+    const remove = within(item).getByRole("button", { name: "portal.delete" });
+    expect(wave.className).toContain("vm-wave");
+    expect(wave.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await waitFor(() => expect(waveLast.current?.url).toBe("/api/v1/me/voicemails/v1/stream"));
+    expect(waveLast.current?.fetchParams).toEqual({ credentials: "include" });
 
-    const item = row.closest("li")!;
-    expect(within(item).getByText("portal.callerId")).toBeInTheDocument();
-    expect(within(item).getByText("4444", { selector: "p" })).toBeInTheDocument();
-    const player = await waitFor(() => {
-      const el = item.querySelector("audio");
-      expect(el).not.toBeNull();
-      return el!;
-    });
-    expect(player).toHaveAttribute("src", "blob:vm");
-    expect(fetchMock).toHaveBeenCalledWith("/api/v1/me/voicemails/v1/stream", { credentials: "include" });
+    await userEvent.click(wave);
+    expect(waveLast.current?.time).toBeUndefined();
+    await userEvent.click(caller);
+    expect(waveLast.current?.time).toBe(0);
   });
 
-  it("deletes the open message after confirmation", async () => {
+  it("deletes the message after confirmation", async () => {
     let rows: unknown[] = [VOICEMAIL];
     get.mockImplementation(async (path: string) => (path === "/api/v1/me/voicemails" ? rows : []));
     patch.mockResolvedValue({});
@@ -326,7 +359,6 @@ describe("voicemail inbox", () => {
 
     renderPage(<MyVoicemailPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: /4444/ }));
     await userEvent.click(await screen.findByRole("button", { name: "portal.delete" }));
     await userEvent.click(screen.getByRole("button", { name: "portal.confirmDelete" }));
 

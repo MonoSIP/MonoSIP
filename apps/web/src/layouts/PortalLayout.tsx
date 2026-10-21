@@ -46,9 +46,10 @@ export function PortalLayout() {
     <div className="flex min-h-full flex-col md:flex-row">
       <aside className="aside-panel portal-rail hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:flex">
         <AppBrand
-          className="mb-6 shrink-0 px-1"
+          className="mb-4 shrink-0 px-1"
           subtitle={actor?.type === "extension" ? `${actor.number} · ${actor.name}` : ""}
         />
+        {!onPhonePage && <MiniPhone className="mb-4 shrink-0" />}
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {links.map((l) => (
             <NavLink
@@ -64,7 +65,6 @@ export function PortalLayout() {
             </NavLink>
           ))}
         </nav>
-        {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
         <div className="portal-rail-foot">
           <button
             className="btn"

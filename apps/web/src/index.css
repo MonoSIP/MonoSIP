@@ -626,6 +626,27 @@ textarea.input {
   min-width: 0;
   padding-inline: 0.4rem;
 }
+.vm-count {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+.vm-count.is-new { color: var(--success); }
+.vm-dot {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+}
+.vm-dot.is-new { background: var(--success); }
+.vm-dot.is-heard { background: var(--text-muted); }
+.vm-wave {
+  min-height: 36px;
+  border-radius: var(--radius);
+  background: color-mix(in oklab, var(--success) 8%, var(--bg-soft));
+  cursor: pointer;
+}
 
 /* MunaSIP mark (public/munasip-mark.svg) — the tile and its corners are in the SVG */
 .brand-mark {

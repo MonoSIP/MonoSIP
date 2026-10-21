@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import WaveSurfer from "wavesurfer.js";
 import { toast } from "sonner";
-import { Pause, Play, Trash2, Voicemail } from "lucide-react";
+import { Trash2, Voicemail } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard } from "../../components/ui";
+import { IconBtn, PageHeader } from "../../components/ui";
 
 type VoicemailRow = {
   id: string;
@@ -16,21 +17,15 @@ type VoicemailRow = {
 export function MyVoicemailPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const [openId, setOpenId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const players = useRef(new Set<WaveSurfer>());
 
   const list = useQuery({
     queryKey: ["voicemails"],
     queryFn: () => api.get<VoicemailRow[]>("/api/v1/me/voicemails"),
   });
 
-  function toggle(id: string) {
-    setConfirmId(null);
-    if (openId === id) {
-      setOpenId(null);
-      return;
-    }
-    setOpenId(id);
+  function markRead(id: string) {
     void api
       .patch(`/api/v1/me/voicemails/${id}`, { read: true })
       .then(() => qc.invalidateQueries({ queryKey: ["voicemails"] }))
@@ -40,7 +35,6 @@ export function MyVoicemailPage() {
   async function remove(id: string) {
     try {
       await api.delete(`/api/v1/me/voicemails/${id}`);
-      if (openId === id) setOpenId(null);
       setConfirmId(null);
       toast.success(t("portal.deleted"));
       void qc.invalidateQueries({ queryKey: ["voicemails"] });
@@ -49,179 +43,166 @@ export function MyVoicemailPage() {
     }
   }
 
+  const rows = list.data ?? [];
+  const unread = rows.filter((v) => !v.read).length;
+
   return (
     <div className="space-y-4">
-      <PageHeader icon={Voicemail} title={t("nav.voicemail")} tone="cyan" />
-      <SectionCard title={t("nav.voicemail")} icon={Voicemail} tone="cyan">
-        {(list.data ?? []).length === 0 ? (
-          <p className="text-[var(--text-muted)]">{t("portal.voicemailEmpty")}</p>
-        ) : (
-          <ul className="space-y-2">
-            {list.data?.map((v) => {
-              const open = openId === v.id;
-              return (
-                <li
-                  key={v.id}
-                  className={`overflow-hidden rounded-lg border ${
-                    open ? "border-[var(--accent)]" : "border-[var(--border)]"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className={`flex w-full items-center gap-3 px-3 py-3 text-left ${
-                      open ? "bg-[color-mix(in_oklab,var(--accent)_8%,transparent)]" : ""
-                    }`}
-                    aria-expanded={open}
-                    onClick={() => toggle(v.id)}
-                  >
-                    <span
-                      className={`h-2 w-2 shrink-0 rounded-full ${v.read ? "bg-transparent" : "bg-[var(--accent)]"}`}
-                      aria-hidden="true"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-mono text-base">{v.caller || "—"}</span>
-                      <span className="block text-xs text-[var(--text-muted)]">
-                        {new Date(v.at).toLocaleString()}
-                        {!v.read ? ` · ${t("portal.unread")}` : ""}
-                      </span>
-                    </span>
-                  </button>
-                  {open && (
-                    <MessageDetail
-                      row={v}
-                      confirming={confirmId === v.id}
-                      onAskDelete={() => setConfirmId(v.id)}
-                      onDelete={() => void remove(v.id)}
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </SectionCard>
+      <PageHeader
+        icon={Voicemail}
+        title={t("nav.voicemail")}
+        tone="cyan"
+        actions={
+          list.data ? (
+            <span className={`vm-count ${unread ? "is-new" : ""}`}>
+              {unread}/{rows.length}
+            </span>
+          ) : null
+        }
+      />
+      {(list.data ?? []).length === 0 ? (
+        <p className="text-[var(--text-muted)]">{t("portal.voicemailEmpty")}</p>
+      ) : (
+        <ul className="space-y-2">
+          {list.data?.map((v) => (
+            <MessageRow
+              key={v.id}
+              row={v}
+              players={players}
+              confirming={confirmId === v.id}
+              onPlay={() => markRead(v.id)}
+              onAskDelete={() => setConfirmId(v.id)}
+              onDelete={() => void remove(v.id)}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-function MessageDetail({
+function MessageRow({
   row,
+  players,
   confirming,
+  onPlay,
   onAskDelete,
   onDelete,
 }: {
   row: VoicemailRow;
+  players: React.RefObject<Set<WaveSurfer>>;
   confirming: boolean;
+  onPlay: () => void;
   onAskDelete: () => void;
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [src, setSrc] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
+  const waveRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WaveSurfer | null>(null);
+  const onPlayRef = useRef(onPlay);
+  onPlayRef.current = onPlay;
+  const [heard, setHeard] = useState(row.read);
+  const heardRef = useRef(row.read);
 
   useEffect(() => {
-    let objectUrl: string | null = null;
-    let cancelled = false;
-    setSrc(null);
-    setError(null);
-    setPlaying(false);
-    void (async () => {
-      const res = await fetch(`/api/v1/me/voicemails/${row.id}/stream`, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(res.status === 404 ? t("portal.recordingMissing") : t("portal.playbackFailed"));
+    if (!row.read) return;
+    heardRef.current = true;
+    setHeard(true);
+  }, [row.read]);
+
+  useEffect(() => {
+    if (!waveRef.current) return;
+    const styles = getComputedStyle(document.documentElement);
+    const green = styles.getPropertyValue("--success").trim() || "#047857";
+    const ws = WaveSurfer.create({
+      container: waveRef.current,
+      waveColor: green,
+      progressColor: green,
+      cursorColor: styles.getPropertyValue("--foreground").trim() || green,
+      height: 36,
+      normalize: true,
+      url: `/api/v1/me/voicemails/${row.id}/stream`,
+      fetchParams: { credentials: "include" },
+    });
+    wsRef.current = ws;
+    players.current?.add(ws);
+    ws.on("ready", () => {
+      if (!ws.getDuration() || ws.getDuration() < 0.05) toast.error(t("portal.recordingMissing"));
+    });
+    ws.on("click", () => {
+      if (ws.isPlaying()) return;
+      for (const other of players.current ?? []) {
+        if (other !== ws && other.isPlaying()) other.pause();
       }
-      const blob = await res.blob();
-      if (blob.size < 128) throw new Error(t("portal.recordingMissing"));
-      objectUrl = URL.createObjectURL(blob);
-      if (cancelled) {
-        URL.revokeObjectURL(objectUrl);
-        return;
-      }
-      setSrc(objectUrl);
-    })().catch((e: Error) => {
-      if (!cancelled) setError(e.message || t("portal.playbackFailed"));
+      void ws.play().catch(() => toast.error(t("portal.playbackFailed")));
+    });
+    ws.on("play", () => {
+      if (heardRef.current) return;
+      heardRef.current = true;
+      setHeard(true);
+      onPlayRef.current();
+    });
+    ws.on("error", () => {
+      toast.error(t("portal.playbackFailed"));
     });
     return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      players.current?.delete(ws);
+      ws.destroy();
+      wsRef.current = null;
     };
-  }, [row.id, t]);
+  }, [row.id, t, players]);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!src || !audio) return;
-    try {
-      const started = audio.play();
-      if (started && typeof started.then === "function") {
-        void started.then(() => setPlaying(true)).catch(() => setPlaying(false));
-      }
-    } catch {
-      setPlaying(false);
+  function playFromStart() {
+    const ws = wsRef.current;
+    if (!ws) return;
+    for (const other of players.current ?? []) {
+      if (other !== ws && other.isPlaying()) other.pause();
     }
-  }, [src]);
-
-  function togglePlay() {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (!audio.paused) {
-      audio.pause();
-      setPlaying(false);
-      return;
-    }
-    try {
-      const started = audio.play();
-      if (started && typeof started.then === "function") {
-        void started.then(() => setPlaying(true)).catch(() => setError(t("portal.playbackFailed")));
-      }
-    } catch {
-      setError(t("portal.playbackFailed"));
-    }
+    ws.setTime(0);
+    void ws.play().catch(() => toast.error(t("portal.playbackFailed")));
   }
 
   return (
-    <div className="space-y-3 border-t border-[var(--border)] bg-[color-mix(in_oklab,var(--accent)_5%,var(--card))] px-4 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-[var(--text-muted)]">{t("portal.callerId")}</p>
-          <p className="font-mono text-2xl leading-tight">{row.caller || "—"}</p>
-          <p className="text-sm text-[var(--text-muted)]">{new Date(row.at).toLocaleString()}</p>
-        </div>
-        {confirming ? (
-          <button className="btn btn-danger" type="button" onClick={onDelete}>
-            <Trash2 size={16} />
-            {t("portal.confirmDelete")}
-          </button>
-        ) : (
-          <button className="btn" type="button" onClick={onAskDelete}>
-            <Trash2 size={16} />
-            {t("portal.delete")}
-          </button>
-        )}
+    <li
+      className="cursor-pointer rounded-lg border border-[var(--border)] px-3 py-2"
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (waveRef.current?.contains(target) || target.closest("button")) return;
+        playFromStart();
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={`vm-dot ${heard ? "is-heard" : "is-new"}`}
+          aria-hidden="true"
+        />
+        <span className="w-40 shrink-0">
+          <span className="block truncate font-mono text-sm">{row.caller || "—"}</span>
+          <span className="block truncate text-xs text-[var(--text-muted)]">
+            {new Date(row.at).toLocaleString()}
+          </span>
+        </span>
+        <div
+          ref={waveRef}
+          className="vm-wave min-w-0 flex-1"
+          role="button"
+          tabIndex={0}
+          aria-label={t("portal.play")}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            e.preventDefault();
+            const ws = wsRef.current;
+            if (!ws || ws.isPlaying()) return;
+            void ws.play().catch(() => toast.error(t("portal.playbackFailed")));
+          }}
+        />
+        <IconBtn
+          icon={Trash2}
+          label={confirming ? t("portal.confirmDelete") : t("portal.delete")}
+          danger={confirming}
+          onClick={confirming ? onDelete : onAskDelete}
+        />
       </div>
-      {error ? (
-        <p className="text-sm text-[var(--danger)]">{error}</p>
-      ) : src ? (
-        <div className="space-y-2">
-          <button className="btn btn-primary" type="button" onClick={togglePlay}>
-            {playing ? <Pause size={16} /> : <Play size={16} />}
-            {playing ? t("portal.pause") : t("portal.play")}
-          </button>
-          <audio
-            ref={audioRef}
-            className="w-full"
-            controls
-            src={src}
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            onEnded={() => setPlaying(false)}
-            onError={() => setError(t("portal.playbackFailed"))}
-          />
-        </div>
-      ) : (
-        <p className="text-sm text-[var(--text-muted)]">{t("common.loading")}</p>
-      )}
-    </div>
+    </li>
   );
 }

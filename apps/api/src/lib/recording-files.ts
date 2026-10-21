@@ -177,34 +177,63 @@ function wavFormatTag(buf: Buffer): number | null {
   return null;
 }
 
-function transcodeToPcmWav(filePath: string): Promise<Buffer> {
+function transcodeToPcmWav(source: string | Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
+    const fromBuffer = Buffer.isBuffer(source);
     const child = spawn(
       "ffmpeg",
-      ["-hide_banner", "-loglevel", "error", "-i", filePath, "-f", "wav", "-acodec", "pcm_s16le", "-ar", "8000", "-ac", "1", "pipe:1"],
-      { stdio: ["ignore", "pipe", "pipe"] },
+      [
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        fromBuffer ? "pipe:0" : source,
+        "-f",
+        "wav",
+        "-acodec",
+        "pcm_s16le",
+        "-ar",
+        "8000",
+        "-ac",
+        "1",
+        "pipe:1",
+      ],
+      { stdio: [fromBuffer ? "pipe" : "ignore", "pipe", "pipe"] },
     );
     const chunks: Buffer[] = [];
+    const err: Buffer[] = [];
     child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
+    child.stderr.on("data", (chunk: Buffer) => err.push(chunk));
     child.on("error", reject);
     child.on("close", (code) => {
       if (code === 0 && chunks.length) resolve(Buffer.concat(chunks));
-      else reject(new Error(`ffmpeg exit ${code}`));
+      else reject(new Error(Buffer.concat(err).toString("utf8") || `ffmpeg exit ${code}`));
     });
+    if (fromBuffer) {
+      child.stdin.on("error", () => undefined);
+      child.stdin.end(source);
+    }
   });
 }
 
-/** Bytes a browser can decode: repaired PCM WAV, or ffmpeg output when the file is not PCM. */
+/**
+ * Bytes a browser can decode. Asterisk mailbox files are often a WAV with a
+ * zero data-chunk size, or GSM inside a wav container. Either one decodes as
+ * silence in the browser, so the file is rewritten to 8 kHz PCM first.
+ */
 export async function browserWavBytes(filePath: string): Promise<Buffer> {
   const raw = readFileSync(filePath);
-  const tag = wavFormatTag(raw);
-  if (tag != null && tag !== 1) {
+  repairWavHeader(raw);
+  try {
+    const wav = await transcodeToPcmWav(raw);
+    if (wav.length >= 128 && wavFormatTag(wav) === 1) return wav;
+  } catch {
     try {
-      return await transcodeToPcmWav(filePath);
+      const wav = await transcodeToPcmWav(filePath);
+      if (wav.length >= 128 && wavFormatTag(wav) === 1) return wav;
     } catch {
-      /* fall through to the original bytes */
+      /* repaired original */
     }
   }
-  repairWavHeader(raw);
   return raw;
 }

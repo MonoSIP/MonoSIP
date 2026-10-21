@@ -1138,12 +1138,14 @@ describe("PortalLayout", () => {
     const aside = document.querySelector("aside") as HTMLElement;
     expect(aside.className).toContain("portal-rail");
     const phone = within(aside).getByRole("region", { name: "portal.miniPhone" });
+    const settings = within(aside).getByRole("link", { name: "nav.mySettings" });
+    expect(phone.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const language = within(aside).getByTitle("common.language");
     const theme = within(aside).getByTitle("common.theme");
     const logout = within(aside).getByTitle("common.logout");
     const foot = logout.parentElement as HTMLElement;
     expect(foot.className).toContain("portal-rail-foot");
-    // Phone sits under the menu; language, theme and logout stay at the foot.
+    // Mini phone sits under the name; language, theme and logout stay at the foot.
     expect(phone.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(language.compareDocumentPosition(theme) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(theme.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

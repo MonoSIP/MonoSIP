@@ -16,7 +16,8 @@ import { requireExtension } from "../lib/auth.js";
 import { decrypt, encrypt, scryptHash } from "../lib/crypto.js";
 import { config } from "../config.js";
 import { ari } from "../asterisk/ari.js";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, statSync } from "node:fs";
+import { Readable } from "node:stream";
 
 export async function portalRoutes(app: FastifyInstance) {
   app.get("/api/v1/me", async (req, reply) => {
@@ -206,16 +207,15 @@ export async function portalRoutes(app: FastifyInstance) {
       .from(voicemails)
       .where(and(eq(voicemails.id, id), eq(voicemails.extensionId, a.id)));
     if (!vm || !existsSync(vm.filePath)) return reply.code(404).send({ error: "Not found" });
-    const { statSync } = await import("node:fs");
+    if (statSync(vm.filePath).size < 128) return reply.code(404).send({ error: "Recording file is empty" });
     const { browserWavBytes } = await import("../lib/recording-files.js");
-    const size = statSync(vm.filePath).size;
-    if (size < 128) return reply.code(404).send({ error: "Recording file is empty" });
     const body = await browserWavBytes(vm.filePath);
+    if (body.length < 128) return reply.code(404).send({ error: "Recording file is empty" });
     reply.header("content-type", "audio/wav");
     reply.header("content-length", String(body.length));
     reply.header("accept-ranges", "bytes");
     reply.header("cache-control", "private, max-age=60");
-    return reply.send(body);
+    return reply.send(Readable.from(body));
   });
 
   app.delete("/api/v1/me/voicemails/:id", async (req, reply) => {
