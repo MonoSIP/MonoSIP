@@ -1,4 +1,4 @@
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, sql } from "drizzle-orm";
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { db } from "../db/client.js";
 import { sessions, admins, extensions } from "../db/schema.js";
@@ -81,7 +81,12 @@ export async function loginAdmin(
   password: string,
   totpCode?: string,
 ): Promise<{ token: string } | { error: string; needTotp?: boolean }> {
-  const [admin] = await db.select().from(admins).where(eq(admins.email, email)).limit(1);
+  const normalized = email.trim().toLowerCase();
+  const [admin] = await db
+    .select()
+    .from(admins)
+    .where(sql`lower(${admins.email}) = ${normalized}`)
+    .limit(1);
   if (!admin || !scryptVerify(password, admin.passwordHash)) {
     return { error: "Invalid credentials" };
   }

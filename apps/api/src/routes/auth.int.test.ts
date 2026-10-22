@@ -10,8 +10,9 @@ import {
 } from "../test/helpers.js";
 import { clearLoginFailures } from "../lib/login-guard.js";
 import { db } from "../db/client.js";
-import { sessions } from "../db/schema.js";
+import { admins, sessions } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+import { scryptHash } from "../lib/crypto.js";
 
 /**
  * Login / logout / TOTP-challenge contract for routes/auth.ts.
@@ -158,6 +159,159 @@ describe("admin TOTP challenge", () => {
     expect(res.statusCode).toBe(401);
     // A valid code must not mask a bad password.
     expect(res.json()).toEqual({ error: "Invalid credentials" });
+  });
+});
+
+describe("admin password change", () => {
+  const url = "/api/v1/admin/auth/password";
+
+  it("POST /password -> 401 without a token", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url,
+      payload: { currentPassword: creds.adminPassword, newPassword: "Admin-new-99" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("rejects a portal session", async () => {
+    const login = await app.inject({
+      method: "POST",
+      url: PORTAL_LOGIN,
+      payload: { extension: creds.extensionNumber, password: creds.extensionPassword },
+    });
+    const token = decodeURIComponent(sessionCookie(login)!.split("=")[1]!);
+    const res = await app.inject({
+      method: "POST",
+      url,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { currentPassword: creds.extensionPassword, newPassword: "Admin-new-99" },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("rejects a wrong current password and keeps the old one", async () => {
+    const token = await loginAdminSession();
+    const res = await app.inject({
+      method: "POST",
+      url,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { currentPassword: "not-the-password", newPassword: "Admin-new-99" },
+    });
+    expect(res.statusCode).toBe(401);
+    const again = await app.inject({
+      method: "POST",
+      url: ADMIN_LOGIN,
+      payload: { email: creds.adminEmail, password: creds.adminPassword },
+    });
+    expect(again.statusCode).toBe(200);
+  });
+
+  it("rejects a new password shorter than 8 characters", async () => {
+    const token = await loginAdminSession();
+    const res = await app.inject({
+      method: "POST",
+      url,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { currentPassword: creds.adminPassword, newPassword: "short" },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("replaces the password, keeps this session, and drops the other one", async () => {
+    const current = await loginAdminSession();
+    const other = await loginAdminSession();
+    const next = "Admin-new-99";
+    const res = await app.inject({
+      method: "POST",
+      url,
+      headers: { authorization: `Bearer ${current}` },
+      payload: { currentPassword: creds.adminPassword, newPassword: next },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+
+    const still = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      headers: { authorization: `Bearer ${current}` },
+    });
+    expect(still.statusCode).toBe(200);
+
+    const dropped = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      headers: { authorization: `Bearer ${other}` },
+    });
+    expect(dropped.statusCode).toBe(401);
+
+    const oldLogin = await app.inject({
+      method: "POST",
+      url: ADMIN_LOGIN,
+      payload: { email: creds.adminEmail, password: creds.adminPassword },
+    });
+    expect(oldLogin.statusCode).toBe(401);
+
+    const newLogin = await app.inject({
+      method: "POST",
+      url: ADMIN_LOGIN,
+      payload: { email: creds.adminEmail, password: next },
+    });
+    expect(newLogin.statusCode).toBe(200);
+  });
+
+  it("changes the sign-in email and keeps the password", async () => {
+    const token = await loginAdminSession();
+    const next = `moved-${creds.adminId.slice(0, 8)}@test.local`;
+    const res = await app.inject({
+      method: "POST",
+      url,
+      headers: { authorization: `Bearer ${token}` },
+      payload: { currentPassword: creds.adminPassword, email: next },
+    });
+    expect(res.statusCode).toBe(200);
+
+    const me = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(me.statusCode).toBe(200);
+    expect(me.json()).toMatchObject({ actor: { email: next } });
+
+    const oldLogin = await app.inject({
+      method: "POST",
+      url: ADMIN_LOGIN,
+      payload: { email: creds.adminEmail, password: creds.adminPassword },
+    });
+    expect(oldLogin.statusCode).toBe(401);
+
+    const newLogin = await app.inject({
+      method: "POST",
+      url: ADMIN_LOGIN,
+      payload: { email: next.toUpperCase(), password: creds.adminPassword },
+    });
+    expect(newLogin.statusCode).toBe(200);
+  });
+
+  it("rejects an email another admin already uses", async () => {
+    const taken = `taken-${creds.adminId.slice(0, 8)}@test.local`;
+    const [row] = await db
+      .insert(admins)
+      .values({ email: taken, passwordHash: scryptHash("other-admin-pw") })
+      .returning();
+    try {
+      const token = await loginAdminSession();
+      const res = await app.inject({
+        method: "POST",
+        url,
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: creds.adminPassword, email: taken },
+      });
+      expect(res.statusCode).toBe(409);
+    } finally {
+      await db.delete(admins).where(eq(admins.id, row!.id));
+    }
   });
 });
 

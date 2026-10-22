@@ -7,6 +7,7 @@ import {
   Building2,
   Globe,
   Mail,
+  KeyRound,
   RefreshCw,
   ScrollText,
   Settings,
@@ -120,6 +121,10 @@ export function SettingsPage() {
   const [hostname, setHostname] = useState("");
   const [autoSsl, setAutoSsl] = useState(false);
   const [sslEmail, setSslEmail] = useState("");
+  const [signInEmail, setSignInEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [qr, setQr] = useState<string | null>(null);
   const [totpSecret, setTotpSecret] = useState<string | null>(null);
@@ -135,6 +140,10 @@ export function SettingsPage() {
       api.get<Array<{ id: string; action: string; at: string; objectId?: string }>>(
         "/api/v1/admin/audit-log",
       ),
+  });
+  const me = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api.get<{ actor?: { email?: string } }>("/api/v1/auth/me"),
   });
   const totpStatus = useQuery({
     queryKey: ["totp-status"],
@@ -200,6 +209,11 @@ export function SettingsPage() {
     }
   }, [settings.data]);
 
+  useEffect(() => {
+    const next = me.data?.actor?.email;
+    if (next) setSignInEmail((cur) => cur || next);
+  }, [me.data?.actor?.email]);
+
   const splitList = (s: string) =>
     s
       .split(/[,\n]+/)
@@ -250,6 +264,28 @@ export function SettingsPage() {
       void qc.invalidateQueries({ queryKey: ["security-status"] });
       void qc.invalidateQueries({ queryKey: ["ssl-status"] });
     },
+  });
+
+  const emailChanged =
+    signInEmail.trim().toLowerCase() !== (me.data?.actor?.email ?? "").trim().toLowerCase();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signInEmail.trim());
+
+  const changePassword = useMutation({
+    mutationFn: () =>
+      api.post("/api/v1/admin/auth/password", {
+        currentPassword,
+        email: signInEmail.trim().toLowerCase(),
+        ...(newPassword ? { newPassword } : {}),
+      }),
+    onSuccess: () => {
+      toast.success(t("settings.passwordChanged"));
+      setSignInEmail(signInEmail.trim().toLowerCase());
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      void qc.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const reload = useMutation({
@@ -736,6 +772,61 @@ export function SettingsPage() {
         </div>
         <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
           {t("common.save")}
+        </button>
+      </SectionCard>
+
+      <SectionCard title={t("settings.passwordTitle")} icon={KeyRound} tone="coral" className="space-y-3">
+        <p className="text-sm text-[var(--text-muted)]">{t("settings.passwordBlurb")}</p>
+        <TextField
+          label={t("auth.email")}
+          type="email"
+          autoComplete="username"
+          value={signInEmail}
+          onChange={(e) => setSignInEmail(e.target.value)}
+        />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <TextField
+            label={t("settings.currentPassword")}
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <TextField
+            label={t("settings.newPassword")}
+            type="password"
+            autoComplete="new-password"
+            hint={t("settings.passwordHint")}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <TextField
+            label={t("settings.confirmPassword")}
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+        <button
+          className="btn btn-primary"
+          type="button"
+          disabled={
+            changePassword.isPending ||
+            !currentPassword ||
+            !emailOk ||
+            (!emailChanged && !newPassword) ||
+            (!!newPassword && (newPassword.length < 8 || !confirmPassword))
+          }
+          onClick={() => {
+            if (newPassword !== confirmPassword) {
+              toast.error(t("settings.passwordMismatch"));
+              return;
+            }
+            changePassword.mutate();
+          }}
+        >
+          {t("settings.saveSignIn")}
         </button>
       </SectionCard>
 

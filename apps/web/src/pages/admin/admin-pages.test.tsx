@@ -260,6 +260,7 @@ describe("SettingsPage", () => {
       }
       if (path === "/api/v1/admin/audit") return [];
       if (path === "/api/v1/admin/auth/totp/status") return { enabled: false };
+      if (path === "/api/v1/auth/me") return { actor: { email: "admin@example.com" } };
       if (path === "/api/v1/admin/prompts") return [];
       if (path.includes("bans")) return { bans: [], memoryBans: [] };
       if (path.includes("security/status")) return { clientIp: "127.0.0.1" };
@@ -303,6 +304,29 @@ describe("SettingsPage", () => {
     expect(payload.defaultLocale).toBe("en");
     expect(payload).toHaveProperty("recordingRetentionMonths");
     expect(toastSuccess).toHaveBeenCalledWith("Saved");
+  });
+
+  it("posts the current and new admin password", async () => {
+    seedSettings();
+    apiPost.mockResolvedValue({ ok: true });
+    renderPage(<SettingsPage />);
+
+    expect(await screen.findByDisplayValue("admin@example.com")).toBeInTheDocument();
+    await userEvent.clear(screen.getByLabelText("auth.email"));
+    await userEvent.type(screen.getByLabelText("auth.email"), "new-admin@example.com");
+    await userEvent.type(screen.getByLabelText("settings.currentPassword"), "Old-pass-1");
+    await userEvent.type(screen.getByLabelText("settings.newPassword", { exact: false }), "New-pass-2");
+    await userEvent.type(screen.getByLabelText("settings.confirmPassword"), "New-pass-2");
+    await userEvent.click(screen.getByRole("button", { name: "settings.saveSignIn" }));
+
+    await waitFor(() =>
+      expect(apiPost).toHaveBeenCalledWith("/api/v1/admin/auth/password", {
+        currentPassword: "Old-pass-1",
+        email: "new-admin@example.com",
+        newPassword: "New-pass-2",
+      }),
+    );
+    expect(toastSuccess).toHaveBeenCalledWith("settings.passwordChanged");
   });
 
   it("triggers an Asterisk reload", async () => {

@@ -21,7 +21,7 @@ The admin panel has 15 screens; the user portal has 5. Both live in the same Vit
 | Missed calls | Waiting / called-back list |
 | Reports | Summary, queue, extension, IVR DTMF, quality; date range |
 | Integration | Webhooks, API keys |
-| Settings | General; security (admin/portal/SIP IP allowlists, denylist, bans, firewall export, login flood); country/spend limits; KVKK; email; backup; audit log; 2FA |
+| Settings | General; security (admin/portal/SIP IP allowlists, denylist, bans, firewall export, login flood); country/spend limits; KVKK; email; backup; audit log; admin sign-in (email and password); 2FA |
 
 ## User portal
 

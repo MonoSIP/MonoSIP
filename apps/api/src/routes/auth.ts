@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { AdminLoginSchema, PortalLoginSchema } from "@munasip/shared";
 import {
   COOKIE, LEGACY_COOKIE,
@@ -11,8 +11,9 @@ import {
   requireAdmin,
   resolveActor,
 } from "../lib/auth.js";
+import { scryptHash, scryptVerify } from "../lib/crypto.js";
 import { db } from "../db/client.js";
-import { admins } from "../db/schema.js";
+import { admins, sessions } from "../db/schema.js";
 import { generateTotpSecret, totpQrDataUrl, totpUri, verifyTotp } from "../lib/totp.js";
 import { writeAudit } from "../lib/audit.js";
 
@@ -114,6 +115,64 @@ export async function authRoutes(app: FastifyInstance) {
       .update(admins)
       .set({ totpEnabled: false, totpSecret: null })
       .where(eq(admins.id, actor.id));
+    return { ok: true };
+  });
+
+  app.post("/api/v1/admin/auth/password", async (req, reply) => {
+    const actor = await requireAdmin(req, reply);
+    if (!actor || "statusCode" in (actor as object)) return;
+    const body = z
+      .object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8).max(128).optional(),
+        email: z.string().trim().email().max(255).optional(),
+      })
+      .parse(req.body);
+    const [admin] = await db.select().from(admins).where(eq(admins.id, actor.id));
+    if (!admin || !scryptVerify(body.currentPassword, admin.passwordHash)) {
+      return reply.code(401).send({ error: "Current password is wrong" });
+    }
+    const nextEmail = body.email?.toLowerCase();
+    const emailChanged = !!nextEmail && nextEmail !== admin.email.toLowerCase();
+    if (emailChanged) {
+      const [taken] = await db
+        .select({ id: admins.id })
+        .from(admins)
+        .where(sql`lower(${admins.email}) = ${nextEmail}`)
+        .limit(1);
+      if (taken && taken.id !== admin.id) {
+        return reply.code(409).send({ error: "That email is already in use" });
+      }
+    }
+    const passwordChanged = body.newPassword != null;
+    if (!emailChanged && !passwordChanged) {
+      return reply.code(400).send({ error: "Nothing to change" });
+    }
+    if (passwordChanged && body.currentPassword === body.newPassword) {
+      return reply.code(400).send({ error: "New password must be different" });
+    }
+    await db
+      .update(admins)
+      .set({
+        ...(emailChanged ? { email: nextEmail } : {}),
+        ...(passwordChanged ? { passwordHash: scryptHash(body.newPassword!) } : {}),
+      })
+      .where(eq(admins.id, actor.id));
+    const token = getSessionToken(req);
+    await db.delete(sessions).where(
+      and(
+        eq(sessions.actorType, "admin"),
+        eq(sessions.actorId, actor.id),
+        ...(token ? [ne(sessions.token, token)] : []),
+      ),
+    );
+    await writeAudit({
+      actor,
+      action: emailChanged ? "admin.email_change" : "admin.password_change",
+      objectId: actor.id,
+      after: emailChanged ? { email: nextEmail } : undefined,
+      ip: req.ip,
+    });
     return { ok: true };
   });
 

@@ -113,7 +113,7 @@ No env is required for a first boot:
 - Demo SIP trunk is **not** auto-seeded (set `MUNASIP_LAB_SEED=1` for lab only)
 - With `PUBLIC_HOST` set (or `MUNASIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `MUNASIP_ALLOW_EPHEMERAL_DATA=1`
 
-Default admin (change after login): `admin@example.com` / `Admin123!`
+Default admin (change it under Settings → Admin sign-in): `admin@example.com` / `Admin123!`
 
 **Vault (recommended for a public host such as `pbx.example.com`):**
 
