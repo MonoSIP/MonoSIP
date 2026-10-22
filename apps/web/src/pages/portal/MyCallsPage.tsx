@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { History, PhoneCall } from "lucide-react";
+import { History, PhoneCall, PhoneIncoming, PhoneMissed, PhoneOutgoing } from "lucide-react";
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { PageHeader, SectionCard } from "../../components/ui";
@@ -64,100 +64,86 @@ export function MyCallsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        icon={PhoneCall}
-        title={t("nav.myCalls")}
-        tone="blue"
-        actions={
-          <>
-            {tabs.map((x) => (
-              <button
-                key={x.id}
-                type="button"
-                className={`btn ${tab === x.id ? "btn-primary" : ""}`}
-                onClick={() => setTab(x.id)}
-              >
-                {x.label}
-              </button>
-            ))}
-          </>
-        }
-      />
+      <PageHeader icon={PhoneCall} title={t("nav.myCalls")} tone="blue" />
+      <div className="call-filters">
+        {tabs.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            className={`btn ${tab === x.id ? "btn-primary" : ""}`}
+            onClick={() => setTab(x.id)}
+          >
+            {x.label}
+          </button>
+        ))}
+      </div>
       {tab === "missed" && (missed.data ?? []).length > 0 && (
-        <SectionCard title="Pending missed" icon={History} tone="blue" flush>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Number</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {missed.data?.map((m) => (
-                <tr key={m.id}>
-                  <td>{new Date(m.at).toLocaleString()}</td>
-                  <td className="font-mono">{m.number}</td>
-                  <td>{m.status}</td>
-                  <td>
+        <SectionCard title="Pending missed" icon={History} tone="blue">
+          <ul className="call-list">
+            {missed.data?.map((m) => (
+              <li key={m.id} className="call-row">
+                <div className="call-row-main">
+                  <span className="call-row-peer font-mono">{m.number}</span>
+                  <span className="call-row-meta">
+                    {new Date(m.at).toLocaleString()} · {m.status}
+                  </span>
+                </div>
+                <button
+                  className="btn shrink-0"
+                  type="button"
+                  onClick={() => navigate(`/?dial=${encodeURIComponent(m.number)}`)}
+                >
+                  {t("portal.dial")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
+      {list.isFetched && filtered.length === 0 ? (
+        <div className="vm-empty" role="status">
+          <span className="vm-empty-mark" aria-hidden="true">
+            <History size={22} strokeWidth={2.25} />
+          </span>
+          <span className="vm-empty-log" aria-hidden="true">
+            <span><PhoneIncoming size={14} /></span>
+            <span><PhoneOutgoing size={14} /></span>
+            <span><PhoneMissed size={14} /></span>
+          </span>
+          <p>{t("portal.callsEmpty")}</p>
+        </div>
+      ) : filtered.length === 0 ? null : (
+        <SectionCard title="Call history" icon={History} tone="blue">
+          <ul className="call-list">
+            {filtered.map((c) => {
+              const num = callPeer(c, me.data?.number);
+              return (
+                <li key={c.id} className="call-row">
+                  <div className="call-row-main">
+                    <span className="call-row-peer">
+                      <span className="font-mono">{c.caller}</span>
+                      <span aria-hidden="true"> → </span>
+                      <span className="font-mono">{c.callee}</span>
+                    </span>
+                    <span className="call-row-meta">
+                      {new Date(c.startedAt).toLocaleString()} · {c.disposition}
+                    </span>
+                  </div>
+                  {num && (
                     <button
-                      className="btn"
+                      className="btn shrink-0"
                       type="button"
-                      onClick={() => navigate(`/?dial=${encodeURIComponent(m.number)}`)}
+                      onClick={() => navigate(`/?dial=${encodeURIComponent(num)}`)}
                     >
                       {t("portal.dial")}
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </SectionCard>
       )}
-      <SectionCard title="Call history" icon={History} tone="blue" flush>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>{t("cdr.caller")}</th>
-              <th>{t("cdr.callee")}</th>
-              <th>{t("cdr.disposition")}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={5}>—</td>
-              </tr>
-            ) : (
-              filtered.map((c) => {
-                const num = callPeer(c, me.data?.number);
-                return (
-                  <tr key={c.id}>
-                    <td>{new Date(c.startedAt).toLocaleString()}</td>
-                    <td className="font-mono">{c.caller}</td>
-                    <td className="font-mono">{c.callee}</td>
-                    <td>{c.disposition}</td>
-                    <td>
-                      {num && (
-                        <button
-                          className="btn"
-                          type="button"
-                          onClick={() => navigate(`/?dial=${encodeURIComponent(num)}`)}
-                        >
-                          {t("portal.dial")}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </SectionCard>
     </div>
   );
 }

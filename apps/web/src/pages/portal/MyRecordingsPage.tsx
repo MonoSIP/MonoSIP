@@ -91,12 +91,22 @@ export function MyRecordingsPage() {
           <div ref={waveRef} />
         </SectionCard>
       )}
-      <SectionCard title="Recordings" icon={FileAudio} tone="coral">
-        <div className="space-y-3">
-          {(list.data ?? []).length === 0 ? (
-            <p className="text-[var(--text-muted)]">—</p>
-          ) : (
-            list.data?.map((r) => (
+      {list.isFetched && (list.data ?? []).length === 0 ? (
+        <div className="vm-empty" role="status">
+          <span className="vm-empty-mark" aria-hidden="true">
+            <FileAudio size={22} strokeWidth={2.25} />
+          </span>
+          <span className="vm-empty-wave" aria-hidden="true">
+            {Array.from({ length: 27 }, (_, i) => (
+              <span key={i} />
+            ))}
+          </span>
+          <p>{t("portal.recordingsEmpty")}</p>
+        </div>
+      ) : (list.data ?? []).length === 0 ? null : (
+        <SectionCard title="Recordings" icon={FileAudio} tone="coral">
+          <div className="space-y-3">
+            {list.data?.map((r) => (
               <div
                 key={r.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3"
@@ -111,10 +121,10 @@ export function MyRecordingsPage() {
                   Play
                 </button>
               </div>
-            ))
-          )}
-        </div>
-      </SectionCard>
+            ))}
+          </div>
+        </SectionCard>
+      )}
     </div>
   );
 }

@@ -364,6 +364,24 @@ textarea.input {
 }
 
 /* Section cards: keep title padded even when body is flush (tables) */
+.settings-columns {
+  display: grid;
+  gap: 1rem;
+}
+.settings-columns-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .settings-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+  .settings-columns-side { height: 100%; }
+  .settings-columns-side > .section-card:last-child { flex: 1; }
+}
 .section-card {
   padding: 0;
   display: flex;
@@ -460,6 +478,45 @@ textarea.input {
 .page-header .toolbar-actions {
   margin-left: auto;
 }
+.call-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+@media (min-width: 480px) {
+  .call-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.call-filters .btn {
+  min-width: 0;
+  padding-inline: 0.4rem;
+}
+.call-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.call-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+.call-row-main { min-width: 0; flex: 1; }
+.call-row-peer,
+.call-row-meta {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.call-row-meta {
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
 
 .nav-link {
   display: flex;
@@ -532,11 +589,60 @@ textarea.input {
 .nav-reg.is-off { background: var(--danger); }
 .nav-tab-ico .nav-reg {
   position: absolute;
-  right: -0.15rem;
-  bottom: -0.05rem;
-  width: 0.5rem;
-  height: 0.5rem;
+  right: 0;
+  bottom: 0;
+  width: 0.45rem;
+  height: 0.45rem;
   box-shadow: 0 0 0 2px var(--card);
+}
+/* Six icons share the screen width, including a 320px phone. */
+.portal-tabs {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  padding: 0.2rem 0.1rem calc(0.2rem + env(safe-area-inset-bottom));
+}
+.portal-tabs a {
+  min-width: 0;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+}
+.portal-tabs a.active {
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.portal-tabs .nav-tab-ico svg {
+  width: clamp(1.05rem, 6vw, 1.5rem);
+  height: clamp(1.05rem, 6vw, 1.5rem);
+}
+.portal-tabs .nav-badge {
+  top: -0.2rem;
+  right: -0.35rem;
+}
+.portal-shell.is-incoming::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 4px var(--warning);
+  animation: incoming-flash 1s ease-in-out infinite;
+}
+@keyframes incoming-flash {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
 }
 
 .badge {
@@ -646,7 +752,15 @@ textarea.input {
   border-right: 1px solid var(--border);
 }
 
-/* Portal rail stays the viewport height; language, theme and logout sit on the bottom edge. */
+/* Row on a wide screen lives here: the shell class is built in a template, so
+   Tailwind never emits md:flex-row and the rail was stacking above every page. */
+.portal-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Portal rail stays the viewport height; the user card stays on the bottom edge. */
 @media (min-width: 768px) {
   .portal-rail {
     position: sticky;
@@ -656,20 +770,95 @@ textarea.input {
     max-height: 100dvh;
     min-height: 0;
   }
+  /* Column stacking would park every page under the full-height rail. */
+  .portal-shell { flex-direction: row; }
+  /* .portal-tabs { display: grid } beats Tailwind md:hidden; keep the bar on phones only. */
+  .portal-tabs { display: none; }
 }
-.portal-rail-foot {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+.portal-user {
+  position: relative;
   flex: none;
-  margin-top: auto;
+  margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);
 }
-.portal-rail-foot .btn {
+.portal-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   width: 100%;
-  min-width: 0;
-  padding-inline: 0.4rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg-soft) 70%, var(--card));
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.portal-user-card:hover,
+.portal-user-card[aria-expanded="true"] {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--border));
+  background: color-mix(in oklab, var(--accent) 10%, var(--card));
+}
+.portal-user-card > svg { flex: none; color: var(--text-muted); }
+.portal-user-card[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.portal-user-mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 16%, var(--card));
+  color: var(--accent);
+  font-weight: 700;
+  flex: none;
+}
+.portal-user-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.portal-user-ext {
+  display: block;
+  font: 500 0.72rem/1.3 var(--mono);
+  color: var(--text-muted);
+}
+.portal-user-menu {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 0.35rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.portal-user-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.portal-user-menu button:hover { background: color-mix(in oklab, var(--accent) 12%, transparent); }
+.portal-user-meta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 .vm-count {
   font-family: var(--mono);
@@ -691,6 +880,79 @@ textarea.input {
   border-radius: var(--radius);
   background: color-mix(in oklab, var(--success) 8%, var(--bg-soft));
   cursor: pointer;
+}
+.vm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+  padding: 2.25rem 1.25rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+}
+.vm-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 999px;
+  color: var(--success);
+  background: color-mix(in oklab, var(--success) 12%, var(--card));
+}
+.vm-empty-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 28px;
+}
+.vm-empty-wave span {
+  width: 3px;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--success) 42%, var(--border));
+}
+.vm-empty-wave span:nth-child(3n) { height: 11px; }
+.vm-empty-wave span:nth-child(4n) { height: 16px; }
+.vm-empty-wave span:nth-child(5n) { height: 8px; }
+.vm-empty-wave span:nth-child(8n) { height: 20px; }
+.vm-empty-log,
+.vm-empty-book {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 9.5rem;
+}
+.vm-empty-log > span,
+.vm-empty-book > span {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: color-mix(in oklab, var(--success) 70%, var(--text-muted));
+}
+.vm-empty-log > span::after,
+.vm-empty-book > span::after {
+  content: "";
+  height: 0.38rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--success) 28%, var(--border));
+}
+.vm-empty-log > span:nth-child(1)::after,
+.vm-empty-book > span:nth-child(1)::after { width: 7.2rem; }
+.vm-empty-log > span:nth-child(2)::after,
+.vm-empty-book > span:nth-child(2)::after { width: 5rem; }
+.vm-empty-log > span:nth-child(3)::after,
+.vm-empty-book > span:nth-child(3)::after { width: 3.2rem; }
+.vm-empty-log > span:last-child { color: color-mix(in oklab, var(--danger) 75%, var(--text-muted)); }
+.vm-empty p {
+  margin: 0;
+  max-width: 16rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
 /* MunaSIP mark (public/munasip-mark.svg) — the tile and its corners are in the SVG */
@@ -1716,23 +1978,6 @@ html.light .sp-screen {
 .mini-phone-btn.is-end { background: var(--destructive); color: var(--destructive-foreground); border-color: transparent; }
 .mini-phone-btn.is-answer { background: var(--success); color: #04211c; border-color: transparent; }
 html.light .mini-phone-btn.is-answer { color: #fff; }
-/* the bar is the phone-width variant; the sidebar carries it from md up */
-@media (min-width: 768px) {
-  .mini-phone.mini-phone--bar { display: none; }
-}
-.mini-phone--bar {
-  position: fixed;
-  inset-inline: 10px;
-  top: max(10px, env(safe-area-inset-top));
-  z-index: 30;
-  backdrop-filter: blur(12px);
-}
-@media (max-width: 767px) {
-  .portal-main.has-mini-bar {
-    padding-top: 4.85rem;
-    padding-bottom: 5.75rem;
-  }
-}
 @keyframes mini-pulse {
   70% { box-shadow: 0 0 0 7px transparent; }
 }
@@ -1742,6 +1987,7 @@ html.light .mini-phone-btn.is-answer { color: #fff; }
 @media (prefers-reduced-motion: reduce) {
   .mini-phone,
   .mini-phone-dot { animation: none !important; }
+  .portal-shell.is-incoming::after { animation: none; opacity: 1; }
 }
 .shadow-xl {
   box-shadow: var(--shadow);

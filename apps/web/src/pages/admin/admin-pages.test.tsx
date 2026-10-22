@@ -1159,19 +1159,23 @@ describe("PortalLayout", () => {
     expect(within(voicemailLink).getByText("1")).toBeInTheDocument();
     const phone = within(aside).getByRole("region", { name: "portal.miniPhone" });
     const settings = within(aside).getByRole("link", { name: "nav.mySettings" });
-    expect(phone.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(settings.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(phoneLink.querySelector(".nav-reg")?.className).toContain("is-off");
-    expect(document.querySelector("nav.fixed .nav-reg")?.className).toContain("is-off");
+    expect(document.querySelector("nav.portal-tabs .nav-reg")?.className).toContain("is-off");
+    expect(document.querySelector(".mini-phone--bar")).toBeNull();
+    const user = aside.querySelector(".portal-user-card") as HTMLElement;
+    expect(user).toBeTruthy();
+    expect(phone.compareDocumentPosition(user) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(aside).queryByTitle("common.language")).toBeNull();
+    await userEvent.click(user);
     const language = within(aside).getByTitle("common.language");
     const theme = within(aside).getByTitle("common.theme");
     const logout = within(aside).getByTitle("common.logout");
-    const foot = logout.parentElement as HTMLElement;
-    expect(foot.className).toContain("portal-rail-foot");
-    // Mini phone sits under the name; language, theme and logout stay at the foot.
-    expect(phone.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(logout.parentElement?.className).toContain("portal-user-menu");
+    expect(user.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(language.compareDocumentPosition(theme) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(theme.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await userEvent.click(screen.getByTitle("common.logout"));
+    await userEvent.click(logout);
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));

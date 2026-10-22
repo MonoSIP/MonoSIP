@@ -53,16 +53,26 @@ export function MyVoicemailPage() {
         title={t("nav.voicemail")}
         tone="cyan"
         actions={
-          list.data ? (
+          rows.length > 0 ? (
             <span className={`vm-count ${unread ? "is-new" : ""}`}>
               {unread}/{rows.length}
             </span>
           ) : null
         }
       />
-      {(list.data ?? []).length === 0 ? (
-        <p className="text-[var(--text-muted)]">{t("portal.voicemailEmpty")}</p>
-      ) : (
+      {list.isFetched && rows.length === 0 ? (
+        <div className="vm-empty" role="status">
+          <span className="vm-empty-mark" aria-hidden="true">
+            <Voicemail size={22} strokeWidth={2.25} />
+          </span>
+          <span className="vm-empty-wave" aria-hidden="true">
+            {Array.from({ length: 27 }, (_, i) => (
+              <span key={i} />
+            ))}
+          </span>
+          <p>{t("portal.voicemailEmpty")}</p>
+        </div>
+      ) : rows.length === 0 ? null : (
         <ul className="space-y-2">
           {list.data?.map((v) => (
             <MessageRow

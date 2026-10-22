@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { KeyRound, Mic, PhoneForwarded, UserCog, Volume2 } from "lucide-react";
+import { KeyRound, Languages, Mic, Moon, PhoneForwarded, UserCog, Volume2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { useStore } from "../../store";
 import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type Fwd = {
@@ -17,8 +18,11 @@ type Fwd = {
 const DEVICE_KEY = "munasip.audioDevices";
 
 export function MySettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const theme = useStore((s) => s.theme);
+  const setTheme = useStore((s) => s.setTheme);
   const qc = useQueryClient();
+  const [lang, setLangState] = useState(() => (i18n?.language || "en").slice(0, 2));
   const [password, setPassword] = useState("");
   const [dnd, setDnd] = useState(false);
   const [fwds, setFwds] = useState<Fwd[]>([
@@ -143,9 +147,46 @@ export function MySettingsPage() {
     setFwds((prev) => prev.map((f) => (f.condition === condition ? { ...f, ...patch } : f)));
   }
 
+  function setLang(next: "en" | "tr") {
+    localStorage.setItem("munasip_locale", next);
+    setLangState(next);
+    void i18n?.changeLanguage?.(next);
+  }
+
   return (
-    <div className="mx-auto max-w-lg space-y-4">
+    <div className="space-y-4">
       <PageHeader icon={UserCog} title={t("nav.mySettings")} tone="cyan" />
+      <div className="settings-columns">
+      <div className="settings-columns-side">
+      <div className="space-y-4 md:hidden">
+      <SectionCard title={t("common.language")} icon={Languages} tone="cyan">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            className={`btn ${lang === "tr" ? "btn-primary" : ""}`}
+            type="button"
+            onClick={() => setLang("tr")}
+          >
+            Türkçe
+          </button>
+          <button
+            className={`btn ${lang === "en" ? "btn-primary" : ""}`}
+            type="button"
+            onClick={() => setLang("en")}
+          >
+            English
+          </button>
+        </div>
+      </SectionCard>
+      <SectionCard title={t("portal.darkMode")} icon={Moon} tone="cyan">
+        <button
+          className={`btn ${theme === "dark" ? "btn-primary" : ""}`}
+          type="button"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          {t("portal.darkMode")}: {theme === "dark" ? t("common.enabled") : t("common.disabled")}
+        </button>
+      </SectionCard>
+      </div>
       <SectionCard title={t("portal.dnd")} icon={UserCog} tone="cyan">
         <button
           className={`btn ${dnd ? "btn-primary" : ""}`}
@@ -180,7 +221,6 @@ export function MySettingsPage() {
           {t("common.save")}
         </button>
       </SectionCard>
-
       <SectionCard title="Audio devices" icon={Mic} tone="cyan">
         <SelectField label="Microphone" icon={Mic} value={micId} onChange={(e) => setMicId(e.target.value)}>
           <option value="">System default</option>
@@ -210,7 +250,8 @@ export function MySettingsPage() {
           Save devices
         </button>
       </SectionCard>
-
+      </div>
+      <div className="settings-columns-side">
       <SectionCard title="Call forwarding" icon={PhoneForwarded} tone="cyan">
         {fwds.map((fwd) => (
           <div key={fwd.condition} className="space-y-2 rounded border border-[var(--border)] p-3">
@@ -260,6 +301,8 @@ export function MySettingsPage() {
           Save forwarding
         </button>
       </SectionCard>
+      </div>
+      </div>
     </div>
   );
 }

@@ -32,14 +32,25 @@ const { SoftphoneMock } = vi.hoisted(() => {
 vi.mock("../lib/softphone", () => ({ Softphone: SoftphoneMock }));
 vi.mock("../lib/api", () => ({
   api: {
-    get: vi.fn(async () => ({ extension: "101", password: "pw", domain: "sip.example", displayName: "Ali" })),
+    get: vi.fn(async (path: string) => {
+      if (path.includes("voicemail") || path.includes("missed")) return [];
+      return { extension: "101", password: "pw", domain: "sip.example", displayName: "Ali" };
+    }),
+    post: vi.fn(async () => ({})),
   },
 }));
-vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
+vi.mock("react-i18next", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-i18next")>();
+  return {
+    ...actual,
+    useTranslation: () => ({ t: (k: string) => k, i18n: { language: "en", changeLanguage: vi.fn() } }),
+  };
+});
 vi.mock("sonner", () => ({ toast: { message: vi.fn(), error: vi.fn() } }));
 
 import { MiniPhone } from "./MiniPhone";
 import { PhoneProvider } from "../lib/phone-context";
+import { PortalLayout } from "../layouts/PortalLayout";
 
 /** A tiny portal: the phone page at "/", another page with the mini phone. */
 function renderPortal() {
@@ -79,6 +90,29 @@ describe("portal softphone across pages", () => {
     expect(SoftphoneMock.instances).toHaveLength(1);
     expect(SoftphoneMock.last.disconnect).not.toHaveBeenCalled();
     expect(SoftphoneMock.last.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the phone screen when a call arrives on another page", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={["/voicemail"]}>
+          <Routes>
+            <Route element={<PortalLayout />}>
+              <Route path="/" element={<div>phone page</div>} />
+              <Route path="/voicemail" element={<div>voicemail page</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("voicemail page")).toBeInTheDocument();
+    expect(document.querySelector(".mini-phone--bar")).toBeNull();
+    await waitFor(() => expect(SoftphoneMock.last.onCallPhase).toBeTypeOf("function"));
+    act(() => SoftphoneMock.last.onCallPhase!("ringing", { seconds: 0, peer: "0532" }));
+    expect(await screen.findByText("phone page")).toBeInTheDocument();
+    expect(document.querySelector(".portal-shell")?.className).toContain("is-incoming");
   });
 
   it("answers and declines an incoming call from the mini phone", async () => {

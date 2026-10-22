@@ -82,6 +82,7 @@ vi.mock("sonner", () => ({
 
 import { MissedPage } from "../admin/MissedPage";
 import { MySettingsPage } from "./MySettingsPage";
+import { useStore } from "../../store";
 import { MyVoicemailPage } from "./MyVoicemailPage";
 
 function renderPage(ui: React.ReactElement) {
@@ -281,6 +282,21 @@ describe("password and voicemail error handling", () => {
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("OK"));
     expect(input).toHaveValue("");
+  });
+
+  it("switches language and dark mode from the settings page", async () => {
+    seedSettings();
+    useStore.setState({ theme: "dark" });
+    document.documentElement.classList.remove("light");
+    renderPage(<MySettingsPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Türkçe" }));
+    expect(localStorage.getItem("munasip_locale")).toBe("tr");
+    expect(screen.getByRole("button", { name: "Türkçe" }).className).toContain("btn-primary");
+
+    await userEvent.click(screen.getByRole("button", { name: "portal.darkMode: common.enabled" }));
+    expect(document.documentElement.classList.contains("light")).toBe(true);
+    expect(screen.getByRole("button", { name: "portal.darkMode: common.disabled" })).toBeInTheDocument();
   });
 
   it("keeps the Save button disabled below the 8-character minimum", async () => {

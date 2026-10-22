@@ -89,7 +89,6 @@ describe("portal smoke tests", () => {
     expect(await screen.findByRole("heading", { name: "nav.myCalls" })).toBeInTheDocument();
     // "1000" legitimately appears as both a caller and a callee.
     await waitFor(() => expect(screen.getAllByText("1000")).toHaveLength(2));
-    expect(screen.getByText("cdr.caller")).toBeInTheDocument();
   });
 
   it("MyCallsPage filters the table when a tab is selected", async () => {
@@ -129,6 +128,15 @@ describe("portal smoke tests", () => {
     expect(screen.getByText("3333")).toBeInTheDocument();
   });
 
+  it("MyCallsPage shows an empty state when there are no calls", async () => {
+    get.mockResolvedValue([]);
+    renderPage(<MyCallsPage />);
+    expect(await screen.findByText("portal.callsEmpty")).toBeInTheDocument();
+    expect(document.querySelector(".vm-empty-wave")).toBeNull();
+    expect(document.querySelectorAll(".vm-empty-log > span")).toHaveLength(3);
+    expect(screen.queryByText("Call history")).not.toBeInTheDocument();
+  });
+
   it("DirectoryPage lists peers and dials one", async () => {
     get.mockResolvedValue([
       { id: "p1", number: "101", name: "Ali", state: "online", dnd: false },
@@ -141,6 +149,15 @@ describe("portal smoke tests", () => {
     const ali = (await screen.findByText("Ali")).closest("div.rounded-md") as HTMLElement;
     await userEvent.click(within(ali).getByRole("button", { name: "portal.dial" }));
     expect(navigate).toHaveBeenCalledWith("/?dial=101");
+  });
+
+  it("DirectoryPage shows an empty state when the directory is empty", async () => {
+    get.mockResolvedValue([]);
+    renderPage(<DirectoryPage />);
+    expect(await screen.findByText("portal.directoryEmpty")).toBeInTheDocument();
+    expect(document.querySelector(".vm-empty-wave")).toBeNull();
+    expect(document.querySelectorAll(".vm-empty-book > span")).toHaveLength(3);
+    expect(screen.queryByText("Extensions")).not.toBeInTheDocument();
   });
 
   it("DirectoryPage disables the dial button for a DND peer", async () => {
