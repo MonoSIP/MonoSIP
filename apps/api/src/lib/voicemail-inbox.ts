@@ -1,9 +1,9 @@
-import { readdir, stat } from "node:fs/promises";
+import { readdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { voicemails } from "../db/schema.js";
+import { cdr, voicemails } from "../db/schema.js";
 
 /** Mailbox recordings land here, on the volume Asterisk and the API share. */
 export function voicemailDir(): string {
@@ -13,10 +13,53 @@ export function voicemailDir(): string {
 /** Older dialplans always wrote under this path, even when configDir differed. */
 const LEGACY_MAILBOX_DIR = "/var/lib/asterisk/munasip/voicemail";
 
-function mailboxDirs(): string[] {
-  const current = path.resolve(voicemailDir());
-  const legacy = path.resolve(LEGACY_MAILBOX_DIR);
-  return current === legacy ? [current] : [current, legacy];
+/** One directory, even when the legacy path is a symlink to the data volume. */
+async function mailboxDirs(): Promise<string[]> {
+  const out: string[] = [];
+  for (const dir of [voicemailDir(), LEGACY_MAILBOX_DIR]) {
+    try {
+      const real = await realpath(dir);
+      if (!out.includes(real)) out.push(real);
+    } catch {
+      /* not mounted */
+    }
+  }
+  return out;
+}
+
+/** Same recording, whether the row stored the real path or the symlink path. */
+export function mailboxKey(filePath: string): string {
+  return path.basename(filePath).toLowerCase();
+}
+
+/** `100-1729000.12.wav` → Asterisk UNIQUEID `1729000.12`, which is the CDR call id. */
+export function callIdFromMailbox(filePath: string): string | null {
+  const base = path.basename(filePath).replace(/\.wav$/i, "");
+  const dash = base.indexOf("-");
+  if (dash <= 0) return null;
+  const id = base.slice(dash + 1);
+  return id || null;
+}
+
+/** Posted caller, or the CDR for this recording when the dialplan sent a blank. */
+export async function resolveVoicemailCaller(
+  filePath: string,
+  posted: string | null | undefined,
+): Promise<string | null> {
+  return usableCaller(posted) ?? (await callerFromCdr(filePath));
+}
+
+/** The inbox row for this wav, ignoring whether the path is the symlink or the real file. */
+export async function existingVoicemail(extensionId: string, filePath: string) {
+  const rows = await db.select().from(voicemails).where(eq(voicemails.extensionId, extensionId));
+  return rows.find((row) => mailboxKey(row.filePath) === mailboxKey(filePath)) ?? null;
+}
+
+/** Empty, a dash, or a placeholder is not a caller number. */
+export function usableCaller(value: string | null | undefined): string | null {
+  const caller = (value ?? "").trim();
+  if (!caller || caller === "-" || caller === "—" || /^(unknown|anonymous)$/i.test(caller)) return null;
+  return caller;
 }
 
 /**
@@ -45,13 +88,24 @@ export function importMailboxFiles(extensionId: string, number: string): Promise
   return job;
 }
 
+async function callerFromCdr(filePath: string): Promise<string | null> {
+  const callId = callIdFromMailbox(filePath);
+  if (!callId) return null;
+  const rows = await db.select({ caller: cdr.caller }).from(cdr).where(eq(cdr.callId, callId)).limit(5);
+  for (const row of rows) {
+    const caller = usableCaller(row.caller);
+    if (caller) return caller;
+  }
+  return null;
+}
+
 async function importMailboxFilesNow(extensionId: string, number: string): Promise<void> {
   const known = await db
     .select({ filePath: voicemails.filePath })
     .from(voicemails)
     .where(eq(voicemails.extensionId, extensionId));
-  const knownPaths = new Set(known.map((row) => row.filePath));
-  for (const dir of mailboxDirs()) {
+  const knownKeys = new Set(known.map((row) => mailboxKey(row.filePath)));
+  for (const dir of await mailboxDirs()) {
     let names: string[];
     try {
       names = await readdir(dir);
@@ -60,8 +114,9 @@ async function importMailboxFilesNow(extensionId: string, number: string): Promi
     }
     for (const name of names) {
       if (mailboxOwner(name) !== number) continue;
+      const key = mailboxKey(name);
+      if (knownKeys.has(key)) continue;
       const filePath = path.join(dir, name);
-      if (knownPaths.has(filePath)) continue;
       let info;
       try {
         info = await stat(filePath);
@@ -71,12 +126,41 @@ async function importMailboxFilesNow(extensionId: string, number: string): Promi
       if (!info.isFile() || info.size < 128) continue;
       await db.insert(voicemails).values({
         extensionId,
-        caller: null,
+        caller: await callerFromCdr(filePath),
         filePath,
         read: false,
         at: info.mtime,
       });
-      knownPaths.add(filePath);
+      knownKeys.add(key);
+    }
+  }
+  await collapseDuplicateVoicemails(extensionId);
+}
+
+/** A symlink path and the real path used to insert the same wav twice. Keep one. */
+async function collapseDuplicateVoicemails(extensionId: string): Promise<void> {
+  const rows = await db.select().from(voicemails).where(eq(voicemails.extensionId, extensionId));
+  const groups = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const key = mailboxKey(row.filePath);
+    const list = groups.get(key) ?? [];
+    list.push(row);
+    groups.set(key, list);
+  }
+  for (const group of groups.values()) {
+    const [keep, ...extra] = group.sort((a, b) => {
+      const rank = (caller: string | null) => (usableCaller(caller) ? 1 : 0);
+      const byCaller = rank(b.caller) - rank(a.caller);
+      if (byCaller !== 0) return byCaller;
+      return a.at.getTime() - b.at.getTime();
+    });
+    if (!keep) continue;
+    const caller = usableCaller(keep.caller) ?? (await callerFromCdr(keep.filePath));
+    if (caller && caller !== keep.caller) {
+      await db.update(voicemails).set({ caller }).where(eq(voicemails.id, keep.id));
+    }
+    for (const row of extra) {
+      await db.delete(voicemails).where(eq(voicemails.id, row.id));
     }
   }
 }

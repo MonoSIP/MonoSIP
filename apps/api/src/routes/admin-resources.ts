@@ -1393,11 +1393,20 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     }
     if (!ready) return reply.code(400).send({ error: "recording file missing" });
     const { voicemails } = await import("../db/schema.js");
+    const { existingVoicemail, resolveVoicemailCaller, usableCaller } = await import("../lib/voicemail-inbox.js");
+    const caller = await resolveVoicemailCaller(body.file, body.caller);
+    const prior = await existingVoicemail(ext.id, body.file);
+    if (prior) {
+      if (caller && !usableCaller(prior.caller)) {
+        await db.update(voicemails).set({ caller }).where(eq(voicemails.id, prior.id));
+      }
+      return { ok: true, id: prior.id };
+    }
     const [row] = await db
       .insert(voicemails)
       .values({
         extensionId: ext.id,
-        caller: body.caller ?? "unknown",
+        caller,
         filePath: body.file,
         read: false,
       })
@@ -1419,7 +1428,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
               to: ext.email,
             },
             `MunaSIP voicemail for ${ext.number}`,
-            `New voicemail\nFrom: ${body.caller ?? "unknown"}\nExt: ${ext.number}\nAt: ${new Date().toISOString()}`,
+            `New voicemail\nFrom: ${caller ?? "unknown"}\nExt: ${ext.number}\nAt: ${new Date().toISOString()}`,
             [{ filename: fname, contentType: "audio/wav", path: body.file }],
           );
         }
@@ -1431,7 +1440,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     emitPortalEvent("voicemail.new", {
       id: row.id,
       extension: ext.number,
-      caller: body.caller ?? "unknown",
+      caller: caller ?? "unknown",
     });
     return { ok: true, id: row.id };
   });

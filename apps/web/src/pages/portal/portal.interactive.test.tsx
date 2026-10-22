@@ -326,7 +326,7 @@ describe("voicemail inbox", () => {
     expect(screen.getByText("4444")).toBeInTheDocument();
   });
 
-  it("shows the wave on the row, with delete beside it and no play button", async () => {
+  it("puts play beside the wave, and a click on the row starts from the beginning", async () => {
     seed();
 
     renderPage(<MyVoicemailPage />);
@@ -335,15 +335,18 @@ describe("voicemail inbox", () => {
     expect(screen.getAllByRole("heading", { name: "nav.voicemail" })).toHaveLength(1);
     const caller = await screen.findByText("4444");
     const item = caller.closest("li")!;
-    const wave = within(item).getByRole("button", { name: "portal.play" });
+    const wave = item.querySelector(".vm-wave")!;
+    const play = within(item).getByRole("button", { name: "portal.play" });
     const remove = within(item).getByRole("button", { name: "portal.delete" });
-    expect(wave.className).toContain("vm-wave");
+    expect(play.compareDocumentPosition(wave) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(wave.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await waitFor(() => expect(waveLast.current?.url).toBe("/api/v1/me/voicemails/v1/stream"));
     expect(waveLast.current?.fetchParams).toEqual({ credentials: "include" });
 
     await userEvent.click(wave);
     expect(waveLast.current?.time).toBeUndefined();
+    await userEvent.click(play);
+    expect(waveLast.current?.time).toBe(0);
     await userEvent.click(caller);
     expect(waveLast.current?.time).toBe(0);
   });

@@ -353,7 +353,7 @@ describe("POST /api/v1/internal/voicemail", () => {
       file,
     });
     const [vm] = await db.select().from(voicemails).where(eq(voicemails.id, (res.json() as { id: string }).id));
-    expect(vm?.caller).toBe("unknown");
+    expect(vm?.caller).toBeNull();
     await db.delete(voicemails).where(eq(voicemails.id, (res.json() as { id: string }).id));
   });
 

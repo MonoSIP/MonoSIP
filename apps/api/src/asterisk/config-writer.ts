@@ -942,7 +942,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     ` same => n,Set(MUNASIP_VM_DONE=1)`,
     ` same => n,${internalPost(
       "voicemail",
-      `{"extension":"\${MUNASIP_VMEXT}","caller":"\${MUNASIP_CID}","file":"\${MUNASIP_VMFILE}"}`,
+      `{"extension":"\${MUNASIP_VMEXT}","caller":"\${MUNASIP_VMCID}","file":"\${MUNASIP_VMFILE}"}`,
     )}`,
     " same => n(vmdone),NoOp(Voicemail filed)",
     "",
@@ -956,12 +956,16 @@ async function writeAsteriskConfigNow(): Promise<void> {
     `exten => *${num},1,NoOp(Voicemail deposit ${num})`,
     ` same => n,Answer()`,
     ` same => n,Playback(beep)`,
-    ` same => n,Set(MUNASIP_CID=\${CALLERID(num)})`,
-    ` same => n,Set(MUNASIP_VMEXT=${num})`,
+    // Keep the number taken before Record(). The hangup path rewrites MUNASIP_CID
+    // from CALLERID(num), which is often empty by then and showed up as a dash.
+    ` same => n,Set(MUNASIP_VMCID=\${CALLERID(num)})`,
+    ` same => n,GotoIf($["\${MUNASIP_VMCID}" != "" & "\${MUNASIP_VMCID}" != "-"]?vmkeep)`,
+    ` same => n,Set(MUNASIP_VMCID=\${MUNASIP_CID})`,
+    ` same => n(vmkeep),Set(MUNASIP_VMEXT=${num})`,
     ` same => n,Set(VMFILE=${vmRoot}/${num}-\${UNIQUEID})`,
     ` same => n,Set(MUNASIP_VMFILE=\${VMFILE}.wav)`,
     ` same => n,Record(\${MUNASIP_VMFILE},3,120,kq)`,
-    ` same => n,${internalPost("voicemail", `{"extension":"${num}","caller":"\${MUNASIP_CID}","file":"\${MUNASIP_VMFILE}"}`)}`,
+    ` same => n,${internalPost("voicemail", `{"extension":"${num}","caller":"\${MUNASIP_VMCID}","file":"\${MUNASIP_VMFILE}"}`)}`,
     ` same => n,Set(MUNASIP_VM_DONE=1)`,
     ` same => n,Hangup()`,
     "",

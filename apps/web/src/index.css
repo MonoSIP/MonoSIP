@@ -522,6 +522,22 @@ textarea.input {
   height: 1.05rem;
   font-size: 0.62rem;
 }
+.nav-reg {
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+}
+.nav-reg.is-on { background: var(--success); }
+.nav-reg.is-off { background: var(--danger); }
+.nav-tab-ico .nav-reg {
+  position: absolute;
+  right: -0.15rem;
+  bottom: -0.05rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  box-shadow: 0 0 0 2px var(--card);
+}
 
 .badge {
   display: inline-flex;
@@ -1707,9 +1723,15 @@ html.light .mini-phone-btn.is-answer { color: #fff; }
 .mini-phone--bar {
   position: fixed;
   inset-inline: 10px;
-  bottom: 72px;
+  top: max(10px, env(safe-area-inset-top));
   z-index: 30;
   backdrop-filter: blur(12px);
+}
+@media (max-width: 767px) {
+  .portal-main.has-mini-bar {
+    padding-top: 4.85rem;
+    padding-bottom: 5.75rem;
+  }
 }
 @keyframes mini-pulse {
   70% { box-shadow: 0 0 0 7px transparent; }

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
 import { toast } from "sonner";
-import { Trash2, Voicemail } from "lucide-react";
+import { Pause, Play, Trash2, Voicemail } from "lucide-react";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader } from "../../components/ui";
 
@@ -102,6 +102,7 @@ function MessageRow({
   const onPlayRef = useRef(onPlay);
   onPlayRef.current = onPlay;
   const [heard, setHeard] = useState(row.read);
+  const [playing, setPlaying] = useState(false);
   const heardRef = useRef(row.read);
 
   useEffect(() => {
@@ -137,11 +138,14 @@ function MessageRow({
       void ws.play().catch(() => toast.error(t("portal.playbackFailed")));
     });
     ws.on("play", () => {
+      setPlaying(true);
       if (heardRef.current) return;
       heardRef.current = true;
       setHeard(true);
       onPlayRef.current();
     });
+    ws.on("pause", () => setPlaying(false));
+    ws.on("finish", () => setPlaying(false));
     ws.on("error", () => {
       toast.error(t("portal.playbackFailed"));
     });
@@ -182,20 +186,20 @@ function MessageRow({
             {new Date(row.at).toLocaleString()}
           </span>
         </span>
-        <div
-          ref={waveRef}
-          className="vm-wave min-w-0 flex-1"
-          role="button"
-          tabIndex={0}
-          aria-label={t("portal.play")}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter" && e.key !== " ") return;
-            e.preventDefault();
+        <IconBtn
+          icon={playing ? Pause : Play}
+          label={playing ? t("portal.pause") : t("portal.play")}
+          onClick={() => {
             const ws = wsRef.current;
-            if (!ws || ws.isPlaying()) return;
-            void ws.play().catch(() => toast.error(t("portal.playbackFailed")));
+            if (!ws) return;
+            if (ws.isPlaying()) {
+              ws.pause();
+              return;
+            }
+            playFromStart();
           }}
         />
+        <div ref={waveRef} className="vm-wave min-w-0 flex-1" />
         <IconBtn
           icon={Trash2}
           label={confirming ? t("portal.confirmDelete") : t("portal.delete")}

@@ -1160,6 +1160,8 @@ describe("PortalLayout", () => {
     const phone = within(aside).getByRole("region", { name: "portal.miniPhone" });
     const settings = within(aside).getByRole("link", { name: "nav.mySettings" });
     expect(phone.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(phoneLink.querySelector(".nav-reg")?.className).toContain("is-off");
+    expect(document.querySelector("nav.fixed .nav-reg")?.className).toContain("is-off");
     const language = within(aside).getByTitle("common.language");
     const theme = within(aside).getByTitle("common.theme");
     const logout = within(aside).getByTitle("common.logout");

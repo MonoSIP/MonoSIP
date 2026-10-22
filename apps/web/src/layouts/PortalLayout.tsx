@@ -9,7 +9,7 @@ import { usePortalLive } from "../hooks/usePortalLive";
 import { AppBrand } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { MiniPhone } from "../components/MiniPhone";
-import { PhoneProvider } from "../lib/phone-context";
+import { PhoneProvider, usePhone } from "../lib/phone-context";
 
 const links = [
   { to: "/", icon: Phone, key: "phone", end: true },
@@ -21,12 +21,22 @@ const links = [
 ];
 
 export function PortalLayout() {
+  return (
+    <PhoneProvider>
+      <PortalChrome />
+    </PhoneProvider>
+  );
+}
+
+function PortalChrome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const actor = useStore((s) => s.actor);
   const setActor = useStore((s) => s.setActor);
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
+  const { status } = usePhone();
+  const registered = status === "registered";
   usePortalLive();
   // The phone page shows the full phone; every other page gets the mini one.
   const onPhonePage = useLocation().pathname === "/";
@@ -61,7 +71,6 @@ export function PortalLayout() {
 
   return (
     // One softphone for the whole portal: switching pages keeps the call up.
-    <PhoneProvider>
     <div className="flex min-h-full flex-col md:flex-row">
       <aside className="aside-panel portal-rail hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:flex">
         <AppBrand
@@ -80,6 +89,7 @@ export function PortalLayout() {
               <span className="nav-ico">
                 <l.icon size={16} strokeWidth={2.25} />
               </span>
+              {l.key === "phone" ? <RegDot on={registered} label={t(registered ? "portal.registered" : "portal.unregistered")} /> : null}
               <span className="min-w-0 flex-1 truncate">{t(`nav.${l.key}`)}</span>
               {menuCount(l.key) > 0 ? (
                 <span className={`nav-badge ${l.key === "voicemail" ? "is-vm" : "is-missed"}`}>
@@ -115,7 +125,7 @@ export function PortalLayout() {
           </button>
         </div>
       </aside>
-      <main className={`min-w-0 flex-1 p-4 md:p-8 md:pb-8 ${onPhonePage ? "pb-24" : "pb-40"}`}>
+      <main className={`portal-main min-w-0 flex-1 p-4 pb-24 md:p-8 ${onPhonePage ? "" : "has-mini-bar"}`}>
         {/* Remount pages on a language switch so tr() copy re-renders */}
         <PageVeil>
           <Outlet key={i18n.language} />
@@ -140,6 +150,7 @@ export function PortalLayout() {
           >
             <span className="nav-tab-ico">
               <l.icon size={26} strokeWidth={2.25} />
+              {l.key === "phone" ? <RegDot on={registered} label={t(registered ? "portal.registered" : "portal.unregistered")} /> : null}
               {menuCount(l.key) > 0 ? (
                 <span className={`nav-badge ${l.key === "voicemail" ? "is-vm" : "is-missed"}`}>
                   {menuCount(l.key) > 99 ? "99+" : menuCount(l.key)}
@@ -150,6 +161,9 @@ export function PortalLayout() {
         ))}
       </nav>
     </div>
-    </PhoneProvider>
   );
+}
+
+function RegDot({ on, label }: { on: boolean; label: string }) {
+  return <span className={`nav-reg ${on ? "is-on" : "is-off"}`} title={label} aria-hidden="true" />;
 }
