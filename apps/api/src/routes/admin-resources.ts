@@ -2034,14 +2034,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       after: body,
       ip: req.ip,
     });
-    // SIP ACL / denylist live in generated PJSIP — rewrite when security nets change
-    if (
-      body.sipIpAllowlist !== undefined ||
-      body.sipIpDenylist !== undefined ||
-      body.adminIpAllowlist !== undefined
-    ) {
-      await tryReloadAsterisk();
-    }
+    // KVKK and queue language are baked into the dialplan; SIP nets live in PJSIP.
+    // Unchanged files do not reload a module.
+    await tryReloadAsterisk();
     // Auto-SSL: issue/renew when enabled or hostname changes
     if (body.autoSsl === true || (next.autoSsl && body.hostname !== undefined)) {
       void import("../lib/ssl-certs.js")

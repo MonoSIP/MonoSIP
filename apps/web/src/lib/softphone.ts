@@ -133,15 +133,27 @@ export class Softphone {
     this.preferredMicId = mic;
     this.preferredSpeakerId = speaker;
     this.preferredRingId = ring;
-    if (speaker) {
-      await this.setOutputDevice(speaker).catch(() => undefined);
-    }
+    if (speaker) await this.setOutputDevice(speaker).catch(() => undefined);
+    else await this.clearSink(this.remoteAudio);
     await this.applyRingSink().catch(() => undefined);
+  }
+
+  private async clearSink(el: HTMLAudioElement) {
+    const sink = el as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
+    if (typeof sink.setSinkId !== "function") return;
+    try {
+      await sink.setSinkId("");
+    } catch {
+      /* ignore */
+    }
   }
 
   private async applyRingSink() {
     const id = this.preferredRingId || this.preferredSpeakerId;
-    if (!id) return;
+    if (!id) {
+      await this.clearSink(this.ringAudio);
+      return;
+    }
     const el = this.ringAudio as HTMLAudioElement & { setSinkId?: (id: string) => Promise<void> };
     if (typeof el.setSinkId !== "function") return;
     try {

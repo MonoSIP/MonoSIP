@@ -103,6 +103,24 @@ export async function portalRoutes(app: FastifyInstance) {
       .limit(50);
   });
 
+  // Opening the Missed list acknowledges pending rows so the phone badge clears.
+  app.post("/api/v1/me/missed-calls/seen", async (req, reply) => {
+    const actor = await requireExtension(req, reply);
+    if (!actor || "statusCode" in (actor as object)) return;
+    const a = actor as { number: string };
+    await db
+      .update(missedCalls)
+      .set({ seen: true })
+      .where(
+        and(
+          eq(missedCalls.target, a.number),
+          eq(missedCalls.status, "pending"),
+          eq(missedCalls.seen, false),
+        ),
+      );
+    return { ok: true };
+  });
+
   app.get("/api/v1/me/recordings", async (req, reply) => {
     const actor = await requireExtension(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;
@@ -272,7 +290,7 @@ export async function portalRoutes(app: FastifyInstance) {
       );
     }
     const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
-    void tryReloadAsterisk();
+    await tryReloadAsterisk();
     return { ok: true };
   });
 
@@ -287,7 +305,7 @@ export async function portalRoutes(app: FastifyInstance) {
     await syncDndAstDb(a.number, body.dnd);
     // Rebuild queues so DND agents are skipped (same as admin DND)
     const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
-    void tryReloadAsterisk();
+    await tryReloadAsterisk();
     return { ok: true, dnd: body.dnd };
   });
 
@@ -317,7 +335,7 @@ export async function portalRoutes(app: FastifyInstance) {
       .set({ portalPasswordHash: scryptHash(body.password), sipSecretEnc: encrypt(body.password) })
       .where(eq(extensions.id, a.id));
     const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
-    void tryReloadAsterisk();
+    await tryReloadAsterisk();
     return { ok: true };
   });
 }

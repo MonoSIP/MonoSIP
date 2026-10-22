@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { KeyRound, Languages, Mic, Moon, PhoneForwarded, UserCog, Volume2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { usePhoneOptional } from "../../lib/phone-context";
 import { useStore } from "../../store";
 import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
@@ -21,6 +22,7 @@ export function MySettingsPage() {
   const { t, i18n } = useTranslation();
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
+  const phoneState = usePhoneOptional();
   const qc = useQueryClient();
   const [lang, setLangState] = useState(() => (i18n?.language || "en").slice(0, 2));
   const [password, setPassword] = useState("");
@@ -113,6 +115,7 @@ export function MySettingsPage() {
     if (!spkOk) setSpeakerId("");
     if (!ringOk) setRingId("");
     localStorage.setItem(DEVICE_KEY, JSON.stringify(next));
+    void phoneState?.phone.loadPreferredDevices();
     toast.success("Audio devices saved");
   }
 
@@ -121,6 +124,18 @@ export function MySettingsPage() {
     onSuccess: () => {
       toast.success("OK");
       setPassword("");
+      const live = phoneState?.phone;
+      if (!live || phoneState?.inCall) return;
+      void api
+        .get<{
+          extension: string;
+          password: string;
+          domain: string;
+          websocketUrl?: string;
+          displayName: string;
+        }>("/api/v1/me/sip-credentials")
+        .then((creds) => live.connect(creds))
+        .catch((e: Error) => toast.error(e.message));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -196,6 +211,7 @@ export function MySettingsPage() {
             try {
               await api.put("/api/v1/me/dnd", { dnd: next });
               setDnd(next);
+              void qc.invalidateQueries({ queryKey: ["me"] });
             } catch (e) {
               // Keep showing the server's truth and surface the failure rather
               // than leaving an unhandled rejection in the console.

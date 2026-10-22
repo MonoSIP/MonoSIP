@@ -1132,6 +1132,7 @@ describe("PortalLayout", () => {
           { id: "m1", status: "pending" },
           { id: "m2", status: "returned" },
           { id: "m3", status: "pending" },
+          { id: "m4", status: "pending", seen: true },
         ];
       }
       return [];

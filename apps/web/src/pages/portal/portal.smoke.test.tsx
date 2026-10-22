@@ -11,12 +11,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const get = vi.fn();
+const post = vi.fn(async () => ({}));
 const navigate = vi.fn();
 
 vi.mock("../../lib/api", () => ({
   api: {
     get: (...a: unknown[]) => get(...a),
-    post: vi.fn(async () => ({})),
+    post: (...a: unknown[]) => post(...a),
     put: vi.fn(async () => ({})),
     patch: vi.fn(async () => ({})),
     del: vi.fn(async () => ({})),
@@ -126,6 +127,9 @@ describe("portal smoke tests", () => {
     await userEvent.click(screen.getByRole("button", { name: "Missed" }));
     expect(await screen.findByText("Pending missed")).toBeInTheDocument();
     expect(screen.getByText("3333")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/v1/me/missed-calls/seen"),
+    );
   });
 
   it("MyCallsPage shows an empty state when there are no calls", async () => {

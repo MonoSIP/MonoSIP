@@ -384,6 +384,8 @@ export const missedCalls = pgTable("missed_calls", {
   at: timestamp("at", { withTimezone: true }).defaultNow().notNull(),
   status: varchar("status", { length: 20 }).notNull().default("pending"),
   callbackCallId: varchar("callback_call_id", { length: 64 }),
+  // Menu badge counts pending rows until the extension opens Missed.
+  seen: boolean("seen").notNull().default(false),
 });
 
 export const voicemails = pgTable("voicemails", {

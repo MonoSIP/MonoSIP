@@ -36,6 +36,11 @@ export function usePhone(): PhoneState {
   return ctx;
 }
 
+/** Settings pages render in tests without the portal phone. */
+export function usePhoneOptional(): PhoneState | null {
+  return useContext(PhoneCtx);
+}
+
 export function formatCallTime(totalSec: number): string {
   const s = Math.max(0, Math.floor(totalSec));
   return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;

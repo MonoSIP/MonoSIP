@@ -56,10 +56,10 @@ function PortalChrome() {
   const missed = useQuery({
     queryKey: ["my-missed"],
     queryFn: async () =>
-      (await api.get<Array<{ status: string }>>("/api/v1/me/missed-calls")) ?? [],
+      (await api.get<Array<{ status: string; seen?: boolean }>>("/api/v1/me/missed-calls")) ?? [],
   });
   const unreadVm = (mailbox.data ?? []).filter((row) => !row.read).length;
-  const missedN = (missed.data ?? []).filter((row) => row.status === "pending").length;
+  const missedN = (missed.data ?? []).filter((row) => row.status === "pending" && !row.seen).length;
 
   function menuCount(key: string): number {
     if (key === "voicemail") return unreadVm;
@@ -92,8 +92,8 @@ function PortalChrome() {
             >
               <span className="nav-ico">
                 <l.icon size={16} strokeWidth={2.25} />
+                {l.key === "phone" ? <RegDot on={registered} label={t(registered ? "portal.registered" : "portal.unregistered")} /> : null}
               </span>
-              {l.key === "phone" ? <RegDot on={registered} label={t(registered ? "portal.registered" : "portal.unregistered")} /> : null}
               <span className="min-w-0 flex-1 truncate">{t(`nav.${l.key}`)}</span>
               {menuCount(l.key) > 0 ? (
                 <span className={`nav-badge ${l.key === "voicemail" ? "is-vm" : "is-missed"}`}>
