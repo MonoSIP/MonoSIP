@@ -145,9 +145,8 @@ describe("PhonePage softphone lifecycle", () => {
 
     // The page catches and surfaces it rather than leaving an unhandled rejection.
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("no creds"));
-    // The status line shows the generic fallback: the handler sets status but
-    // not `detail`, so the server message only reaches the toast.
-    expect(await screen.findByText("Error")).toBeInTheDocument();
+    // The status line shows the phone as unregistered. The server message only reaches the toast.
+    expect(await screen.findByText("portal.unregistered")).toBeInTheDocument();
   });
 
   it("follows the softphone status callback", async () => {

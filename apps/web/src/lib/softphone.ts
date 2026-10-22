@@ -66,6 +66,22 @@ export class Softphone {
   private ua: UserAgent | null = null;
   private registerer: Registerer | null = null;
   private intentionalStop = false;
+  /** Bumped when the user leaves, so an in-flight reconnect does not start again. */
+  private epoch = 0;
+  private recovering = false;
+  private reconnectAttempt = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private probeTimer: ReturnType<typeof setTimeout> | null = null;
+  private probeWaitTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Invalidates registerer listeners left behind by a dropped connection. */
+  private link = 0;
+  private connectOpts: {
+    extension: string;
+    password: string;
+    domain: string;
+    websocketUrl?: string;
+    displayName: string;
+  } | null = null;
   private callStartedAt: number | null = null;
   private callPeer = "";
   private mediaWatchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -397,15 +413,26 @@ export class Softphone {
     applyStream();
   }
 
-  async connect(opts: {
-    extension: string;
-    password: string;
-    domain: string;
-    websocketUrl?: string;
-    displayName: string;
-  }) {
+  async connect(
+    opts: {
+      extension: string;
+      password: string;
+      domain: string;
+      websocketUrl?: string;
+      displayName: string;
+    },
+    throwOnFail = true,
+  ) {
+    const epoch = this.epoch;
+    this.link += 1;
+    this.connectOpts = opts;
+    // disconnect() raises intentionalStop so the old socket's close is ignored.
+    // The new session must lower it again, or a later PBX reboot stays "registered".
+    this.intentionalStop = true;
+    this.clearLinkTimers();
+    await this.tearDown({ unregister: true, silent: true });
+    if (this.epoch !== epoch) return;
     this.intentionalStop = false;
-    await this.disconnect(true);
     this.setStatus("connecting");
 
     // Vault/NineDeploy often leaves SIP domain as localhost — use the page host.
@@ -493,27 +520,34 @@ export class Softphone {
     };
 
     this.ua.transport.stateChange.addListener((state) => {
-      if (state === TransportState.Disconnected && !this.intentionalStop) {
-        this.setStatus("error", "Transport disconnected");
-      }
+      if (state === TransportState.Disconnected) this.onTransportLost();
     });
 
     try {
       await this.ua.start();
-      this.registerer = new Registerer(this.ua, { expires: 300 });
+      if (this.epoch !== epoch || this.intentionalStop) return;
+      const link = this.link;
+      this.registerer = new Registerer(this.ua, { expires: 90 });
       this.registerer.stateChange.addListener((state) => {
-        if (state === RegistererState.Registered) this.setStatus("registered");
-        if (state === RegistererState.Unregistered && !this.intentionalStop) {
-          this.setStatus("idle");
+        if (this.link !== link) return;
+        if (state === RegistererState.Registered) {
+          this.reconnectAttempt = 0;
+          this.setStatus("registered");
+          this.armProbe();
         }
+        if (state === RegistererState.Unregistered) this.onTransportLost();
       });
       await this.registerer.register();
       if (this.registerer.state === RegistererState.Registered) {
+        this.reconnectAttempt = 0;
         this.setStatus("registered");
+        this.armProbe();
       }
     } catch (e) {
-      if (this.intentionalStop) return;
+      if (this.intentionalStop || this.epoch !== epoch) return;
       this.setStatus("error");
+      this.scheduleReconnect();
+      if (!throwOnFail) return;
       const msg = (e as Error).message || String(e);
       if (msg.includes("1006") || msg.includes("WebSocket closed")) {
         throw new Error(
@@ -1080,11 +1114,131 @@ export class Softphone {
     this.onStatus?.(s, detail);
   }
 
-  async disconnect(silent = false) {
-    this.intentionalStop = true;
+  /** Socket closed, REGISTER failed, or a keepalive REGISTER never answered. */
+  private onTransportLost() {
+    if (this.intentionalStop || this.recovering || !this.connectOpts) return;
+    void this.loseLink();
+  }
+
+  private loseLink(): Promise<void> {
+    if (this.intentionalStop || this.recovering || !this.connectOpts) return Promise.resolve();
+    this.recovering = true;
+    this.link += 1;
+    this.clearLinkTimers();
+    this.setStatus("error");
+    this.dropDeadCall();
+    const epoch = this.epoch;
+    return this.tearDown({ unregister: false, silent: true }).finally(() => {
+      this.recovering = false;
+      if (this.epoch !== epoch || this.intentionalStop) return;
+      this.scheduleReconnect();
+    });
+  }
+
+  /** Ask the registrar again. A reboot leaves the websocket open and the old registration green. */
+  private armProbe() {
+    this.clearProbe();
+    if (this.intentionalStop || !this.registerer) return;
+    this.probeTimer = setTimeout(() => void this.probeRegistration(), 20_000);
+  }
+
+  private async probeRegistration() {
+    this.probeTimer = null;
+    const reg = this.registerer;
+    if (this.intentionalStop || this.recovering || this.status !== "registered" || !reg) return;
+    let settled = false;
+    this.probeWaitTimer = setTimeout(() => {
+      this.probeWaitTimer = null;
+      if (settled) return;
+      settled = true;
+      this.onTransportLost();
+    }, 10_000);
+    const finish = (again: boolean) => {
+      if (settled) return;
+      settled = true;
+      if (this.probeWaitTimer) clearTimeout(this.probeWaitTimer);
+      this.probeWaitTimer = null;
+      if (again) this.armProbe();
+    };
+    try {
+      await reg.register({
+        requestDelegate: {
+          onAccept: () => finish(true),
+          onReject: () => finish(false),
+        },
+      });
+    } catch {
+      finish(true);
+    }
+  }
+
+  private scheduleReconnect() {
+    if (this.intentionalStop || !this.connectOpts) return;
+    this.clearReconnect();
+    const delay = Math.min(15_000, 2_000 * 2 ** Math.min(this.reconnectAttempt, 3));
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.tryReconnect();
+    }, delay);
+  }
+
+  private async tryReconnect() {
+    if (this.intentionalStop || !this.connectOpts) return;
+    this.reconnectAttempt += 1;
+    try {
+      await this.connect(this.connectOpts, false);
+    } catch {
+      /* connect() already scheduled the next attempt */
+    }
+  }
+
+  private clearProbe() {
+    if (this.probeTimer) clearTimeout(this.probeTimer);
+    this.probeTimer = null;
+    if (this.probeWaitTimer) clearTimeout(this.probeWaitTimer);
+    this.probeWaitTimer = null;
+  }
+
+  private clearReconnect() {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+  }
+
+  private clearLinkTimers() {
+    this.clearProbe();
+    this.clearReconnect();
+  }
+
+  /** The PBX is gone, so end the call locally instead of waiting on a BYE. */
+  private dropDeadCall() {
+    if (this.callPhase === "idle" && !this.session) return;
+    this.stopLocalRingback();
+    this.clearMediaWatch();
+    const seconds = this.callStartedAt
+      ? Math.max(0, Math.floor((Date.now() - this.callStartedAt) / 1000))
+      : 0;
+    const peer = this.callPeer;
+    const live = this.callPhase !== "idle" && this.callPhase !== "ended";
+    this.session = null;
+    this.callStartedAt = null;
+    this.callPeer = "";
+    this.rtpWarned = false;
+    this.remoteAudio.srcObject = null;
+    if (!live) {
+      this.onSession?.(null);
+      return;
+    }
+    this.setCallPhase("ended", { seconds, peer, reason: "remote" });
+    this.onSession?.(null);
+    setTimeout(() => {
+      if (this.callPhase === "ended") this.setCallPhase("idle");
+    }, 2500);
+  }
+
+  private async tearDown(opts: { unregister: boolean; silent: boolean }) {
     this.stopLocalRingback();
     try {
-      if (this.registerer) {
+      if (opts.unregister && this.registerer) {
         try {
           await this.registerer.unregister();
         } catch {
@@ -1102,7 +1256,15 @@ export class Softphone {
       this.registerer = null;
       this.ua = null;
       this.session = null;
-      if (!silent) this.setStatus("idle");
+      if (!opts.silent) this.setStatus("idle");
     }
+  }
+
+  async disconnect(silent = false) {
+    this.epoch += 1;
+    this.link += 1;
+    this.intentionalStop = true;
+    this.clearLinkTimers();
+    await this.tearDown({ unregister: true, silent });
   }
 }

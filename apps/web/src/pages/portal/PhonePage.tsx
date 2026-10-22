@@ -54,7 +54,7 @@ export function PhonePage() {
   const [params] = useSearchParams();
   // The softphone lives in the portal layout (lib/phone-context): leaving this
   // page keeps the registration and any call up.
-  const { phone, status, detail, domain, inCall, callPhase, callSeconds, peer, muted, held, noRtp, setMuted, setHeld, resetCall } =
+  const { phone, status, domain, inCall, callPhase, callSeconds, peer, muted, held, noRtp, setMuted, setHeld, resetCall } =
     usePhone();
   const [digits, setDigits] = useState("");
   const [dnd, setDnd] = useState(false);
@@ -173,9 +173,7 @@ export function PhonePage() {
       ? t("portal.registered")
       : status === "connecting"
         ? t("portal.connecting")
-        : status === "error"
-          ? detail || "Error"
-          : t("portal.unregistered");
+        : t("portal.unregistered");
   const shownPeer = peer || digits;
   const avatarLabel = shownPeer ? (shownPeer.length <= 4 ? shownPeer : shownPeer.slice(-2)) : "?";
 

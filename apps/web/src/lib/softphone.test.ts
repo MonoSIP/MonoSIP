@@ -278,6 +278,68 @@ describe("sendDtmf", () => {
   });
 });
 
+describe("lost registration", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function armedPhone() {
+    const sp = new Softphone();
+    const connect = vi.spyOn(sp, "connect").mockResolvedValue(undefined);
+    const internal = sp as unknown as {
+      intentionalStop: boolean;
+      connectOpts: { extension: string; password: string; domain: string; displayName: string };
+      ua: { stop: ReturnType<typeof vi.fn> };
+      registerer: { unregister: ReturnType<typeof vi.fn>; register?: ReturnType<typeof vi.fn> };
+      onTransportLost: () => void;
+      probeRegistration: () => Promise<void>;
+    };
+    internal.intentionalStop = false;
+    internal.connectOpts = { extension: "101", password: "pw", domain: "sip.example", displayName: "Ali" };
+    internal.ua = { stop: vi.fn(async () => {}) };
+    internal.registerer = { unregister: vi.fn(async () => {}) };
+    sp.status = "registered";
+    return { sp, connect, internal };
+  }
+
+  it("shows disconnected and dials again after the socket drops", async () => {
+    vi.useFakeTimers();
+    const { sp, connect, internal } = armedPhone();
+    const onStatus = vi.fn();
+    sp.onStatus = onStatus;
+
+    internal.onTransportLost();
+
+    expect(sp.status).toBe("error");
+    expect(onStatus).toHaveBeenCalledWith("error", undefined);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(connect).toHaveBeenCalledWith(internal.connectOpts, false);
+  });
+
+  it("leaves a stopping phone alone when the socket drops", () => {
+    const { sp, connect, internal } = armedPhone();
+    internal.intentionalStop = true;
+
+    internal.onTransportLost();
+
+    expect(sp.status).toBe("registered");
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it("reconnects when a registration check gets no answer", async () => {
+    vi.useFakeTimers();
+    const { sp, connect, internal } = armedPhone();
+    internal.registerer.register = vi.fn(async () => {});
+
+    await internal.probeRegistration();
+    expect(sp.status).toBe("registered");
+
+    await vi.advanceTimersByTimeAsync(12_000);
+    expect(sp.status).toBe("error");
+    expect(connect).toHaveBeenCalledWith(internal.connectOpts, false);
+  });
+});
+
 describe("disconnect", () => {
   it("clears transport state and reports idle", async () => {
     const sp = new Softphone();
