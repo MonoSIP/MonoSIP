@@ -207,6 +207,8 @@
   "settings": {
     "title": "Ayarlar",
     "company": "Şirket adı",
+    "queueLanguage": "Kuyruk dili",
+    "queueLanguageHint": "Kuyrukta bekleyen arayanın duyduğu anonsların dili.",
     "retention": "Kayıt saklama (ay)",
     "countries": "İzinli ülkeler",
     "backup": "Yedek indir",

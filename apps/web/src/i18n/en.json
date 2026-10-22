@@ -207,6 +207,8 @@
   "settings": {
     "title": "Settings",
     "company": "Company name",
+    "queueLanguage": "Queue language",
+    "queueLanguageHint": "Language of the announcements a caller hears while waiting in a queue.",
     "retention": "Recording retention (months)",
     "countries": "Allowed countries",
     "backup": "Download backup",

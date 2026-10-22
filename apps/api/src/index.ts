@@ -5,7 +5,7 @@ import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
 import { existsSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { chmod, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
@@ -21,6 +21,8 @@ import { asteriskWsProxyRoutes } from "./routes/asterisk-ws-proxy.js";
 
 async function main() {
   await mkdir(config.recordingsDir, { recursive: true });
+  // umask 0077 would leave this 0700, and MixMonitor then cannot store the wav.
+  await chmod(config.recordingsDir, 0o777).catch(() => undefined);
   await mkdir(config.uploadsDir, { recursive: true });
   await mkdir(config.asterisk.configDir, { recursive: true });
   await mkdir(path.join(config.asterisk.configDir, "voicemail"), { recursive: true });

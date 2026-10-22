@@ -181,6 +181,17 @@ describe("QueuesPage", () => {
     // The loaded queue values round-trip through the edit payload.
     expect(apiPatch.mock.calls[0]![1]).toMatchObject({ name: "Sales", number: "800" });
   });
+
+  it("deletes a queue from its row", async () => {
+    seedQueues();
+    apiDelete.mockResolvedValue({});
+    renderPage(<QueuesPage />);
+
+    const row = (await screen.findByText("Sales")).closest("tr") as HTMLElement;
+    await userEvent.click(within(row).getByRole("button", { name: "common.delete" }));
+
+    await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/queues/q1"));
+  });
 });
 
 describe("SchedulesPage", () => {
@@ -289,6 +300,7 @@ describe("SettingsPage", () => {
     expect(path).toBe("/api/v1/admin/settings");
     // Seeded from the GET response, then round-tripped by the save.
     expect(payload.companyName).toBe("MunaSIP");
+    expect(payload.defaultLocale).toBe("en");
     expect(payload).toHaveProperty("recordingRetentionMonths");
     expect(toastSuccess).toHaveBeenCalledWith("Saved");
   });
@@ -449,6 +461,16 @@ describe("IntegrationsPage", () => {
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     expect(apiPost.mock.calls[0]![0]).toBe("/api/v1/admin/webhooks");
+  });
+
+  it("deletes a webhook from its row", async () => {
+    apiDelete.mockResolvedValue({});
+    renderPage(<IntegrationsPage />);
+
+    const row = (await screen.findByText("https://x.test/hook")).closest("li") as HTMLElement;
+    await userEvent.click(within(row).getByRole("button", { name: "common.delete" }));
+
+    await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/webhooks/w1"));
   });
 
   it("deletes an API key from its row", async () => {

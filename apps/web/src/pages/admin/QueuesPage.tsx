@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Headphones, ListOrdered, Pencil, Plus } from "lucide-react";
+import { Headphones, ListOrdered, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
@@ -118,6 +118,15 @@ export function QueuesPage() {
       void qc.invalidateQueries({ queryKey: ["queues"] });
       toast.success(tr("Queue updated"));
     },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/v1/admin/queues/${id}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["queues"] });
+      toast.success(tr("Queue deleted"));
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   function resetForm() {
@@ -474,6 +483,12 @@ export function QueuesPage() {
                 <td>{q.callbackEnabled ? "on" : "off"}</td>
                 <td className="col-actions">
                   <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(q)} />
+                  <IconBtn
+                    icon={Trash2}
+                    label={t("common.delete")}
+                    danger
+                    onClick={() => remove.mutate(q.id)}
+                  />
                 </td>
               </tr>
             ))}

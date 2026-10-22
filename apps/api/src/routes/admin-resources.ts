@@ -599,6 +599,16 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     return row;
   });
 
+  app.delete("/api/v1/admin/flows/:id", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { id } = req.params as { id: string };
+    const [row] = await db.select().from(flows).where(eq(flows.id, id)).limit(1);
+    if (!row) return reply.code(404).send({ error: "Not found" });
+    await db.delete(flows).where(eq(flows.id, id));
+    if (row.extensionNumber) await tryReloadAsterisk();
+    return { ok: true };
+  });
+
   app.get("/api/v1/admin/flows/:id/draft", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const { id } = req.params as { id: string };
@@ -1313,6 +1323,21 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     ari.setExtensionState(ext.number, body.dnd ? "dnd" : "idle");
     void tryReloadAsterisk();
     return { ok: true, extension: ext.number, dnd: body.dnd };
+  });
+
+  /** Dialplan gate: 1 when this number is blacklisted for the direction, else 0. */
+  app.post("/api/v1/internal/blacklist", async (req, reply) => {
+    const { requireInternalSecret } = await import("../lib/internal-auth.js");
+    if (!requireInternalSecret(req, reply)) return;
+    const body = z
+      .object({
+        number: z.string().optional().default(""),
+        direction: z.enum(["inbound", "outbound"]),
+      })
+      .parse(req.body);
+    const { isBlacklisted } = await import("../asterisk/routing.js");
+    const blocked = body.number ? await isBlacklisted(body.number, body.direction) : false;
+    return reply.type("text/plain; charset=utf-8").send(blocked ? "1" : "0");
   });
 
   /** Dialplan NOANSWER → missed + optional SMTP */
@@ -2120,6 +2145,13 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       .values({ ...body, secret: randomSecret(24) })
       .returning();
     return row;
+  });
+
+  app.delete("/api/v1/admin/webhooks/:id", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { id } = req.params as { id: string };
+    await db.delete(webhooks).where(eq(webhooks.id, id));
+    return { ok: true };
   });
 
   app.get("/api/v1/admin/api-keys", async (req, reply) => {

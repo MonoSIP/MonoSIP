@@ -10,7 +10,7 @@ import {
 } from "../test/helpers.js";
 
 /**
- * Authorization contract for routes/admin-resources.ts — 107 routes spanning
+ * Authorization contract for routes/admin-resources.ts — 108 routes spanning
  * trunks, dialplan routes, queues, schedules, flows, prompts, recordings, CDR,
  * reports, secrets, API keys and audit.
  *
@@ -80,6 +80,7 @@ const ADMIN_ROUTES: Array<[string, string]> = [
 ["GET", "/api/v1/admin/flows"],
 ["POST", "/api/v1/admin/flows"],
 ["PATCH", "/api/v1/admin/flows/11111111-1111-1111-1111-111111111111"],
+["DELETE", "/api/v1/admin/flows/11111111-1111-1111-1111-111111111111"],
 ["GET", "/api/v1/admin/flows/11111111-1111-1111-1111-111111111111/draft"],
 ["PUT", "/api/v1/admin/flows/11111111-1111-1111-1111-111111111111/draft"],
 ["POST", "/api/v1/admin/flows/11111111-1111-1111-1111-111111111111/validate"],
@@ -126,6 +127,7 @@ const ADMIN_ROUTES: Array<[string, string]> = [
 ["DELETE", "/api/v1/admin/secrets/11111111-1111-1111-1111-111111111111"],
 ["GET", "/api/v1/admin/webhooks"],
 ["POST", "/api/v1/admin/webhooks"],
+["DELETE", "/api/v1/admin/webhooks/11111111-1111-1111-1111-111111111111"],
 ["GET", "/api/v1/admin/api-keys"],
 ["POST", "/api/v1/admin/api-keys"],
 ["PATCH", "/api/v1/admin/api-keys/11111111-1111-1111-1111-111111111111"],
@@ -154,7 +156,8 @@ const INTERNAL_ROUTES: Array<[string, string]> = [
 ["POST", "/api/v1/internal/recording"],
 ["POST", "/api/v1/internal/dnd"],
 ["POST", "/api/v1/internal/missed"],
-["POST", "/api/v1/internal/voicemail"]
+["POST", "/api/v1/internal/voicemail"],
+["POST", "/api/v1/internal/blacklist"]
 ];
 
 describe("admin resource routes reject unauthenticated callers", () => {

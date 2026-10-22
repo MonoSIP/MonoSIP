@@ -314,6 +314,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
   // create the wav. It returns at once and the dialplan hangs up — the caller
   // hears the beep and the call ends. 0777 lets the Asterisk user write here.
   await chmod(voicemailDir(), 0o777).catch(() => undefined);
+  await ensureDir(config.recordingsDir);
+  await chmod(config.recordingsDir, 0o777).catch(() => undefined);
 
   const exts = await db.select().from(extensions);
   const trks = await db.select().from(trunks).where(eq(trunks.enabled, true));
@@ -737,6 +739,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     if (!/^\d{2,8}$/.test(num)) continue;
     extensionsConf.push(
       `exten => ${num},1,NoOp(Flow ${f.name})`,
+      " same => n,Gosub(munasip-blacklist,s,1)",
       ` same => n,Stasis(munasip-flow,${f.id})`,
       ` same => n,Hangup()`,
       "",
@@ -777,32 +780,50 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "recording",
       `{"callId":"\${UNIQUEID}","file":"/data/recordings/\${UNIQUEID}-${ext.number}.wav","extension":"${ext.number}","duration":\${MUNASIP_BILL}}`,
     );
-    // on_demand: no auto MixMonitor (feature code / future); always|external record
-    const wantRec = ext.recordingMode === "always" || ext.recordingMode === "external";
-    const kvkkLines =
-      wantRec && kvkkEnabled
-        ? [
-            ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?kvkkdone)`,
-            ` same => n,Set(__KVKK_DONE=1)`,
-            kvkkPlaybackLine(kvkkPromptId),
-            ` same => n(kvkkdone),NoOp(KVKK)`,
-          ]
-        : [];
-    const rec = wantRec
+    // on_demand / off / never: no auto MixMonitor. always and external record.
+    // A call between extensions is kept when either side is set to record.
+    const records = (mode?: string | null) => mode === "always" || mode === "external";
+    const calleeRec = records(ext.recordingMode);
+    const callerRecCond = exts
+      .filter((e) => e.number !== ext.number && records(e.recordingMode))
+      .map((e) => e.number)
+      .filter((n) => /^\d+$/.test(n))
+      .map((n) => `"\${CALLERID(num)}" = "${n}"`)
+      .join(" | ");
+    const kvkkLines = kvkkEnabled
       ? [
-          ` same => n,Set(MUNASIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
-          ` same => n,MixMonitor(${recFile})`,
+          ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?kvkkdone)`,
+          ` same => n,Set(__KVKK_DONE=1)`,
+          kvkkPlaybackLine(kvkkPromptId),
+          ` same => n(kvkkdone),NoOp(KVKK)`,
         ]
       : [];
+    const recLines = [
+      ` same => n,Set(MUNASIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
+      ` same => n,MixMonitor(${recFile})`,
+    ];
 
     extensionsConf.push(
       `exten => ${ext.number},hint,PJSIP/${ext.number}`,
       `exten => ${ext.number},1,NoOp(Dial ${ext.number})`,
+      // Caller and dialed number, including extension-to-extension.
+      " same => n,Gosub(munasip-blacklist,s,1)",
       // DND → treat as BUSY (honor busy/noanswer forwarding)
       ` same => n,GotoIf($["\${DB(DND/${ext.number})}" = "1"]?dndbusy)`,
     );
-    extensionsConf.push(...kvkkLines);
-    extensionsConf.push(...rec);
+    if (calleeRec) {
+      extensionsConf.push(...kvkkLines, ...recLines);
+    } else if (callerRecCond) {
+      // Callee is not recorded on its own. The calling extension still keeps the conversation.
+      extensionsConf.push(
+        ` same => n,GotoIf($[${callerRecCond}]?rec)`,
+        ` same => n,Goto(norec)`,
+        ` same => n(rec),NoOp(Record internal call to ${ext.number})`,
+        ...kvkkLines,
+        ...recLines,
+        ` same => n(norec),NoOp(Recording off)`,
+      );
+    }
     if (alwaysExternal) {
       extensionsConf.push(
         ` same => n,Stasis(munasip-outbound,${alwaysExternal})`,
@@ -827,13 +848,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ...qosPrepLines(),
         // Ring time before answer (DIALEDTIME includes talk time)
         ` same => n,Set(MUNASIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${MUNASIP_DUR} - \${MUNASIP_BILL}]:)})`,
-        ...(rec.length
-          ? [
-              ` same => n,StopMixMonitor()`,
-              ` same => n,${recRegister}`,
-              ` same => n,Set(MUNASIP_REC_DONE=1)`,
-            ]
-          : []),
+        ` same => n,GotoIf($["\${MUNASIP_RECFILE}" = ""]?skiprec)`,
+        ` same => n,StopMixMonitor()`,
+        ` same => n,${recRegister}`,
+        ` same => n,Set(MUNASIP_REC_DONE=1)`,
+        ` same => n(skiprec),NoOp(Recording)`,
         ` same => n,${cdrPost}`,
         ` same => n,Set(MUNASIP_CDR_DONE=1)`,
         // ANSWER: hang up cleanly. Failures jump to per-status forward/missed handlers.
@@ -870,7 +889,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
           ` same => n,Hangup()`,
           "",
         );
-      } else if (rule?.destType === "voicemail") {
+      } else if (!rule || rule.destType === "voicemail") {
+        // No saved row is voicemail, matching the portal form. A decline is BUSY;
+        // without this the caller is hung up whenever only no-answer was stored.
         // No answer still counts as missed, then the caller can leave a message.
         const lines = [`exten => s-${st}-${ext.number},1,NoOp(${st} voicemail ${ext.number})`];
         if (st === "NOANSWER") lines.push(...missedCurl);
@@ -995,6 +1016,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // Ring one-by-one until answer
       const lines = [
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name} linear)`,
+        " same => n,Gosub(munasip-blacklist,s,1)",
       ];
       for (const e of members) {
         lines.push(` same => n,Dial(PJSIP/${e!.number},${rg.ringSeconds},tT)`);
@@ -1006,6 +1028,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       const dial = members.map((e) => `PJSIP/${e!.number}`).join("&");
       extensionsConf.push(
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name})`,
+        " same => n,Gosub(munasip-blacklist,s,1)",
         ` same => n,Dial(${dial},${rg.ringSeconds},tT)`,
         ` same => n,Hangup()`,
         "",
@@ -1062,6 +1085,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const mohName = moh.find((m) => m.id === q.mohId)?.name ?? "default";
     const queueHead = [
       `exten => ${q.number},1,NoOp(Queue ${q.name})`,
+      " same => n,Gosub(munasip-blacklist,s,1)",
       ` same => n,Answer()`,
       // Hangup handler `h` posts the CDR if the caller leaves before Queue() returns
       ` same => n,Set(MUNASIP_QUEUE=${q.number})`,
@@ -1158,6 +1182,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   extensionsConf.push(
     "exten => _X.,1,NoOp(Outbound ${EXTEN})",
+    " same => n,Gosub(munasip-blacklist,s,1)",
     " same => n,Stasis(munasip-outbound,${EXTEN})",
     " same => n,Hangup()",
     "",
@@ -1259,6 +1284,20 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `; outbound ${route.name} pattern=${route.pattern} trunks=${JSON.stringify(route.trunkIds)}`,
     );
   }
+
+  // Live check so a blacklist row applies on the next call, including internal dials.
+  extensionsConf.push(
+    "[munasip-blacklist]",
+    "exten => s,1,NoOp(Blacklist ${EXTEN} from ${CALLERID(num)})",
+    " same => n,Set(MUNASIP_BLCID=${CALLERID(num)})",
+    ` same => n,${internalPost("blacklist", '{"number":"\${EXTEN}","direction":"outbound"}')}`,
+    ` same => n,GotoIf($["\${MUNASIP_HOOK:0:1}" = "1"]?block)`,
+    ` same => n,${internalPost("blacklist", '{"number":"\${MUNASIP_BLCID}","direction":"inbound"}')}`,
+    ` same => n,GotoIf($["\${MUNASIP_HOOK:0:1}" = "1"]?block)`,
+    " same => n,Return()",
+    " same => n(block),Hangup(17)",
+    "",
+  );
 
   // MOH under shared munasip volume (API upload + Asterisk playback)
   const mohConf = ["; MunaSIP musiconhold — generated", ""];

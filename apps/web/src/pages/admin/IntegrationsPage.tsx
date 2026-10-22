@@ -144,23 +144,36 @@ export function IntegrationsPage() {
               className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm"
             >
               <span className="truncate">{w.url}</span>
-              <button
-                className="btn shrink-0"
-                type="button"
-                onClick={() =>
-                  void api
-                    .post<{ ok: boolean; status?: number; error?: string }>(
-                      `/api/v1/admin/webhooks/${w.id}/test`,
-                    )
-                    .then((r) =>
-                      toast[r.ok ? "success" : "error"](
-                        r.ok ? tr("Test OK ({{status}})", { status: r.status ?? "" }) : r.error ?? tr("Test failed"),
-                      ),
-                    )
-                }
-              >
-                {tr("Test")}
-              </button>
+              <span className="flex shrink-0 items-center gap-1">
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() =>
+                    void api
+                      .post<{ ok: boolean; status?: number; error?: string }>(
+                        `/api/v1/admin/webhooks/${w.id}/test`,
+                      )
+                      .then((r) =>
+                        toast[r.ok ? "success" : "error"](
+                          r.ok ? tr("Test OK ({{status}})", { status: r.status ?? "" }) : r.error ?? tr("Test failed"),
+                        ),
+                      )
+                  }
+                >
+                  {tr("Test")}
+                </button>
+                <IconBtn
+                  icon={Trash2}
+                  label={t("common.delete")}
+                  danger
+                  onClick={() =>
+                    void api.delete(`/api/v1/admin/webhooks/${w.id}`).then(() => {
+                      toast.success(tr("Webhook deleted"));
+                      void qc.invalidateQueries({ queryKey: ["webhooks"] });
+                    })
+                  }
+                />
+              </span>
             </li>
           ))}
         </ul>

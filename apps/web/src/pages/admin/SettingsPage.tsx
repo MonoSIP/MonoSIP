@@ -29,6 +29,7 @@ const SSL_STATUS_LABEL: Record<string, string> = {
 
 type Settings = {
   companyName?: string;
+  defaultLocale?: "en" | "tr";
   recordingRetentionMonths?: number;
   kvkkAnnouncementEnabled?: boolean;
   kvkkPromptId?: string | null;
@@ -87,6 +88,7 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [companyName, setCompanyName] = useState("MunaSIP");
+  const [defaultLocale, setDefaultLocale] = useState<"en" | "tr">("en");
   const [retention, setRetention] = useState(12);
   const [kvkk, setKvkk] = useState(true);
   const [kvkkPromptId, setKvkkPromptId] = useState("");
@@ -164,6 +166,7 @@ export function SettingsPage() {
   useEffect(() => {
     if (settings.data) {
       setCompanyName(settings.data.companyName ?? "MunaSIP");
+      setDefaultLocale(settings.data.defaultLocale === "tr" ? "tr" : "en");
       setRetention(settings.data.recordingRetentionMonths ?? 12);
       setKvkk(settings.data.kvkkAnnouncementEnabled ?? true);
       setKvkkPromptId(settings.data.kvkkPromptId ?? "");
@@ -207,6 +210,7 @@ export function SettingsPage() {
     mutationFn: () =>
       api.patch("/api/v1/admin/settings", {
         companyName,
+        defaultLocale,
         recordingRetentionMonths: retention,
         kvkkAnnouncementEnabled: kvkk,
         kvkkPromptId: kvkkPromptId || null,
@@ -376,6 +380,15 @@ export function SettingsPage() {
       </SectionCard>
       <SectionCard title={t("settings.company")} icon={Building2} tone="blue" className="space-y-4">
         <TextField label={t("settings.company")} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+        <SelectField
+          label={t("settings.queueLanguage")}
+          value={defaultLocale}
+          onChange={(e) => setDefaultLocale(e.target.value === "tr" ? "tr" : "en")}
+          hint={t("settings.queueLanguageHint")}
+        >
+          <option value="tr">Türkçe</option>
+          <option value="en">English</option>
+        </SelectField>
         <TextField
           label={t("settings.retention")}
           type="number"

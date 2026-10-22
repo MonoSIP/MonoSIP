@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { GitBranch, Hash, List, Tag } from "lucide-react";
+import { GitBranch, Hash, List, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 export function FlowsPage() {
@@ -36,6 +36,14 @@ export function FlowsPage() {
       setName("");
       setExt("");
       void qc.invalidateQueries({ queryKey: ["flows"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/api/v1/admin/flows/${id}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["flows"] });
+      toast.success(tr("Flow deleted"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -82,17 +90,25 @@ export function FlowsPage() {
       <SectionCard title={tr("All flows")} icon={List} tone="blue">
         <div className="grid gap-3">
           {list.data?.map((f) => (
-            <Link key={f.id} to={`/flows/${f.id}`} className="block rounded-lg border border-[var(--border)] p-4 transition hover:border-[var(--accent)]">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <div className="font-medium">{f.name}</div>
-                {f.extensionNumber && (
-                  <span className="font-mono text-sm text-[var(--accent)]">dial {f.extensionNumber}</span>
-                )}
-              </div>
-              <div className="text-sm text-[var(--text-muted)]">
-                {f.publishedVersionId ? "Published" : "Draft"} · {new Date(f.updatedAt).toLocaleString()}
-              </div>
-            </Link>
+            <div key={f.id} className="flex items-start gap-2 rounded-lg border border-[var(--border)] p-4 transition hover:border-[var(--accent)]">
+              <Link to={`/flows/${f.id}`} className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div className="font-medium">{f.name}</div>
+                  {f.extensionNumber && (
+                    <span className="font-mono text-sm text-[var(--accent)]">dial {f.extensionNumber}</span>
+                  )}
+                </div>
+                <div className="text-sm text-[var(--text-muted)]">
+                  {f.publishedVersionId ? "Published" : "Draft"} · {new Date(f.updatedAt).toLocaleString()}
+                </div>
+              </Link>
+              <IconBtn
+                icon={Trash2}
+                label={t("common.delete")}
+                danger
+                onClick={() => remove.mutate(f.id)}
+              />
+            </div>
           ))}
         </div>
       </SectionCard>
