@@ -27,7 +27,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build docs pages
         run: node scripts/build-site-docs.mjs
       - name: Push site/ to MunaSIP/munasip.github.io

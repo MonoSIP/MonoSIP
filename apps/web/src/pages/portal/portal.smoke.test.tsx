@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const get = vi.fn();
-const post = vi.fn(async () => ({}));
+const post = vi.fn(async (..._args: unknown[]) => ({}));
 const navigate = vi.fn();
 
 vi.mock("../../lib/api", () => ({
