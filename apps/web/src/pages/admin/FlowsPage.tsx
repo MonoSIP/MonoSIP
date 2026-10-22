@@ -56,6 +56,31 @@ export function FlowsPage() {
         tone="cyan"
         description={tr("Visual IVR flows — assign a dialable extension for softphone testing")}
       />
+      <SectionCard title={tr("All flows")} icon={List} tone="blue">
+        <div className="grid gap-3">
+          {list.data?.map((f) => (
+            <div key={f.id} className="flex items-start gap-2 rounded-lg border border-[var(--border)] p-4 transition hover:border-[var(--accent)]">
+              <Link to={`/flows/${f.id}`} className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div className="font-medium">{f.name}</div>
+                  {f.extensionNumber && (
+                    <span className="font-mono text-sm text-[var(--accent)]">dial {f.extensionNumber}</span>
+                  )}
+                </div>
+                <div className="text-sm text-[var(--text-muted)]">
+                  {f.publishedVersionId ? "Published" : "Draft"} · {new Date(f.updatedAt).toLocaleString()}
+                </div>
+              </Link>
+              <IconBtn
+                icon={Trash2}
+                label={t("common.delete")}
+                danger
+                onClick={() => remove.mutate(f.id)}
+              />
+            </div>
+          ))}
+        </div>
+      </SectionCard>
       <SectionCard title={t("common.create")} icon={GitBranch} tone="cyan">
         <form
           className="toolbar"
@@ -86,31 +111,6 @@ export function FlowsPage() {
             {t("common.create")}
           </button>
         </form>
-      </SectionCard>
-      <SectionCard title={tr("All flows")} icon={List} tone="blue">
-        <div className="grid gap-3">
-          {list.data?.map((f) => (
-            <div key={f.id} className="flex items-start gap-2 rounded-lg border border-[var(--border)] p-4 transition hover:border-[var(--accent)]">
-              <Link to={`/flows/${f.id}`} className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="font-medium">{f.name}</div>
-                  {f.extensionNumber && (
-                    <span className="font-mono text-sm text-[var(--accent)]">dial {f.extensionNumber}</span>
-                  )}
-                </div>
-                <div className="text-sm text-[var(--text-muted)]">
-                  {f.publishedVersionId ? "Published" : "Draft"} · {new Date(f.updatedAt).toLocaleString()}
-                </div>
-              </Link>
-              <IconBtn
-                icon={Trash2}
-                label={t("common.delete")}
-                danger
-                onClick={() => remove.mutate(f.id)}
-              />
-            </div>
-          ))}
-        </div>
       </SectionCard>
     </div>
   );

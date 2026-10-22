@@ -119,25 +119,7 @@ export function IntegrationsPage() {
         description={tr("Webhooks, API keys, and website call widgets")}
       />
       <SectionCard title={tr("Webhooks")} icon={Webhook} tone="coral">
-        <form
-          className="toolbar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            addHook.mutate();
-          }}
-        >
-          <TextField
-            className="min-w-[16rem] flex-1"
-            label={tr("Webhook URL")}
-            icon={Webhook}
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <button className="btn btn-primary" type="submit">
-            {t("common.create")}
-          </button>
-        </form>
-        <ul className="space-y-2">
+        <ul className="mb-4 space-y-2">
           {webhooks.data?.map((w) => (
             <li
               key={w.id}
@@ -177,11 +159,66 @@ export function IntegrationsPage() {
             </li>
           ))}
         </ul>
+        <form
+          className="toolbar"
+          onSubmit={(e) => {
+            e.preventDefault();
+            addHook.mutate();
+          }}
+        >
+          <TextField
+            className="min-w-[16rem] flex-1"
+            label={tr("Webhook URL")}
+            icon={Webhook}
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button className="btn btn-primary" type="submit">
+            {t("common.create")}
+          </button>
+        </form>
       </SectionCard>
       <SectionCard title={tr("Website call widgets")} icon={Globe} tone="cyan">
         <p className="text-sm text-[var(--text-muted)]">
           {tr("Embed a “Call us” button on any site. Visitors talk over WebRTC or leave a number for call-back.")}
         </p>
+        <ul className="mb-4 space-y-3">
+          {(widgets.data ?? []).map((w) => {
+            const embed = `<script src="${window.location.origin}/widget.js" data-widget="${w.publicKey}" async></script>`;
+            return (
+              <li key={w.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <span>
+                    <strong>{w.name}</strong> {tr("· DID")} {w.number} ·{" "}
+                    <span className="font-mono text-[var(--text-muted)]">{w.publicKey}</span>
+                    {!w.enabled ? " (disabled)" : ""}
+                  </span>
+                  <IconBtn
+                    icon={Trash2}
+                    label={tr("Delete")}
+                    danger
+                    onClick={() =>
+                      void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
+                        toast.message(tr("Widget deleted"));
+                        void qc.invalidateQueries({ queryKey: ["widgets"] });
+                      })
+                    }
+                  />
+                </div>
+                <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">{embed}</code>
+                <IconBtn
+                  className="mt-2"
+                  icon={Copy}
+                  label={tr("Copy embed")}
+                  onClick={() => {
+                    void navigator.clipboard.writeText(embed);
+                    toast.success(tr("Embed code copied"));
+                  }}
+                />
+              </li>
+            );
+          })}
+        </ul>
         <form
           className="grid gap-2 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -228,72 +265,9 @@ export function IntegrationsPage() {
             {tr("Create widget")}
           </button>
         </form>
-        <ul className="space-y-3">
-          {(widgets.data ?? []).map((w) => {
-            const embed = `<script src="${window.location.origin}/widget.js" data-widget="${w.publicKey}" async></script>`;
-            return (
-              <li key={w.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    <strong>{w.name}</strong> {tr("· DID")} {w.number} ·{" "}
-                    <span className="font-mono text-[var(--text-muted)]">{w.publicKey}</span>
-                    {!w.enabled ? " (disabled)" : ""}
-                  </span>
-                  <IconBtn
-                    icon={Trash2}
-                    label={tr("Delete")}
-                    danger
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
-                        toast.message(tr("Widget deleted"));
-                        void qc.invalidateQueries({ queryKey: ["widgets"] });
-                      })
-                    }
-                  />
-                </div>
-                <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">{embed}</code>
-                <IconBtn
-                  className="mt-2"
-                  icon={Copy}
-                  label={tr("Copy embed")}
-                  onClick={() => {
-                    void navigator.clipboard.writeText(embed);
-                    toast.success(tr("Embed code copied"));
-                  }}
-                />
-              </li>
-            );
-          })}
-        </ul>
       </SectionCard>
       <SectionCard title={tr("API keys")} icon={KeyRound} tone="blue">
-        <form
-          className="flex flex-wrap gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            addKey.mutate();
-          }}
-        >
-          <TextField
-            className="max-w-xs"
-            label={tr("Key name")}
-            icon={KeyRound}
-            value={keyName}
-            onChange={(e) => setKeyName(e.target.value)}
-          />
-          <div className="flex flex-wrap items-center gap-2 self-end text-sm">
-            {ALL_PERMS.map((p) => (
-              <label key={p} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1">
-                <input type="checkbox" checked={perms.includes(p)} onChange={() => togglePerm(p)} />
-                {p}
-              </label>
-            ))}
-          </div>
-          <button className="btn btn-primary self-end" type="submit">
-            {t("common.create")}
-          </button>
-        </form>
-        <ul className="space-y-3">
+        <ul className="mb-4 space-y-3">
           {keys.data?.map((k) => {
             const kp = (k.permissions ?? []) as string[];
             return (
@@ -332,6 +306,32 @@ export function IntegrationsPage() {
             );
           })}
         </ul>
+        <form
+          className="flex flex-wrap gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            addKey.mutate();
+          }}
+        >
+          <TextField
+            className="max-w-xs"
+            label={tr("Key name")}
+            icon={KeyRound}
+            value={keyName}
+            onChange={(e) => setKeyName(e.target.value)}
+          />
+          <div className="flex flex-wrap items-center gap-2 self-end text-sm">
+            {ALL_PERMS.map((p) => (
+              <label key={p} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1">
+                <input type="checkbox" checked={perms.includes(p)} onChange={() => togglePerm(p)} />
+                {p}
+              </label>
+            ))}
+          </div>
+          <button className="btn btn-primary self-end" type="submit">
+            {t("common.create")}
+          </button>
+        </form>
       </SectionCard>
     </div>
   );

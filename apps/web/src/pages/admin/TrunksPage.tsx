@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -150,6 +150,7 @@ export function TrunksPage() {
   const [allowExtra, setAllowExtra] = useState("");
   const [blockExtra, setBlockExtra] = useState("");
   const [allowAllIntl, setAllowAllIntl] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const list = useQuery({
     queryKey: ["trunks"],
@@ -213,7 +214,7 @@ export function TrunksPage() {
   function startEdit(tr: Trunk) {
     setEditingId(tr.id);
     setForm(trunkToForm(tr));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
   function cancelEdit() {
@@ -250,6 +251,71 @@ export function TrunksPage() {
         description={t("trunks.blurb")}
       />
 
+      <SectionCard title={tr("Trunk list")} icon={Cable} tone="blue" flush>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t("trunks.name")}</th>
+              <th>{t("trunks.host")}</th>
+              <th>{t("trunks.transport")}</th>
+              <th>{t("common.status")}</th>
+              <th>{t("common.enabled")}</th>
+              <th>{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.data?.map((trow) => (
+              <tr key={trow.id}>
+                <td>
+                  <div className="font-medium">{trow.name}</div>
+                  {trow.username ? (
+                    <div className="font-mono text-xs text-[var(--text-muted)]">{trow.username}</div>
+                  ) : (
+                    <div className="text-xs text-[var(--text-muted)]">{t("trunks.authIp")}</div>
+                  )}
+                  {trow.callerId ? (
+                    <div className="font-mono text-xs">{trow.callerId}</div>
+                  ) : null}
+                </td>
+                <td className="font-mono text-sm">
+                  {trow.host}:{trow.port ?? 5060}
+                </td>
+                <td className="uppercase text-sm">{trow.transport ?? "udp"}</td>
+                <td>
+                  <span className="badge">{trow.status}</span>
+                  {trow.latencyMs != null ? ` ${trow.latencyMs}ms` : ""}
+                </td>
+                <td>{trow.enabled ? t("common.yes") : t("common.no")}</td>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <IconBtn icon={Pencil} label={t("common.edit")} onClick={() => startEdit(trow)} />
+                    <IconBtn
+                      icon={Power}
+                      label={trow.enabled ? t("trunks.disable") : t("trunks.enable")}
+                      onClick={() => void toggle(trow)}
+                    />
+                    <IconBtn icon={RefreshCw} label={t("trunks.status")} onClick={() => void refreshStatus(trow.id)} />
+                    <IconBtn
+                      icon={Trash2}
+                      label={t("common.delete")}
+                      danger
+                      onClick={() =>
+                        void api.delete(`/api/v1/admin/trunks/${trow.id}`).then(() => {
+                          toast.success(t("common.delete"));
+                          if (editingId === trow.id) cancelEdit();
+                          void qc.invalidateQueries({ queryKey: ["trunks"] });
+                        })
+                      }
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+
+      <div ref={formRef}>
       <SectionCard
         title={editingId ? t("trunks.edit") : t("trunks.addProvider")}
         icon={Plus}
@@ -413,6 +479,7 @@ export function TrunksPage() {
         </div>
         </form>
       </SectionCard>
+      </div>
 
       {didsByNote.length ? (
         <p className="text-sm text-[var(--text-muted)]">
@@ -534,70 +601,6 @@ export function TrunksPage() {
         >
           {t("trunks.saveDialPolicy")}
         </button>
-      </SectionCard>
-
-      <SectionCard title={tr("Trunk list")} icon={Cable} tone="blue" flush>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{t("trunks.name")}</th>
-              <th>{t("trunks.host")}</th>
-              <th>{t("trunks.transport")}</th>
-              <th>{t("common.status")}</th>
-              <th>{t("common.enabled")}</th>
-              <th>{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.data?.map((trow) => (
-              <tr key={trow.id}>
-                <td>
-                  <div className="font-medium">{trow.name}</div>
-                  {trow.username ? (
-                    <div className="font-mono text-xs text-[var(--text-muted)]">{trow.username}</div>
-                  ) : (
-                    <div className="text-xs text-[var(--text-muted)]">{t("trunks.authIp")}</div>
-                  )}
-                  {trow.callerId ? (
-                    <div className="font-mono text-xs">{trow.callerId}</div>
-                  ) : null}
-                </td>
-                <td className="font-mono text-sm">
-                  {trow.host}:{trow.port ?? 5060}
-                </td>
-                <td className="uppercase text-sm">{trow.transport ?? "udp"}</td>
-                <td>
-                  <span className="badge">{trow.status}</span>
-                  {trow.latencyMs != null ? ` ${trow.latencyMs}ms` : ""}
-                </td>
-                <td>{trow.enabled ? t("common.yes") : t("common.no")}</td>
-                <td className="col-actions">
-                  <div className="btn-icon-row">
-                    <IconBtn icon={Pencil} label={t("common.edit")} onClick={() => startEdit(trow)} />
-                    <IconBtn
-                      icon={Power}
-                      label={trow.enabled ? t("trunks.disable") : t("trunks.enable")}
-                      onClick={() => void toggle(trow)}
-                    />
-                    <IconBtn icon={RefreshCw} label={t("trunks.status")} onClick={() => void refreshStatus(trow.id)} />
-                    <IconBtn
-                      icon={Trash2}
-                      label={t("common.delete")}
-                      danger
-                      onClick={() =>
-                        void api.delete(`/api/v1/admin/trunks/${trow.id}`).then(() => {
-                          toast.success(t("common.delete"));
-                          if (editingId === trow.id) cancelEdit();
-                          void qc.invalidateQueries({ queryKey: ["trunks"] });
-                        })
-                      }
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </SectionCard>
     </div>
   );

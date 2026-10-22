@@ -51,46 +51,6 @@ export function BlacklistPage() {
         description={t("blacklist.blurb")}
       />
 
-      <SectionCard title={t("blacklist.add")} icon={Plus} tone="coral" className="space-y-3">
-        <p className="text-sm text-[var(--text-muted)]">{t("blacklist.patternHint")}</p>
-        <form
-          className="toolbar toolbar-wrap"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!pattern.trim()) return;
-            add.mutate();
-          }}
-        >
-          <TextField
-            label={t("blacklist.pattern")}
-            className="font-mono flex-1"
-            value={pattern}
-            onChange={(e) => setPattern(e.target.value)}
-            placeholder="*123*  ·  90532*  ·  05321112233"
-            required
-          />
-          <SelectField
-            label={t("blacklist.direction")}
-            value={direction}
-            onChange={(e) => setDirection(e.target.value as typeof direction)}
-          >
-            <option value="both">{t("blacklist.dirBoth")}</option>
-            <option value="inbound">{t("blacklist.dirInbound")}</option>
-            <option value="outbound">{t("blacklist.dirOutbound")}</option>
-          </SelectField>
-          <TextField
-            label={t("blacklist.note")}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t("blacklist.notePlaceholder")}
-          />
-          <button className="btn btn-primary" type="submit" disabled={add.isPending}>
-            <Plus size={16} />
-            {t("common.add")}
-          </button>
-        </form>
-      </SectionCard>
-
       <SectionCard title={t("blacklist.list")} icon={Ban} tone="blue" flush>
         <table className="table">
           <thead>
@@ -132,6 +92,46 @@ export function BlacklistPage() {
             )}
           </tbody>
         </table>
+      </SectionCard>
+
+      <SectionCard title={t("blacklist.add")} icon={Plus} tone="coral" className="space-y-3">
+        <p className="text-sm text-[var(--text-muted)]">{t("blacklist.patternHint")}</p>
+        <form
+          className="toolbar toolbar-wrap"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!pattern.trim()) return;
+            add.mutate();
+          }}
+        >
+          <TextField
+            label={t("blacklist.pattern")}
+            className="font-mono flex-1"
+            value={pattern}
+            onChange={(e) => setPattern(e.target.value)}
+            placeholder="*123*  ·  90532*  ·  05321112233"
+            required
+          />
+          <SelectField
+            label={t("blacklist.direction")}
+            value={direction}
+            onChange={(e) => setDirection(e.target.value as typeof direction)}
+          >
+            <option value="both">{t("blacklist.dirBoth")}</option>
+            <option value="inbound">{t("blacklist.dirInbound")}</option>
+            <option value="outbound">{t("blacklist.dirOutbound")}</option>
+          </SelectField>
+          <TextField
+            label={t("blacklist.note")}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t("blacklist.notePlaceholder")}
+          />
+          <button className="btn btn-primary" type="submit" disabled={add.isPending}>
+            <Plus size={16} />
+            {t("common.add")}
+          </button>
+        </form>
       </SectionCard>
     </div>
   );

@@ -256,6 +256,26 @@ export function SchedulesPage() {
         description={tr("Open hours, overrides, and holiday routing")}
       />
 
+      {!list.data?.length ? (
+        <p className="text-[var(--text-muted)]">
+          {t("schedules.empty", { defaultValue: "No schedules yet — create one below to define open hours." })}
+        </p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-[var(--text-muted)]">{tr("Schedules")}</span>
+          {list.data.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={`btn ${selected?.id === s.id ? "btn-primary" : ""}`}
+              onClick={() => setSelectedId(s.id)}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <SectionCard title={tr("Create schedule")} icon={Plus} tone="cyan">
         <p className="text-sm text-[var(--text-muted)]">
           {tr("Name a schedule to get a weekday open-hours template. Pick it below to edit ranges, holidays, and destinations.")}
@@ -280,26 +300,6 @@ export function SchedulesPage() {
           </button>
         </form>
       </SectionCard>
-
-      {!list.data?.length ? (
-        <p className="text-[var(--text-muted)]">
-          {t("schedules.empty", { defaultValue: "No schedules yet — create one above to define open hours." })}
-        </p>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-[var(--text-muted)]">{tr("Schedules")}</span>
-          {list.data.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              className={`btn ${selected?.id === s.id ? "btn-primary" : ""}`}
-              onClick={() => setSelectedId(s.id)}
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
-      )}
 
       {selected && (
         <SectionCard title={tr("Schedule details")} icon={CalendarDays} tone="blue" className="space-y-6">

@@ -235,6 +235,107 @@ export function PromptsPage() {
         actions={ttsBadge}
       />
 
+      <input
+        ref={replaceRef}
+        type="file"
+        accept=".wav,.ulaw,.alaw,.gsm,audio/wav,audio/x-wav,audio/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f && replaceId) replaceAudio.mutate({ id: replaceId, file: f });
+        }}
+      />
+
+      <SectionCard title={tr("All prompts")} icon={List} tone="blue" flush>
+        <table className="table">
+            <thead>
+              <tr>
+                <th>{tr("Name / text")}</th>
+                <th>{tr("Type")}</th>
+                <th>{tr("Lang")}</th>
+                <th>{tr("Created")}</th>
+                <th>{tr("Expires")}</th>
+                <th>{tr("File")}</th>
+                <th className="col-actions">{t("common.actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(list.data ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={7}>—</td>
+                </tr>
+              ) : (
+                list.data?.map((p) => {
+                  const isCache = p.source === "cache";
+                  return (
+                  <tr key={`${p.source}-${p.id}`}>
+                    <td className="max-w-xs truncate" title={p.ttsText ?? p.name}>
+                      {p.name}
+                    </td>
+                    <td>
+                      <span className={`badge ${isCache ? "badge-ok" : ""}`}>
+                        {isCache
+                          ? t("prompts.typeCache", { defaultValue: "Cache" })
+                          : t("prompts.typePrompt", { defaultValue: "Prompt" })}
+                      </span>
+                    </td>
+                    <td>{p.language}</td>
+                    <td className="whitespace-nowrap text-xs text-[var(--text-muted)]">
+                      {fmtDate(p.createdAt)}
+                    </td>
+                    <td className="whitespace-nowrap text-xs text-[var(--text-muted)]">
+                      {isCache ? fmtDate(p.expiresAt) : "—"}
+                    </td>
+                    <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
+                    <td className="col-actions">
+                      <div className="btn-icon-row">
+                        {p.filePath && (
+                          <IconBtn
+                            icon={playingId === p.id && isPlaying ? Pause : Play}
+                            label={
+                              playingId === p.id && isPlaying
+                                ? t("prompts.pause", { defaultValue: "Pause" })
+                                : t("prompts.play", { defaultValue: "Play" })
+                            }
+                            primary={playingId === p.id && isPlaying}
+                            onClick={() => void playPrompt(p.id)}
+                          />
+                        )}
+                        {!isCache && (
+                          <>
+                            <IconBtn
+                              icon={Upload}
+                              label={t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
+                              onClick={() => {
+                                setReplaceId(p.id);
+                                replaceRef.current?.click();
+                              }}
+                            />
+                            <IconBtn
+                              icon={Wand2}
+                              label={t("prompts.generate", { defaultValue: "Generate TTS" })}
+                              disabled={!p.ttsText || synthesize.isPending}
+                              onClick={() => synthesize.mutate(p.id)}
+                            />
+                          </>
+                        )}
+                        <IconBtn
+                          icon={Trash2}
+                          label={t("common.delete", { defaultValue: "Delete" })}
+                          danger
+                          disabled={remove.isPending}
+                          onClick={() => setPendingDelete(p)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+      </SectionCard>
+
       <SectionCard title={t("common.create", { defaultValue: "Create prompt" })} icon={AudioLines} tone="coral">
         <form
           className="grid gap-3"
@@ -342,107 +443,6 @@ export function PromptsPage() {
             </button>
           </div>
         </form>
-      </SectionCard>
-
-      <input
-        ref={replaceRef}
-        type="file"
-        accept=".wav,.ulaw,.alaw,.gsm,audio/wav,audio/x-wav,audio/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f && replaceId) replaceAudio.mutate({ id: replaceId, file: f });
-        }}
-      />
-
-      <SectionCard title={tr("All prompts")} icon={List} tone="blue" flush>
-        <table className="table">
-            <thead>
-              <tr>
-                <th>{tr("Name / text")}</th>
-                <th>{tr("Type")}</th>
-                <th>{tr("Lang")}</th>
-                <th>{tr("Created")}</th>
-                <th>{tr("Expires")}</th>
-                <th>{tr("File")}</th>
-                <th className="col-actions">{t("common.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(list.data ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={7}>—</td>
-                </tr>
-              ) : (
-                list.data?.map((p) => {
-                  const isCache = p.source === "cache";
-                  return (
-                  <tr key={`${p.source}-${p.id}`}>
-                    <td className="max-w-xs truncate" title={p.ttsText ?? p.name}>
-                      {p.name}
-                    </td>
-                    <td>
-                      <span className={`badge ${isCache ? "badge-ok" : ""}`}>
-                        {isCache
-                          ? t("prompts.typeCache", { defaultValue: "Cache" })
-                          : t("prompts.typePrompt", { defaultValue: "Prompt" })}
-                      </span>
-                    </td>
-                    <td>{p.language}</td>
-                    <td className="whitespace-nowrap text-xs text-[var(--text-muted)]">
-                      {fmtDate(p.createdAt)}
-                    </td>
-                    <td className="whitespace-nowrap text-xs text-[var(--text-muted)]">
-                      {isCache ? fmtDate(p.expiresAt) : "—"}
-                    </td>
-                    <td className="font-mono text-xs">{p.filePath ? "yes" : "—"}</td>
-                    <td className="col-actions">
-                      <div className="btn-icon-row">
-                        {p.filePath && (
-                          <IconBtn
-                            icon={playingId === p.id && isPlaying ? Pause : Play}
-                            label={
-                              playingId === p.id && isPlaying
-                                ? t("prompts.pause", { defaultValue: "Pause" })
-                                : t("prompts.play", { defaultValue: "Play" })
-                            }
-                            primary={playingId === p.id && isPlaying}
-                            onClick={() => void playPrompt(p.id)}
-                          />
-                        )}
-                        {!isCache && (
-                          <>
-                            <IconBtn
-                              icon={Upload}
-                              label={t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
-                              onClick={() => {
-                                setReplaceId(p.id);
-                                replaceRef.current?.click();
-                              }}
-                            />
-                            <IconBtn
-                              icon={Wand2}
-                              label={t("prompts.generate", { defaultValue: "Generate TTS" })}
-                              disabled={!p.ttsText || synthesize.isPending}
-                              onClick={() => synthesize.mutate(p.id)}
-                            />
-                          </>
-                        )}
-                        <IconBtn
-                          icon={Trash2}
-                          label={t("common.delete", { defaultValue: "Delete" })}
-                          danger
-                          disabled={remove.isPending}
-                          onClick={() => setPendingDelete(p)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
       </SectionCard>
 
       {pendingDelete && (

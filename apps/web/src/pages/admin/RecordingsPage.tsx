@@ -24,6 +24,7 @@ export function RecordingsPage() {
   const [playingId, setPlayingId] = useState<string | null>(params.get("id"));
   const [accessId, setAccessId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [canPlay, setCanPlay] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const waveRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
@@ -45,6 +46,7 @@ export function RecordingsPage() {
   useEffect(() => {
     if (!playingId || !waveRef.current) return;
     setLoadError(null);
+    setCanPlay(false);
     setIsPlaying(false);
     wsRef.current?.destroy();
     const ws = WaveSurfer.create({
@@ -63,10 +65,7 @@ export function RecordingsPage() {
         setLoadError(tr("Recording file is empty or unreadable"));
         return;
       }
-      void ws.play().then(() => setIsPlaying(true)).catch((e) => {
-        setLoadError(String(e));
-        toast.error(tr("Playback failed — check browser audio permission"));
-      });
+      setCanPlay(true);
     });
     ws.on("play", () => setIsPlaying(true));
     ws.on("pause", () => setIsPlaying(false));
@@ -106,12 +105,17 @@ export function RecordingsPage() {
                   icon={isPlaying ? Pause : Play}
                   label={isPlaying ? "Pause" : "Play"}
                   primary
-                  disabled={!!loadError}
+                  disabled={!canPlay || !!loadError}
                   onClick={() => {
                     const ws = wsRef.current;
                     if (!ws) return;
-                    if (ws.isPlaying()) ws.pause();
-                    else void ws.play();
+                    if (ws.isPlaying()) {
+                      ws.pause();
+                      return;
+                    }
+                    void ws.play().catch(() => {
+                      toast.error(tr("Playback failed — check browser audio permission"));
+                    });
                   }}
                 />
                 <IconBtn icon={X} label={tr("Close")} onClick={() => setPlayingId(null)} />

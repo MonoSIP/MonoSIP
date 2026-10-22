@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -147,6 +147,12 @@ export function ExtensionsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const editRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (edit) editRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [edit]);
+
   async function openEdit(ext: Ext) {
     setEdit(ext);
     setEditPassword("");
@@ -262,6 +268,54 @@ export function ExtensionsPage() {
           </div>
         }
       />
+      <SectionCard title={tr("Extensions")} icon={Users} tone="blue" flush className="mb-6">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t("extensions.number")}</th>
+              <th>{t("extensions.name")}</th>
+              <th>{t("extensions.dnd")}</th>
+              <th>{t("extensions.portal")}</th>
+              <th>{tr("Secretary")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.data?.map((e) => (
+              <tr key={e.id}>
+                <td className="font-mono">{e.number}</td>
+                <td className="col-grow">{e.name}</td>
+                <td>
+                  {(() => {
+                    const pending = toggleDnd.isPending && toggleDnd.variables?.id === e.id;
+                    return (
+                      <Switch
+                        label={`${tr("DND")} ${e.number}`}
+                        checked={pending ? !e.dnd : !!e.dnd}
+                        pending={pending}
+                        onChange={() => toggleDnd.mutate(e)}
+                      />
+                    );
+                  })()}
+                </td>
+                <td>{e.portalEnabled ? t("common.yes") : t("common.no")}</td>
+                <td className="font-mono text-xs">
+                  {e.bossSecretaryOf
+                    ? list.data?.find((x) => x.id === e.bossSecretaryOf)?.number ?? "…"
+                    : "—"}
+                </td>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => void openEdit(e)} />
+                    <IconBtn icon={Trash2} label={t("common.delete")} danger onClick={() => remove.mutate(e.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+
       <SectionCard title={tr("Add extension")} icon={UserPlus} tone="cyan" className="mb-6">
         <form
           className="toolbar"
@@ -302,6 +356,7 @@ export function ExtensionsPage() {
       </SectionCard>
 
       {edit && (
+        <div ref={editRef}>
         <SectionCard title={tr("Edit extension {{v0}}", { v0: edit.number })} icon={Users} tone="coral" className="mb-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField label={tr("Name")} value={editName} onChange={(e) => setEditName(e.target.value)} />
@@ -484,55 +539,8 @@ export function ExtensionsPage() {
             </button>
           </div>
         </SectionCard>
+        </div>
       )}
-
-      <SectionCard title={tr("Extensions")} icon={Users} tone="blue" flush>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{t("extensions.number")}</th>
-              <th>{t("extensions.name")}</th>
-              <th>{t("extensions.dnd")}</th>
-              <th>{t("extensions.portal")}</th>
-              <th>{tr("Secretary")}</th>
-              <th className="col-actions">{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.data?.map((e) => (
-              <tr key={e.id}>
-                <td className="font-mono">{e.number}</td>
-                <td className="col-grow">{e.name}</td>
-                <td>
-                  {(() => {
-                    const pending = toggleDnd.isPending && toggleDnd.variables?.id === e.id;
-                    return (
-                      <Switch
-                        label={`${tr("DND")} ${e.number}`}
-                        checked={pending ? !e.dnd : !!e.dnd}
-                        pending={pending}
-                        onChange={() => toggleDnd.mutate(e)}
-                      />
-                    );
-                  })()}
-                </td>
-                <td>{e.portalEnabled ? t("common.yes") : t("common.no")}</td>
-                <td className="font-mono text-xs">
-                  {e.bossSecretaryOf
-                    ? list.data?.find((x) => x.id === e.bossSecretaryOf)?.number ?? "…"
-                    : "—"}
-                </td>
-                <td className="col-actions">
-                  <div className="btn-icon-row">
-                    <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => void openEdit(e)} />
-                    <IconBtn icon={Trash2} label={t("common.delete")} danger onClick={() => remove.mutate(e.id)} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </SectionCard>
     </div>
   );
 }

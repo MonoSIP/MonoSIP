@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { BellRing, Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
@@ -63,12 +63,15 @@ export function RingGroupsPage() {
     setMemberIds([]);
   }
 
+  const formRef = useRef<HTMLDivElement>(null);
+
   function startEdit(g: Group) {
     setEditId(g.id);
     setName(g.name);
     setNumber(g.number);
     setStrategy(g.strategy);
     setMemberIds(g.memberIds ?? []);
+    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
   function toggle(id: string) {
@@ -83,6 +86,45 @@ export function RingGroupsPage() {
         tone="cyan"
         description={tr("Ring multiple extensions together with ringall or linear strategy")}
       />
+      <SectionCard title={tr("Ring groups")} icon={List} tone="blue" flush>
+        <table className="table">
+            <thead>
+              <tr>
+                <th>{t("extensions.number")}</th>
+                <th className="col-grow">{t("extensions.name")}</th>
+                <th>{tr("Strategy")}</th>
+                <th>{tr("Members")}</th>
+                <th className="col-actions">{t("common.actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.data?.map((g) => (
+                <tr key={g.id}>
+                  <td className="font-mono">{g.number}</td>
+                  <td className="col-grow">{g.name}</td>
+                  <td>{g.strategy}</td>
+                  <td>{g.memberIds?.length ?? 0}</td>
+                  <td className="col-actions">
+                    <div className="btn-icon-row">
+                      <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(g)} />
+                      <IconBtn
+                        icon={Trash2}
+                        label={t("common.delete")}
+                        danger
+                        onClick={() =>
+                          void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
+                            qc.invalidateQueries({ queryKey: ["ring-groups"] }),
+                          )
+                        }
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+      </SectionCard>
+      <div ref={formRef}>
       <SectionCard
         title={editId ? t("common.save") : t("common.create")}
         icon={BellRing}
@@ -141,44 +183,7 @@ export function RingGroupsPage() {
           </div>
         </form>
       </SectionCard>
-      <SectionCard title={tr("Ring groups")} icon={List} tone="blue" flush>
-        <table className="table">
-            <thead>
-              <tr>
-                <th>{t("extensions.number")}</th>
-                <th className="col-grow">{t("extensions.name")}</th>
-                <th>{tr("Strategy")}</th>
-                <th>{tr("Members")}</th>
-                <th className="col-actions">{t("common.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.data?.map((g) => (
-                <tr key={g.id}>
-                  <td className="font-mono">{g.number}</td>
-                  <td className="col-grow">{g.name}</td>
-                  <td>{g.strategy}</td>
-                  <td>{g.memberIds?.length ?? 0}</td>
-                  <td className="col-actions">
-                    <div className="btn-icon-row">
-                      <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(g)} />
-                      <IconBtn
-                        icon={Trash2}
-                        label={t("common.delete")}
-                        danger
-                        onClick={() =>
-                          void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
-                            qc.invalidateQueries({ queryKey: ["ring-groups"] }),
-                          )
-                        }
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-      </SectionCard>
+      </div>
     </div>
   );
 }

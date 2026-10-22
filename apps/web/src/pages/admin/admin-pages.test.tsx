@@ -364,6 +364,9 @@ describe("TrunksPage", () => {
     renderPage(<TrunksPage />);
     expect(await screen.findByRole("heading", { name: "trunks.title" })).toBeInTheDocument();
     expect(await screen.findByText("main")).toBeInTheDocument();
+    const listTitle = screen.getByRole("heading", { name: "Trunk list" });
+    const formTitle = screen.getByRole("heading", { name: "trunks.addProvider" });
+    expect(listTitle.compareDocumentPosition(formTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("posts a new trunk from the add form", async () => {

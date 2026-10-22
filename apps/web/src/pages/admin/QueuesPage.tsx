@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -61,6 +61,7 @@ export function QueuesPage() {
   const [mohId, setMohId] = useState<string>("");
   const [members, setMembers] = useState<Member[]>([]);
   const [editId, setEditId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const list = useQuery({
     queryKey: ["queues"],
@@ -207,6 +208,7 @@ export function QueuesPage() {
         paused: m.paused,
       })),
     );
+    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
 
   async function pauseMember(queueId: string, extensionId: string, paused: boolean) {
@@ -222,6 +224,60 @@ export function QueuesPage() {
         tone="blue"
         description={tr("Call queues, agents, and overflow destinations")}
       />
+      <SectionCard title={tr("Queue list")} icon={ListOrdered} tone="blue" flush className="mb-6">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{t("extensions.number")}</th>
+              <th>{t("extensions.name")}</th>
+              <th>{t("queues.strategy")}</th>
+              <th className="col-grow">{t("queues.members")}</th>
+              <th>{tr("Callback")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.data?.map((q) => (
+              <tr key={q.id}>
+                <td className="font-mono">{q.number}</td>
+                <td>{q.name}</td>
+                <td>{q.strategy}</td>
+                <td className="col-grow">
+                  <div className="flex flex-wrap gap-1">
+                    {(q.members ?? []).map((m) => {
+                      const ext = exts.data?.find((e) => e.id === m.extensionId);
+                      return (
+                        <button
+                          key={m.extensionId}
+                          type="button"
+                          className="btn text-xs"
+                          onClick={() => void pauseMember(q.id, m.extensionId, !m.paused)}
+                          title={`penalty ${m.penalty ?? 0}`}
+                        >
+                          {ext?.number ?? "?"}
+                          {(m.penalty ?? 0) > 0 ? ` p${m.penalty}` : ""}
+                          {m.paused ? " ⏸" : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </td>
+                <td>{q.callbackEnabled ? "on" : "off"}</td>
+                <td className="col-actions">
+                  <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(q)} />
+                  <IconBtn
+                    icon={Trash2}
+                    label={t("common.delete")}
+                    danger
+                    onClick={() => remove.mutate(q.id)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+      <div ref={formRef}>
       <SectionCard
         title={editId ? t("common.edit", { defaultValue: "Edit" }) : t("common.create")}
         icon={Plus}
@@ -442,59 +498,7 @@ export function QueuesPage() {
         </div>
         </form>
       </SectionCard>
-      <SectionCard title={tr("Queue list")} icon={ListOrdered} tone="blue" flush>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{t("extensions.number")}</th>
-              <th>{t("extensions.name")}</th>
-              <th>{t("queues.strategy")}</th>
-              <th className="col-grow">{t("queues.members")}</th>
-              <th>{tr("Callback")}</th>
-              <th className="col-actions">{t("common.actions")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.data?.map((q) => (
-              <tr key={q.id}>
-                <td className="font-mono">{q.number}</td>
-                <td>{q.name}</td>
-                <td>{q.strategy}</td>
-                <td className="col-grow">
-                  <div className="flex flex-wrap gap-1">
-                    {(q.members ?? []).map((m) => {
-                      const ext = exts.data?.find((e) => e.id === m.extensionId);
-                      return (
-                        <button
-                          key={m.extensionId}
-                          type="button"
-                          className="btn text-xs"
-                          onClick={() => void pauseMember(q.id, m.extensionId, !m.paused)}
-                          title={`penalty ${m.penalty ?? 0}`}
-                        >
-                          {ext?.number ?? "?"}
-                          {(m.penalty ?? 0) > 0 ? ` p${m.penalty}` : ""}
-                          {m.paused ? " ⏸" : ""}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </td>
-                <td>{q.callbackEnabled ? "on" : "off"}</td>
-                <td className="col-actions">
-                  <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(q)} />
-                  <IconBtn
-                    icon={Trash2}
-                    label={t("common.delete")}
-                    danger
-                    onClick={() => remove.mutate(q.id)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </SectionCard>
+      </div>
     </div>
   );
 }

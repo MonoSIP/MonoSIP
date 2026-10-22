@@ -170,34 +170,6 @@ export function MohPage() {
         tone="blue"
         description={tr("Upload WAV/MP3/OGG; non-WAV or wrong sample rate is converted to 8 kHz mono WAV for Asterisk. Use Play to preview.")}
       />
-      <SectionCard title={tr("New MOH class")} icon={Plus} tone="blue">
-        <form
-          className="toolbar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            create.mutate();
-          }}
-        >
-          <TextField
-            label={tr("Class name")}
-            icon={Music}
-            className="max-w-xs"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={tr("Class name")}
-            required
-          />
-          <button className="btn btn-primary" type="submit" disabled={!nameKey || nameTaken || create.isPending}>
-            {tr("Create class")}
-          </button>
-          {nameKey && nameTaken && (
-            <span className="self-center text-sm text-[var(--danger)]" role="alert">
-              {tr("A class with this name already exists")}
-            </span>
-          )}
-        </form>
-      </SectionCard>
-
       <div className="space-y-4">
         {(list.data ?? []).length === 0 ? (
           <SectionCard title={tr("Classes")} icon={Music} tone="blue">
@@ -294,6 +266,33 @@ export function MohPage() {
           })
         )}
       </div>
+      <SectionCard title={tr("New MOH class")} icon={Plus} tone="blue">
+        <form
+          className="toolbar"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
+          <TextField
+            label={tr("Class name")}
+            icon={Music}
+            className="max-w-xs"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={tr("Class name")}
+            required
+          />
+          <button className="btn btn-primary" type="submit" disabled={!nameKey || nameTaken || create.isPending}>
+            {tr("Create class")}
+          </button>
+          {nameKey && nameTaken && (
+            <span className="self-center text-sm text-[var(--danger)]" role="alert">
+              {tr("A class with this name already exists")}
+            </span>
+          )}
+        </form>
+      </SectionCard>
     </div>
   );
 }

@@ -144,45 +144,6 @@ export function RoutesPage() {
     <div className="space-y-8">
       <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description={tr("Inbound DIDs and outbound patterns")} />
       <SectionCard title={t("routes.inbound")} icon={Signpost} tone="cyan">
-        <form
-          className="mb-3 grid gap-2 sm:grid-cols-6 sm:items-end"
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveInbound.mutate();
-          }}
-        >
-          <TextField label={tr("DID")} value={did} onChange={(e) => setDid(e.target.value)} />
-          <TextField
-            label={tr("Caller pattern")}
-            value={callerPattern}
-            onChange={(e) => setCallerPattern(e.target.value)}
-          />
-          <DestPicker
-            destType={destType}
-            destId={destId || null}
-            onChange={(t, id) => {
-              setDestType(t);
-              setDestId(id ?? "");
-            }}
-          />
-          <TextField
-            label={tr("Priority")}
-            type="number"
-            value={priority}
-            onChange={(e) => setPriority(Number(e.target.value))}
-          />
-          <div className="flex gap-2 pb-[0.85rem]">
-            <button className="btn btn-primary" type="submit">
-              <Plus size={16} />
-              {editInboundId ? t("common.save") : t("common.create")}
-            </button>
-            {editInboundId ? (
-              <button className="btn" type="button" onClick={resetInbound}>
-                {t("common.cancel", { defaultValue: "Cancel" })}
-              </button>
-            ) : null}
-          </div>
-        </form>
         <table className="table">
           <thead>
             <tr>
@@ -221,53 +182,47 @@ export function RoutesPage() {
             ))}
           </tbody>
         </table>
-      </SectionCard>
-      <SectionCard title={t("routes.outbound")} icon={Route} tone="blue">
         <form
-          className="mb-3 grid gap-2 sm:grid-cols-6 sm:items-end"
+          className="mt-3 grid gap-2 sm:grid-cols-6 sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
-            saveOutbound.mutate();
+            saveInbound.mutate();
           }}
         >
-          <TextField label={tr("Name")} value={obName} onChange={(e) => setObName(e.target.value)} required />
+          <TextField label={tr("DID")} value={did} onChange={(e) => setDid(e.target.value)} />
           <TextField
-            label={tr("Pattern")}
-            className="font-mono"
-            value={obPattern}
-            onChange={(e) => setObPattern(e.target.value)}
-            required
+            label={tr("Caller pattern")}
+            value={callerPattern}
+            onChange={(e) => setCallerPattern(e.target.value)}
           />
-          <SelectField label={tr("Trunk")} value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
-            <option value="">{tr("Trunk…")}</option>
-            {(trunks.data ?? []).map((tr) => (
-              <option key={tr.id} value={tr.id}>
-                {tr.name}
-              </option>
-            ))}
-          </SelectField>
-          <SelectField label={tr("Permission")} value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
-            <option value="localFixed">{tr("Local landline")}</option>
-            <option value="mobile">mobile</option>
-            <option value="short444">short444</option>
-            <option value="international">international</option>
-          </SelectField>
-          <label className="flex items-center gap-2 pb-[0.85rem] text-sm">
-            <input type="checkbox" checked={obEnabled} onChange={(e) => setObEnabled(e.target.checked)} />
-            {t("common.enabled")}
-          </label>
+          <DestPicker
+            destType={destType}
+            destId={destId || null}
+            onChange={(t, id) => {
+              setDestType(t);
+              setDestId(id ?? "");
+            }}
+          />
+          <TextField
+            label={tr("Priority")}
+            type="number"
+            value={priority}
+            onChange={(e) => setPriority(Number(e.target.value))}
+          />
           <div className="flex gap-2 pb-[0.85rem]">
             <button className="btn btn-primary" type="submit">
               <Plus size={16} />
-              {editOutboundId ? t("common.save") : t("common.create")}
+              {editInboundId ? t("common.save") : t("common.create")}
             </button>
-            {editOutboundId ? (
-              <button className="btn" type="button" onClick={resetOutbound}>
+            {editInboundId ? (
+              <button className="btn" type="button" onClick={resetInbound}>
                 {t("common.cancel", { defaultValue: "Cancel" })}
               </button>
             ) : null}
           </div>
         </form>
+      </SectionCard>
+      <SectionCard title={t("routes.outbound")} icon={Route} tone="blue">
         <table className="table">
           <thead>
             <tr>
@@ -312,6 +267,51 @@ export function RoutesPage() {
             )}
           </tbody>
         </table>
+        <form
+          className="mt-3 grid gap-2 sm:grid-cols-6 sm:items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveOutbound.mutate();
+          }}
+        >
+          <TextField label={tr("Name")} value={obName} onChange={(e) => setObName(e.target.value)} required />
+          <TextField
+            label={tr("Pattern")}
+            className="font-mono"
+            value={obPattern}
+            onChange={(e) => setObPattern(e.target.value)}
+            required
+          />
+          <SelectField label={tr("Trunk")} value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
+            <option value="">{tr("Trunk…")}</option>
+            {(trunks.data ?? []).map((tr) => (
+              <option key={tr.id} value={tr.id}>
+                {tr.name}
+              </option>
+            ))}
+          </SelectField>
+          <SelectField label={tr("Permission")} value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
+            <option value="localFixed">{tr("Local landline")}</option>
+            <option value="mobile">mobile</option>
+            <option value="short444">short444</option>
+            <option value="international">international</option>
+          </SelectField>
+          <label className="flex items-center gap-2 pb-[0.85rem] text-sm">
+            <input type="checkbox" checked={obEnabled} onChange={(e) => setObEnabled(e.target.checked)} />
+            {t("common.enabled")}
+          </label>
+          <div className="flex gap-2 pb-[0.85rem]">
+            <button className="btn btn-primary" type="submit">
+              <Plus size={16} />
+              {editOutboundId ? t("common.save") : t("common.create")}
+            </button>
+            {editOutboundId ? (
+              <button className="btn" type="button" onClick={resetOutbound}>
+                {t("common.cancel", { defaultValue: "Cancel" })}
+              </button>
+            ) : null}
+          </div>
+        </form>
       </SectionCard>
       <SectionCard title={t("routes.blacklist")} icon={Ban} tone="coral">
         <p className="mb-3 text-sm text-[var(--text-muted)]">{t("routes.blacklistMoved")}</p>

@@ -63,6 +63,60 @@ export function DevicesPage() {
         tone="blue"
         description={tr("Provision desk phones and generate SIP QR codes for mobile softphones")}
       />
+      <SectionCard title={tr("Devices")} icon={List} tone="cyan" flush>
+        <table className="table">
+            <thead>
+              <tr>
+                <th>{tr("Extension")}</th>
+                <th>{tr("Model")}</th>
+                <th>{tr("MAC")}</th>
+                <th>{tr("Profile")}</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {(devices.data ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-[var(--text-muted)]">
+                    {tr("No devices yet.")}
+                  </td>
+                </tr>
+              ) : (
+                devices.data?.map((d) => {
+                  const ext = exts.data?.find((e) => e.id === d.extensionId);
+                  return (
+                    <tr key={d.id}>
+                      <td className="font-mono">{ext?.number ?? d.extensionId.slice(0, 8)}</td>
+                      <td>{d.model ?? "—"}</td>
+                      <td className="font-mono text-xs">{d.mac ?? "—"}</td>
+                      <td>{d.provisioningProfile ?? "—"}</td>
+                      <td className="col-actions">
+                        <div className="btn-icon-row">
+                          <IconBtn icon={QrCode} label={tr("QR")} onClick={() => void showQr(d.id)} />
+                          <IconBtn
+                            icon={Trash2}
+                            label={tr("Delete")}
+                            danger
+                            onClick={() =>
+                              void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
+                                qc.invalidateQueries({ queryKey: ["devices"] }),
+                              )
+                            }
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+      </SectionCard>
+      {qr && (
+        <SectionCard title={tr("SIP QR")} icon={QrCode} tone="cyan">
+          <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />
+        </SectionCard>
+      )}
       <SectionCard title={tr("Add device")} icon={Smartphone} tone="blue">
         <form
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-end"
@@ -115,60 +169,6 @@ export function DevicesPage() {
             {tr("Add device")}
           </button>
         </form>
-      </SectionCard>
-      {qr && (
-        <SectionCard title={tr("SIP QR")} icon={QrCode} tone="cyan">
-          <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />
-        </SectionCard>
-      )}
-      <SectionCard title={tr("Devices")} icon={List} tone="cyan" flush>
-        <table className="table">
-            <thead>
-              <tr>
-                <th>{tr("Extension")}</th>
-                <th>{tr("Model")}</th>
-                <th>{tr("MAC")}</th>
-                <th>{tr("Profile")}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {(devices.data ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-[var(--text-muted)]">
-                    {tr("No devices yet.")}
-                  </td>
-                </tr>
-              ) : (
-                devices.data?.map((d) => {
-                  const ext = exts.data?.find((e) => e.id === d.extensionId);
-                  return (
-                    <tr key={d.id}>
-                      <td className="font-mono">{ext?.number ?? d.extensionId.slice(0, 8)}</td>
-                      <td>{d.model ?? "—"}</td>
-                      <td className="font-mono text-xs">{d.mac ?? "—"}</td>
-                      <td>{d.provisioningProfile ?? "—"}</td>
-                      <td className="col-actions">
-                        <div className="btn-icon-row">
-                          <IconBtn icon={QrCode} label={tr("QR")} onClick={() => void showQr(d.id)} />
-                          <IconBtn
-                            icon={Trash2}
-                            label={tr("Delete")}
-                            danger
-                            onClick={() =>
-                              void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
-                                qc.invalidateQueries({ queryKey: ["devices"] }),
-                              )
-                            }
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
       </SectionCard>
     </div>
   );
