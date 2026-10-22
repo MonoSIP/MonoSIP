@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { BookUser, FileAudio, History, LogOut, Moon, Phone, Settings, Sun, Voicemail } from "lucide-react";
 import { api } from "../lib/api";
@@ -29,6 +30,24 @@ export function PortalLayout() {
   usePortalLive();
   // The phone page shows the full phone; every other page gets the mini one.
   const onPhonePage = useLocation().pathname === "/";
+  const mailbox = useQuery({
+    queryKey: ["voicemails"],
+    queryFn: async () =>
+      (await api.get<Array<{ read: boolean }>>("/api/v1/me/voicemails")) ?? [],
+  });
+  const missed = useQuery({
+    queryKey: ["my-missed"],
+    queryFn: async () =>
+      (await api.get<Array<{ status: string }>>("/api/v1/me/missed-calls")) ?? [],
+  });
+  const unreadVm = (mailbox.data ?? []).filter((row) => !row.read).length;
+  const missedN = (missed.data ?? []).filter((row) => row.status === "pending").length;
+
+  function menuCount(key: string): number {
+    if (key === "voicemail") return unreadVm;
+    if (key === "phone") return missedN;
+    return 0;
+  }
 
   async function logout() {
     try {
@@ -61,7 +80,12 @@ export function PortalLayout() {
               <span className="nav-ico">
                 <l.icon size={16} strokeWidth={2.25} />
               </span>
-              {t(`nav.${l.key}`)}
+              <span className="min-w-0 flex-1 truncate">{t(`nav.${l.key}`)}</span>
+              {menuCount(l.key) > 0 ? (
+                <span className={`nav-badge ${l.key === "voicemail" ? "is-vm" : "is-missed"}`}>
+                  {menuCount(l.key) > 99 ? "99+" : menuCount(l.key)}
+                </span>
+              ) : null}
             </NavLink>
           ))}
         </nav>
@@ -104,16 +128,24 @@ export function PortalLayout() {
             key={l.to}
             to={l.to}
             end={l.end}
+            aria-label={t(`nav.${l.key}`)}
+            title={t(`nav.${l.key}`)}
             className={({ isActive }) =>
-              `flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-[var(--radius)] px-2 py-1.5 text-xs ${
+              `flex h-14 min-w-0 flex-1 items-center justify-center rounded-[var(--radius)] ${
                 isActive
                   ? "bg-[color-mix(in_oklab,var(--accent)_16%,transparent)] text-[var(--accent)]"
                   : "text-[var(--text-muted)]"
               }`
             }
           >
-            <l.icon size={18} strokeWidth={2.25} />
-            {t(`nav.${l.key}`)}
+            <span className="nav-tab-ico">
+              <l.icon size={26} strokeWidth={2.25} />
+              {menuCount(l.key) > 0 ? (
+                <span className={`nav-badge ${l.key === "voicemail" ? "is-vm" : "is-missed"}`}>
+                  {menuCount(l.key) > 99 ? "99+" : menuCount(l.key)}
+                </span>
+              ) : null}
+            </span>
           </NavLink>
         ))}
       </nav>

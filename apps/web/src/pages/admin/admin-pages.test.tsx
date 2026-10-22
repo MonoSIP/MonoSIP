@@ -1120,6 +1120,22 @@ describe("AdminLayout", () => {
 describe("PortalLayout", () => {
   it("renders outlet content and logs out to /login", async () => {
     apiPost.mockResolvedValue({});
+    apiGet.mockImplementation(async (path: string) => {
+      if (path === "/api/v1/me/voicemails") {
+        return [
+          { id: "v1", read: false },
+          { id: "v2", read: true },
+        ];
+      }
+      if (path === "/api/v1/me/missed-calls") {
+        return [
+          { id: "m1", status: "pending" },
+          { id: "m2", status: "returned" },
+          { id: "m3", status: "pending" },
+        ];
+      }
+      return [];
+    });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     render(
       <QueryClientProvider client={client}>
@@ -1137,6 +1153,10 @@ describe("PortalLayout", () => {
     expect(screen.getByText(/^v\d+\.\d+\.\d+/)).toBeInTheDocument();
     const aside = document.querySelector("aside") as HTMLElement;
     expect(aside.className).toContain("portal-rail");
+    const phoneLink = within(aside).getByRole("link", { name: /nav\.phone/ });
+    const voicemailLink = within(aside).getByRole("link", { name: /nav\.voicemail/ });
+    expect(await within(phoneLink).findByText("2")).toBeInTheDocument();
+    expect(within(voicemailLink).getByText("1")).toBeInTheDocument();
     const phone = within(aside).getByRole("region", { name: "portal.miniPhone" });
     const settings = within(aside).getByRole("link", { name: "nav.mySettings" });
     expect(phone.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

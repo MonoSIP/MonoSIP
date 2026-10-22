@@ -23,6 +23,7 @@ async function main() {
   await mkdir(config.recordingsDir, { recursive: true });
   await mkdir(config.uploadsDir, { recursive: true });
   await mkdir(config.asterisk.configDir, { recursive: true });
+  await mkdir(path.join(config.asterisk.configDir, "voicemail"), { recursive: true });
 
   const app = Fastify({
     logger: true,

@@ -18,6 +18,7 @@ import { config } from "../config.js";
 import { ari } from "../asterisk/ari.js";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { Readable } from "node:stream";
+import { importMailboxFiles } from "../lib/voicemail-inbox.js";
 
 export async function portalRoutes(app: FastifyInstance) {
   app.get("/api/v1/me", async (req, reply) => {
@@ -176,7 +177,12 @@ export async function portalRoutes(app: FastifyInstance) {
   app.get("/api/v1/me/voicemails", async (req, reply) => {
     const actor = await requireExtension(req, reply);
     if (!actor || "statusCode" in (actor as object)) return;
-    const a = actor as { id: string };
+    const a = actor as { id: string; number: string };
+    try {
+      await importMailboxFiles(a.id, a.number);
+    } catch (err) {
+      req.log.warn({ err }, "voicemail import failed");
+    }
     return db
       .select()
       .from(voicemails)

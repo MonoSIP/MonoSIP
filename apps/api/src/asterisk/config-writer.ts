@@ -26,6 +26,7 @@ import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
 import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
 import { queueLanguage, queueSoundLanguage } from "./queue-lang.js";
+import { voicemailDir } from "../lib/voicemail-inbox.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -308,6 +309,7 @@ export const writeAsteriskConfig = singleFlight(writeAsteriskConfigNow);
 async function writeAsteriskConfigNow(): Promise<void> {
   const dir = config.asterisk.configDir;
   await ensureDir(dir);
+  await ensureDir(voicemailDir());
 
   const exts = await db.select().from(extensions);
   const trks = await db.select().from(trunks).where(eq(trunks.enabled, true));
@@ -865,10 +867,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
           "",
         );
       } else if (rule?.destType === "voicemail") {
-        extensionsConf.push(
-          `exten => s-${st}-${ext.number},1,Goto(*${ext.number},1)`,
-          "",
-        );
+        // No answer still counts as missed, then the caller can leave a message.
+        const lines = [`exten => s-${st}-${ext.number},1,NoOp(${st} voicemail ${ext.number})`];
+        if (st === "NOANSWER") lines.push(...missedCurl);
+        lines.push(` same => n,Goto(*${ext.number},1)`, "");
+        extensionsConf.push(...lines);
       } else if (
         rule?.destType === "external" &&
         rule.destId &&
@@ -934,18 +937,32 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"\${MUNASIP_QUEUE}","disposition":"\${MUNASIP_DISP}","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_CDRDUR},"direction":"internal","queueNumber":"\${MUNASIP_QUEUE}","extension":"\${MUNASIP_AGENT}","wait":"\${MUNASIP_QWAIT}","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
     )}`,
     " same => n(cdrdone),NoOp(CDR done)",
+    // Hangup during Record() skips the lines after it. File the mailbox from here.
+    ` same => n,GotoIf($["\${MUNASIP_VM_DONE}" = "1" | "\${MUNASIP_VMFILE}" = ""]?vmdone)`,
+    ` same => n,Set(MUNASIP_VM_DONE=1)`,
+    ` same => n,${internalPost(
+      "voicemail",
+      `{"extension":"\${MUNASIP_VMEXT}","caller":"\${MUNASIP_CID}","file":"\${MUNASIP_VMFILE}"}`,
+    )}`,
+    " same => n(vmdone),NoOp(Voicemail filed)",
     "",
   );
 
-  // Voicemail deposit via Record → API (portal inbox). Path under shared munasip volume.
+  // Voicemail deposit via Record → API (portal inbox). Path under the shared volume.
+  // `#` or silence continues below and posts the file. A hangup skips those lines,
+  // so the `h` extension posts MUNASIP_VMFILE instead. `k` keeps the wav on hangup.
+  const vmRoot = voicemailDir();
   const vmDeposit = (num: string) => [
     `exten => *${num},1,NoOp(Voicemail deposit ${num})`,
     ` same => n,Answer()`,
     ` same => n,Playback(beep)`,
-    ` same => n,Set(VMFILE=/var/lib/asterisk/munasip/voicemail/${num}-\${UNIQUEID})`,
-    ` same => n,Record(\${VMFILE}.wav,3,120,kq)`,
     ` same => n,Set(MUNASIP_CID=\${CALLERID(num)})`,
-    ` same => n,${internalPost("voicemail", `{"extension":"${num}","caller":"\${MUNASIP_CID}","file":"\${VMFILE}.wav"}`)}`,
+    ` same => n,Set(MUNASIP_VMEXT=${num})`,
+    ` same => n,Set(VMFILE=${vmRoot}/${num}-\${UNIQUEID})`,
+    ` same => n,Set(MUNASIP_VMFILE=\${VMFILE}.wav)`,
+    ` same => n,Record(\${MUNASIP_VMFILE},3,120,kq)`,
+    ` same => n,${internalPost("voicemail", `{"extension":"${num}","caller":"\${MUNASIP_CID}","file":"\${MUNASIP_VMFILE}"}`)}`,
+    ` same => n,Set(MUNASIP_VM_DONE=1)`,
     ` same => n,Hangup()`,
     "",
   ];

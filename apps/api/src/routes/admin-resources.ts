@@ -1376,10 +1376,22 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       .where(eq(extensions.number, body.extension))
       .limit(1);
     if (!ext) return reply.code(404).send({ error: "extension not found" });
-    const { existsSync } = await import("node:fs");
-    if (!existsSync(body.file)) {
-      return reply.code(400).send({ error: "recording file missing" });
+    const { existsSync, statSync } = await import("node:fs");
+    let ready = false;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (existsSync(body.file)) {
+        try {
+          if (statSync(body.file).size >= 44) {
+            ready = true;
+            break;
+          }
+        } catch {
+          /* still closing */
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
+    if (!ready) return reply.code(400).send({ error: "recording file missing" });
     const { voicemails } = await import("../db/schema.js");
     const [row] = await db
       .insert(voicemails)

@@ -493,6 +493,35 @@ textarea.input {
 .nav-link.active .nav-ico {
   color: var(--primary);
 }
+.nav-badge {
+  margin-left: auto;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fff;
+}
+.nav-badge.is-vm { background: var(--success); }
+.nav-badge.is-missed { background: var(--danger); }
+.nav-tab-ico {
+  position: relative;
+  display: grid;
+}
+.nav-tab-ico .nav-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.55rem;
+  margin-left: 0;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  font-size: 0.62rem;
+}
 
 .badge {
   display: inline-flex;
@@ -1428,6 +1457,25 @@ html.light .sp-screen {
   20%, 40% { transform: rotate(10deg); }
 }
 .sp-act-label { display: block; margin-top: 0.2rem; font-size: 0.6rem; text-align: center; color: var(--text-muted); }
+/* Phone width: captions under the round actions wrap and push the row.
+   Drop them, and let the icons grow into that space so five still sit on one line. */
+@media (max-width: 767px) {
+  .sp-act-label { display: none; }
+  .sp-actions { height: auto; }
+  .sp-actions > div { width: 100%; align-items: center; }
+  .sp-act {
+    width: min(3.7rem, 100%);
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .sp-act svg { width: 1.45rem; height: 1.45rem; }
+  .sp-main {
+    width: min(4.35rem, 100%);
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .sp-main svg { width: 1.8rem; height: 1.8rem; }
+}
 
 .sp-overlay {
   position: absolute;
