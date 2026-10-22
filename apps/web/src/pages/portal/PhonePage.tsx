@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -20,6 +20,7 @@ import {
   Play,
   X,
 } from "lucide-react";
+import { acknowledgeMissed } from "../../lib/acknowledge-missed";
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { formatCallTime, usePhone } from "../../lib/phone-context";
@@ -89,6 +90,13 @@ export function PhonePage() {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
+  const qc = useQueryClient();
+
+  // Recents is the missed list under the phone icon. Opening it clears the menu count.
+  useEffect(() => {
+    if (view !== "recents") return;
+    acknowledgeMissed(qc);
+  }, [view, qc]);
 
   const mediaWarning = health.data?.media?.warnings?.[0];
   const showMediaBanner = Boolean(mediaWarning) || noRtp;

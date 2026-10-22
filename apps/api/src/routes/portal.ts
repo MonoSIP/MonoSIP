@@ -17,8 +17,10 @@ import { decrypt, encrypt, scryptHash } from "../lib/crypto.js";
 import { config } from "../config.js";
 import { ari } from "../asterisk/ari.js";
 import { createReadStream, existsSync, statSync } from "node:fs";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
 import { Readable } from "node:stream";
-import { importMailboxFiles } from "../lib/voicemail-inbox.js";
+import { importMailboxFiles, voicemailGreetingMediaId } from "../lib/voicemail-inbox.js";
 
 export async function portalRoutes(app: FastifyInstance) {
   app.get("/api/v1/me", async (req, reply) => {
@@ -34,6 +36,9 @@ export async function portalRoutes(app: FastifyInstance) {
       dnd: ext.dnd,
       email: ext.email,
       mobileForwardAllowed: ext.mobileForwardAllowed,
+      voicemailGreeting: ext.voicemailGreeting ?? "",
+      voicemailGreetingVoice: ext.voicemailGreetingVoice,
+      voicemailGreetingLang: ext.voicemailGreetingLang,
     };
   });
 
@@ -289,6 +294,47 @@ export async function portalRoutes(app: FastifyInstance) {
         })),
       );
     }
+    const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
+    await tryReloadAsterisk();
+    return { ok: true };
+  });
+
+  app.put("/api/v1/me/voicemail-greeting", async (req, reply) => {
+    const actor = await requireExtension(req, reply);
+    if (!actor || "statusCode" in (actor as object)) return;
+    const a = actor as { id: string; number: string };
+    const body = z
+      .object({
+        text: z.string().max(500),
+        voice: z.enum(["female", "male", "ema-lightning"]),
+        language: z.enum(["en", "tr"]),
+      })
+      .parse(req.body);
+    const text = body.text.trim();
+    const voice = body.voice;
+    const language = voice === "ema-lightning" ? "tr" : body.language;
+    const mediaId = voicemailGreetingMediaId(a.number);
+    const wavPath = path.join(config.asterisk.configDir, "sounds", "munasip", `${mediaId}.wav`);
+    if (text) {
+      try {
+        const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");
+        const wav = await synthesizeSpeech(text, language, 1.05, voice);
+        await writePromptWav(mediaId, wav);
+      } catch (e) {
+        return reply.code(503).send({ error: (e as Error).message });
+      }
+    } else {
+      await unlink(wavPath).catch(() => undefined);
+    }
+    await db
+      .update(extensions)
+      .set({
+        voicemailGreeting: text || null,
+        voicemailGreetingVoice: voice,
+        voicemailGreetingLang: language,
+        updatedAt: new Date(),
+      })
+      .where(eq(extensions.id, a.id));
     const { tryReloadAsterisk } = await import("../asterisk/config-writer.js");
     await tryReloadAsterisk();
     return { ok: true };

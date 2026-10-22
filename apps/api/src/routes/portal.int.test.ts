@@ -38,6 +38,7 @@ const portalRoutes: Array<[string, string]> = [
   ["GET", "/api/v1/me/recordings"],
   ["GET", "/api/v1/me/voicemails"],
   ["GET", "/api/v1/me/forwarding"],
+  ["PUT", "/api/v1/me/voicemail-greeting"],
   ["GET", "/api/v1/me/directory"],
 ];
 

@@ -282,7 +282,16 @@
     "recordingMissing": "The recording file is missing",
     "delete": "Delete",
     "confirmDelete": "Delete this message",
-    "deleted": "Message deleted"
+    "deleted": "Message deleted",
+    "voicemailGreeting": "Voicemail greeting",
+    "greetingHint": "Played before the beep when a caller reaches your mailbox. Leave it empty to keep only the beep.",
+    "greetingText": "Greeting",
+    "greetingVoice": "Voice",
+    "voiceFemale": "Female",
+    "voiceMale": "Male",
+    "voiceEma": "EMA (Turkish, offline)",
+    "greetingLang": "Language",
+    "greetingSaved": "Greeting saved"
   },
   "langs": {
     "en": "English",

@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { KeyRound, Languages, Mic, Moon, PhoneForwarded, UserCog, Volume2 } from "lucide-react";
+import { KeyRound, Languages, Mic, Moon, PhoneForwarded, UserCog, Voicemail, Volume2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { usePhoneOptional } from "../../lib/phone-context";
 import { useStore } from "../../store";
-import { PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Fwd = {
   id?: string;
@@ -26,7 +26,9 @@ export function MySettingsPage() {
   const qc = useQueryClient();
   const [lang, setLangState] = useState(() => (i18n?.language || "en").slice(0, 2));
   const [password, setPassword] = useState("");
-  const [dnd, setDnd] = useState(false);
+  const [greet, setGreet] = useState("");
+  const [greetVoice, setGreetVoice] = useState("female");
+  const [greetLang, setGreetLang] = useState<"en" | "tr">("tr");
   const [fwds, setFwds] = useState<Fwd[]>([
     { condition: "noanswer", ringSeconds: 20, destType: "voicemail", destId: null },
     { condition: "busy", ringSeconds: 5, destType: "voicemail", destId: null },
@@ -45,7 +47,13 @@ export function MySettingsPage() {
   const me = useQuery({
     queryKey: ["me"],
     queryFn: () =>
-      api.get<{ dnd: boolean; mobileForwardAllowed?: boolean }>("/api/v1/me"),
+      api.get<{
+        dnd: boolean;
+        mobileForwardAllowed?: boolean;
+        voicemailGreeting?: string;
+        voicemailGreetingVoice?: string;
+        voicemailGreetingLang?: string;
+      }>("/api/v1/me"),
   });
 
   useEffect(() => {
@@ -67,7 +75,10 @@ export function MySettingsPage() {
   }, [forwarding.data]);
 
   useEffect(() => {
-    if (me.data) setDnd(!!me.data.dnd);
+    if (!me.data) return;
+    setGreet(me.data.voicemailGreeting ?? "");
+    setGreetVoice(me.data.voicemailGreetingVoice || "female");
+    setGreetLang(me.data.voicemailGreetingLang === "en" ? "en" : "tr");
   }, [me.data]);
 
   useEffect(() => {
@@ -140,6 +151,20 @@ export function MySettingsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const saveGreet = useMutation({
+    mutationFn: () =>
+      api.put("/api/v1/me/voicemail-greeting", {
+        text: greet,
+        voice: greetVoice,
+        language: greetVoice === "ema-lightning" ? "tr" : greetLang,
+      }),
+    onSuccess: () => {
+      toast.success(t("portal.greetingSaved"));
+      void qc.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const saveFwd = useMutation({
     mutationFn: () =>
       api.put(
@@ -202,25 +227,7 @@ export function MySettingsPage() {
         </button>
       </SectionCard>
       </div>
-      <SectionCard title={t("portal.dnd")} icon={UserCog} tone="cyan">
-        <button
-          className={`btn ${dnd ? "btn-primary" : ""}`}
-          type="button"
-          onClick={async () => {
-            const next = !dnd;
-            try {
-              await api.put("/api/v1/me/dnd", { dnd: next });
-              setDnd(next);
-              void qc.invalidateQueries({ queryKey: ["me"] });
-            } catch (e) {
-              // Keep showing the server's truth and surface the failure rather
-              // than leaving an unhandled rejection in the console.
-              toast.error((e as Error).message);
-            }
-          }}
-        >
-          {t("portal.dnd")}: {dnd ? "ON" : "OFF"}
-        </button>
+      <SectionCard title={t("auth.password")} icon={KeyRound} tone="cyan">
         <TextField
           label={t("auth.password")}
           icon={KeyRound}
@@ -237,37 +244,6 @@ export function MySettingsPage() {
           {t("common.save")}
         </button>
       </SectionCard>
-      <SectionCard title="Audio devices" icon={Mic} tone="cyan">
-        <SelectField label="Microphone" icon={Mic} value={micId} onChange={(e) => setMicId(e.target.value)}>
-          <option value="">System default</option>
-          {inputs.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || d.deviceId.slice(0, 8)}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField label="Speaker" icon={Volume2} value={speakerId} onChange={(e) => setSpeakerId(e.target.value)}>
-          <option value="">System default</option>
-          {outputs.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || d.deviceId.slice(0, 8)}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField label="Ringtone output" icon={Volume2} value={ringId} onChange={(e) => setRingId(e.target.value)}>
-          <option value="">Same as speaker</option>
-          {outputs.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || d.deviceId.slice(0, 8)}
-            </option>
-          ))}
-        </SelectField>
-        <button className="btn btn-primary" type="button" onClick={saveDevices}>
-          Save devices
-        </button>
-      </SectionCard>
-      </div>
-      <div className="settings-columns-side">
       <SectionCard title="Call forwarding" icon={PhoneForwarded} tone="cyan">
         {fwds.map((fwd) => (
           <div key={fwd.condition} className="space-y-2 rounded border border-[var(--border)] p-3">
@@ -315,6 +291,88 @@ export function MySettingsPage() {
         ))}
         <button className="btn btn-primary" type="button" onClick={() => saveFwd.mutate()}>
           Save forwarding
+        </button>
+      </SectionCard>
+      </div>
+      <div className="settings-columns-side">
+      <SectionCard title={t("portal.voicemailGreeting")} icon={Voicemail} tone="cyan">
+        <p className="text-xs text-[var(--text-muted)]">{t("portal.greetingHint")}</p>
+        <TextAreaField
+          label={t("portal.greetingText")}
+          rows={3}
+          maxLength={500}
+          value={greet}
+          onChange={(e) => setGreet(e.target.value)}
+        />
+        <SelectField
+          label={t("portal.greetingVoice")}
+          value={greetVoice}
+          onChange={(e) => {
+            const next = e.target.value;
+            setGreetVoice(next);
+            if (next === "ema-lightning") setGreetLang("tr");
+          }}
+        >
+          <option value="female">{t("portal.voiceFemale")}</option>
+          <option value="male">{t("portal.voiceMale")}</option>
+          <option value="ema-lightning">{t("portal.voiceEma")}</option>
+        </SelectField>
+        <div className="space-y-1">
+          <span className="field-label">{t("portal.greetingLang")}</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              className={`btn ${greetLang === "tr" ? "btn-primary" : ""}`}
+              type="button"
+              onClick={() => setGreetLang("tr")}
+            >
+              Türkçe
+            </button>
+            <button
+              className={`btn ${greetLang === "en" ? "btn-primary" : ""}`}
+              type="button"
+              disabled={greetVoice === "ema-lightning"}
+              onClick={() => setGreetLang("en")}
+            >
+              English
+            </button>
+          </div>
+        </div>
+        <button
+          className="btn btn-primary"
+          type="button"
+          onClick={() => saveGreet.mutate()}
+          disabled={saveGreet.isPending}
+        >
+          {t("common.save")}
+        </button>
+      </SectionCard>
+      <SectionCard title="Audio devices" icon={Mic} tone="cyan">
+        <SelectField label="Microphone" icon={Mic} value={micId} onChange={(e) => setMicId(e.target.value)}>
+          <option value="">System default</option>
+          {inputs.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || d.deviceId.slice(0, 8)}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField label="Speaker" icon={Volume2} value={speakerId} onChange={(e) => setSpeakerId(e.target.value)}>
+          <option value="">System default</option>
+          {outputs.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || d.deviceId.slice(0, 8)}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField label="Ringtone output" icon={Volume2} value={ringId} onChange={(e) => setRingId(e.target.value)}>
+          <option value="">Same as speaker</option>
+          {outputs.map((d) => (
+            <option key={d.deviceId} value={d.deviceId}>
+              {d.label || d.deviceId.slice(0, 8)}
+            </option>
+          ))}
+        </SelectField>
+        <button className="btn btn-primary" type="button" onClick={saveDevices}>
+          Save devices
         </button>
       </SectionCard>
       </div>

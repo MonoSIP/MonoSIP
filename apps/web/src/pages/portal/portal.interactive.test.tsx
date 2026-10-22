@@ -94,7 +94,7 @@ function renderPage(ui: React.ReactElement) {
   );
 }
 
-/** The three forwarding selects, scoped past the audio-device selects above them. */
+/** The three forwarding selects, scoped to the forwarding card. */
 function fwdSelects() {
   const card = screen.getByRole("heading", { name: "Call forwarding" }).closest("section") as HTMLElement;
   return within(card).getAllByRole("combobox");
@@ -117,57 +117,47 @@ beforeEach(() => {
   });
 });
 
-describe("DND toggle", () => {
+describe("voicemail greeting", () => {
   beforeEach(() => {
     get.mockImplementation(async (path: string) => {
-      if (path === "/api/v1/me") return { dnd: false, mobileForwardAllowed: false };
+      if (path === "/api/v1/me") {
+        return {
+          dnd: false,
+          mobileForwardAllowed: false,
+          voicemailGreeting: "Merhaba",
+          voicemailGreetingVoice: "female",
+          voicemailGreetingLang: "tr",
+        };
+      }
       if (path === "/api/v1/me/voicemails") return [];
       if (path === "/api/v1/me/forwarding") return [];
       return {};
     });
   });
 
-  it("sends dnd:true and flips the button to ON", async () => {
+  it("saves the greeting text and voice", async () => {
     renderPage(<MySettingsPage />);
 
-    const button = await screen.findByRole("button", { name: "portal.dnd: OFF" });
-    await userEvent.click(button);
+    const box = await screen.findByLabelText("portal.greetingText");
+    await waitFor(() => expect(box).toHaveValue("Merhaba"));
+    await userEvent.clear(box);
+    await userEvent.type(box, "Birakin");
+    await userEvent.selectOptions(screen.getByLabelText("portal.greetingVoice"), "male");
 
-    expect(put).toHaveBeenCalledWith("/api/v1/me/dnd", { dnd: true });
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "portal.dnd: ON" })).toBeInTheDocument(),
-    );
-  });
+    const card = screen.getByRole("heading", { name: "portal.voicemailGreeting" }).closest("section")!;
+    await userEvent.click(within(card).getByRole("button", { name: "common.save" }));
 
-  it("sends dnd:false when toggled back off", async () => {
-    get.mockImplementation(async (path: string) => {
-      if (path === "/api/v1/me") return { dnd: true, mobileForwardAllowed: false };
-      if (path === "/api/v1/me/voicemails") return [];
-      if (path === "/api/v1/me/forwarding") return [];
-      return {};
+    expect(put).toHaveBeenCalledWith("/api/v1/me/voicemail-greeting", {
+      text: "Birakin",
+      voice: "male",
+      language: "tr",
     });
-
-    renderPage(<MySettingsPage />);
-
-    await userEvent.click(await screen.findByRole("button", { name: "portal.dnd: ON" }));
-    expect(put).toHaveBeenCalledWith("/api/v1/me/dnd", { dnd: false });
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "portal.dnd: OFF" })).toBeInTheDocument(),
-    );
   });
 
-  it("keeps the server state and surfaces the error when the save fails", async () => {
-    put.mockRejectedValueOnce(new Error("boom"));
-
+  it("does not offer do-not-disturb on the settings page", async () => {
     renderPage(<MySettingsPage />);
-
-    await userEvent.click(await screen.findByRole("button", { name: "portal.dnd: OFF" }));
-
-    expect(put).toHaveBeenCalledWith("/api/v1/me/dnd", { dnd: true });
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith("boom"));
-    // setDnd runs only after the awaited put resolves, so a failure leaves the
-    // label showing what the server actually has.
-    expect(screen.getByRole("button", { name: "portal.dnd: OFF" })).toBeInTheDocument();
+    await screen.findByLabelText("portal.greetingText");
+    expect(screen.queryByRole("button", { name: /portal\.dnd/ })).not.toBeInTheDocument();
   });
 });
 
@@ -261,7 +251,8 @@ describe("password and voicemail error handling", () => {
 
     const input = await screen.findByLabelText("auth.password");
     await userEvent.type(input, "supersecret");
-    await userEvent.click(screen.getByRole("button", { name: "common.save" }));
+    const card = screen.getByRole("heading", { name: "auth.password" }).closest("section")!;
+    await userEvent.click(within(card).getByRole("button", { name: "common.save" }));
 
     expect(patch).toHaveBeenCalledWith("/api/v1/me/password", { password: "supersecret" });
     await waitFor(() => expect(toastError).toHaveBeenCalledWith("password too short"));
@@ -278,7 +269,8 @@ describe("password and voicemail error handling", () => {
 
     const input = await screen.findByLabelText("auth.password");
     await userEvent.type(input, "supersecret");
-    await userEvent.click(screen.getByRole("button", { name: "common.save" }));
+    const card = screen.getByRole("heading", { name: "auth.password" }).closest("section")!;
+    await userEvent.click(within(card).getByRole("button", { name: "common.save" }));
 
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("OK"));
     expect(input).toHaveValue("");
@@ -290,9 +282,10 @@ describe("password and voicemail error handling", () => {
     document.documentElement.classList.remove("light");
     renderPage(<MySettingsPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Türkçe" }));
+    const langCard = screen.getByRole("heading", { name: "common.language" }).closest("section")!;
+    await userEvent.click(within(langCard).getByRole("button", { name: "Türkçe" }));
     expect(localStorage.getItem("munasip_locale")).toBe("tr");
-    expect(screen.getByRole("button", { name: "Türkçe" }).className).toContain("btn-primary");
+    expect(within(langCard).getByRole("button", { name: "Türkçe" }).className).toContain("btn-primary");
 
     await userEvent.click(screen.getByRole("button", { name: "portal.darkMode: common.enabled" }));
     expect(document.documentElement.classList.contains("light")).toBe(true);
@@ -304,7 +297,8 @@ describe("password and voicemail error handling", () => {
     renderPage(<MySettingsPage />);
 
     const input = await screen.findByLabelText("auth.password");
-    const save = screen.getByRole("button", { name: "common.save" });
+    const card = screen.getByRole("heading", { name: "auth.password" }).closest("section")!;
+    const save = within(card).getByRole("button", { name: "common.save" });
     expect(save).toBeDisabled();
 
     await userEvent.type(input, "short123");

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { History, PhoneCall, PhoneIncoming, PhoneMissed, PhoneOutgoing } from "lucide-react";
+import { acknowledgeMissed } from "../../lib/acknowledge-missed";
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { PageHeader, SectionCard } from "../../components/ui";
@@ -53,18 +54,7 @@ export function MyCallsPage() {
   // Looking at Missed clears the phone-menu count. The rows stay in the list.
   useEffect(() => {
     if (tab !== "missed") return;
-    const rows = missed.data ?? [];
-    if (!rows.some((m) => m.status === "pending" && !m.seen)) return;
-    let cancel = false;
-    void api.post("/api/v1/me/missed-calls/seen").then(() => {
-      if (cancel) return;
-      qc.setQueryData<typeof rows>(["my-missed"], (prev) =>
-        (prev ?? []).map((m) => (m.status === "pending" ? { ...m, seen: true } : m)),
-      );
-    });
-    return () => {
-      cancel = true;
-    };
+    acknowledgeMissed(qc);
   }, [tab, missed.data, qc]);
 
   const filtered = (list.data ?? []).filter((c) => {

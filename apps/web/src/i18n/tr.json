@@ -282,7 +282,16 @@
     "recordingMissing": "Ses dosyası yok",
     "delete": "Sil",
     "confirmDelete": "Bu mesajı sil",
-    "deleted": "Mesaj silindi"
+    "deleted": "Mesaj silindi",
+    "voicemailGreeting": "Sesli mesaj karşılama",
+    "greetingHint": "Arayan sesli mesaja düşünce sinyal sesinden önce okunur. Boş bırakırsanız yalnız sinyal sesi çalar.",
+    "greetingText": "Karşılama metni",
+    "greetingVoice": "Ses",
+    "voiceFemale": "Kadın",
+    "voiceMale": "Erkek",
+    "voiceEma": "EMA (Türkçe, çevrimdışı)",
+    "greetingLang": "Dil",
+    "greetingSaved": "Karşılama kaydedildi"
   },
   "langs": {
     "en": "İngilizce",

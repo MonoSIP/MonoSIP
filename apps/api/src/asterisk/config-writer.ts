@@ -26,7 +26,7 @@ import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { resolveExtensionNumber } from "./routing.js";
 import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
 import { queueLanguage, queueSoundLanguage } from "./queue-lang.js";
-import { voicemailDir } from "../lib/voicemail-inbox.js";
+import { voicemailDir, voicemailGreetingMediaId } from "../lib/voicemail-inbox.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -310,6 +310,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
   const dir = config.asterisk.configDir;
   await ensureDir(dir);
   await ensureDir(voicemailDir());
+  // mkdir honours umask 0077, so this directory lands as 0700 and Record() cannot
+  // create the wav. It returns at once and the dialplan hangs up — the caller
+  // hears the beep and the call ends. 0777 lets the Asterisk user write here.
+  await chmod(voicemailDir(), 0o777).catch(() => undefined);
 
   const exts = await db.select().from(extensions);
   const trks = await db.select().from(trunks).where(eq(trunks.enabled, true));
@@ -952,9 +956,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
   // `#` or silence continues below and posts the file. A hangup skips those lines,
   // so the `h` extension posts MUNASIP_VMFILE instead. `k` keeps the wav on hangup.
   const vmRoot = voicemailDir();
-  const vmDeposit = (num: string) => [
+  const vmDeposit = (ext: { number: string; voicemailGreeting: string | null }) => {
+    const num = ext.number;
+    const greet = (ext.voicemailGreeting ?? "").trim();
+    return [
     `exten => *${num},1,NoOp(Voicemail deposit ${num})`,
     ` same => n,Answer()`,
+    ...(greet ? [` same => n,Playback(munasip/${voicemailGreetingMediaId(num)})`] : []),
     ` same => n,Playback(beep)`,
     // Keep the number taken before Record(). The hangup path rewrites MUNASIP_CID
     // from CALLERID(num), which is often empty by then and showed up as a dash.
@@ -970,8 +978,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
     ` same => n,Hangup()`,
     "",
   ];
+  };
   for (const ext of exts) {
-    extensionsConf.push(...vmDeposit(ext.number));
+    extensionsConf.push(...vmDeposit(ext));
   }
 
   // Ring groups / queues / emergency / outbound MUST stay in [from-internal]

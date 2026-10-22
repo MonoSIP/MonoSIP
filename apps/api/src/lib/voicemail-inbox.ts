@@ -10,6 +10,11 @@ export function voicemailDir(): string {
   return path.join(config.asterisk.configDir, "voicemail");
 }
 
+/** Sound id under sounds/munasip for this extension's greeting. */
+export function voicemailGreetingMediaId(number: string): string {
+  return `vmgreet-${number.replace(/\D/g, "") || "ext"}`;
+}
+
 /** Older dialplans always wrote under this path, even when configDir differed. */
 const LEGACY_MAILBOX_DIR = "/var/lib/asterisk/munasip/voicemail";
 
