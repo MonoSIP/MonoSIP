@@ -1,9 +1,9 @@
 name: Publish website
 
-# site/ is served at https://munasip.github.io from the MunaSIP/munasip.github.io
-# repository (an organization's root Pages site must live in that repo). This
-# job copies site/ there; the deploy key (secret SITE_DEPLOY_KEY) can only write
-# to that repository.
+# site/ is the Next.js product site. This job exports it and copies the result
+# to MunaSIP/munasip.github.io (an organization's root Pages site must live in
+# that repo). The deploy key (secret SITE_DEPLOY_KEY) can only write there.
+# Live: https://munasip.github.io/
 
 on:
   push:
@@ -28,9 +28,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Build docs pages
-        run: node scripts/build-site-docs.mjs
-      - name: Push site/ to MunaSIP/munasip.github.io
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: site/.node-version
+      - name: Build website
+        working-directory: site
+        run: |
+          npm install --global pnpm@12.14.0
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm check:export
+      - name: Push export to MunaSIP/munasip.github.io
         env:
           SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
         run: |
@@ -39,11 +47,12 @@ jobs:
           chmod 600 ~/.ssh/site_deploy
           ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_deploy -o IdentitiesOnly=yes"
-          git clone --depth 1 git@github.com:MunaSIP/munasip.github.io.git out
-          find out -mindepth 1 -maxdepth 1 ! -name .git ! -name README.md -exec rm -rf {} +
-          cp -R site/. out/
-          cd out
-          # site/README.md is for this repo; the target keeps its own
+          git clone --depth 1 git@github.com:MunaSIP/munasip.github.io.git publish
+          find publish -mindepth 1 -maxdepth 1 ! -name .git ! -name README.md -exec rm -rf {} +
+          cp -R site/out/. publish/
+          rm -f publish/CNAME
+          cd publish
+          # The Pages repo keeps its own README.
           git checkout -- README.md
           git add -A
           if git diff --cached --quiet; then

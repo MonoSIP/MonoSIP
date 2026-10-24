@@ -16,4 +16,4 @@
 | [TTS.md](TTS.md) | Text-to-speech service |
 
 Product roadmap / phase checklist: [../TASKS.md](../TASKS.md)  
-Marketing site (static): [../site/](../site/)
+Website source: [../site/](../site/)

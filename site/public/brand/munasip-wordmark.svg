@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 128" role="img" aria-labelledby="t">
+  <title id="t">MünaSIP</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".22"/>
+      <stop offset=".55" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#bg)"/>
+  <rect width="128" height="128" rx="30" fill="url(#shine)"/>
+  <!-- handset: earpiece top-left, mouthpiece bottom-right -->
+  <path fill="#fff" transform="matrix(1.16 0 0 1.16 -8.5 -0.5)" d="M36.6 24.4c3-1.7 6.8-.9 8.9 1.9l7.6 10.2c2.1 2.8 1.8 6.7-.7 9.1l-5.2 5c3.9 8.6 10.6 15.5 19.1 19.6l5.1-5.1c2.5-2.5 6.4-2.8 9.2-.6l10.1 7.8c2.8 2.2 3.5 6.1 1.7 9.1l-3.6 6c-2.5 4.2-7.6 6.2-12.3 4.8C55.6 85.6 39 69 32.5 47.8c-1.4-4.7.6-9.8 4.8-12.3z"/>
+  <!-- check: "münasip" — the right fit -->
+  <path fill="none" stroke="#fff" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round" d="M71 37.5l10.5 10.5 21-23.5"/>
+  <text x="150" y="86" font-family="Outfit, 'Inter', 'Segoe UI', system-ui, sans-serif" font-size="68" font-weight="700" letter-spacing="-1.5" fill="currentColor">Müna<tspan fill="#10b981">SIP</tspan></text>
+</svg>

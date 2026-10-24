@@ -2,7 +2,7 @@
 
 **Company PBX** — open-source Asterisk VoIP with an admin panel, a visual IVR designer and a browser softphone. Built for small offices (~20 extensions). Runs as one prebuilt Docker image (or Docker Compose) on a Linux VM.
 
-[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](site/index.html) · [Release v1.7.5](https://github.com/MunaSIP/MunaSIP/releases/tag/v1.7.5) · [MIT License](LICENSE)
+[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](https://munasip.github.io/) · [Release v1.7.5](https://github.com/MunaSIP/MunaSIP/releases/tag/v1.7.5) · [MIT License](LICENSE)
 
 Default UI language: **English** (Turkish available in the app).
 
@@ -73,7 +73,7 @@ Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
 ## Documentation
 
-All docs live under **[docs/](docs/README.md)** and on the site at **[munasip.github.io/docs](https://munasip.github.io/docs/)**. Static product site: **[site/](site/index.html)**.
+All docs live under **[docs/](docs/README.md)**. The product site is **[munasip.github.io](https://munasip.github.io/)**; its source is **[site/](site/)**.
 
 ## License
 

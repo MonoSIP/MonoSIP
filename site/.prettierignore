@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+next-env.d.ts
+public
+.research
+.tools
+out
+.next
+node_modules
