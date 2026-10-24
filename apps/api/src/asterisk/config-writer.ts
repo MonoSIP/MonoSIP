@@ -30,6 +30,34 @@ import { voicemailDir, voicemailGreetingMediaId } from "../lib/voicemail-inbox.j
 
 const execFileAsync = promisify(execFile);
 
+/**
+ * Desk-phone BLF: the watching endpoint must accept SUBSCRIBE, and Asterisk
+ * must report ringing (`early`) as well as busy. Pickup groups make bare *8 work.
+ */
+export function blfEndpointLines(): string[] {
+  return [
+    "allow_subscribe=yes",
+    "subscribe_context=from-internal",
+    "notify_early_inuse_ringing=yes",
+    "device_state_busy_at=1",
+    "call_group=1",
+    "pickup_group=1",
+  ];
+}
+
+export function extensionHintLine(number: string): string {
+  return `exten => ${number},hint,PJSIP/${number}`;
+}
+
+/** *8101 picks up a ringing PJSIP/101 channel (Dial or queue). Bare *8 stays Pickup(). */
+export function directedPickupLines(): string[] {
+  return [
+    "exten => _*8.,1,NoOp(Directed pickup ${EXTEN:2})",
+    " same => n,PickupChan(PJSIP/${EXTEN:2}-)",
+    " same => n,Hangup()",
+  ];
+}
+
 /** Public IPv4 for RTP ICE candidates (vault EXTERNAL_IP or DNS of PUBLIC_HOST). */
 async function resolveExternalIp(): Promise<string> {
   if (config.externalIp) return config.externalIp;
@@ -494,6 +522,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "media_use_received_transport=yes",
       "rtp_timeout=60",
       "rtp_timeout_hold=300",
+      ...blfEndpointLines(),
       // Do not set transport= here: PJSIP accepts a single transport name only.
       // Omitting it lets each contact use the transport it registered on (UDP / WS / TLS).
       ...(sipAclName ? [`acl=${sipAclName}`] : []),
@@ -728,6 +757,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     " same => n,Hangup()",
     "exten => *8,1,Pickup()",
     " same => n,Hangup()",
+    ...directedPickupLines(),
     "exten => 700,1,Park()",
     " same => n,Hangup()",
     "",
@@ -804,7 +834,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     ];
 
     extensionsConf.push(
-      `exten => ${ext.number},hint,PJSIP/${ext.number}`,
+      extensionHintLine(ext.number),
       `exten => ${ext.number},1,NoOp(Dial ${ext.number})`,
       // Caller and dialed number, including extension-to-extension.
       " same => n,Gosub(munasip-blacklist,s,1)",

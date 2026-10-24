@@ -49,6 +49,7 @@ import {
   secrets,
 } from "../db/schema.js";
 import { requireAdmin } from "../lib/auth.js";
+import { deskPhoneConfig } from "../lib/phone-provision.js";
 import { writeAudit } from "../lib/audit.js";
 import { decrypt, encrypt, hashToken, randomSecret } from "../lib/crypto.js";
 import { tryReloadAsterisk } from "../asterisk/config-writer.js";
@@ -2671,65 +2672,19 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     }
     const host = config.sipDomain || config.publicHost;
     const profile = (dev.provisioningProfile ?? "yealink").toLowerCase();
-    // BLF peers: other extensions (max 8) for busy-lamp keys
     const peers = (await db.select().from(extensions))
       .filter((e) => e.number !== ext.number)
-      .sort((a, b) => a.number.localeCompare(b.number))
-      .slice(0, 8);
-    let body = "";
-    // Prefer SIP TLS (5061) for desk phones; UDP fallback documented in Devices UI
-    if (profile === "fanvil" || profile === "grandstream") {
-      const lines = [
-        `Account.1.Enable = 1`,
-        `Account.1.Account = ${ext.number}`,
-        `Account.1.Password = ${sipPass}`,
-        `Account.1.SipServer.1.Address = ${host}`,
-        `Account.1.SipServer.1.Port = 5061`,
-        `Account.1.DisplayName = ${ext.name}`,
-        `Account.1.LocalSipPort = 5061`,
-        `Account.1.Transport = 2`,
-        `Account.1.SrtpEncryption = 1`,
-      ];
-      peers.forEach((p, i) => {
-        const n = i + 1;
-        lines.push(
-          `MemoryKey.${n}.Type = 1`,
-          `MemoryKey.${n}.Value = ${p.number}`,
-          `MemoryKey.${n}.Label = ${p.name || p.number}`,
-          `MemoryKey.${n}.PickupValue = *8${p.number}`,
-        );
-      });
-      body = lines.join("\n");
-    } else {
-      // Yealink / generic — transport_type 2 = TLS; linekey type 16 = BLF
-      const lines = [
-        `#!version:1.0.0.1`,
-        `account.1.enable = 1`,
-        `account.1.label = ${ext.name}`,
-        `account.1.display_name = ${ext.name}`,
-        `account.1.auth_name = ${ext.number}`,
-        `account.1.user_name = ${ext.number}`,
-        `account.1.password = ${sipPass}`,
-        `account.1.sip_server.1.address = ${host}`,
-        `account.1.sip_server.1.port = 5061`,
-        `account.1.sip_server.1.transport_type = 2`,
-        `account.1.srtp_encryption = 1`,
-        `account.1.outbound_proxy_enable = 0`,
-      ];
-      peers.forEach((p, i) => {
-        const n = i + 1;
-        lines.push(
-          `linekey.${n}.type = 16`,
-          `linekey.${n}.line = 1`,
-          `linekey.${n}.value = ${p.number}`,
-          `linekey.${n}.label = ${p.name || p.number}`,
-          `linekey.${n}.extension = ${p.number}`,
-        );
-      });
-      body = lines.join("\n");
-    }
-    reply.header("content-type", "text/plain; charset=utf-8");
-    return body;
+      .sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+    const cfg = deskPhoneConfig({
+      profile,
+      number: ext.number,
+      name: ext.name,
+      password: sipPass,
+      host,
+      peers: peers.map((p) => ({ number: p.number, name: p.name || p.number })),
+    });
+    reply.header("content-type", cfg.contentType);
+    return cfg.body;
   });
 
   app.post("/api/v1/admin/holidays/import", async (req, reply) => {
