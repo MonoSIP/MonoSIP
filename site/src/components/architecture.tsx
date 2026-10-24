@@ -1,25 +1,36 @@
+import type { Locale } from "@/lib/locale";
 import { MotionRegion } from "./background";
 import { Icon } from "./icon";
 
-export function Architecture() {
+export function Architecture({ locale = "en" }: { locale?: Locale }) {
+  const tr = locale === "tr";
   return (
     <MotionRegion className="architecture-visual">
       <div className="architecture-label mono">
-        <span className="status-dot" /> DOCKER COMPOSE · SERVICE MAP
+        <span className="status-dot" />{" "}
+        {tr
+          ? "DOCKER COMPOSE · SERVİS HARİTASI"
+          : "DOCKER COMPOSE · SERVICE MAP"}
       </div>
       <div className="architecture-clients">
         <span>
-          <Icon name="monitor" /> Browser / portal
+          <Icon name="monitor" />{" "}
+          {tr ? "Tarayıcı / portal" : "Browser / portal"}
         </span>
         <span>
-          <Icon name="phone" /> SIP phones / provider
+          <Icon name="phone" />{" "}
+          {tr ? "SIP telefon / operatör" : "SIP phones / provider"}
         </span>
       </div>
       <svg
         className="architecture-connections"
         viewBox="0 0 600 84"
         role="img"
-        aria-label="Browser HTTPS and WSS connect through nginx. SIP and RTP connect directly to Asterisk."
+        aria-label={
+          tr
+            ? "Tarayıcı HTTPS ve WSS nginx üzerinden bağlanır. SIP ve RTP doğrudan Asterisk’e gider."
+            : "Browser HTTPS and WSS connect through nginx. SIP and RTP connect directly to Asterisk."
+        }
       >
         <path d="M150 0v65h150v19M450 0v84" />
         <path className="signal" d="M150 0v65h150v19M450 0v84" />
@@ -32,7 +43,8 @@ export function Architecture() {
       </svg>
       <div className="architecture-host">
         <div className="host-label mono">
-          <Icon name="server" /> YOUR LINUX SERVER
+          <Icon name="server" />{" "}
+          {tr ? "SİZİN LINUX SUNUCUNUZ" : "YOUR LINUX SERVER"}
         </div>
         <div className="architecture-grid">
           <div className="service service-edge">
@@ -47,33 +59,43 @@ export function Architecture() {
           </div>
           <div className="service">
             <Icon name="monitor" />
-            <strong>Web app</strong>
-            <span>Admin + portal</span>
+            <strong>{tr ? "Web uygulaması" : "Web app"}</strong>
+            <span>{tr ? "Yönetici + portal" : "Admin + portal"}</span>
           </div>
           <div className="service service-control">
             <Icon name="flow" />
             <strong>Fastify API</strong>
-            <span>Flows · config · jobs</span>
+            <span>
+              {tr ? "Akışlar · yapılandırma · işler" : "Flows · config · jobs"}
+            </span>
           </div>
           <div className="service">
             <Icon name="server" />
             <strong>PostgreSQL</strong>
-            <span>Settings · CDR · flows</span>
+            <span>
+              {tr ? "Ayarlar · CDR · akışlar" : "Settings · CDR · flows"}
+            </span>
           </div>
           <div className="service">
             <Icon name="sound" />
-            <strong>Speech</strong>
-            <span>Edge / EMA · embedded</span>
+            <strong>{tr ? "Konuşma" : "Speech"}</strong>
+            <span>{tr ? "Edge / EMA · gömülü" : "Edge / EMA · embedded"}</span>
           </div>
         </div>
         <p className="architecture-footnote">
-          API ↔ Asterisk over ARI / AMI · coturn relays remote WebRTC media.
+          {tr
+            ? "API ↔ Asterisk, ARI / AMI üzerinden · coturn uzak WebRTC ortamını taşır."
+            : "API ↔ Asterisk over ARI / AMI · coturn relays remote WebRTC media."}
         </p>
       </div>
       <div className="architecture-persistence">
         <Icon name="server" />
-        <span>Persistent volumes</span>
-        <span className="mono">database / recordings / config</span>
+        <span>{tr ? "Kalıcı birimler" : "Persistent volumes"}</span>
+        <span className="mono">
+          {tr
+            ? "veritabanı / kayıtlar / yapılandırma"
+            : "database / recordings / config"}
+        </span>
       </div>
     </MotionRegion>
   );

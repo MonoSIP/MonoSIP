@@ -1,4 +1,10 @@
-import { copyFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 
 // Next.js #85374: Windows static export uses path.relative() backslashes for
@@ -35,6 +41,25 @@ function visit(directory) {
   }
 }
 visit(root);
+const turkishRoot = join(root, "tr");
+let language = 0;
+if (existsSync(turkishRoot)) {
+  function mark(directory) {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) mark(path);
+      else if (entry.name.endsWith(".html")) {
+        const html = readFileSync(path, "utf8");
+        const next = html.replace('<html lang="en"', '<html lang="tr"');
+        if (next !== html) {
+          writeFileSync(path, next);
+          language++;
+        }
+      }
+    }
+  }
+  mark(turkishRoot);
+}
 console.log(
-  `Static export: normalized ${count} Windows RSC segment aliases (Next.js #85374).`,
+  `Static export: normalized ${count} Windows RSC segment aliases (Next.js #85374); marked ${language} Turkish pages.`,
 );

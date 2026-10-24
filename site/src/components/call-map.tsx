@@ -3,35 +3,48 @@
 import { useState } from "react";
 import { Icon } from "./icon";
 import { MotionRegion } from "./background";
+import type { Locale } from "@/lib/locale";
 
-const routes = [
+const routes = (tr: boolean) => [
   {
-    name: "Sales",
-    target: "Extension 201",
-    note: "The caller chooses Sales. The IVR transfers the call to extension 201.",
+    name: tr ? "Satış" : "Sales",
+    target: tr ? "Dahili 201" : "Extension 201",
+    note: tr
+      ? "Arayan Satış’ı seçer. IVR aramayı 201 dahilisine aktarır."
+      : "The caller chooses Sales. The IVR transfers the call to extension 201.",
     icon: "phone",
+    box: tr ? "201" : "201",
   },
   {
-    name: "Support",
-    target: "Support queue",
-    note: "The caller chooses Support. The queue rings an available team member.",
+    name: tr ? "Destek" : "Support",
+    target: tr ? "Destek kuyruğu" : "Support queue",
+    note: tr
+      ? "Arayan Destek’i seçer. Kuyruk müsait bir ekip üyesini çaldırır."
+      : "The caller chooses Support. The queue rings an available team member.",
     icon: "headset",
+    box: tr ? "Kuyruk" : "Queue",
   },
   {
-    name: "After hours",
-    target: "Voicemail",
-    note: "A closed schedule sends the caller to a voicemail destination.",
+    name: tr ? "Mesai dışı" : "After hours",
+    target: tr ? "Sesli mesaj" : "Voicemail",
+    note: tr
+      ? "Kapalı bir takvim arayanı sesli mesaja gönderir."
+      : "A closed schedule sends the caller to a voicemail destination.",
     icon: "clock",
+    box: tr ? "Mesaj" : "Voicemail",
   },
 ];
 
-export function CallMap() {
+export function CallMap({ locale = "en" }: { locale?: Locale }) {
+  const tr = locale === "tr";
+  const items = routes(tr);
   const [route, setRoute] = useState(1);
   return (
     <MotionRegion className="hero-visual">
       <div className="visual-topline">
         <span>
-          <span className="status-dot" /> YOUR CALL, CONNECTED.
+          <span className="status-dot" />{" "}
+          {tr ? "ARAMANIZ, BAĞLI." : "YOUR CALL, CONNECTED."}
         </span>
         <span>FIG. 01</span>
       </div>
@@ -41,11 +54,13 @@ export function CallMap() {
           role="img"
           aria-labelledby="call-map-title call-map-desc"
         >
-          <title id="call-map-title">A call through MunaSIP</title>
+          <title id="call-map-title">
+            {tr ? "MunaSIP üzerinden bir arama" : "A call through MunaSIP"}
+          </title>
           <desc id="call-map-desc">
-            An incoming SIP call enters Asterisk, follows an IVR or schedule and
-            reaches {routes[route].target}. A conceptual illustration, not a
-            live call.
+            {tr
+              ? `Gelen bir SIP araması Asterisk’e girer, bir IVR veya takvimi izler ve ${items[route].target} hedefine ulaşır. Kavramsal bir çizim, canlı bir arama değil.`
+              : `An incoming SIP call enters Asterisk, follows an IVR or schedule and reaches ${items[route].target}. A conceptual illustration, not a live call.`}
           </desc>
           <defs>
             <pattern
@@ -91,10 +106,10 @@ export function CallMap() {
               <path d="m6 3 4 5-3 3a15 15 0 0 0 6 6l3-3 5 4-2 3C10 23 1 14 3 5Z" />
             </g>
             <text x="90" y="310" textAnchor="middle">
-              Incoming call
+              {tr ? "Gelen arama" : "Incoming call"}
             </text>
             <text x="90" y="332" textAnchor="middle" className="diagram-detail">
-              SIP provider
+              {tr ? "SIP hattı" : "SIP provider"}
             </text>
           </g>
           <g className="pbx-core">
@@ -136,10 +151,10 @@ export function CallMap() {
               <path d="M541 229v9h-16v9m16-9h16v9m-37 0h10v8h-10zm32 0h10v8h-10z" />
             </g>
             <text x="541" y="279" textAnchor="middle">
-              Call flow
+              {tr ? "Akış" : "Call flow"}
             </text>
           </g>
-          {routes.map((item, i) => (
+          {items.map((item, i) => (
             <g
               key={item.name}
               className={`destination ${route === i ? "chosen" : ""}`}
@@ -148,29 +163,33 @@ export function CallMap() {
               <rect width="94" height="58" rx="5" />
               <circle cx="14" cy="16" r="3" />
               <text x="47" y="39" textAnchor="middle">
-                {i === 0 ? "201" : i === 1 ? "Queue" : "Voicemail"}
+                {item.box}
               </text>
             </g>
           ))}
           <g className="diagram-detail">
             <text x="320" y="404" textAnchor="middle">
-              ONE PBX. YOUR INFRASTRUCTURE.
+              {tr
+                ? "TEK SANTRAL. SİZİN ALTYAPINIZ."
+                : "ONE PBX. YOUR INFRASTRUCTURE."}
             </text>
             <path d="M252 423h136" stroke="currentColor" opacity=".3" />
           </g>
         </svg>
         <div className="route-stamp">
-          <Icon name={routes[route].icon} />
-          <span>{routes[route].target}</span>
+          <Icon name={items[route].icon} />
+          <span>{items[route].target}</span>
           <span className="status-dot" />
         </div>
       </div>
       <div
         className="route-picker"
         role="group"
-        aria-label="Choose an example call route"
+        aria-label={
+          tr ? "Örnek bir arama rotası seçin" : "Choose an example call route"
+        }
       >
-        {routes.map((item, i) => (
+        {items.map((item, i) => (
           <button
             type="button"
             key={item.name}
@@ -184,10 +203,12 @@ export function CallMap() {
         ))}
       </div>
       <p className="route-description" aria-live="polite">
-        {routes[route].note}
+        {items[route].note}
       </p>
       <span className="illustration-note">
-        Interactive illustration · no call is placed
+        {tr
+          ? "Etkileşimli çizim · arama yapılmaz"
+          : "Interactive illustration · no call is placed"}
       </span>
     </MotionRegion>
   );

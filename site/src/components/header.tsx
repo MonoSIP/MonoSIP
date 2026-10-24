@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "./icon";
 import { usePreferences } from "./preferences";
+import { chrome, localeFromPath, pathFor, themeName } from "@/lib/locale";
 import { site } from "@/lib/site";
 
 export function Header() {
@@ -15,6 +17,13 @@ export function Header() {
   const trigger = useRef<HTMLButtonElement>(null);
   const mobileTrigger = useRef<HTMLButtonElement>(null);
   const nav = useRef<HTMLElement>(null);
+  const pathname = usePathname() || "/";
+  const locale = localeFromPath(pathname);
+  const t = chrome[locale];
+  const href = (path: string) => pathFor(locale, path);
+  useLayoutEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
   useEffect(() => {
     if (!appearance) return;
     popup.current?.querySelector<HTMLInputElement>("input:checked")?.focus();
@@ -77,7 +86,7 @@ export function Header() {
   return (
     <header className="site-header" id="top">
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="MünaSIP. home">
+        <Link href={href("/")} className="brand" aria-label={t.home}>
           <Image
             src="/brand/munasip-mark.svg"
             width={34}
@@ -93,16 +102,16 @@ export function Header() {
         <nav
           ref={nav}
           id="main-navigation"
-          aria-label="Main navigation"
+          aria-label={t.nav}
           className={`main-nav ${menu ? "is-open" : ""}`}
           onClick={(event) => {
             if ((event.target as HTMLElement).closest("a")) setMenu(false);
           }}
         >
-          <Link href="/#features">Features</Link>
-          <Link href="/updates/">What’s new</Link>
-          <Link href="/docs/">Documentation</Link>
-          <Link href="/download/">Download</Link>
+          <Link href={href("/#features")}>{t.features}</Link>
+          <Link href={href("/updates/")}>{t.updates}</Link>
+          <Link href={href("/docs/")}>{t.docs}</Link>
+          <Link href={href("/download/")}>{t.download}</Link>
         </nav>
         <div className="header-actions">
           <div className="appearance-wrap">
@@ -110,7 +119,7 @@ export function Header() {
               ref={trigger}
               className="theme-trigger"
               type="button"
-              aria-label={`Choose color theme: ${theme}`}
+              aria-label={t.theme(theme)}
               aria-expanded={appearance}
               aria-controls="appearance-panel"
               onClick={() => {
@@ -127,7 +136,9 @@ export function Header() {
                       : "sun"
                 }
               />
-              <span className="theme-label">{theme}</span>
+              <span className="theme-label">
+                {locale === "tr" ? themeName(locale, theme) : theme}
+              </span>
               <Icon name="chevron" className="tiny" />
             </button>
             {appearance && (
@@ -136,12 +147,12 @@ export function Header() {
                 id="appearance-panel"
                 ref={popup}
                 role="region"
-                aria-label="Appearance"
+                aria-label={t.appearance}
               >
-                <strong>Appearance</strong>
-                <p>Your desk. Your atmosphere.</p>
+                <strong>{t.appearance}</strong>
+                <p>{t.appearanceLead}</p>
                 <fieldset>
-                  <legend className="sr-only">Color theme</legend>
+                  <legend className="sr-only">{t.colorTheme}</legend>
                   <div className="theme-options">
                     {(["light", "dark", "system"] as const).map((option) => (
                       <label
@@ -174,7 +185,7 @@ export function Header() {
                             </b>
                           )}
                         </span>
-                        <span>{option[0].toUpperCase() + option.slice(1)}</span>
+                        <span>{themeName(locale, option)}</span>
                       </label>
                     ))}
                   </div>
@@ -190,10 +201,10 @@ export function Header() {
                     }
                   />
                   {theme === "system"
-                    ? "In sync with your system."
+                    ? t.themeSystem
                     : theme === "dark"
-                      ? "A little easier on the eyes."
-                      : "A fresh perspective."}
+                      ? t.themeDark
+                      : t.themeLight}
                 </div>
               </div>
             )}
@@ -201,28 +212,40 @@ export function Header() {
           <button
             type="button"
             className="icon-button motion-toggle"
-            aria-label={
-              motion ? "Disable mouse effects" : "Enable mouse effects"
-            }
+            aria-label={motion ? t.motionOff : t.motionOn}
             aria-pressed={motion}
             title={
               reduced
-                ? "Your system prefers reduced motion. Mouse effects stay paused."
+                ? t.motionReduced
                 : motion
-                  ? "Mouse effects on — click to disable"
-                  : "Mouse effects off — click to enable"
+                  ? t.motionTitleOn
+                  : t.motionTitleOff
             }
             onClick={toggleMotion}
           >
             <Icon name="mouse" />
             <span className={`motion-indicator ${motion ? "on" : ""}`} />
           </button>
+          <nav className="lang-switch" aria-label={t.language}>
+            <Link
+              href={pathFor("en", pathname)}
+              hrefLang="en"
+              lang="en"
+              aria-current={locale === "en" ? "page" : undefined}
+            >
+              EN
+            </Link>
+            <Link
+              href={pathFor("tr", pathname)}
+              hrefLang="tr"
+              lang="tr"
+              aria-current={locale === "tr" ? "page" : undefined}
+            >
+              TR
+            </Link>
+          </nav>
           <span className="header-divider" />
-          <a
-            className="github-link"
-            href={site.repo}
-            aria-label="MunaSIP on GitHub"
-          >
+          <a className="github-link" href={site.repo} aria-label={t.github}>
             <Icon name="github" />
             <span>GitHub</span>
             <Icon name="external" className="tiny" />
@@ -231,7 +254,7 @@ export function Header() {
             ref={mobileTrigger}
             type="button"
             className="icon-button mobile-toggle"
-            aria-label={menu ? "Close navigation" : "Open navigation"}
+            aria-label={menu ? t.menuClose : t.menuOpen}
             aria-controls="main-navigation"
             aria-expanded={menu}
             onClick={() => {

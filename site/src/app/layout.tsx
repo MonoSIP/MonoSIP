@@ -3,6 +3,7 @@ import { PreferencesProvider } from "@/components/preferences";
 import { preferenceScript } from "@/lib/preference-script";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { SkipLink } from "@/components/skip-link";
 import { Background } from "@/components/background";
 import { FragmentNavigation } from "@/components/fragment-navigation";
 import { site } from "@/lib/site";
@@ -67,9 +68,7 @@ export default function RootLayout({
       <body>
         <PreferencesProvider>
           <FragmentNavigation />
-          <a href="#main" className="skip-link">
-            Skip to content
-          </a>
+          <SkipLink />
           <Background />
           <Header />
           <main id="main">{children}</main>

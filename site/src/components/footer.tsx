@@ -1,15 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Icon } from "./icon";
+import { chrome, localeFromPath, pathFor } from "@/lib/locale";
 import { site } from "@/lib/site";
 
 export function Footer() {
+  const pathname = usePathname() || "/";
+  const locale = localeFromPath(pathname);
+  const t = chrome[locale];
+  const href = (path: string) => pathFor(locale, path);
   return (
     <footer className="site-footer">
       <div className="container">
         <div className="footer-top">
           <div className="footer-intro">
-            <Link className="brand" href="/">
+            <Link className="brand" href={href("/")}>
               <Image
                 src="/brand/munasip-mark.svg"
                 width={32}
@@ -22,47 +30,47 @@ export function Footer() {
               </span>
             </Link>
             <p>
-              Good conversations.
+              {t.footerLeadA}
               <br />
-              Your infrastructure.
+              {t.footerLeadB}
             </p>
-            <span className="mono footer-small">
-              OPEN SOURCE. ON YOUR TERMS.
-            </span>
+            <span className="mono footer-small">{t.footerKicker}</span>
           </div>
           <div>
-            <h2>Product</h2>
-            <Link href="/#features">Features</Link>
-            <Link href="/#ivr">Visual IVR</Link>
-            <Link href="/#softphone">Browser softphone</Link>
-            <Link href="/download/">Download</Link>
-            <Link href="/updates/">What’s new</Link>
-            <a href={site.release}>Release {site.version}</a>
+            <h2>{t.product}</h2>
+            <Link href={href("/#features")}>{t.features}</Link>
+            <Link href={href("/#ivr")}>{t.visualIvr}</Link>
+            <Link href={href("/#softphone")}>{t.softphone}</Link>
+            <Link href={href("/download/")}>{t.download}</Link>
+            <Link href={href("/updates/")}>{t.updates}</Link>
+            <a href={site.release}>
+              {locale === "tr" ? "Sürüm" : "Release"} {site.version}
+            </a>
           </div>
           <div>
-            <h2>Resources</h2>
-            <Link href="/docs/">Documentation</Link>
-            <Link href="/docs/getting-started/">Installation</Link>
-            <Link href="/docs/architecture/">Architecture</Link>
-            <Link href="/docs/security/">Security & operations</Link>
-            <Link href="/brand/">Brand assets</Link>
+            <h2>{t.resources}</h2>
+            <Link href={href("/docs/")}>{t.docs}</Link>
+            <Link href={href("/docs/getting-started/")}>{t.install}</Link>
+            <Link href={href("/docs/architecture/")}>{t.architecture}</Link>
+            <Link href={href("/docs/security/")}>{t.security}</Link>
+            <Link href={href("/brand/")}>{t.brand}</Link>
           </div>
           <div>
-            <h2>Open source</h2>
+            <h2>{t.openSource}</h2>
             <a href={site.repo}>
               GitHub <Icon name="external" className="tiny" />
             </a>
-            <a href={`${site.repo}/blob/main/LICENSE`}>MIT license</a>
-            <a href={`${site.repo}#readme`}>Project readme</a>
-            <a href="https://github.com/diggyen">Original author</a>
-            <a href={site.websiteRepo}>Website source</a>
+            <a href={`${site.repo}/blob/main/LICENSE`}>{t.license}</a>
+            <a href={`${site.repo}#readme`}>{t.readme}</a>
+            <a href="https://github.com/diggyen">{t.author}</a>
+            <a href={site.websiteRepo}>{t.website}</a>
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2026 diggyen. MunaSIP is MIT licensed.</span>
+          <span>{t.copyright}</span>
           <span className="footer-end">
-            <span className="status-dot" /> Built for your own server.
-            <a href="#top" aria-label="Back to top">
+            <span className="status-dot" /> {t.built}
+            <a href="#top" aria-label={t.top}>
               ↑
             </a>
           </span>

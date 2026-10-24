@@ -442,6 +442,36 @@ td code {
   align-items: center;
   gap: 10px;
 }
+.lang-switch {
+  display: inline-flex;
+  align-items: stretch;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.lang-switch a {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-family: var(--font-jetbrains);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.lang-switch a[aria-current="page"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.lang-switch a:hover {
+  color: var(--accent);
+}
+.lang-switch a[aria-current="page"]:hover {
+  color: var(--on-accent);
+}
 .theme-trigger,
 .icon-button {
   display: inline-flex;
@@ -3310,18 +3340,29 @@ figcaption {
     display: none;
   }
   .theme-trigger,
+  .icon-button,
+  .lang-switch {
+    height: 34px;
+  }
+  .theme-trigger,
   .icon-button {
     width: 34px;
-    height: 34px;
     padding: 0;
+  }
+  .lang-switch a {
+    min-width: 28px;
+    padding: 0 6px;
+    font-size: 10px;
   }
   .main-nav {
     top: 67px;
   }
   .appearance-panel {
-    right: -81px;
+    position: fixed;
+    top: 76px;
+    right: 20px;
+    left: auto;
     width: min(330px, calc(100vw - 40px));
-    top: 48px;
     padding: 20px;
   }
   .hero {

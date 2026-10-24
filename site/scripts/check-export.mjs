@@ -54,6 +54,28 @@ for (const path of routes) {
   assert.ok(!/oxog/i.test(html), `Old site host present: ${path}`);
   documents.set(path, html);
 }
+const turkish = routes.map((path) => (path === "/" ? "/tr/" : `/tr${path}`));
+for (const path of turkish) {
+  const file = fileFor(path);
+  assert.ok(existsSync(file), `Missing static route ${path}`);
+  const html = readFileSync(file, "utf8");
+  assert.ok(
+    html.includes(`rel="canonical" href="https://munasip.github.io${path}"`),
+    `Canonical mismatch: ${path}`,
+  );
+  assert.match(
+    html,
+    /<html[^>]+lang="tr"/,
+    `Missing Turkish language: ${path}`,
+  );
+  assert.equal(
+    [...html.matchAll(/<h1[\s>]/g)].length,
+    1,
+    `One h1 required: ${path}`,
+  );
+  assert.ok(!/oxog/i.test(html), `Old site host present: ${path}`);
+  documents.set(path, html);
+}
 let links = 0;
 for (const [path, html] of documents) {
   for (const [, raw] of html.matchAll(/(?:href|src)="([^"<>]+)"/g)) {
@@ -97,7 +119,7 @@ for (const anchor of [
 ])
   assert.ok(home.includes(`id="${anchor}"`), `Legacy anchor ${anchor} missing`);
 const sitemap = readFileSync(join(root, "sitemap.xml"), "utf8");
-for (const path of routes)
+for (const path of [...routes, ...turkish])
   assert.ok(
     sitemap.includes(`https://munasip.github.io${path}</loc>`),
     `Sitemap missing ${path}`,
@@ -117,5 +139,5 @@ function walk(dir) {
 }
 walk(root);
 console.log(
-  `PASS: ${routes.length} static pages; ${links} local links/assets; legacy anchors, canonical URLs, sitemap, robots, 404 and .nojekyll. Export ${(size / 1024 / 1024).toFixed(2)} MiB.`,
+  `PASS: ${routes.length} English and ${turkish.length} Turkish pages; ${links} local links/assets; legacy anchors, canonical URLs, sitemap, robots, 404 and .nojekyll. Export ${(size / 1024 / 1024).toFixed(2)} MiB.`,
 );

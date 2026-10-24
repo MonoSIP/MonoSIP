@@ -1,25 +1,28 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
+import { chrome, localeFromPath, pathFor } from "@/lib/locale";
 
 export default function NotFound() {
+  const locale = localeFromPath(usePathname() || "/");
+  const t = chrome[locale];
   return (
     <div className="container not-found">
-      <p className="eyebrow">404 / THIS LINE ISN’T CONNECTED</p>
+      <p className="eyebrow">{t.notFoundEyebrow}</p>
       <h1>
-        A missed connection.
+        {t.notFoundTitleA}
         <br />
-        <span>Let’s try another route.</span>
+        <span>{t.notFoundTitleB}</span>
       </h1>
-      <p>
-        This page could not be found. Head home or pick up where you left off in
-        the documentation.
-      </p>
+      <p>{t.notFoundBody}</p>
       <div className="button-row">
-        <Link className="button primary" href="/">
-          Back to home <Icon name="arrow" />
+        <Link className="button primary" href={pathFor(locale, "/")}>
+          {t.notFoundHome} <Icon name="arrow" />
         </Link>
-        <Link className="button secondary" href="/docs/">
-          Documentation
+        <Link className="button secondary" href={pathFor(locale, "/docs/")}>
+          {t.notFoundDocs}
         </Link>
       </div>
     </div>

@@ -1,18 +1,26 @@
 import type { Metadata } from "next";
+import type { Locale } from "./locale";
+import { pathFor } from "./locale";
 import { site } from "./site";
 
 export function pageMetadata(
   title: string,
   description: string,
   path: string,
+  locale: Locale = "en",
 ): Metadata {
+  const en = pathFor("en", path);
+  const tr = pathFor("tr", path);
   return {
     title,
     description,
-    alternates: { canonical: path },
+    alternates: {
+      canonical: path,
+      languages: { en, tr, "x-default": en },
+    },
     openGraph: {
       type: "website",
-      locale: "en_US",
+      locale: locale === "tr" ? "tr_TR" : "en_US",
       siteName: site.name,
       title: `${title} — MunaSIP`,
       description,

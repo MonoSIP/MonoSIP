@@ -1,6 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { chrome, localeFromPath } from "@/lib/locale";
 import { Icon } from "./icon";
 
 export function CodeBlock({
@@ -12,6 +14,7 @@ export function CodeBlock({
   title?: string;
   language?: string;
 }) {
+  const t = chrome[localeFromPath(usePathname() || "/")];
   const [state, setState] = useState<"idle" | "copied" | "error">("idle");
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pre = useRef<HTMLPreElement>(null);
@@ -44,9 +47,13 @@ export function CodeBlock({
           </span>
           {title}
         </span>
-        <button type="button" onClick={copy} aria-label={`Copy ${title}`}>
+        <button
+          type="button"
+          onClick={copy}
+          aria-label={`${state === "copied" ? t.copied : t.copy} ${title}`}
+        >
           <Icon name={state === "copied" ? "check" : "copy"} />
-          <span>{state === "copied" ? "Copied" : "Copy"}</span>
+          <span>{state === "copied" ? t.copied : t.copy}</span>
         </button>
       </div>
       <pre ref={pre} tabIndex={0} aria-label={`${title} code`}>
@@ -70,9 +77,9 @@ export function CodeBlock({
       </pre>
       <span className="sr-only" role="status">
         {state === "copied"
-          ? "Copied to clipboard."
+          ? t.copiedStatus
           : state === "error"
-            ? "Clipboard unavailable. Code selected; copy it with your keyboard."
+            ? t.copyError
             : ""}
       </span>
     </div>

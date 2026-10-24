@@ -1,3 +1,5 @@
+import type { Locale } from "./locale";
+import { docsTr } from "./docs-tr";
 import { ProductMockup } from "@/components/product-mockup";
 import Link from "next/link";
 import { Architecture } from "@/components/architecture";
@@ -1110,3 +1112,14 @@ export const docs: Record<
     ],
   },
 };
+
+export type Guide = {
+  title: string;
+  summary: string;
+  source: string;
+  sections: { id: string; title: string; content: React.ReactNode }[];
+};
+
+export function getDocs(locale: Locale = "en"): Record<string, Guide> {
+  return (locale === "tr" ? docsTr : docs) as Record<string, Guide>;
+}
