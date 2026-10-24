@@ -114,7 +114,7 @@ export function DevicesPage() {
       </SectionCard>
       {qr && (
         <SectionCard title={tr("SIP QR")} icon={QrCode} tone="cyan">
-          <img src={qr} alt="SIP QR" className="h-48 w-48 rounded border border-[var(--border)]" />
+          <img src={qr} alt="SIP QR" className="h-48 w-48 rounded" />
         </SectionCard>
       )}
       <SectionCard title={tr("Add device")} icon={Smartphone} tone="blue">

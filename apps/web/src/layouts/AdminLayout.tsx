@@ -117,7 +117,10 @@ export function AdminLayout() {
           </nav>
           <div className="mt-4 flex gap-2">
             <button className="btn flex-1" onClick={toggleTheme} type="button">
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              <span className="icon-swap" aria-hidden>
+                <Sun size={16} className={theme === "dark" ? "is-on" : undefined} />
+                <Moon size={16} className={theme === "light" ? "is-on" : undefined} />
+              </span>
               {t("common.theme")}
             </button>
             <button

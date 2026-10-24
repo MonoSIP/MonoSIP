@@ -210,7 +210,10 @@ function UserCard({
             <span className="portal-user-meta">{i18n.language.slice(0, 2).toUpperCase()}</span>
           </button>
           <button type="button" role="menuitem" title={t("common.theme")} onClick={onToggleTheme}>
-            {theme === "dark" ? <Moon size={16} /> : <Sun size={16} />}
+            <span className="icon-swap" aria-hidden>
+              <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
+              <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
+            </span>
             <span className="flex-1">{t("portal.darkMode")}</span>
           </button>
           <button type="button" role="menuitem" title={t("common.logout")} onClick={onLogout}>
