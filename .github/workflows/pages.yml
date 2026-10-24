@@ -31,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: site/.node-version
+          # Node 26 has no Corepack. pnpm is installed in the next step.
+          package-manager-cache: false
       - name: Build website
         working-directory: site
         run: |
