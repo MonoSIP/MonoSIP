@@ -5,7 +5,7 @@ import { UpdatesPage } from "@/views/updates";
 
 export const metadata: Metadata = pageMetadata(
   "Yenilikler",
-  `MonoSIP ${site.version}: sesli mesaj kutusu, operatör arayan kimliği ve santral hazır olma kapısı. Sürüm notları ve ana daldaki son iş.`,
+  `MonoSIP ${site.version}: MonoSIP adı, göz önünde kalan sesli mesaj kutusu ve içeriye taşınan giriş tercihleri.`,
   "/tr/updates/",
   "tr",
 );

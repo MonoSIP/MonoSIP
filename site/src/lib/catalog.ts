@@ -49,19 +49,19 @@ const referenceTr = [
 
 export const highlightsTr = [
   {
-    icon: "sound" as const,
-    title: "Her dahili için bir sesli mesaj kutusu.",
-    text: "Kim aradığını görün, mesajı dinleyin, okundu işaretleyin ve çalışan portalından silin.",
+    icon: "phone" as const,
+    title: "Ürünün adı MonoSIP.",
+    text: "Konsol, açık site ve Docker imajı MonoSIP adını paylaşır. ghcr.io/monosip/monosip imajını çekin.",
   },
   {
-    icon: "phone" as const,
-    title: "Operatörünüzün beklediği arayan kimliği.",
-    text: "Giden numarayı, hattın kaydındaki SIP kullanıcı adından ayrı ayarlayın.",
+    icon: "sound" as const,
+    title: "Göz önünde kalan bir sesli mesaj kutusu.",
+    text: "Dalga biçimleri, kayıtlı karşılamalar ve duyulmamış sayılar sesli mesaj kutusunda durur.",
   },
   {
     icon: "shield" as const,
-    title: "Hazır, santralin hazır olduğu anlamına gelir.",
-    text: "Sağlık ucu, PostgreSQL, Asterisk ve arama planı hazır olmadan sistemi sağlıklı saymaz.",
+    title: "Giriş seçimleri sizinle kalır.",
+    text: "Giriş ekranında seçilen dil ve koyu mod, yönetici ve portal içinde de aynı seçimdir.",
   },
 ];
 

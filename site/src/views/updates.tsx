@@ -45,8 +45,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
             <h2 id="stable-release">MonoSIP {site.version}</h2>
             <p>
               {L(
-                "Released 21 October 2026 · Linux / AMD64 · MIT",
-                "21 Ekim 2026’da yayımlandı · Linux / AMD64 · MIT",
+                "Released 25 October 2026 · Linux / AMD64 · MIT",
+                "25 Ekim 2026’da yayımlandı · Linux / AMD64 · MIT",
               )}
             </p>
           </div>
@@ -71,8 +71,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
             </h3>
             <p>
               {L(
-                `Back up your persistent data, pull the pinned tag and recreate the container with the same volume and configuration. The project notes that the v1.7.4 image did not publish; use v${site.version}.`,
-                `Kalıcı veriyi yedekleyin, sabitlenen etiketi çekin ve konteyneri aynı birim ve yapılandırmayla yeniden oluşturun. Proje, v1.7.4 imajının yayımlanmadığını belirtir; v${site.version} kullanın.`,
+                `Back up your persistent data, pull ${site.image} and recreate the container with the same volume and configuration.`,
+                `Kalıcı veriyi yedekleyin, ${site.image} imajını çekin ve konteyneri aynı birim ve yapılandırmayla yeniden oluşturun.`,
               )}
             </p>
             <Link
@@ -101,8 +101,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              kaydına göre incelendi. Bu değişiklikler v{site.version} sürüm
-              anlığında değil, kaynak dalındadır.
+              kaydına göre incelendi. Sesli mesaj, portal ve yazılımsal telefon
+              işi v{site.version} sürümündedir.
             </>
           ) : (
             <>
@@ -110,8 +110,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              on {site.reviewed}. These changes are in the source branch, rather
-              than the v{site.version} release snapshot.
+              on {site.reviewed}. The mailbox, portal and softphone work is in
+              the v{site.version} release.
             </>
           )}
         </p>
@@ -151,7 +151,7 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
         </div>
         <a
           className="text-link"
-          href={`${site.repo}/compare/v${site.version}...${site.developmentRevision}`}
+          href={`${site.repo}/compare/v1.7.5...v${site.version}`}
         >
           {L("Follow the source changes", "Kaynak değişikliklerini izleyin")}{" "}
           <Icon name="external" />

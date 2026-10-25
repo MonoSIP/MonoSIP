@@ -446,7 +446,7 @@ test("copy buttons copy the exact install command and handle denied clipboard", 
   await page.getByRole("button", { name: "Copy install MonoSIP" }).click();
   await expect(page.getByRole("status")).toContainText("Copied to clipboard");
   const clipboard = await page.evaluate(() => navigator.clipboard.readText());
-  expect(clipboard).toContain("ghcr.io/monosip/monosip:1.7.5");
+  expect(clipboard).toContain("ghcr.io/monosip/monosip:1.8.0");
   expect(clipboard).toContain("-v monosip-data:/data");
   await page.evaluate(() => {
     Object.defineProperty(navigator.clipboard, "writeText", {
@@ -469,25 +469,25 @@ test("release notes connect the published image, source build and voicemail guid
     .getByRole("link", { name: "See what changed", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "MonoSIP 1.7.5", exact: true }),
+    page.getByRole("heading", { name: "MonoSIP 1.8.0", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".release-detail")).toContainText(
     "voicemail inbox",
   );
   await expect(page.locator(".development-note")).toContainText(
-    "MAIN BRANCH / AFTER v1.7.5",
+    "MAIN BRANCH / AFTER v1.8.0",
   );
   await page
-    .getByRole("link", { name: "Install MonoSIP 1.7.5", exact: true })
+    .getByRole("link", { name: "Install MonoSIP 1.8.0", exact: true })
     .click();
   await expect(page.locator(".download-summary")).toContainText(
-    "Current release: v1.7.5",
+    "Current release: v1.8.0",
   );
   await page
     .getByText("Show the source install commands", { exact: true })
     .click();
   await expect(page.locator(".source-install-details")).toContainText(
-    "git checkout v1.7.5",
+    "git checkout v1.8.0",
   );
   await page.goto("/docs/voicemail/");
   await expect(
@@ -502,7 +502,7 @@ test("release notes connect the published image, source build and voicemail guid
     page.getByRole("link", { name: /API reference Authentication/ }),
   ).toHaveAttribute(
     "href",
-    "https://github.com/MonoSIP/MonoSIP/blob/v1.7.5/docs/API.md",
+    "https://github.com/MonoSIP/MonoSIP/blob/v1.8.0/docs/API.md",
   );
 });
 

@@ -1,4 +1,4 @@
-const version = "1.7.5";
+const version = "1.8.0";
 const repo = "https://github.com/MonoSIP/MonoSIP";
 
 export const site = {
@@ -10,9 +10,9 @@ export const site = {
   release: `${repo}/releases/tag/v${version}`,
   sourceZip: `${repo}/archive/refs/tags/v${version}.zip`,
   image: `ghcr.io/monosip/monosip:${version}`,
-  sourceRevision: "3f9deec1c3de77a5aeb4d8ac0f3d60153f01d418",
-  developmentRevision: "18e42f6",
-  reviewed: "22 October 2026",
+  sourceRevision: "37b50285f620153230041c1f105b00599372951b",
+  developmentRevision: "37b5028",
+  reviewed: "25 October 2026",
   description:
     "A self-hosted Asterisk PBX for small offices. Connect SIP providers, route calls with visual IVR, and give your team a browser softphone and voicemail inbox. Run it with Docker on your Linux server.",
 };
@@ -22,19 +22,19 @@ export const sourceDoc = (file: string) =>
 
 export const releaseHighlights = [
   {
-    icon: "sound",
-    title: "A voicemail inbox for every extension.",
-    text: "See who called, play the message, mark it read and delete it from the employee portal.",
+    icon: "phone",
+    title: "The product is MonoSIP.",
+    text: "The console, the public site and the Docker image share the MonoSIP name. Pull ghcr.io/monosip/monosip.",
   },
   {
-    icon: "phone",
-    title: "The caller ID your provider expects.",
-    text: "Set the outbound phone number independently of the SIP username used to register your trunk.",
+    icon: "sound",
+    title: "A voicemail inbox that stays in view.",
+    text: "Waveforms, saved greetings and unheard counts stay with the voicemail inbox.",
   },
   {
     icon: "shield",
-    title: "Ready means the PBX is ready.",
-    text: "The health endpoint waits for PostgreSQL, Asterisk and the dialplan before reporting the system healthy.",
+    title: "Sign-in choices stay with you.",
+    text: "Language and dark mode chosen on the sign-in screen are the same choices inside the admin and the portal.",
   },
 ];
 

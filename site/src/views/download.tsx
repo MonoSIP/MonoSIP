@@ -51,8 +51,8 @@ export function DownloadPage({ locale = "en" }: { locale?: Locale }) {
           <h2>{L("Pull the prebuilt image.", "Hazır imajı çekin.")}</h2>
           <p className="download-release-note">
             {L(
-              `v${site.version} adds the employee voicemail inbox, provider caller ID and PBX readiness checks. `,
-              `v${site.version} çalışan sesli mesaj kutusunu, operatör arayan kimliğini ve santral hazır olma kontrollerini ekler. `,
+              `v${site.version} names the product MonoSIP and keeps the voicemail inbox, portal and sign-in preferences together. `,
+              `v${site.version} ürüne MonoSIP adını verir ve sesli mesaj kutusunu, portalı ve giriş tercihlerini bir arada tutar. `,
             )}
             <Link href={href("/updates/")}>
               {L("Read what’s new →", "Yenilikleri okuyun →")}

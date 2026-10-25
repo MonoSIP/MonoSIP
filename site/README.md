@@ -53,7 +53,7 @@ Windows builds currently reproduce [Next #85374](https://github.com/vercel/next.
 ## Content and design
 
 - Home, downloads, release updates, brand assets, documentation index and seven full guides, including voicemail and forwarding. The reference directory links twelve official documents to the pinned release source.
-- Release v1.7.5 and post-release main-branch changes are clearly separated. Image, source archive, Compose commands and guide references use the central release value in `src/lib/site.ts`.
+- Release v1.8.0 is the pinned snapshot. Image, source archive, Compose commands and guide references use the central release value in `src/lib/site.ts`.
 - Original SVG logos, social PNG, Apple icon and legacy project captures preserved at their old URLs. The website presents ten theme-aware SVG interface mockups instead of screenshots, including the voicemail inbox, with call flows, audio waves and activity indicators. They use illustrative sample data.
 - Locally served Outfit and JetBrains Mono, with Latin/Turkish coverage. Central variables include the requested Quicksand token; no unnecessary third font is loaded.
 - Shared fluid container up to 1440px, centralized spacing and 4/6/8px component corners, light/dark tokens.

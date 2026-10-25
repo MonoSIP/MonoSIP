@@ -2,7 +2,7 @@
 
 **Company PBX** — open-source Asterisk VoIP with an admin panel, a visual IVR designer and a browser softphone. Built for small offices (~20 extensions). Runs as one prebuilt Docker image (or Docker Compose) on a Linux VM.
 
-[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](https://www.monosip.com/) · [Release v1.7.5](https://github.com/MonoSIP/MonoSIP/releases/tag/v1.7.5) · [MIT License](LICENSE)
+[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](https://www.monosip.com/) · [Release v1.8.0](https://github.com/MonoSIP/MonoSIP/releases/tag/v1.8.0) · [MIT License](LICENSE)
 
 Default UI language: **English** (Turkish available in the app).
 
