@@ -1177,8 +1177,13 @@ describe("AdminLayout", () => {
 
     expect(await screen.findByText("admin body")).toBeInTheDocument();
     expect(screen.getAllByText(/^v\d+\.\d+\.\d+/).length).toBeGreaterThan(0);
-    // Mobile and desktop chrome each render a logout control.
-    await userEvent.click(screen.getAllByTitle("auth.logout")[0]!);
+    const aside = document.querySelector("aside") as HTMLElement;
+    expect(within(aside).getByRole("link", { name: "www.monosip.com" })).toHaveAttribute(
+      "href",
+      "https://www.monosip.com",
+    );
+    expect(document.querySelector(".product-site-bar")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "common.logout" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));
@@ -1232,20 +1237,18 @@ describe("PortalLayout", () => {
     expect(phoneLink.querySelector(".nav-reg")?.className).toContain("is-off");
     expect(document.querySelector("nav.portal-tabs .nav-reg")?.className).toContain("is-off");
     expect(document.querySelector(".mini-phone--bar")).toBeNull();
+    expect(document.querySelector(".portal-site-mobile")).toBeNull();
     const user = aside.querySelector(".portal-user-card") as HTMLElement;
     expect(user).toBeTruthy();
+    const site = within(aside).getByRole("link", { name: "www.monosip.com" });
+    expect(site).toHaveAttribute("href", "https://www.monosip.com");
+    expect(settings.compareDocumentPosition(site) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(site.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(phone.compareDocumentPosition(user) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(aside).queryByRole("menuitem", { name: /common\.language/ })).toBeNull();
-    await userEvent.click(user);
-    const menu = await screen.findByRole("menu");
-    expect(menu.className).toContain("rt-DropdownMenuContent");
-    const language = within(menu).getByRole("menuitem", { name: /common\.language/ });
-    const theme = within(menu).getByRole("menuitem", { name: /portal\.darkMode/ });
-    const logout = within(menu).getByRole("menuitem", { name: /common\.logout/ });
-    expect(user.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(language.compareDocumentPosition(theme) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(theme.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await userEvent.click(logout);
+    const tools = document.querySelector(".shell-tools") as HTMLElement;
+    expect(within(tools).getByRole("button", { name: "common.language" })).toBeInTheDocument();
+    expect(within(tools).getByRole("button", { name: "common.theme" })).toBeInTheDocument();
+    await userEvent.click(within(tools).getByRole("button", { name: "common.logout" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));

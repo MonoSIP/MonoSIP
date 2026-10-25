@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useMatch } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -12,22 +12,17 @@ import {
   Music,
   LayoutDashboard,
   ListTree,
-  LogOut,
   Menu,
-  Moon,
   PhoneMissed,
   PhoneOutgoing,
   Settings,
-  Sun,
   Users,
   Smartphone,
   Webhook,
   Workflow,
 } from "lucide-react";
-import { api } from "../lib/api";
-import { useStore } from "../store";
-import i18n, { toggleAppLocale } from "../i18n";
-import { AppBrand, ProductSiteLink } from "../components/AppBrand";
+import i18n from "../i18n";
+import { AppBrand, ProductSiteLink, ShellTools } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { Button } from "../components/ui";
 
@@ -54,10 +49,6 @@ const links = [
 
 export function AdminLayout() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const theme = useStore((s) => s.theme);
-  const toggleTheme = useStore((s) => s.toggleTheme);
-  const setActor = useStore((s) => s.setActor);
   const flowDesigner = useMatch("/flows/:id");
   const [navOpen, setNavOpen] = useState(false);
   const path = useLocation().pathname;
@@ -75,19 +66,8 @@ export function AdminLayout() {
     return () => window.removeEventListener("keydown", onKey);
   }, [navOpen]);
 
-  async function logout() {
-    try {
-      await api.post("/api/v1/auth/logout");
-    } catch {
-      /* still clear local session */
-    }
-    setActor(null);
-    navigate("/login", { replace: true });
-  }
-
   return (
-    <div className={`flex h-full flex-col ${flowDesigner ? "overflow-hidden" : ""}`}>
-      <div className={`flex min-h-0 ${flowDesigner ? "min-h-0 flex-1 overflow-hidden" : "flex-1"}`}>
+    <div className={`flex h-full min-h-0 ${flowDesigner ? "overflow-hidden" : ""}`}>
       {/* Hide admin nav in flow designer — fixed-height layout was forcing a sidebar scrollbar */}
       {!flowDesigner && navOpen && (
         <button
@@ -102,7 +82,7 @@ export function AdminLayout() {
           className={`aside-panel fixed inset-y-0 left-0 z-40 h-full w-64 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:z-auto md:h-full md:flex ${navOpen ? "flex" : "hidden"}`}
         >
           <AppBrand subtitle={t("app.tagline")} />
-          <nav id="admin-nav" className="flex flex-1 flex-col gap-0.5 overflow-auto">
+          <nav id="admin-nav" className="flex min-h-0 flex-col gap-0.5 overflow-auto">
             {links.map((l) => (
               <NavLink
                 key={l.to}
@@ -117,63 +97,34 @@ export function AdminLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="mt-4 flex gap-2">
-            <Button className="flex-1" onClick={toggleTheme} type="button">
-              <span className="icon-swap" aria-hidden>
-                <Sun size={16} className={theme === "dark" ? "is-on" : undefined} />
-                <Moon size={16} className={theme === "light" ? "is-on" : undefined} />
-              </span>
-              {t("common.theme")}
-            </Button>
-            <Button type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
-              {i18n.language.toUpperCase()}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void logout()}
-              title={t("auth.logout", { defaultValue: "Logout" })}
-            >
-              <LogOut size={16} />
-            </Button>
-          </div>
+          <ProductSiteLink className="shell-site" />
         </aside>
       )}
-      <main
-        className={`min-h-0 min-w-0 flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
-      >
-        {!flowDesigner && (
-          <div className="mb-4 flex items-center justify-between gap-2 md:hidden">
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                aria-expanded={navOpen}
-                aria-controls="admin-nav"
-                onClick={() => setNavOpen((open) => !open)}
-              >
-                <Menu size={16} />
-                {t("common.menu", { defaultValue: "Menu" })}
-              </Button>
-            </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="shell-tools">
+          {!flowDesigner && (
             <Button
               type="button"
-              onClick={() => void logout()}
-              title={t("auth.logout", { defaultValue: "Logout" })}
+              className="shell-menu"
+              aria-expanded={navOpen}
+              aria-controls="admin-nav"
+              onClick={() => setNavOpen((open) => !open)}
             >
-              <LogOut size={16} />
+              <Menu size={16} strokeWidth={2.25} />
+              {t("common.menu", { defaultValue: "Menu" })}
             </Button>
-          </div>
-        )}
-        {/* Remount pages on a language switch so tr() copy re-renders */}
-        <PageVeil>
-          <Outlet key={i18n.language} />
-        </PageVeil>
-      </main>
+          )}
+          <ShellTools />
+        </div>
+        <main
+          className={`min-h-0 min-w-0 flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
+        >
+          {/* Remount pages on a language switch so tr() copy re-renders */}
+          <PageVeil>
+            <Outlet key={i18n.language} />
+          </PageVeil>
+        </main>
       </div>
-      {!flowDesigner && (
-        <footer className="product-site-bar">
-          <ProductSiteLink />
-        </footer>
-      )}
     </div>
   );
 }

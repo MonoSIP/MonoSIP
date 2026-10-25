@@ -898,7 +898,6 @@ textarea.input {
   background: color-mix(in oklab, var(--bg-soft) 70%, var(--card));
   color: var(--text);
   text-align: left;
-  cursor: pointer;
 }
 .portal-user-card:hover,
 .portal-user-card[aria-expanded="true"] {
@@ -1240,28 +1239,40 @@ textarea.input {
 .product-site:hover {
   color: var(--accent-bright);
 }
-.product-site-bar {
-  display: flex;
-  justify-content: center;
-  flex: none;
-  padding: 0.55rem 1rem;
-  border-top: 1px solid var(--border);
-  background: var(--card);
+[data-sonner-toaster][data-y-position="top"] {
+  top: 4.75rem !important;
 }
-.portal-site-mobile {
-  position: fixed;
-  z-index: 21;
-  inset-inline: 0;
-  bottom: calc(3.55rem + env(safe-area-inset-bottom));
-  padding: 0.2rem 0.5rem;
-  text-align: center;
-  background: var(--card);
-  border-top: 1px solid var(--border);
+.shell-tools {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+  padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--gray-a3);
+}
+.shell-tool-group {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.shell-tools .rt-Button {
+  min-height: 40px;
+  min-width: 40px;
 }
 @media (min-width: 768px) {
-  .portal-site-mobile {
-    display: none;
-  }
+  .shell-menu { display: none; }
+}
+.shell-site {
+  display: block;
+  flex: none;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--gray-a3);
+  text-align: center;
 }
 .login-shell::before {
   content: none;

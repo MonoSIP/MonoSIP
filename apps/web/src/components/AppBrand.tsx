@@ -1,5 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Languages, LogOut, Moon, Sun } from "lucide-react";
+import { api } from "../lib/api";
+import { useStore } from "../store";
+import { toggleAppLocale } from "../i18n";
 import { APP_VERSION } from "../lib/version";
+import { Button } from "./ui";
 
 type Props = {
   subtitle?: React.ReactNode;
@@ -15,6 +21,44 @@ export function ProductSiteLink({ className = "" }: { className?: string }) {
     <a className={className ? `product-site ${className}` : "product-site"} href="https://www.monosip.com">
       www.monosip.com
     </a>
+  );
+}
+
+/** Theme, language, and sign-out. Stays at the top right of admin and portal. */
+export function ShellTools() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
+  const setActor = useStore((s) => s.setActor);
+
+  async function logout() {
+    try {
+      await api.post("/api/v1/auth/logout");
+    } catch {
+      /* still clear local session */
+    }
+    setActor(null);
+    navigate("/login", { replace: true });
+  }
+
+  return (
+    <div className="shell-tool-group">
+      <Button type="button" aria-label={t("common.theme")} onClick={toggleTheme}>
+        <span className="icon-swap" aria-hidden>
+          <Sun size={16} strokeWidth={2.25} className={theme === "dark" ? "is-on" : undefined} />
+          <Moon size={16} strokeWidth={2.25} className={theme === "light" ? "is-on" : undefined} />
+        </span>
+        {t("common.theme")}
+      </Button>
+      <Button type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
+        <Languages size={16} strokeWidth={2.25} aria-hidden />
+        {(i18n.language || "en").slice(0, 2).toUpperCase()}
+      </Button>
+      <Button type="button" aria-label={t("common.logout")} onClick={() => void logout()}>
+        <LogOut size={16} strokeWidth={2.25} />
+      </Button>
+    </div>
   );
 }
 

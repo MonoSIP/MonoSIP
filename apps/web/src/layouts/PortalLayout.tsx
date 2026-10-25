@@ -2,13 +2,12 @@ import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { BookUser, ChevronDown, FileAudio, History, Languages, LogOut, Moon, Phone, Settings, Sun, Voicemail } from "lucide-react";
+import { BookUser, FileAudio, History, Phone, Settings, Voicemail } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
-import i18n, { toggleAppLocale } from "../i18n";
+import i18n from "../i18n";
 import { usePortalLive } from "../hooks/usePortalLive";
-import { AppBrand, ProductSiteLink } from "../components/AppBrand";
-import { Menu, MenuItem } from "../components/ui";
+import { AppBrand, ProductSiteLink, ShellTools } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { MiniPhone } from "../components/MiniPhone";
 import { PhoneProvider, usePhone } from "../lib/phone-context";
@@ -34,9 +33,6 @@ function PortalChrome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const actor = useStore((s) => s.actor);
-  const setActor = useStore((s) => s.setActor);
-  const theme = useStore((s) => s.theme);
-  const toggleTheme = useStore((s) => s.toggleTheme);
   const { status, callPhase } = usePhone();
   const registered = status === "registered";
   usePortalLive();
@@ -68,22 +64,12 @@ function PortalChrome() {
     return 0;
   }
 
-  async function logout() {
-    try {
-      await api.post("/api/v1/auth/logout");
-    } catch {
-      /* still clear local session */
-    }
-    setActor(null);
-    navigate("/login", { replace: true });
-  }
-
   return (
     // One softphone for the whole portal: switching pages keeps the call up.
     <div className={`portal-shell${callPhase === "ringing" ? " is-incoming" : ""}`}>
       <aside className="aside-panel portal-rail hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:flex">
         <AppBrand className="mb-4 shrink-0 px-1" />
-        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+        <nav className="flex min-h-0 flex-col gap-0.5 overflow-y-auto">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -104,23 +90,26 @@ function PortalChrome() {
             </NavLink>
           ))}
         </nav>
-        {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
-        <UserCard
-          name={actor?.type === "extension" ? actor.name : ""}
-          number={actor?.type === "extension" ? actor.number : ""}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onLogout={() => void logout()}
-        />
-        <ProductSiteLink className="mt-3 hidden text-center md:block" />
+        <ProductSiteLink className="shell-site" />
+        <div className="mt-auto">
+          {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
+          <UserCard
+            name={actor?.type === "extension" ? actor.name : ""}
+            number={actor?.type === "extension" ? actor.number : ""}
+          />
+        </div>
       </aside>
-      <main className="portal-main min-w-0 flex-1 p-4 pb-28 md:p-8">
-        {/* Remount pages on a language switch so tr() copy re-renders */}
-        <PageVeil>
-          <Outlet key={i18n.language} />
-        </PageVeil>
-      </main>
-      <ProductSiteLink className="portal-site-mobile md:hidden" />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="shell-tools">
+          <ShellTools />
+        </div>
+        <main className="portal-main min-w-0 flex-1 p-4 pb-28 md:p-8">
+          {/* Remount pages on a language switch so tr() copy re-renders */}
+          <PageVeil>
+            <Outlet key={i18n.language} />
+          </PageVeil>
+        </main>
+      </div>
       <nav className="portal-tabs md:hidden">
         {links.map((l) => (
           <NavLink
@@ -147,60 +136,19 @@ function PortalChrome() {
   );
 }
 
-function UserCard({
-  name,
-  number,
-  theme,
-  onToggleTheme,
-  onLogout,
-}: {
-  name: string;
-  number: string;
-  theme: "dark" | "light";
-  onToggleTheme: () => void;
-  onLogout: () => void;
-}) {
-  const { t } = useTranslation();
+function UserCard({ name, number }: { name: string; number: string }) {
   const label = name || number || "—";
   const initial = label.slice(0, 1).toUpperCase();
 
-  function toggleLanguage() {
-    toggleAppLocale();
-  }
-
   return (
     <div className="portal-user">
-      <Menu
-        side="top"
-        align="start"
-        trigger={
-          <button type="button" className="portal-user-card">
-            <span className="portal-user-mark" aria-hidden="true">{initial}</span>
-            <span className="min-w-0 flex-1">
-              <span className="portal-user-name">{label}</span>
-              {name && number ? <span className="portal-user-ext">{number}</span> : null}
-            </span>
-            <ChevronDown size={16} aria-hidden="true" />
-          </button>
-        }
-      >
-        <MenuItem onSelect={toggleLanguage}>
-          <Languages size={16} />
-          <span className="flex-1">{t("common.language")}</span>
-          <span className="portal-user-meta">{i18n.language.slice(0, 2).toUpperCase()}</span>
-        </MenuItem>
-        <MenuItem onSelect={onToggleTheme}>
-          <span className="icon-swap" aria-hidden>
-            <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
-            <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
-          </span>
-          <span className="flex-1">{t("portal.darkMode")}</span>
-        </MenuItem>
-        <MenuItem onSelect={onLogout}>
-          <LogOut size={16} />
-          <span className="flex-1">{t("common.logout")}</span>
-        </MenuItem>
-      </Menu>
+      <div className="portal-user-card">
+        <span className="portal-user-mark" aria-hidden="true">{initial}</span>
+        <span className="min-w-0 flex-1">
+          <span className="portal-user-name">{label}</span>
+          {name && number ? <span className="portal-user-ext">{number}</span> : null}
+        </span>
+      </div>
     </div>
   );
 }
