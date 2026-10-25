@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   agentRules: false,
-  // Published at the root of https://www.monosip.com.
+  // GitHub Pages project site: https://monosip.github.io/MonoSIP/
+  basePath: "/MonoSIP",
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },

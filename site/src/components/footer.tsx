@@ -68,8 +68,8 @@ export function Footer() {
         </div>
         <div className="footer-bottom">
           <span>{t.copyright}</span>
-          <a className="footer-site" href="https://www.monosip.com">
-            www.monosip.com
+          <a className="footer-site" href={site.url}>
+            monosip.github.io/MonoSIP
           </a>
           <span className="footer-end">
             <span className="status-dot" /> {t.built}

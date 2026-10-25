@@ -1,0 +1,48 @@
+name: Publish website
+
+# site/ is the Next.js product site. GitHub Pages serves this repository at
+# https://monosip.github.io/MonoSIP/
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/**"
+      - "TASKS.md"
+      - "scripts/build-site-docs.mjs"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: site/.node-version
+          package-manager-cache: false
+      - name: Build website
+        working-directory: site
+        run: |
+          npm install --global pnpm@12.14.0
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm check:export
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/out
+      - id: deployment
+        uses: actions/deploy-pages@v5

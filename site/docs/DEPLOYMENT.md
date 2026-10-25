@@ -1,14 +1,14 @@
-# Cloudflare deployment
+# GitHub Pages
 
 Website source: the `site/` folder in **[MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP)**.
-Public URL: **https://www.monosip.com**.
+Public URL: **https://monosip.github.io/MonoSIP/**.
 
-Connect that repository in Cloudflare Workers. The build reads `site/wrangler.jsonc` and serves the static export.
+Pushing `main` runs `.github/workflows/pages.yml`. The workflow builds this folder and publishes the static export with GitHub Pages.
 
-- Root directory: `site`
-- Build command: `pnpm install --frozen-lockfile && pnpm build`
 - Node.js: `26.12.1` (`site/.node-version`)
 - Package manager: pnpm `12.14.0`
-- Output: `out/`, declared as the asset directory in `wrangler.jsonc`
+- Build: `pnpm install --frozen-lockfile && pnpm build`
+- Output: `out/`
+- Pages source: GitHub Actions
 
-Attach `www.monosip.com` as the custom domain in Cloudflare. Do not add a `CNAME` file to the export.
+The site is a project page, so `basePath` is `/MonoSIP`. Do not add a `CNAME` file to the export.

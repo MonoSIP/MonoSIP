@@ -3,7 +3,14 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = "out";
-const origin = "https://www.monosip.com";
+const origin = "https://monosip.github.io/MonoSIP";
+const base = "/MonoSIP";
+const localPath = (pathname) =>
+  pathname === base || pathname === `${base}/`
+    ? "/"
+    : pathname.startsWith(`${base}/`)
+      ? pathname.slice(base.length)
+      : pathname;
 const routes = [
   "/",
   "/download/",
@@ -80,11 +87,9 @@ for (const [path, html] of documents) {
     const value = raw.replaceAll("&amp;", "&");
     if (/^(https?:|mailto:|data:|tel:)/.test(value)) continue;
     const url = new URL(value, `${origin}${path}`);
-    if (
-      url.hash &&
-      (!url.pathname.includes(".") || documents.has(url.pathname))
-    ) {
-      const target = documents.get(url.pathname);
+    const pathname = localPath(url.pathname);
+    if (url.hash && (!pathname.includes(".") || documents.has(pathname))) {
+      const target = documents.get(pathname);
       if (target)
         assert.ok(
           target.includes(`id="${decodeURIComponent(url.hash.slice(1))}"`),
@@ -92,7 +97,7 @@ for (const [path, html] of documents) {
         );
     }
     assert.ok(
-      existsSync(fileFor(url.pathname)),
+      existsSync(fileFor(pathname)),
       `Broken local link/asset ${value} on ${path}`,
     );
     links++;
