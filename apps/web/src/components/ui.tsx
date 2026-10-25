@@ -54,7 +54,7 @@ function InTheme({ children }: { children: ReactNode }) {
   }
   if (ready) return children;
   return (
-    <Theme appearance="dark" accentColor="cyan" grayColor="slate" panelBackground="solid" radius="large">
+    <Theme appearance="dark" accentColor="indigo" grayColor="slate" hasBackground panelBackground="translucent" radius="medium" scaling="100%">
       {children}
     </Theme>
   );
@@ -74,10 +74,12 @@ export function TooltipProvider({ children }: { children: ReactNode }) {
   return (
     <Theme
       appearance={theme}
-      accentColor="cyan"
+      accentColor="indigo"
       grayColor="slate"
-      panelBackground="solid"
-      radius="large"
+      hasBackground
+      panelBackground="translucent"
+      radius="medium"
+      scaling="100%"
       style={{ height: "100%" }}
     >
       {children}

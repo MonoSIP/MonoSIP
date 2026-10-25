@@ -1,3 +1,4 @@
-/** Build-time app version from apps/web/package.json (Vite `define`). */
-export const APP_VERSION: string =
-  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0";
+import pkg from "../../package.json";
+
+/** Product version, read from apps/web/package.json. */
+export const APP_VERSION: string = pkg.version;
