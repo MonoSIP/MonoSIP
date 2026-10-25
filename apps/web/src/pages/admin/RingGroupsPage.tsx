@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { BellRing, Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -180,13 +180,13 @@ export function RingGroupsPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <button className="btn btn-primary" type="submit">
+            <Button variant="solid" type="submit">
               {editId ? t("common.save") : t("common.create")}
-            </button>
+            </Button>
             {editId && (
-              <button className="btn" type="button" onClick={reset}>
+              <Button type="button" onClick={reset}>
                 {tr("Cancel")}
-              </button>
+              </Button>
             )}
           </div>
         </form>

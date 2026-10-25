@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { GitBranch, Hash, List, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { Button, IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 export function FlowsPage() {
@@ -107,9 +107,9 @@ export function FlowsPage() {
             placeholder={tr("Ext (900)")}
             title={tr("Optional dialable extension for softphone testing")}
           />
-          <button className="btn btn-primary" type="submit">
+          <Button variant="solid" type="submit">
             {t("common.create")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
     </div>

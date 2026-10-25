@@ -29,6 +29,7 @@ import { useStore } from "../store";
 import i18n, { toggleAppLocale } from "../i18n";
 import { AppBrand, ProductSiteLink } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
+import { Button } from "../components/ui";
 
 const links = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", end: true },
@@ -117,24 +118,23 @@ export function AdminLayout() {
             ))}
           </nav>
           <div className="mt-4 flex gap-2">
-            <button className="btn flex-1" onClick={toggleTheme} type="button">
+            <Button className="flex-1" onClick={toggleTheme} type="button">
               <span className="icon-swap" aria-hidden>
                 <Sun size={16} className={theme === "dark" ? "is-on" : undefined} />
                 <Moon size={16} className={theme === "light" ? "is-on" : undefined} />
               </span>
               {t("common.theme")}
-            </button>
-            <button className="btn" type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
+            </Button>
+            <Button type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
               {i18n.language.toUpperCase()}
-            </button>
-            <button
-              className="btn"
+            </Button>
+            <Button
               type="button"
               onClick={() => void logout()}
               title={t("auth.logout", { defaultValue: "Logout" })}
             >
               <LogOut size={16} />
-            </button>
+            </Button>
           </div>
         </aside>
       )}
@@ -144,8 +144,7 @@ export function AdminLayout() {
         {!flowDesigner && (
           <div className="mb-4 flex items-center justify-between gap-2 md:hidden">
             <div className="flex items-center gap-2">
-              <button
-                className="btn"
+              <Button
                 type="button"
                 aria-expanded={navOpen}
                 aria-controls="admin-nav"
@@ -153,16 +152,15 @@ export function AdminLayout() {
               >
                 <Menu size={16} />
                 {t("common.menu", { defaultValue: "Menu" })}
-              </button>
+              </Button>
             </div>
-            <button
-              className="btn"
+            <Button
               type="button"
               onClick={() => void logout()}
               title={t("auth.logout", { defaultValue: "Logout" })}
             >
               <LogOut size={16} />
-            </button>
+            </Button>
           </div>
         )}
         {/* Remount pages on a language switch so tr() copy re-renders */}

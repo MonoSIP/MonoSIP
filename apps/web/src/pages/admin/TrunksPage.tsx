@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DIAL_COUNTRIES } from "../../lib/dialCountries";
-import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type DialSettings = {
@@ -322,9 +322,9 @@ export function TrunksPage() {
         tone="cyan"
         actions={
           editingId ? (
-            <button className="btn" type="button" onClick={cancelEdit}>
+            <Button type="button" onClick={cancelEdit}>
               {t("common.cancel")}
-            </button>
+            </Button>
           ) : null
         }
       >
@@ -465,14 +465,16 @@ export function TrunksPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary" type="submit" disabled={save.isPending}>
+          <Button variant="solid" type="submit" disabled={save.isPending}>
             <Plus size={16} />
             {editingId ? t("common.save") : t("trunks.add")}
-          </button>
-          <Link className="btn" to="/routes">
+          </Button>
+          <Button asChild variant="soft">
+<Link  to="/routes">
             <Link2 size={16} />
             {t("trunks.manageDids")}
           </Link>
+</Button>
         </div>
         </form>
       </SectionCard>
@@ -505,16 +507,17 @@ export function TrunksPage() {
               {DIAL_COUNTRIES.map((c) => {
                 const on = allowedCountries.includes(c.code);
                 return (
-                  <button
+                  <Button
                     key={`allow-${c.code}`}
                     type="button"
-                    className={`btn text-xs ${on ? "btn-primary" : ""}`}
+                    size="1"
+                    variant={on ? "solid" : "soft"}
                     aria-pressed={on}
                     onClick={() => setAllowedCountries((list) => toggleCode(list, c.code))}
                   >
                     {c.code}
                     <span className="opacity-70">{c.label}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -527,8 +530,7 @@ export function TrunksPage() {
                 placeholder={tr("ISO")}
                 maxLength={3}
               />
-              <button
-                className="btn"
+              <Button
                 type="button"
                 onClick={() => {
                   const codes = normalizeIsoList(allowExtra.split(/[,\s]+/));
@@ -538,7 +540,7 @@ export function TrunksPage() {
                 }}
               >
                 {t("common.add")}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -550,16 +552,18 @@ export function TrunksPage() {
             {DIAL_COUNTRIES.map((c) => {
               const on = blockedCountries.includes(c.code);
               return (
-                <button
+                <Button
                   key={`block-${c.code}`}
                   type="button"
-                  className={`btn text-xs ${on ? "btn-danger" : ""}`}
+                  size="1"
+                  variant={on ? "solid" : "soft"}
+                  color={on ? "red" : "gray"}
                   aria-pressed={on}
                   onClick={() => setBlockedCountries((list) => toggleCode(list, c.code))}
                 >
                   {c.code}
                   <span className="opacity-70">{c.label}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -572,8 +576,7 @@ export function TrunksPage() {
               placeholder={tr("ISO")}
               maxLength={3}
             />
-            <button
-              className="btn"
+            <Button
               type="button"
               onClick={() => {
                 const codes = normalizeIsoList(blockExtra.split(/[,\s]+/));
@@ -583,18 +586,18 @@ export function TrunksPage() {
               }}
             >
               {t("common.add")}
-            </button>
+            </Button>
           </div>
         </div>
 
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="solid"
           type="button"
           disabled={saveDialPolicy.isPending}
           onClick={() => saveDialPolicy.mutate()}
         >
           {t("trunks.saveDialPolicy")}
-        </button>
+        </Button>
       </SectionCard>
     </div>
   );

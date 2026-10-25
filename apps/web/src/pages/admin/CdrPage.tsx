@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronRight, Download, Filter, History, Play } from "lucide-react";
 import { api } from "../../lib/api";
-import { IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 import { nodeTitle } from "./flow/nodeMeta";
 
@@ -89,10 +89,12 @@ export function CdrPage() {
         tone="blue"
         description={tr("Call detail records and quality metrics")}
         actions={
-          <a className="btn" href={exportHref}>
-            <Download size={16} />
-            {t("common.export")}
-          </a>
+          <Button asChild>
+            <a href={exportHref}>
+              <Download size={16} />
+              {t("common.export")}
+            </a>
+          </Button>
         }
       />
       <SectionCard title={tr("Filters")} icon={Filter} tone="cyan">
@@ -122,10 +124,10 @@ export function CdrPage() {
               { value: "FAILED", label: tr("FAILED") },
             ]}
           />
-          <button className="btn btn-primary" type="submit">
+          <Button variant="solid" type="submit">
             <Filter size={16} />
             {tr("Filter")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
       <SectionCard title={tr("Call log")} icon={History} tone="blue" flush>

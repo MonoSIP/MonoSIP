@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Copy, KeyRound, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Checkbox, IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 const ALL_PERMS = ["cdr", "originate", "recordings"] as const;
@@ -127,8 +127,7 @@ export function IntegrationsPage() {
             >
               <span className="truncate">{w.url}</span>
               <span className="flex shrink-0 items-center gap-1">
-                <button
-                  className="btn"
+                <Button
                   type="button"
                   onClick={() =>
                     void api
@@ -143,7 +142,7 @@ export function IntegrationsPage() {
                   }
                 >
                   {tr("Test")}
-                </button>
+                </Button>
                 <IconBtn
                   icon={Trash2}
                   label={t("common.delete")}
@@ -173,9 +172,9 @@ export function IntegrationsPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <button className="btn btn-primary" type="submit">
+          <Button variant="solid" type="submit">
             {t("common.create")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
       <SectionCard title={tr("Website call widgets")} icon={Globe} tone="cyan">
@@ -258,9 +257,9 @@ export function IntegrationsPage() {
             disabled={!wCallback}
             hint="e.g. 05,90"
           />
-          <button className="btn btn-primary sm:col-span-2" type="submit" disabled={addWidget.isPending}>
+          <Button variant="solid" className="sm:col-span-2" type="submit" disabled={addWidget.isPending}>
             {tr("Create widget")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
       <SectionCard title={tr("API keys")} icon={KeyRound} tone="blue">
@@ -327,9 +326,9 @@ export function IntegrationsPage() {
               />
             ))}
           </div>
-          <button className="btn btn-primary self-end" type="submit">
+          <Button variant="solid" className="self-end" type="submit">
             {t("common.create")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
     </div>

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Download, KeyRound, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch } from "../../components/ui";
+import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = {
@@ -259,11 +259,12 @@ export function ExtensionsPage() {
         description={tr("Desk phones, softphones, and portal accounts")}
         actions={
           <div className="flex gap-2">
-            <button className="btn" type="button" onClick={() => void exportCsv()}>
+            <Button type="button" onClick={() => void exportCsv()}>
               <Download size={16} />
               {tr("Export CSV")}
-            </button>
-            <label className="btn cursor-pointer">
+            </Button>
+            <Button asChild>
+              <label>
               <Upload size={16} />
               {tr("Import CSV")}
               <input
@@ -275,7 +276,8 @@ export function ExtensionsPage() {
                   if (f) void importCsv(f);
                 }}
               />
-            </label>
+              </label>
+            </Button>
           </div>
         }
       />
@@ -387,10 +389,10 @@ export function ExtensionsPage() {
             spellCheck={false}
             aria-invalid={!!passwordProblem(password)}
           />
-          <button className="btn btn-primary justify-center" type="submit" disabled={!!passwordProblem(password)}>
+          <Button variant="solid" className="justify-center" type="submit" disabled={!!passwordProblem(password)}>
             <UserPlus size={16} />
             {t("extensions.add")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
 
@@ -432,10 +434,10 @@ export function ExtensionsPage() {
                 spellCheck={false}
                 aria-invalid={!!passwordProblem(editPassword)}
               />
-              <button type="button" className="btn mb-[1.6rem]" onClick={() => setEditPassword(generatePassword())}>
+              <Button type="button" className="mb-[1.6rem]" onClick={() => setEditPassword(generatePassword())}>
                 <KeyRound size={15} />
                 {tr("Generate")}
-              </button>
+              </Button>
             </div>
             <TextField
               className="sm:col-span-2"
@@ -464,8 +466,8 @@ export function ExtensionsPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{tr("Forwarding rules")}</span>
-              <button
-                className="btn text-xs"
+              <Button
+                className="text-xs"
                 type="button"
                 onClick={() =>
                   setFwdRules((r) => [
@@ -475,7 +477,7 @@ export function ExtensionsPage() {
                 }
               >
                 {tr("Add rule")}
-              </button>
+              </Button>
             </div>
             {fwdRules.map((rule, i) => (
               <div key={i} className="space-y-2 rounded border border-[var(--border)] p-3">
@@ -504,13 +506,13 @@ export function ExtensionsPage() {
                       )
                     }
                   />
-                  <button
-                    className="btn btn-danger text-xs"
+                  <Button
+                    variant="solid" color="red" className="text-xs"
                     type="button"
                     onClick={() => setFwdRules((rs) => rs.filter((_, j) => j !== i))}
                   >
                     {tr("Remove")}
-                  </button>
+                  </Button>
                 </div>
                 <DestPicker
                   destType={rule.destType}
@@ -546,11 +548,10 @@ export function ExtensionsPage() {
             <Checkbox checked={listenRec} onCheckedChange={setListenRec} label={tr("Listen recordings")} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button disabled={!!passwordProblem(editPassword)} className="btn btn-primary" type="button" onClick={() => saveEdit.mutate()}>
+            <Button disabled={!!passwordProblem(editPassword)} variant="solid" type="button" onClick={() => saveEdit.mutate()}>
               {t("common.save")}
-            </button>
-            <button
-              className="btn"
+            </Button>
+            <Button
               type="button"
               onClick={() =>
                 void api
@@ -562,10 +563,10 @@ export function ExtensionsPage() {
               }
             >
               {tr("Generate new password now")}
-            </button>
-            <button className="btn" type="button" onClick={() => setEdit(null)}>
+            </Button>
+            <Button type="button" onClick={() => setEdit(null)}>
               {t("common.cancel", { defaultValue: "Cancel" })}
-            </button>
+            </Button>
           </div>
         </SectionCard>
         </div>

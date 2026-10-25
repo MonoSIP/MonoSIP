@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { Checkbox, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { SPEECH_VOICES } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
 import { Link } from "react-router-dom";
@@ -392,8 +392,7 @@ export function SettingsPage() {
             <span className="text-[var(--danger)] text-xs break-all">{sslStatus.data.lastError}</span>
           ) : null}
         </div>
-        <button
-          className="btn"
+        <Button
           type="button"
           disabled={!autoSsl || !hostname.trim()}
           onClick={() => {
@@ -409,7 +408,7 @@ export function SettingsPage() {
           }}
         >
           {t("settings.sslRenewNow")}
-        </button>
+        </Button>
       </SectionCard>
       <SectionCard title={t("settings.company")} icon={Building2} tone="blue" className="space-y-4">
         <TextField label={t("settings.company")} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
@@ -528,11 +527,10 @@ export function SettingsPage() {
           placeholder="sftp://user:pass@host:22/recordings"
         />
         <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
+          <Button variant="solid" type="button" onClick={() => save.mutate()}>
             {t("common.save")}
-          </button>
-          <button
-            className="btn"
+          </Button>
+          <Button
             type="button"
             onClick={() => {
               void api
@@ -542,9 +540,8 @@ export function SettingsPage() {
             }}
           >
             {tr("Run archive now")}
-          </button>
-          <button
-            className="btn"
+          </Button>
+          <Button
             type="button"
             disabled={!archiveSftp}
             onClick={() => {
@@ -559,7 +556,7 @@ export function SettingsPage() {
             }}
           >
             {tr("Test SFTP")}
-          </button>
+          </Button>
         </div>
       </SectionCard>
 
@@ -618,27 +615,25 @@ export function SettingsPage() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
+          <Button variant="solid" type="button" onClick={() => save.mutate()}>
             {tr("Save security settings")}
-          </button>
-          <button
-            className="btn"
+          </Button>
+          <Button
             type="button"
             onClick={() => {
               window.open("/api/v1/admin/security/firewall-export?format=nftables", "_blank");
             }}
           >
             {tr("Download nftables")}
-          </button>
-          <button
-            className="btn"
+          </Button>
+          <Button
             type="button"
             onClick={() => {
               window.open("/api/v1/admin/security/firewall-export?format=ufw", "_blank");
             }}
           >
             {tr("Download ufw script")}
-          </button>
+          </Button>
         </div>
 
         <h3 className="pt-2 text-sm font-medium">{tr("Active bans")}</h3>
@@ -655,8 +650,8 @@ export function SettingsPage() {
             value={banReason}
             onChange={(e) => setBanReason(e.target.value)}
           />
-          <button
-            className="btn btn-danger"
+          <Button
+            variant="solid" color="red"
             type="button"
             onClick={() => {
               void api
@@ -675,7 +670,7 @@ export function SettingsPage() {
             }}
           >
             {tr("Ban IP")}
-          </button>
+          </Button>
         </div>
         <table className="w-full text-left text-sm">
           <thead>
@@ -695,8 +690,8 @@ export function SettingsPage() {
                   {b.expiresAt ? new Date(b.expiresAt).toLocaleString() : "permanent"}
                 </td>
                 <td>
-                  <button
-                    className="btn text-xs"
+                  <Button
+                    className="text-xs"
                     type="button"
                     onClick={() => {
                       void api
@@ -708,7 +703,7 @@ export function SettingsPage() {
                     }}
                   >
                     {tr("Remove")}
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -757,9 +752,9 @@ export function SettingsPage() {
           <TextField label={tr("smtpTo")} value={smtpTo} onChange={(e) => setSmtpTo(e.target.value)} />
           <TextField label={tr("emailFrom")} value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
         </div>
-        <button className="btn btn-primary" type="button" onClick={() => save.mutate()}>
+        <Button variant="solid" type="button" onClick={() => save.mutate()}>
           {t("common.save")}
-        </button>
+        </Button>
       </SectionCard>
 
       <SectionCard title={t("settings.passwordTitle")} icon={KeyRound} tone="coral" className="space-y-3">
@@ -795,8 +790,8 @@ export function SettingsPage() {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="solid"
           type="button"
           disabled={
             changePassword.isPending ||
@@ -814,7 +809,7 @@ export function SettingsPage() {
           }}
         >
           {t("settings.saveSignIn")}
-        </button>
+        </Button>
       </SectionCard>
 
       <SectionCard
@@ -832,9 +827,9 @@ export function SettingsPage() {
 
         {!qr && (
           <div className="flex flex-wrap gap-2">
-            <button className="btn btn-primary" type="button" onClick={() => void setupTotp()}>
+            <Button variant="solid" type="button" onClick={() => void setupTotp()}>
               {totpStatus.data?.enabled ? t("settings.totpRotate") : t("settings.totpSetup")}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -850,13 +845,11 @@ export function SettingsPage() {
                 <li>{t("settings.totpStepCode")}</li>
               </ol>
               {otpauth ? (
-                <a
-                  className="btn btn-primary inline-flex items-center gap-2 no-underline"
-                  href={otpauth}
-                  onClick={() => toast.message(t("settings.totpAppleOpened"))}
-                >
-                  {t("settings.totpAddApple")}
-                </a>
+                <Button asChild variant="solid">
+                  <a href={otpauth} onClick={() => toast.message(t("settings.totpAppleOpened"))}>
+                    {t("settings.totpAddApple")}
+                  </a>
+                </Button>
               ) : null}
               {totpSecret ? (
                 <div>
@@ -864,8 +857,8 @@ export function SettingsPage() {
                   <code className="block break-all rounded border border-[var(--border)] bg-[var(--bg-soft)] px-3 py-2 font-mono text-sm tracking-wider">
                     {totpSecret}
                   </code>
-                  <button
-                    className="btn mt-2"
+                  <Button
+                    className="mt-2"
                     type="button"
                     onClick={() => {
                       void navigator.clipboard.writeText(totpSecret).then(
@@ -875,7 +868,7 @@ export function SettingsPage() {
                     }}
                   >
                     {t("settings.totpCopy")}
-                  </button>
+                  </Button>
                 </div>
               ) : null}
               <div className="flex flex-wrap items-end gap-2 pt-1">
@@ -889,16 +882,15 @@ export function SettingsPage() {
                   onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
                   placeholder="000000"
                 />
-                <button
-                  className="btn btn-primary"
+                <Button
+                  variant="solid"
                   type="button"
                   disabled={totpCode.trim().length < 6}
                   onClick={() => void enableTotp().catch((e) => toast.error(String(e)))}
                 >
                   {t("settings.totpEnable")}
-                </button>
-                <button
-                  className="btn"
+                </Button>
+                <Button
                   type="button"
                   onClick={() => {
                     setQr(null);
@@ -908,7 +900,7 @@ export function SettingsPage() {
                   }}
                 >
                   {t("common.cancel", { defaultValue: "Cancel" })}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -926,26 +918,27 @@ export function SettingsPage() {
               onChange={(e) => setTotpCode(e.target.value.replace(/\s/g, ""))}
               placeholder="000000"
             />
-            <button
-              className="btn btn-danger"
+            <Button
+              variant="solid" color="red"
               type="button"
               onClick={() => void disableTotp().catch((e) => toast.error(String(e)))}
             >
               {t("settings.totpDisable")}
-            </button>
+            </Button>
           </div>
         ) : null}
       </SectionCard>
 
       <div className="flex flex-wrap gap-3">
-        <button className="btn" type="button" onClick={() => reload.mutate()}>
+        <Button type="button" onClick={() => reload.mutate()}>
           <RefreshCw size={16} />
           {t("settings.reload")}
-        </button>
-        <button className="btn" type="button" onClick={() => void downloadBackup()}>
+        </Button>
+        <Button type="button" onClick={() => void downloadBackup()}>
           {t("settings.backup")}
-        </button>
-        <label className="btn cursor-pointer">
+        </Button>
+        <Button asChild>
+          <label>
           {tr("Restore backup")}
           <input
             type="file"
@@ -956,7 +949,8 @@ export function SettingsPage() {
               if (f) void restoreBackup(f).catch((err) => toast.error((err as Error).message));
             }}
           />
-        </label>
+          </label>
+        </Button>
       </div>
 
       <SectionCard title={tr("Audit log")} icon={ScrollText} tone="cyan" flush>

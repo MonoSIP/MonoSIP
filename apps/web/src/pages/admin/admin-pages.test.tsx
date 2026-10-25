@@ -463,8 +463,7 @@ describe("DevicesPage", () => {
 
     const row = (await screen.findByText("AA:BB:CC:DD:EE:FF")).closest("tr") as HTMLElement;
     // The delete affordance is an unlabelled danger icon.
-    const del = row.querySelector("button.btn-danger") as HTMLButtonElement;
-    await userEvent.click(del);
+    await userEvent.click(within(row).getByRole("button", { name: "Delete" }));
 
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/devices/d1"));
   });
@@ -507,8 +506,7 @@ describe("IntegrationsPage", () => {
     renderPage(<IntegrationsPage />);
 
     const row = (await screen.findByText(/ci ·/)).closest("li") as HTMLElement;
-    const del = row.querySelector("button.btn-danger") as HTMLButtonElement;
-    await userEvent.click(del);
+    await userEvent.click(within(row).getByRole("button", { name: "Revoke" }));
 
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/api-keys/k1"));
   });
@@ -979,9 +977,9 @@ describe("SchedulesPage overrides and delete", () => {
 
     // The first schedule is auto-selected, and its current mode is highlighted.
     const auto = await screen.findByRole("button", { name: "schedules.auto" });
-    expect(auto).toHaveClass("btn-primary");
+    expect(auto).toHaveClass("rt-variant-solid");
     expect(screen.getByRole("button", { name: "schedules.closed" })).not.toHaveClass(
-      "btn-primary",
+      "rt-variant-solid",
     );
   });
 
@@ -1074,7 +1072,7 @@ describe("LoginPage", () => {
     expect(await screen.findByRole("heading", { name: "app.name" })).toBeInTheDocument();
     // Admin mode shows the authenticator field; portal mode hides it.
     expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "auth.adminLogin" })).toHaveClass("btn-primary");
+    expect(screen.getByRole("radio", { name: "auth.adminLogin" })).toHaveAttribute("data-state", "on");
     expect(screen.getByRole("link", { name: "www.monosip.com" })).toHaveAttribute(
       "href",
       "https://www.monosip.com",
@@ -1240,7 +1238,7 @@ describe("PortalLayout", () => {
     expect(within(aside).queryByRole("menuitem", { name: /common\.language/ })).toBeNull();
     await userEvent.click(user);
     const menu = await screen.findByRole("menu");
-    expect(menu.className).toContain("ui-menu");
+    expect(menu.className).toContain("rt-DropdownMenuContent");
     const language = within(menu).getByRole("menuitem", { name: /common\.language/ });
     const theme = within(menu).getByRole("menuitem", { name: /portal\.darkMode/ });
     const logout = within(menu).getByRole("menuitem", { name: /common\.logout/ });

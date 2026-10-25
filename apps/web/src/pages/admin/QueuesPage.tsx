@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Headphones, ListOrdered, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 import { SPEECH_VOICES, voiceOptions } from "./flow/nodeMeta";
 
@@ -247,17 +247,17 @@ export function QueuesPage() {
                     {(q.members ?? []).map((m) => {
                       const ext = exts.data?.find((e) => e.id === m.extensionId);
                       return (
-                        <button
+                        <Button
                           key={m.extensionId}
                           type="button"
-                          className="btn text-xs"
+                          className="text-xs"
                           onClick={() => void pauseMember(q.id, m.extensionId, !m.paused)}
                           title={`penalty ${m.penalty ?? 0}`}
                         >
                           {ext?.number ?? "?"}
                           {(m.penalty ?? 0) > 0 ? ` p${m.penalty}` : ""}
                           {m.paused ? " ⏸" : ""}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -452,17 +452,16 @@ export function QueuesPage() {
                         onChange={(e) => setPenalty(m.extensionId, Number(e.target.value))}
                       />
                     </label>
-                    <button className="btn" type="button" onClick={() => moveMember(m.extensionId, -1)} disabled={idx === 0}>
+                    <Button type="button" onClick={() => moveMember(m.extensionId, -1)} disabled={idx === 0}>
                       ↑
-                    </button>
-                    <button
-                      className="btn"
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => moveMember(m.extensionId, 1)}
                       disabled={idx === members.length - 1}
                     >
                       ↓
-                    </button>
+                    </Button>
                   </li>
                 );
               })}
@@ -470,14 +469,14 @@ export function QueuesPage() {
           )}
         </div>
         <div className="flex gap-2">
-          <button className="btn btn-primary" type="submit">
+          <Button variant="solid" type="submit">
             <Plus size={16} />
             {editId ? t("common.save") : t("common.create")}
-          </button>
+          </Button>
           {editId && (
-            <button className="btn" type="button" onClick={resetForm}>
+            <Button type="button" onClick={resetForm}>
               {tr("Cancel")}
-            </button>
+            </Button>
           )}
         </div>
         </form>

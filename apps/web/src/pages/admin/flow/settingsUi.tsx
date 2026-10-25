@@ -1,5 +1,5 @@
+import { Card, Flex, Heading, Text, Theme } from "@radix-ui/themes";
 import type { ReactNode } from "react";
-import { Label } from "radix-ui";
 import { Segmented } from "../../../components/ui";
 import { tr } from "../../../i18n";
 
@@ -16,20 +16,32 @@ export function SettingsSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3 rounded-xl border border-[var(--border)] bg-[color-mix(in_oklab,var(--bg-soft)_55%,transparent)] p-3.5">
-      <header className="space-y-0.5">
-        <div className="flex items-center gap-2">
-          {step != null && (
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[10px] font-bold text-[var(--primary-foreground)]">
-              {step}
-            </span>
-          )}
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text)]">{title}</h3>
-        </div>
-        {hint ? <p className="text-[11px] leading-snug text-[var(--text-muted)]">{hint}</p> : null}
-      </header>
-      <div className="space-y-3">{children}</div>
-    </section>
+    <Theme>
+    <Card size="1">
+      <Flex direction="column" gap="3">
+        <header>
+          <Flex align="center" gap="2">
+            {step != null && (
+              <Text size="1" weight="bold">
+                {step}
+              </Text>
+            )}
+            <Heading as="h3" size="2">
+              {title}
+            </Heading>
+          </Flex>
+          {hint ? (
+            <Text as="p" size="1" color="gray" mt="1">
+              {hint}
+            </Text>
+          ) : null}
+        </header>
+        <Flex direction="column" gap="3">
+          {children}
+        </Flex>
+      </Flex>
+    </Card>
+    </Theme>
   );
 }
 
@@ -45,11 +57,17 @@ export function Field({
   className?: string;
 }) {
   return (
-    <Label.Root className={`block text-xs text-[var(--text-muted)] ${className ?? ""}`}>
-      <span className="font-medium text-[var(--text)]">{label}</span>
-      {hint ? <span className="mt-0.5 block font-normal opacity-80">{hint}</span> : null}
+    <Theme>
+    <Text as="label" size="2" className={className}>
+      <Text weight="medium">{label}</Text>
+      {hint ? (
+        <Text as="p" size="1" color="gray" mt="1">
+          {hint}
+        </Text>
+      ) : null}
       <div className="mt-1">{children}</div>
-    </Label.Root>
+    </Text>
+    </Theme>
   );
 }
 

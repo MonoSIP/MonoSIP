@@ -12,7 +12,7 @@ import {
   Tv,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SelectInput, StatTile } from "../../components/ui";
+import { Button, PageHeader, SelectInput, StatTile } from "../../components/ui";
 import { LiveDot } from "../../components/motion";
 import { tr } from "../../i18n";
 
@@ -153,14 +153,14 @@ export function DashboardPage() {
                 }
               />
             </label>
-            <button className="btn" type="button" onClick={() => void cleanupSnoops()}>
+            <Button type="button" onClick={() => void cleanupSnoops()}>
               <Trash2 size={16} />
               {tr("Clear stuck spy")}
-            </button>
-            <button className="btn" type="button" onClick={() => setTv((v) => !v)}>
+            </Button>
+            <Button type="button" onClick={() => setTv((v) => !v)}>
               <Tv size={16} />
               {tv ? tr("Exit TV") : tr("TV mode")}
-            </button>
+            </Button>
           </>
         }
       />
@@ -292,17 +292,17 @@ export function DashboardPage() {
                     <span className="badge">{c.state}</span>
                   </td>
                   <td className="flex flex-wrap gap-1">
-                    <button className="btn" type="button" onClick={() => void spy(c.id, "listen")}>
+                    <Button type="button" onClick={() => void spy(c.id, "listen")}>
                       {tr("Spy")}
-                    </button>
-                    <button className="btn" type="button" onClick={() => void spy(c.id, "whisper")}>
+                    </Button>
+                    <Button type="button" onClick={() => void spy(c.id, "whisper")}>
                       {tr("Whisper")}
-                    </button>
-                    <button className="btn" type="button" onClick={() => void spy(c.id, "barge")}>
+                    </Button>
+                    <Button type="button" onClick={() => void spy(c.id, "barge")}>
                       {tr("Barge")}
-                    </button>
-                    <button
-                      className="btn btn-danger"
+                    </Button>
+                    <Button
+                      variant="solid" color="red"
                       type="button"
                       onClick={() =>
                         void api
@@ -312,7 +312,7 @@ export function DashboardPage() {
                       }
                     >
                       {tr("Hangup")}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))

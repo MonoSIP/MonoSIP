@@ -8,6 +8,7 @@ import { TooltipProvider } from "./components/ui";
 import { useStore } from "./store";
 import App from "./App";
 import "./i18n";
+import "@radix-ui/themes/styles.css";
 import "./index.css";
 
 const qc = new QueryClient({

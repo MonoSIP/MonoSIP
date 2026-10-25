@@ -290,7 +290,7 @@ describe("password and voicemail error handling", () => {
     const langCard = screen.getByRole("heading", { name: "common.language" }).closest("section")!;
     await userEvent.click(within(langCard).getByRole("button", { name: "Türkçe" }));
     expect(localStorage.getItem("monosip_locale")).toBe("tr");
-    expect(within(langCard).getByRole("button", { name: "Türkçe" }).className).toContain("btn-primary");
+    expect(within(langCard).getByRole("button", { name: "Türkçe" }).className).toContain("rt-variant-solid");
 
     await userEvent.click(screen.getByRole("button", { name: "portal.darkMode: common.enabled" }));
     expect(document.documentElement.classList.contains("light")).toBe(true);

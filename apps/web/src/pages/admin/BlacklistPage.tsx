@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Ban, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type BlacklistRow = {
   id: string;
@@ -128,10 +128,10 @@ export function BlacklistPage() {
             onChange={(e) => setNote(e.target.value)}
             placeholder={t("blacklist.notePlaceholder")}
           />
-          <button className="btn btn-primary" type="submit" disabled={add.isPending}>
+          <Button variant="solid" type="submit" disabled={add.isPending}>
             <Plus size={16} />
             {t("common.add")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
     </div>

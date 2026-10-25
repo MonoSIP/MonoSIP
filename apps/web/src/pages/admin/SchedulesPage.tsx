@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { CalendarClock, CalendarDays, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Checkbox, ConfirmDialog, PageHeader, SectionCard, SelectInput, TextField } from "../../components/ui";
+import { Button, Checkbox, ConfirmDialog, PageHeader, SectionCard, SelectInput, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Range = {
@@ -265,14 +265,14 @@ export function SchedulesPage() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-[var(--text-muted)]">{tr("Schedules")}</span>
           {list.data.map((s) => (
-            <button
+            <Button
               key={s.id}
               type="button"
-              className={`btn ${selected?.id === s.id ? "btn-primary" : ""}`}
+              variant={selected?.id === s.id ? "solid" : "soft"}
               onClick={() => setSelectedId(s.id)}
             >
               {s.name}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -295,10 +295,10 @@ export function SchedulesPage() {
             onChange={(e) => setNewName(e.target.value)}
             className="min-w-[16rem]"
           />
-          <button className="btn btn-primary" type="submit" disabled={create.isPending}>
+          <Button variant="solid" type="submit" disabled={create.isPending}>
             <Plus size={16} />
             {t("common.create")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
 
@@ -322,10 +322,10 @@ export function SchedulesPage() {
             <div className="flex flex-col items-end gap-2">
               <div className="flex flex-wrap gap-2">
                 {(["auto", "open", "closed"] as const).map((mode) => (
-                  <button
+                  <Button
                     key={mode}
                     type="button"
-                    className={`btn ${selected.overrideMode === mode ? "btn-primary" : ""}`}
+                    variant={selected.overrideMode === mode ? "solid" : "soft"}
                     onClick={() =>
                       setOverride.mutate({
                         id: selected.id,
@@ -340,7 +340,7 @@ export function SchedulesPage() {
                     }
                   >
                     {t(`schedules.${mode === "auto" ? "auto" : mode}`)}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <label className="block text-xs text-[var(--text-muted)]">
@@ -364,16 +364,15 @@ export function SchedulesPage() {
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-medium">{t("schedules.weekly", { defaultValue: "Weekly hours" })}</h2>
               <div className="flex gap-2">
-                <button className="btn" type="button" onClick={addWeekdaysPreset}>
+                <Button type="button" onClick={addWeekdaysPreset}>
                   {t("schedules.presetWeekdays", { defaultValue: "Mon–Fri 09–18 + lunch" })}
-                </button>
-                <button
-                  className="btn"
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setRanges((rs) => [...rs, emptyRange()])}
                 >
                   {t("schedules.addRange", { defaultValue: "Add range" })}
-                </button>
+                </Button>
               </div>
             </div>
             <p className="mb-3 text-sm text-[var(--text-muted)]">
@@ -429,13 +428,13 @@ export function SchedulesPage() {
                         ]}
                       />
                     </label>
-                    <button
-                      className="btn btn-danger"
+                    <Button
+                      variant="solid" color="red"
                       type="button"
                       onClick={() => setRanges((rs) => rs.filter((_, idx) => idx !== i))}
                     >
                       {t("common.delete")}
-                    </button>
+                    </Button>
                   </div>
                 ))
               )}
@@ -509,11 +508,10 @@ export function SchedulesPage() {
                 onCheckedChange={setHolHalf}
                 label={t("schedules.halfDay", { defaultValue: "Half day (open until noon)" })}
               />
-              <button className="btn btn-primary" type="submit">
+              <Button variant="solid" type="submit">
                 {t("common.create")}
-              </button>
-              <button
-                className="btn"
+              </Button>
+              <Button
                 type="button"
                 onClick={() => {
                   void api
@@ -530,7 +528,7 @@ export function SchedulesPage() {
                 }}
               >
                 {t("schedules.trPack")}
-              </button>
+              </Button>
             </form>
             <ul className="space-y-1 text-sm">
               {scheduleHolidays.length === 0 ? (
@@ -545,8 +543,8 @@ export function SchedulesPage() {
                       <span className="font-mono">{h.date}</span> — {h.name}
                       {h.halfDay ? " (½)" : ""}
                     </span>
-                    <button
-                      className="btn btn-danger"
+                    <Button
+                      variant="solid" color="red"
                       type="button"
                       onClick={() =>
                         void api.delete(`/api/v1/admin/holidays/${h.id}`).then(() =>
@@ -555,7 +553,7 @@ export function SchedulesPage() {
                       }
                     >
                       {t("common.delete")}
-                    </button>
+                    </Button>
                   </li>
                 ))
               )}
@@ -563,12 +561,12 @@ export function SchedulesPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-[var(--border)] pt-4">
-            <button className="btn btn-primary" type="button" onClick={() => save.mutate()} disabled={save.isPending}>
+            <Button variant="solid" type="button" onClick={() => save.mutate()} disabled={save.isPending}>
               {t("common.save")}
-            </button>
-            <button className="btn btn-danger" type="button" onClick={() => setDeleteOpen(true)}>
+            </Button>
+            <Button variant="solid" color="red" type="button" onClick={() => setDeleteOpen(true)}>
               {t("common.delete")}
-            </button>
+            </Button>
           </div>
         </SectionCard>
       )}

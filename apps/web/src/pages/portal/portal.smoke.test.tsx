@@ -28,7 +28,10 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useNavigate: () => navigate };
 });
 // Return the key so assertions do not depend on a loaded translation bundle.
-vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (k: string) => k, i18n: { language: "en" } }),
+  initReactI18next: { type: "3rdParty", init: () => undefined },
+}));
 // jsdom has no Media/Audio stack that WaveSurfer needs.
 vi.mock("wavesurfer.js", () => ({
   default: {

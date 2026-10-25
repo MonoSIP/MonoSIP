@@ -5,7 +5,7 @@ import WaveSurfer from "wavesurfer.js";
 import { toast } from "sonner";
 import { Disc, FileAudio } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard } from "../../components/ui";
+import { Button, PageHeader, SectionCard } from "../../components/ui";
 
 export function MyRecordingsPage() {
   const { t } = useTranslation();
@@ -70,8 +70,8 @@ export function MyRecordingsPage() {
               {loadError ?? (isPlaying ? "Playing…" : "Ready")}
             </span>
             <div className="flex gap-2">
-              <button
-                className="btn btn-primary"
+              <Button
+                variant="solid"
                 type="button"
                 disabled={!!loadError}
                 onClick={() => {
@@ -82,10 +82,10 @@ export function MyRecordingsPage() {
                 }}
               >
                 {isPlaying ? "Pause" : "Play"}
-              </button>
-              <button className="btn" type="button" onClick={() => setPlayingId(null)}>
+              </Button>
+              <Button type="button" onClick={() => setPlayingId(null)}>
                 Close
-              </button>
+              </Button>
             </div>
           </div>
           <div ref={waveRef} />
@@ -117,9 +117,9 @@ export function MyRecordingsPage() {
                     {new Date(r.createdAt).toLocaleString()} · {r.duration}s
                   </div>
                 </div>
-                <button className="btn" type="button" onClick={() => setPlayingId(r.id)}>
+                <Button type="button" onClick={() => setPlayingId(r.id)}>
                   Play
-                </button>
+                </Button>
               </div>
             ))}
           </div>

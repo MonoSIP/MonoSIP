@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music, Pause, Play, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { ConfirmDialog, IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { Button, ConfirmDialog, IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type MohClass = { id: string; name: string; files: unknown };
@@ -208,14 +208,14 @@ export function MohPage() {
                         if (f) void upload(m.id, f).catch((err) => toast.error((err as Error).message));
                       }}
                     />
-                    <button
-                      className="btn btn-primary"
+                    <Button
+                      variant="solid"
                       type="button"
                       onClick={() => fileInputRefs.current[m.id]?.click()}
                     >
                       <Upload size={16} />
                       {tr("Upload")}
-                    </button>
+                    </Button>
                   </>
                 }
               >
@@ -280,9 +280,9 @@ export function MohPage() {
             placeholder={tr("Class name")}
             required
           />
-          <button className="btn btn-primary" type="submit" disabled={!nameKey || nameTaken || create.isPending}>
+          <Button variant="solid" type="submit" disabled={!nameKey || nameTaken || create.isPending}>
             {tr("Create class")}
-          </button>
+          </Button>
           {nameKey && nameTaken && (
             <span className="self-center text-sm text-[var(--danger)]" role="alert">
               {tr("A class with this name already exists")}

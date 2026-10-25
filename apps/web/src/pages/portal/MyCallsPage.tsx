@@ -6,7 +6,7 @@ import { History, PhoneCall, PhoneIncoming, PhoneMissed, PhoneOutgoing } from "l
 import { acknowledgeMissed } from "../../lib/acknowledge-missed";
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
-import { PageHeader, SectionCard } from "../../components/ui";
+import { Button, PageHeader, SectionCard } from "../../components/ui";
 
 type Tab = "all" | "inbound" | "outbound" | "missed";
 
@@ -76,14 +76,14 @@ export function MyCallsPage() {
       <PageHeader icon={PhoneCall} title={t("nav.myCalls")} tone="blue" />
       <div className="call-filters">
         {tabs.map((x) => (
-          <button
+          <Button
             key={x.id}
             type="button"
-            className={`btn ${tab === x.id ? "btn-primary" : ""}`}
+            variant={tab === x.id ? "solid" : "soft"}
             onClick={() => setTab(x.id)}
           >
             {x.label}
-          </button>
+          </Button>
         ))}
       </div>
       {tab === "missed" && (missed.data ?? []).length > 0 && (
@@ -97,13 +97,13 @@ export function MyCallsPage() {
                     {new Date(m.at).toLocaleString()} · {m.status}
                   </span>
                 </div>
-                <button
-                  className="btn shrink-0"
+                <Button
+                  className="shrink-0"
                   type="button"
                   onClick={() => navigate(`/?dial=${encodeURIComponent(m.number)}`)}
                 >
                   {t("portal.dial")}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -139,13 +139,13 @@ export function MyCallsPage() {
                     </span>
                   </div>
                   {num && (
-                    <button
-                      className="btn shrink-0"
+                    <Button
+                      className="shrink-0"
                       type="button"
                       onClick={() => navigate(`/?dial=${encodeURIComponent(num)}`)}
                     >
                       {t("portal.dial")}
-                    </button>
+                    </Button>
                   )}
                 </li>
               );

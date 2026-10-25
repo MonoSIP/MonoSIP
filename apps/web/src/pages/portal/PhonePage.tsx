@@ -25,6 +25,7 @@ import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { formatCallTime, usePhone } from "../../lib/phone-context";
 import { CallBars, CallPulse } from "../../components/motion";
+import { Button } from "../../components/ui";
 
 const RECENTS_SEEN_KEY = "monosip.recentsSeenAt";
 
@@ -511,8 +512,8 @@ export function PhonePage() {
                 onChange={(e) => setXferTarget(e.target.value.replace(/[^\d*#]/g, ""))}
               />
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  className="btn btn-primary justify-center"
+                <Button
+                  variant="solid" className="justify-center"
                   type="button"
                   disabled={!xferTarget}
                   onClick={() => {
@@ -529,9 +530,9 @@ export function PhonePage() {
                   }}
                 >
                   Blind
-                </button>
-                <button
-                  className="btn justify-center"
+                </Button>
+                <Button
+                  className="justify-center"
                   type="button"
                   disabled={!xferTarget}
                   onClick={() => {
@@ -542,9 +543,9 @@ export function PhonePage() {
                   }}
                 >
                   Consult
-                </button>
-                <button
-                  className="btn btn-primary justify-center"
+                </Button>
+                <Button
+                  variant="solid" className="justify-center"
                   type="button"
                   onClick={() => {
                     void phone
@@ -559,9 +560,9 @@ export function PhonePage() {
                   }}
                 >
                   Complete
-                </button>
-                <button
-                  className="btn justify-center"
+                </Button>
+                <Button
+                  className="justify-center"
                   type="button"
                   onClick={() => {
                     void phone
@@ -574,7 +575,7 @@ export function PhonePage() {
                   }}
                 >
                   Cancel consult
-                </button>
+                </Button>
               </div>
             </div>
           )}

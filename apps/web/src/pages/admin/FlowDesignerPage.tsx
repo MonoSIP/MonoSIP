@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Modal, SelectInput } from "../../components/ui";
+import { Button, Modal, SelectInput } from "../../components/ui";
 import {
   FlowCanvasActionsProvider,
   flowEdgeTypes,
@@ -411,9 +411,11 @@ export function FlowDesignerPage() {
   return (
     <div className="flex h-full min-h-[480px] flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2 px-4 pt-4 md:px-8 md:pt-6">
-        <Link to="/flows" className="btn">
+        <Button asChild variant="soft">
+<Link to="/flows" >
           {t("common.back")}
         </Link>
+</Button>
         <input
           className="input min-w-[12rem] max-w-[28rem] flex-1 font-medium"
           value={flowName}
@@ -438,22 +440,21 @@ export function FlowDesignerPage() {
         )}
         {!mobileView && (
           <>
-        <button className="btn" type="button" onClick={() => void save().catch((e) => toast.error(String(e)))}>
+        <Button type="button" onClick={() => void save().catch((e) => toast.error(String(e)))}>
           {t("common.save")}
-        </button>
-        <button className="btn" type="button" onClick={() => void validate()}>
+        </Button>
+        <Button type="button" onClick={() => void validate()}>
           {t("flows.validate")}
-        </button>
-        <button className="btn btn-primary" type="button" onClick={() => void publish()}>
+        </Button>
+        <Button variant="solid" type="button" onClick={() => void publish()}>
           {t("flows.publish")}
-        </button>
+        </Button>
           </>
         )}
-        <button className="btn" type="button" onClick={() => void simulate()}>
+        <Button type="button" onClick={() => void simulate()}>
           {t("flows.simulate")}
-        </button>
-        <button
-          className="btn"
+        </Button>
+        <Button
           type="button"
           onClick={() => {
             void (async () => {
@@ -473,8 +474,9 @@ export function FlowDesignerPage() {
           }}
         >
           {tr("Export")}
-        </button>
-        <label className="btn cursor-pointer">
+        </Button>
+        <Button asChild>
+          <label>
           {tr("Import")}
           <input
             type="file"
@@ -502,7 +504,8 @@ export function FlowDesignerPage() {
                 .catch((err) => toast.error((err as Error).message));
             }}
           />
-        </label>
+          </label>
+        </Button>
         {versions[0] && (
           <SelectInput
             className="w-auto max-w-[12rem]"
@@ -606,9 +609,9 @@ export function FlowDesignerPage() {
                 onChange={(e) => setSimMockApi(e.target.value)}
               />
             </label>
-            <button className="btn w-full text-sm" type="button" onClick={() => void simulate()}>
+            <Button className="w-full text-sm" type="button" onClick={() => void simulate()}>
               {tr("Run simulation")}
-            </button>
+            </Button>
             {simSteps.length > 0 && (
               <>
                 <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--text-muted)]">
@@ -616,11 +619,11 @@ export function FlowDesignerPage() {
                     {simIndex + 1} / {simSteps.length}
                   </span>
                   <span className="flex gap-1">
-                    <button className="btn px-2 py-0.5 text-[10px]" type="button" onClick={() => setSimIndex(0)}>
+                    <Button className="px-2 py-0.5 text-[10px]" type="button" onClick={() => setSimIndex(0)}>
                       {tr("Replay")}
-                    </button>
-                    <button
-                      className="btn px-2 py-0.5 text-[10px]"
+                    </Button>
+                    <Button
+                      className="px-2 py-0.5 text-[10px]"
                       type="button"
                       onClick={() => {
                         setSimSteps([]);
@@ -629,7 +632,7 @@ export function FlowDesignerPage() {
                       }}
                     >
                       {tr("Clear")}
-                    </button>
+                    </Button>
                   </span>
                 </div>
                 <ol className="mt-1 min-h-0 flex-1 space-y-1 overflow-y-auto text-xs text-[var(--text)]">
@@ -663,9 +666,9 @@ export function FlowDesignerPage() {
           title={nodeTitle(selected.data.flowType)}
           description={nodeBlurb(selected.data.flowType) || undefined}
           headerAside={
-            <button className="btn shrink-0" type="button" onClick={() => closeInspector()}>
+            <Button className="shrink-0" type="button" onClick={() => closeInspector()}>
               {tr("Done")}
-            </button>
+            </Button>
           }
         >
           <NodeSettings
@@ -699,12 +702,12 @@ export function FlowDesignerPage() {
           })()}
           footer={
             <>
-              <button className="btn" type="button" onClick={() => setPendingDeleteId(null)}>
+              <Button type="button" onClick={() => setPendingDeleteId(null)}>
                 {t("common.cancel")}
-              </button>
-              <button className="btn btn-danger" type="button" onClick={() => confirmDeleteNode()}>
+              </Button>
+              <Button variant="solid" color="red" type="button" onClick={() => confirmDeleteNode()}>
                 {t("common.delete")}
-              </button>
+              </Button>
             </>
           }
         />

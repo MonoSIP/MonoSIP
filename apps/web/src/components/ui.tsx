@@ -1,35 +1,107 @@
-import { Check, ChevronDown, type LucideIcon } from "lucide-react";
 import {
   AlertDialog,
-  Checkbox as CheckboxPrimitive,
+  Button as ThemesButton,
+  Card,
+  Checkbox as ThemesCheckbox,
   Dialog,
   DropdownMenu,
-  Label,
-  Select,
-  Switch as SwitchPrimitive,
-  ToggleGroup,
+  Flex,
+  Heading,
+  IconButton,
+  Select as ThemesSelect,
+  SegmentedControl,
+  Switch as ThemesSwitch,
+  Text,
+  TextArea,
+  TextField as ThemesTextField,
+  Theme,
   Tooltip,
-} from "radix-ui";
+  useThemeContext,
+} from "@radix-ui/themes";
+import { type LucideIcon } from "lucide-react";
 import {
   useId,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
+  type ComponentProps,
   type InputHTMLAttributes,
   type ReactElement,
   type ReactNode,
   type TextareaHTMLAttributes,
 } from "react";
+import { useStore } from "../store";
 
 type Tone = "cyan" | "coral" | "blue" | "success" | "warn" | "danger";
 
-const TONE_VAR: Record<Tone, string> = {
-  cyan: "var(--accent)",
-  coral: "var(--accent-2)",
-  blue: "var(--accent-3)",
-  success: "var(--success)",
-  warn: "var(--warning)",
-  danger: "var(--danger)",
-};
+const TONE_COLOR = {
+  cyan: "cyan",
+  coral: "orange",
+  blue: "blue",
+  success: "green",
+  warn: "amber",
+  danger: "red",
+} as const;
+
+type ThemesButtonProps = ComponentProps<typeof ThemesButton>;
+
+/** Pages rendered outside the app shell (tests) still need a theme for these components. */
+function InTheme({ children }: { children: ReactNode }) {
+  let ready = true;
+  try {
+    useThemeContext();
+  } catch {
+    ready = false;
+  }
+  if (ready) return children;
+  return (
+    <Theme appearance="dark" accentColor="cyan" grayColor="slate" panelBackground="solid" radius="large">
+      {children}
+    </Theme>
+  );
+}
+
+/** Radix Themes button. Secondary actions stay soft; pass variant="solid" for the main action. */
+export function Button({ variant = "soft", ...props }: ThemesButtonProps) {
+  return (
+    <InTheme>
+      <ThemesButton variant={variant} {...props} />
+    </InTheme>
+  );
+}
+
+export function TooltipProvider({ children }: { children: ReactNode }) {
+  const theme = useStore((s) => s.theme);
+  return (
+    <Theme
+      appearance={theme}
+      accentColor="cyan"
+      grayColor="slate"
+      panelBackground="solid"
+      radius="large"
+      style={{ height: "100%" }}
+    >
+      {children}
+    </Theme>
+  );
+}
+
+export function Surface({
+  className,
+  children,
+  size = "4",
+}: {
+  className?: string;
+  children: ReactElement;
+  size?: "1" | "2" | "3" | "4" | "5";
+}) {
+  return (
+    <InTheme>
+      <Card asChild size={size} className={className}>
+        {children}
+      </Card>
+    </InTheme>
+  );
+}
 
 export function PageHeader({
   icon: Icon,
@@ -45,18 +117,30 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="page-header" style={{ ["--tone" as string]: TONE_VAR[tone] }}>
-      <div className="page-header-title">
-        <span className="page-header-icon" aria-hidden>
+    <InTheme>
+    <Flex align="center" justify="between" gap="4" mb="4" className="page-header">
+      <Flex align="center" gap="3" className="page-header-title">
+        <Text color={TONE_COLOR[tone]} as="span" className="page-header-icon">
           <Icon size={22} strokeWidth={2.25} />
-        </span>
+        </Text>
         <div>
-          <h1>{title}</h1>
-          {description ? <div className="mt-1 text-[0.92rem] text-[var(--text-muted)]">{description}</div> : null}
+          <Heading as="h1" size="6" weight="medium" wrap="balance">
+            {title}
+          </Heading>
+          {description ? (
+            <Text as="p" size="2" color="gray" mt="1">
+              {description}
+            </Text>
+          ) : null}
         </div>
-      </div>
-      {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}
-    </header>
+      </Flex>
+      {actions ? (
+        <Flex gap="2" align="center" className="toolbar toolbar-actions">
+          {actions}
+        </Flex>
+      ) : null}
+    </Flex>
+    </InTheme>
   );
 }
 
@@ -72,13 +156,23 @@ export function StatTile({
   tone?: Tone;
 }) {
   return (
-    <div className="stat-tile" style={{ ["--tone" as string]: TONE_VAR[tone] }}>
-      <div className="stat-label">
-        <Icon size={15} strokeWidth={2.25} />
-        {label}
-      </div>
-      <div className="stat-value">{value}</div>
-    </div>
+    <InTheme>
+    <Card size="2" className="stat-tile">
+      <Flex direction="column" gap="1">
+        <Flex align="center" gap="2" className="stat-label">
+          <Text color={TONE_COLOR[tone]} as="span">
+            <Icon size={15} strokeWidth={2.25} />
+          </Text>
+          <Text size="2" color="gray">
+            {label}
+          </Text>
+        </Flex>
+        <Text size="7" weight="bold" className="stat-value">
+          {value}
+        </Text>
+      </Flex>
+    </Card>
+    </InTheme>
   );
 }
 
@@ -89,51 +183,62 @@ type FieldBase = {
   className?: string;
 };
 
-export function Field({
-  label,
+function FieldLabel({
+  htmlFor,
   icon: Icon,
-  hint,
-  className,
   children,
-}: FieldBase & { children: ReactNode }) {
+}: {
+  htmlFor?: string;
+  icon?: LucideIcon;
+  children: ReactNode;
+}) {
   return (
-    <Label.Root className={`field ${className ?? ""}`}>
-      <span className="field-label">
-        {Icon ? <Icon size={14} strokeWidth={2.25} /> : null}
-        {label}
-      </span>
+    <Text as="label" htmlFor={htmlFor} size="2" weight="medium" className="field-label">
+      {Icon ? <Icon size={14} strokeWidth={2.25} /> : null}
       {children}
-      {hint ? <span className="mt-1 block text-xs text-[var(--text-muted)]">{hint}</span> : null}
-    </Label.Root>
+    </Text>
   );
 }
 
-export function TextField({
-  label,
-  icon: Icon,
-  hint,
-  className,
-  id,
-  ...props
-}: FieldBase & InputHTMLAttributes<HTMLInputElement>) {
+export function Field({ label, icon, hint, className, children }: FieldBase & { children: ReactNode }) {
+  return (
+    <InTheme>
+    <Flex direction="column" gap="1" mb="2" className={`field ${className ?? ""}`}>
+      <FieldLabel icon={icon}>{label}</FieldLabel>
+      {children}
+      {hint ? (
+        <Text size="1" color="gray">
+          {hint}
+        </Text>
+      ) : null}
+    </Flex>
+    </InTheme>
+  );
+}
+
+type TextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "color" | "children">;
+
+export function TextField({ label, icon: Icon, hint, className, id, ...props }: FieldBase & TextInputProps) {
   const autoId = useId();
   const fieldId = id ?? autoId;
   return (
-    <div className={`field ${className ?? ""}`}>
-      <Label.Root htmlFor={fieldId} className="field-label">
-        {Icon ? <Icon size={14} strokeWidth={2.25} /> : null}
-        {label}
-      </Label.Root>
-      <span className={`field-control ${Icon ? "has-icon" : ""}`}>
+    <InTheme>
+    <Flex direction="column" gap="1" mb="2" className={`field ${className ?? ""}`}>
+      <FieldLabel htmlFor={fieldId}>{label}</FieldLabel>
+      <ThemesTextField.Root id={fieldId} {...(props as ComponentProps<typeof ThemesTextField.Root>)}>
         {Icon ? (
-          <span className="field-icon">
+          <ThemesTextField.Slot>
             <Icon size={16} strokeWidth={2} />
-          </span>
+          </ThemesTextField.Slot>
         ) : null}
-        <input id={fieldId} className="input" {...props} />
-      </span>
-      {hint ? <span className="mt-1 block text-xs text-[var(--text-muted)]">{hint}</span> : null}
-    </div>
+      </ThemesTextField.Root>
+      {hint ? (
+        <Text size="1" color="gray">
+          {hint}
+        </Text>
+      ) : null}
+    </Flex>
+    </InTheme>
   );
 }
 
@@ -162,42 +267,37 @@ export function SelectInput({
   "aria-label"?: string;
   required?: boolean;
 }) {
-  const hasEmpty = options.some((option) => option.value === "");
   const encoded = value === "" ? EMPTY_OPTION : value;
   const known = options.some((option) => (option.value === "" ? EMPTY_OPTION : option.value) === encoded);
   return (
-    <Select.Root
-      value={known ? encoded : ""}
+    <InTheme>
+    <ThemesSelect.Root
+      value={known ? encoded : undefined}
       onValueChange={(next) => onValueChange(next === EMPTY_OPTION ? "" : next)}
       disabled={disabled}
       required={required}
+      size="2"
     >
-      <Select.Trigger id={id} className={`input ui-select-trigger ${className ?? ""}`} aria-label={ariaLabel}>
-        <Select.Value placeholder={placeholder} />
-        <Select.Icon className="ui-select-icon" aria-hidden>
-          <ChevronDown size={16} strokeWidth={2.25} />
-        </Select.Icon>
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Content className="ui-select-content" position="popper" sideOffset={4}>
-          <Select.Viewport>
-            {options.map((option) => (
-              <Select.Item
-                key={option.value === "" ? EMPTY_OPTION : option.value}
-                value={option.value === "" ? EMPTY_OPTION : option.value}
-                disabled={option.disabled}
-                className="ui-select-item"
-              >
-                <Select.ItemText>{option.label}</Select.ItemText>
-                <Select.ItemIndicator className="ui-select-indicator">
-                  <Check size={14} strokeWidth={2.5} />
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-        </Select.Content>
-      </Select.Portal>
-    </Select.Root>
+      <ThemesSelect.Trigger
+        id={id}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        className={className}
+        style={{ width: "100%" }}
+      />
+      <ThemesSelect.Content position="popper" sideOffset={4}>
+        {options.map((option) => (
+          <ThemesSelect.Item
+            key={option.value === "" ? EMPTY_OPTION : option.value}
+            value={option.value === "" ? EMPTY_OPTION : option.value}
+            disabled={option.disabled}
+          >
+            {option.label}
+          </ThemesSelect.Item>
+        ))}
+      </ThemesSelect.Content>
+    </ThemesSelect.Root>
+    </InTheme>
   );
 }
 
@@ -225,51 +325,49 @@ export function SelectField({
   const autoId = useId();
   const fieldId = id ?? autoId;
   return (
-    <div className={`field ${className ?? ""}`}>
-      <Label.Root htmlFor={fieldId} className="field-label">
-        {Icon ? <Icon size={14} strokeWidth={2.25} /> : null}
+    <InTheme>
+    <Flex direction="column" gap="1" mb="2" className={`field ${className ?? ""}`}>
+      <FieldLabel htmlFor={fieldId} icon={Icon}>
         {label}
-      </Label.Root>
-      <span className={`field-control ${Icon ? "has-icon" : ""}`}>
-        {Icon ? (
-          <span className="field-icon">
-            <Icon size={16} strokeWidth={2} />
-          </span>
-        ) : null}
-        <SelectInput
-          id={fieldId}
-          value={value}
-          onValueChange={onValueChange}
-          options={options}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-        />
-      </span>
-      {hint ? <span className="mt-1 block text-xs text-[var(--text-muted)]">{hint}</span> : null}
-    </div>
+      </FieldLabel>
+      <SelectInput
+        id={fieldId}
+        value={value}
+        onValueChange={onValueChange}
+        options={options}
+        placeholder={placeholder}
+        disabled={disabled}
+        required={required}
+      />
+      {hint ? (
+        <Text size="1" color="gray">
+          {hint}
+        </Text>
+      ) : null}
+    </Flex>
+    </InTheme>
   );
 }
 
-export function TextAreaField({
-  label,
-  icon: Icon,
-  hint,
-  className,
-  id,
-  ...props
-}: FieldBase & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+type TextAreaProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "size" | "color" | "children">;
+
+export function TextAreaField({ label, icon: Icon, hint, className, id, ...props }: FieldBase & TextAreaProps) {
   const autoId = useId();
   const fieldId = id ?? autoId;
   return (
-    <div className={`field ${className ?? ""}`}>
-      <Label.Root htmlFor={fieldId} className="field-label">
-        {Icon ? <Icon size={14} strokeWidth={2.25} /> : null}
+    <InTheme>
+    <Flex direction="column" gap="1" mb="2" className={`field ${className ?? ""}`}>
+      <FieldLabel htmlFor={fieldId} icon={Icon}>
         {label}
-      </Label.Root>
-      <textarea id={fieldId} className="input" {...props} />
-      {hint ? <span className="mt-1 block text-xs text-[var(--text-muted)]">{hint}</span> : null}
-    </div>
+      </FieldLabel>
+      <TextArea id={fieldId} {...(props as ComponentProps<typeof TextArea>)} />
+      {hint ? (
+        <Text size="1" color="gray">
+          {hint}
+        </Text>
+      ) : null}
+    </Flex>
+    </InTheme>
   );
 }
 
@@ -280,24 +378,29 @@ export function IconBtn({
   danger,
   primary,
   className,
+  type,
   ...props
 }: {
   icon: LucideIcon;
   label: string;
   danger?: boolean;
   primary?: boolean;
-} & ButtonHTMLAttributes<HTMLButtonElement>) {
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color">) {
   return (
-    <Tip label={label}>
-      <button
-        type="button"
-        className={`btn btn-icon ${danger ? "btn-danger" : ""} ${primary ? "btn-primary" : ""} ${className ?? ""}`}
+    <InTheme>
+    <Tooltip content={label}>
+      <IconButton
+        type={type ?? "button"}
+        variant={primary || danger ? "solid" : "soft"}
+        color={danger ? "red" : undefined}
         aria-label={label}
+        className={className}
         {...props}
       >
         <Icon size={16} strokeWidth={2.25} />
-      </button>
-    </Tip>
+      </IconButton>
+    </Tooltip>
+    </InTheme>
   );
 }
 
@@ -311,11 +414,15 @@ export function IconLink({
   label: string;
 } & AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
-    <Tip label={label}>
-      <a className={`btn btn-icon ${className ?? ""}`} aria-label={label} {...props}>
-        <Icon size={16} strokeWidth={2.25} />
-      </a>
-    </Tip>
+    <InTheme>
+    <Tooltip content={label}>
+      <IconButton asChild variant="soft" className={className} aria-label={label}>
+        <a {...props}>
+          <Icon size={16} strokeWidth={2.25} />
+        </a>
+      </IconButton>
+    </Tooltip>
+    </InTheme>
   );
 }
 
@@ -337,28 +444,36 @@ export function SectionCard({
   flush?: boolean;
 }) {
   return (
-    <section className={`card section-card ${flush ? "section-card-flush" : ""} ${className ?? ""}`}>
+    <InTheme>
+    <Card asChild size="2" className={`section-card ${flush ? "section-card-flush" : ""} ${className ?? ""}`} style={flush ? { padding: 0 } : undefined}>
+      <section>
       {title || actions ? (
-        <div className="section-card-head">
+        <Flex align="center" justify="between" gap="3" mb={flush ? "0" : "3"} px={flush ? "4" : "0"} pt={flush ? "3" : "0"} className="section-card-head">
           {title ? (
-            <h2 className="section-card-title">
+            <Heading as="h2" size="4" weight="medium" className="section-card-title">
               {Icon ? <Icon size={16} strokeWidth={2.25} /> : null}
               {title}
-            </h2>
+            </Heading>
           ) : (
             <span />
           )}
-          {actions ? <div className="toolbar toolbar-actions">{actions}</div> : null}
-        </div>
+          {actions ? (
+            <Flex gap="2" align="center" className="toolbar toolbar-actions">
+              {actions}
+            </Flex>
+          ) : null}
+        </Flex>
       ) : null}
-      <div className={`section-card-body ${flush ? "section-card-body-flush" : "space-y-3"}`}>{children}</div>
-    </section>
+      <div className={`section-card-body ${flush ? "section-card-body-flush" : ""}`}>{children}</div>
+      </section>
+    </Card>
+    </InTheme>
   );
 }
 
 /**
- * On/off switch. `pending` disables it and shows a spinner on the thumb while a
- * save is in flight, so a second click can't race the first.
+ * On/off switch. `pending` disables it while a save is in flight, so a second
+ * click can't race the first.
  */
 export function Switch({
   checked,
@@ -374,36 +489,16 @@ export function Switch({
   disabled?: boolean;
 }) {
   return (
-    <SwitchPrimitive.Root
+    <InTheme>
+    <ThemesSwitch
       checked={checked}
       onCheckedChange={onChange}
       disabled={disabled || pending}
       aria-label={label}
       aria-busy={pending || undefined}
-      className={`ui-switch${checked ? " is-on" : ""}${pending ? " is-pending" : ""}`}
-    >
-      <SwitchPrimitive.Thumb className="ui-switch-thumb" />
-    </SwitchPrimitive.Root>
+    />
+    </InTheme>
   );
-}
-
-function Tip({ label, children }: { label: string; children: ReactElement }) {
-  return (
-    <Tooltip.Provider delayDuration={400}>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content className="ui-tooltip" sideOffset={6}>
-            {label}
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
-  );
-}
-
-export function TooltipProvider({ children }: { children: ReactNode }) {
-  return <Tooltip.Provider delayDuration={400}>{children}</Tooltip.Provider>;
 }
 
 export function Checkbox({
@@ -421,22 +516,19 @@ export function Checkbox({
 }) {
   const id = useId();
   return (
-    <div className={`ui-check ${className ?? ""}`}>
-      <CheckboxPrimitive.Root
+    <InTheme>
+    <Flex align="center" gap="2" className={`ui-check ${className ?? ""}`}>
+      <ThemesCheckbox
         id={id}
-        className="ui-checkbox"
         checked={checked}
         disabled={disabled}
         onCheckedChange={(next) => onCheckedChange(next === true)}
-      >
-        <CheckboxPrimitive.Indicator>
-          <Check size={12} strokeWidth={3} />
-        </CheckboxPrimitive.Indicator>
-      </CheckboxPrimitive.Root>
-      <Label.Root htmlFor={id} className="ui-check-label">
+      />
+      <Text as="label" htmlFor={id} size="2" className="ui-check-label">
         {label}
-      </Label.Root>
-    </div>
+      </Text>
+    </Flex>
+    </InTheme>
   );
 }
 
@@ -454,26 +546,20 @@ export function Segmented<T extends string>({
   "aria-label"?: string;
 }) {
   return (
-    <ToggleGroup.Root
-      type="single"
+    <InTheme>
+    <SegmentedControl.Root
       value={value}
-      onValueChange={(next) => {
-        if (next) onValueChange(next as T);
-      }}
-      className={`segmented ${className ?? ""}`}
+      onValueChange={(next) => onValueChange(next as T)}
+      className={className}
       aria-label={ariaLabel}
     >
       {options.map((option) => (
-        <ToggleGroup.Item
-          key={option.value}
-          value={option.value}
-          disabled={option.disabled}
-          className={`btn ${option.value === value ? "btn-primary" : ""}`}
-        >
+        <SegmentedControl.Item key={option.value} value={option.value}>
           {option.label}
-        </ToggleGroup.Item>
+        </SegmentedControl.Item>
       ))}
-    </ToggleGroup.Root>
+    </SegmentedControl.Root>
+    </InTheme>
   );
 }
 
@@ -501,37 +587,43 @@ export function Modal({
   dismissable?: boolean;
 }) {
   return (
+    <InTheme>
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="ui-overlay" />
-        <Dialog.Content
-          className={`ui-dialog ${className ?? "max-w-lg"}`}
-          onEscapeKeyDown={(event) => {
-            if (!dismissable) event.preventDefault();
-          }}
-          onPointerDownOutside={(event) => {
-            if (!dismissable) event.preventDefault();
-          }}
-        >
-          <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-            <div className="min-w-0">
-              {eyebrow ? (
-                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">{eyebrow}</div>
-              ) : null}
-              <Dialog.Title className="text-base font-semibold text-[var(--text)]">{title}</Dialog.Title>
-              {description ? (
-                <Dialog.Description className="mt-1 text-sm text-[var(--muted)]">{description}</Dialog.Description>
-              ) : (
-                <Dialog.Description className="sr-only">{title}</Dialog.Description>
-              )}
-            </div>
-            {headerAside}
+      <Dialog.Content
+        className={className}
+        maxWidth="36rem"
+        onEscapeKeyDown={(event) => {
+          if (!dismissable) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (!dismissable) event.preventDefault();
+        }}
+      >
+        <Flex align="start" justify="between" gap="3" mb="3">
+          <div>
+            {eyebrow ? (
+              <Text size="1" weight="bold" color="gray" style={{ letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                {eyebrow}
+              </Text>
+            ) : null}
+            <Dialog.Title>{title}</Dialog.Title>
+            {description ? (
+              <Dialog.Description>{description}</Dialog.Description>
+            ) : (
+              <Dialog.Description className="sr-only">{title}</Dialog.Description>
+            )}
           </div>
-          {children ? <div className="min-h-0 flex-1 overflow-auto p-4">{children}</div> : null}
-          {footer ? <div className="flex shrink-0 justify-end gap-2 px-4 py-3">{footer}</div> : null}
-        </Dialog.Content>
-      </Dialog.Portal>
+          {headerAside}
+        </Flex>
+        {children}
+        {footer ? (
+          <Flex justify="end" gap="2" mt="4">
+            {footer}
+          </Flex>
+        ) : null}
+      </Dialog.Content>
     </Dialog.Root>
+    </InTheme>
   );
 }
 
@@ -555,23 +647,26 @@ export function ConfirmDialog({
   pending?: boolean;
 }) {
   return (
+    <InTheme>
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
-      <AlertDialog.Portal>
-        <AlertDialog.Overlay className="ui-overlay" />
-        <AlertDialog.Content className="ui-dialog ui-dialog-pad max-w-sm">
-          <AlertDialog.Title className="text-sm font-semibold">{title}</AlertDialog.Title>
-          <AlertDialog.Description className="mt-2 text-sm text-[var(--muted)]">{description}</AlertDialog.Description>
-          <div className="mt-4 flex justify-end gap-2">
-            <AlertDialog.Cancel className="btn" disabled={pending}>
+      <AlertDialog.Content maxWidth="24rem">
+        <AlertDialog.Title>{title}</AlertDialog.Title>
+        <AlertDialog.Description>{description}</AlertDialog.Description>
+        <Flex justify="end" gap="2" mt="4">
+          <AlertDialog.Cancel>
+            <Button type="button" disabled={pending}>
               {cancelLabel}
-            </AlertDialog.Cancel>
-            <AlertDialog.Action className="btn btn-danger" disabled={pending} onClick={onConfirm}>
+            </Button>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <Button type="button" variant="solid" color="red" disabled={pending} onClick={onConfirm}>
               {confirmLabel}
-            </AlertDialog.Action>
-          </div>
-        </AlertDialog.Content>
-      </AlertDialog.Portal>
+            </Button>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
     </AlertDialog.Root>
+    </InTheme>
   );
 }
 
@@ -587,26 +682,27 @@ export function Menu({
   align?: "start" | "center" | "end";
 }) {
   return (
+    <InTheme>
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="ui-menu" side={side} align={align} sideOffset={6}>
-          {children}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+      <DropdownMenu.Trigger>{trigger}</DropdownMenu.Trigger>
+      <DropdownMenu.Content side={side} align={align} sideOffset={6}>
+        {children}
+      </DropdownMenu.Content>
     </DropdownMenu.Root>
+    </InTheme>
   );
 }
 
 export function MenuItem({ onSelect, children }: { onSelect?: () => void; children: ReactNode }) {
   return (
+    <InTheme>
     <DropdownMenu.Item
-      className="ui-menu-item"
       onSelect={() => {
         onSelect?.();
       }}
     >
       {children}
     </DropdownMenu.Item>
+    </InTheme>
   );
 }

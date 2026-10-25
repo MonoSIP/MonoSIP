@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { BookUser, User } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard } from "../../components/ui";
+import { Button, PageHeader, SectionCard } from "../../components/ui";
 
 export function DirectoryPage() {
   const { t } = useTranslation();
@@ -48,14 +48,14 @@ export function DirectoryPage() {
                   <span className={`badge ${p.dnd || p.state === "dnd" ? "badge-warn" : "badge-ok"}`}>
                     {p.dnd ? "DND" : p.state}
                   </span>
-                  <button
-                    className="btn btn-primary"
+                  <Button
+                    variant="solid"
                     type="button"
                     disabled={p.dnd}
                     onClick={() => navigate(`/?dial=${encodeURIComponent(p.number)}`)}
                   >
                     {t("portal.dial")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

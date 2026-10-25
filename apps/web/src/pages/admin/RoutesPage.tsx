@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Inbound = {
@@ -210,14 +210,14 @@ export function RoutesPage() {
             onChange={(e) => setPriority(Number(e.target.value))}
           />
           <div className="flex gap-2 pb-[0.85rem]">
-            <button className="btn btn-primary" type="submit">
+            <Button variant="solid" type="submit">
               <Plus size={16} />
               {editInboundId ? t("common.save") : t("common.create")}
-            </button>
+            </Button>
             {editInboundId ? (
-              <button className="btn" type="button" onClick={resetInbound}>
+              <Button type="button" onClick={resetInbound}>
                 {t("common.cancel", { defaultValue: "Cancel" })}
-              </button>
+              </Button>
             ) : null}
           </div>
         </form>
@@ -305,24 +305,26 @@ export function RoutesPage() {
           />
           <Checkbox checked={obEnabled} onCheckedChange={setObEnabled} label={t("common.enabled")} />
           <div className="flex gap-2 pb-[0.85rem]">
-            <button className="btn btn-primary" type="submit">
+            <Button variant="solid" type="submit">
               <Plus size={16} />
               {editOutboundId ? t("common.save") : t("common.create")}
-            </button>
+            </Button>
             {editOutboundId ? (
-              <button className="btn" type="button" onClick={resetOutbound}>
+              <Button type="button" onClick={resetOutbound}>
                 {t("common.cancel", { defaultValue: "Cancel" })}
-              </button>
+              </Button>
             ) : null}
           </div>
         </form>
       </SectionCard>
       <SectionCard title={t("routes.blacklist")} icon={Ban} tone="coral">
         <p className="mb-3 text-sm text-[var(--text-muted)]">{t("routes.blacklistMoved")}</p>
-        <Link className="btn btn-primary" to="/blacklist">
+        <Button asChild variant="solid">
+<Link to="/blacklist">
           <Ban size={16} />
           {t("nav.blacklist")}
         </Link>
+</Button>
       </SectionCard>
     </div>
   );

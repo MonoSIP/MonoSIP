@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { List, PhoneMissed } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard } from "../../components/ui";
+import { Button, PageHeader, SectionCard } from "../../components/ui";
 import { tr } from "../../i18n";
 
 export function MissedPage() {
@@ -39,14 +39,14 @@ export function MissedPage() {
           ["all", t("missed.all")],
         ] as const
       ).map(([k, label]) => (
-        <button
+        <Button
           key={k}
           type="button"
-          className={`btn ${tab === k ? "btn-primary" : ""}`}
+          variant={tab === k ? "solid" : "soft"}
           onClick={() => setTab(k)}
         >
           {label}
-        </button>
+        </Button>
       ))}
     </>
   );
@@ -87,22 +87,20 @@ export function MissedPage() {
                     </td>
                     <td className="flex gap-1">
                       {m.status !== "returned" && (
-                        <button
-                          className="btn"
+                        <Button
                           type="button"
                           onClick={() => mark.mutate({ id: m.id, status: "returned" })}
                         >
                           {t("missed.markReturned")}
-                        </button>
+                        </Button>
                       )}
                       {m.status === "pending" && (
-                        <button
-                          className="btn"
+                        <Button
                           type="button"
                           onClick={() => mark.mutate({ id: m.id, status: "ignored" })}
                         >
                           {t("missed.ignore")}
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>

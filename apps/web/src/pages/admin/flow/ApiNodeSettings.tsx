@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "../../../lib/api";
-import { Checkbox, SelectInput } from "../../../components/ui";
+import { Button, Checkbox, SelectInput } from "../../../components/ui";
 import type { FlowNodeData } from "./FlowNodes";
 import { ExitsHint, Field, SegmentedSelect, SettingsSection } from "./settingsUi";
 import { tr } from "../../../i18n";
@@ -102,8 +102,7 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
           value={newVal}
           onChange={(e) => setNewVal(e.target.value)}
         />
-        <button
-          className="btn"
+        <Button
           type="button"
           onClick={() => {
             if (!newName || !newVal) return;
@@ -120,7 +119,7 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
           }}
         >
           {tr("Add")}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -299,13 +298,13 @@ export function ApiNodeSettings({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--text)]">{tr("Extra headers")}</span>
-            <button
-              className="btn text-xs"
+            <Button
+              className="text-xs"
               type="button"
               onClick={() => setHeaders([...headerRows, { key: "", value: "" }])}
             >
               {tr("+ Header")}
-            </button>
+            </Button>
           </div>
           {headerRows.map((row, i) => (
             <div key={`h-${i}`} className="flex gap-1">
@@ -331,14 +330,13 @@ export function ApiNodeSettings({
                   setHeaders(next);
                 }}
               />
-              <button
-                className="btn"
+              <Button
                 type="button"
                 title={tr("Remove")}
                 onClick={() => setHeaders(headerRows.filter((_, idx) => idx !== i))}
               >
                 ×
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -385,13 +383,13 @@ export function ApiNodeSettings({
         hint={tr("Map JSON fields into flow variables. Status is always saved as http_status.")}
       >
         <div className="flex justify-end">
-          <button
-            className="btn text-xs"
+          <Button
+            className="text-xs"
             type="button"
             onClick={() => setMappings([...mappings, { path: "", var: "" }])}
           >
             {tr("+ Mapping")}
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-[1fr_auto_1fr_auto] gap-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">
           <span>{tr("JSON path")}</span>
@@ -424,14 +422,13 @@ export function ApiNodeSettings({
                 setMappings(next);
               }}
             />
-            <button
-              className="btn"
+            <Button
               type="button"
               title={tr("Remove")}
               onClick={() => setMappings(mappings.filter((_, idx) => idx !== i))}
             >
               ×
-            </button>
+            </Button>
           </div>
         ))}
       </SettingsSection>
@@ -441,14 +438,14 @@ export function ApiNodeSettings({
         title={tr("Test")}
         hint={tr("Sends the real request (auth included). Replace {{var}} with sample values for a trial.")}
       >
-        <button
-          className="btn btn-primary w-full text-sm"
+        <Button
+          variant="solid" className="w-full text-sm"
           type="button"
           disabled={testing}
           onClick={() => void runTest()}
         >
           {testing ? "Sending…" : `Send ${method} request`}
-        </button>
+        </Button>
         {(testStatus !== null || testBody) && (
           <div className="space-y-2">
             {testStatus !== null && (

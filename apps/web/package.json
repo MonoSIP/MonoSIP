@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@monosip/shared": "workspace:*",
+    "@radix-ui/themes": "3.3.0",
     "@tanstack/react-query": "^5.90.2",
     "@xyflow/react": "^12.8.6",
     "i18next": "^25.5.3",

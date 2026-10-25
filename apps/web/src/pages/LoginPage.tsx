@@ -7,7 +7,7 @@ import { api } from "../lib/api";
 import { useStore } from "../store";
 import { toggleAppLocale } from "../i18n";
 import { AppBrand, ProductSiteLink } from "../components/AppBrand";
-import { Segmented, TextField } from "../components/ui";
+import { Button, Segmented, Surface, TextField } from "../components/ui";
 
 export function LoginPage() {
   const { t, i18n } = useTranslation();
@@ -59,24 +59,24 @@ export function LoginPage() {
   return (
     <div className="login-shell">
       <div className="login-tools">
-        <button
-          className="btn"
+        <Button
           type="button"
           aria-label={t("common.language")}
           onClick={() => toggleAppLocale()}
         >
           <Languages size={16} aria-hidden />
           {(i18n.language || "en").slice(0, 2).toUpperCase()}
-        </button>
-        <button className="btn" type="button" aria-label={t("portal.darkMode")} onClick={toggleTheme}>
+        </Button>
+        <Button type="button" aria-label={t("portal.darkMode")} onClick={toggleTheme}>
           <span className="icon-swap" aria-hidden>
             <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
             <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
           </span>
           {t("portal.darkMode")}
-        </button>
+        </Button>
       </div>
-      <form onSubmit={submit} className="card relative z-10 w-full max-w-md p-8">
+      <Surface className="login-card relative z-10 w-full max-w-md">
+      <form onSubmit={submit}>
         <AppBrand className="mb-6" subtitle={t("app.tagline")} asHeading />
         <Segmented
           className="mb-5"
@@ -146,10 +146,11 @@ export function LoginPage() {
             placeholder="000000"
           />
         )}
-        <button className="btn btn-primary mt-2 w-full justify-center" disabled={loading}>
+        <Button variant="solid" className="mt-2 w-full justify-center" disabled={loading}>
           {loading ? t("common.loading") : t("auth.signIn")}
-        </button>
+        </Button>
       </form>
+      </Surface>
       <ProductSiteLink />
     </div>
   );

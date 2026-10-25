@@ -4,7 +4,7 @@ import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Trash2, Upload, Wan
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { voiceOptions } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
 
@@ -413,29 +413,29 @@ export function PromptsPage() {
               {audioFile && (
                 <span className="text-sm text-[var(--text-muted)]">
                   {audioFile.name} ({Math.round(audioFile.size / 1024)} {tr("KB)")}
-                  <button
+                  <Button
                     type="button"
-                    className="btn ml-2"
+                    className="ml-2"
                     onClick={() => {
                       setAudioFile(null);
                       if (fileRef.current) fileRef.current.value = "";
                     }}
                   >
                     {t("common.clear", { defaultValue: "Clear" })}
-                  </button>
+                  </Button>
                 </span>
               )}
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button className="btn btn-primary w-fit" type="submit" disabled={create.isPending}>
+            <Button variant="solid" className="w-fit" type="submit" disabled={create.isPending}>
               {audioFile
                 ? t("prompts.createWithUpload", { defaultValue: "Create with audio file" })
                 : ttsText.trim()
                   ? t("prompts.createAndSpeak", { defaultValue: "Create + generate TTS" })
                   : t("common.create")}
-            </button>
+            </Button>
           </div>
         </form>
       </SectionCard>
@@ -459,11 +459,11 @@ export function PromptsPage() {
           })}
           footer={
             <>
-              <button className="btn" type="button" disabled={remove.isPending} onClick={() => setPendingDelete(null)}>
+              <Button type="button" disabled={remove.isPending} onClick={() => setPendingDelete(null)}>
                 {t("common.cancel", { defaultValue: "Cancel" })}
-              </button>
-              <button
-                className="btn btn-danger"
+              </Button>
+              <Button
+                variant="solid" color="red"
                 type="button"
                 disabled={remove.isPending}
                 onClick={() => remove.mutate(pendingDelete.id)}
@@ -471,7 +471,7 @@ export function PromptsPage() {
                 {remove.isPending
                   ? t("common.deleting", { defaultValue: "Deleting…" })
                   : t("common.delete", { defaultValue: "Delete" })}
-              </button>
+              </Button>
             </>
           }
         />

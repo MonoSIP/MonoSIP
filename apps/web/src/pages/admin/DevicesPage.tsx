@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -178,9 +178,9 @@ export function DevicesPage() {
             onValueChange={setProfile}
             options={PROFILES.map((p) => ({ value: p, label: p }))}
           />
-          <button className="btn btn-primary w-fit" type="submit">
+          <Button variant="solid" className="w-fit" type="submit">
             {tr("Add device")}
-          </button>
+          </Button>
         </form>
       </SectionCard>
     </div>

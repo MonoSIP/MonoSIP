@@ -7,7 +7,7 @@ import { api } from "../../lib/api";
 import { usePhoneOptional } from "../../lib/phone-context";
 import { useStore } from "../../store";
 import { setAppLocale } from "../../i18n";
-import { PageHeader, SectionCard, Segmented, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, PageHeader, SectionCard, Segmented, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Fwd = {
   id?: string;
@@ -201,30 +201,30 @@ export function MySettingsPage() {
       <div className="space-y-4 md:hidden">
       <SectionCard title={t("common.language")} icon={Languages} tone="cyan">
         <div className="grid grid-cols-2 gap-2">
-          <button
-            className={`btn ${lang === "tr" ? "btn-primary" : ""}`}
+          <Button
+            variant={lang === "tr" ? "solid" : "soft"}
             type="button"
             onClick={() => setLang("tr")}
           >
             Türkçe
-          </button>
-          <button
-            className={`btn ${lang === "en" ? "btn-primary" : ""}`}
+          </Button>
+          <Button
+            variant={lang === "en" ? "solid" : "soft"}
             type="button"
             onClick={() => setLang("en")}
           >
             English
-          </button>
+          </Button>
         </div>
       </SectionCard>
       <SectionCard title={t("portal.darkMode")} icon={Moon} tone="cyan">
-        <button
-          className={`btn ${theme === "dark" ? "btn-primary" : ""}`}
+        <Button
+          variant={theme === "dark" ? "solid" : "soft"}
           type="button"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
           {t("portal.darkMode")}: {theme === "dark" ? t("common.enabled") : t("common.disabled")}
-        </button>
+        </Button>
       </SectionCard>
       </div>
       <SectionCard title={t("auth.password")} icon={KeyRound} tone="cyan">
@@ -235,14 +235,14 @@ export function MySettingsPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="solid"
           type="button"
           onClick={() => savePass.mutate()}
           disabled={password.length < 8}
         >
           {t("common.save")}
-        </button>
+        </Button>
       </SectionCard>
       <SectionCard title="Call forwarding" icon={PhoneForwarded} tone="cyan">
         {fwds.map((fwd) => (
@@ -290,9 +290,9 @@ export function MySettingsPage() {
             )}
           </div>
         ))}
-        <button className="btn btn-primary" type="button" onClick={() => saveFwd.mutate()}>
+        <Button variant="solid" type="button" onClick={() => saveFwd.mutate()}>
           Save forwarding
-        </button>
+        </Button>
       </SectionCard>
       </div>
       <div className="settings-columns-side">
@@ -330,14 +330,14 @@ export function MySettingsPage() {
             ]}
           />
         </div>
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="solid"
           type="button"
           onClick={() => saveGreet.mutate()}
           disabled={saveGreet.isPending}
         >
           {t("common.save")}
-        </button>
+        </Button>
       </SectionCard>
       <SectionCard title="Audio devices" icon={Mic} tone="cyan">
         <SelectField
@@ -370,9 +370,9 @@ export function MySettingsPage() {
             ...outputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
           ]}
         />
-        <button className="btn btn-primary" type="button" onClick={saveDevices}>
+        <Button variant="solid" type="button" onClick={saveDevices}>
           Save devices
-        </button>
+        </Button>
       </SectionCard>
       </div>
       </div>
