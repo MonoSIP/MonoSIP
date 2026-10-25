@@ -962,6 +962,23 @@ textarea.input {
   gap: 0.5rem;
   min-width: 0;
 }
+.admin-brand-pop {
+  position: relative;
+  width: 100%;
+}
+.admin-brand-btn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.admin-brand-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
 .brand-lockup {
   display: block;
   width: auto;
@@ -1036,12 +1053,15 @@ textarea.input {
   /* .portal-tabs { display: grid } beats Tailwind md:hidden; keep the bar on phones only. */
   .portal-tabs { display: none; }
 }
+.portal-softphone,
 .portal-user {
-  position: relative;
   flex: none;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);
+}
+.portal-user-pop {
+  position: relative;
 }
 .portal-user-card {
   display: flex;
@@ -1049,6 +1069,8 @@ textarea.input {
   gap: 0.55rem;
   width: 100%;
   padding: 0.4rem 0.45rem;
+  font: inherit;
+  cursor: pointer;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: color-mix(in oklab, var(--bg-soft) 70%, var(--card));
@@ -1093,35 +1115,56 @@ textarea.input {
   font: 500 0.72rem/1.3 var(--mono);
   color: var(--text-muted);
 }
+.portal-user-menu.admin-brand-menu {
+  top: calc(100% + 4px);
+  bottom: auto;
+}
 .portal-user-menu {
   position: absolute;
   z-index: 5;
   left: 0;
   right: 0;
-  bottom: calc(100% + 0.35rem);
+  bottom: calc(100% + 4px);
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   padding: 0.35rem;
   border-radius: calc(var(--radius) + 0.35rem);
   border: 1px solid var(--border);
-  background: var(--card);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
 }
 .portal-user-menu button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   width: 100%;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.5rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.55rem;
+  border: 0;
   border-radius: var(--radius);
   background: transparent;
   color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
 }
-.portal-user-menu button:hover { background: color-mix(in oklab, var(--accent) 12%, transparent); }
+.portal-user-menu button:hover,
+.portal-user-menu button:focus-visible {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+  outline: none;
+}
+.portal-user-sep {
+  height: 1px;
+  margin: 0.2rem 0.35rem;
+  background: var(--border);
+}
+.portal-user-menu .portal-user-meta {
+  margin-left: auto;
+}
 .portal-user-meta {
   font-size: 0.72rem;
   font-weight: 600;
@@ -1435,6 +1478,7 @@ textarea.input {
 }
 @media (min-width: 768px) {
   .shell-menu { display: none; }
+  .admin-shell .shell-tools:not(:has(.shell-tool-group)) { display: none; }
 }
 .shell-site {
   display: block;
@@ -1931,46 +1975,38 @@ textarea.input {
   }
 }
 
-/* Portal softphone — one fixed-size device: the screen shows dialing and the
-   call (number, state, timer, animation); keypad and the 5-slot action row keep
-   their place in every state, so the panel never grows or jumps. */
+/* Portal softphone — a frosted console, not a handset. The readout, keypad, and
+   five action slots keep one height in every state so the panel never jumps. */
 .sp-device {
-  --sp-screen: color-mix(in oklab, var(--bg) 70%, #000);
-  --sp-ink: #f1f6fa;
-  --sp-ink-muted: color-mix(in oklab, #f1f6fa 58%, transparent);
+  --sp-screen: color-mix(in srgb, var(--card) 62%, transparent);
+  --sp-ink: var(--text);
+  --sp-ink-muted: var(--text-muted);
   --sp-accent: var(--accent);
-  --sp-call: #22c55e;
-  --sp-end: #ef4444;
+  --sp-call: var(--accent);
+  --sp-end: #c2413a;
   width: 100%;
   max-width: 22rem;
   margin: 0 auto;
-  padding: 0.9rem;
-  border-radius: 2.1rem;
-  background: var(--bg-elevated);
+  padding: 0.75rem;
+  border-radius: 1.5rem;
+  background: color-mix(in srgb, var(--card) 78%, transparent);
   border: 1px solid var(--border);
-  box-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.45);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
   position: relative;
-}
-/* Light theme: a light display with dark ink (same layout, same accent glow) */
-html.light .sp-device {
-  --sp-screen: color-mix(in oklab, var(--accent) 6%, #f6fafb);
-  --sp-ink: #0b1a24;
-  --sp-ink-muted: color-mix(in oklab, #0b1a24 55%, transparent);
-}
-html.light .sp-screen {
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--sp-ink) 10%, transparent),
-    inset 0 1px 6px color-mix(in oklab, var(--sp-ink) 6%, transparent);
 }
 .sp-screen {
   position: relative;
   height: 11rem;
-  border-radius: 1.5rem;
+  border-radius: 0.75rem;
   padding: 0.7rem 0.9rem;
   overflow: hidden;
   color: var(--sp-ink);
-  background: var(--sp-screen);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--sp-ink) 6%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 58%),
+    var(--sp-screen);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  backdrop-filter: blur(12px);
 }
 .sp-statusbar {
   display: flex;
@@ -2001,10 +2037,10 @@ html.light .sp-screen {
 }
 .sp-dial {
   position: absolute;
-  inset: 1.8rem 0.6rem 1.8rem;
+  inset: 1.8rem 0.15rem 1.8rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   gap: 0.35rem;
 }
@@ -2024,9 +2060,10 @@ html.light .sp-screen {
   outline: none;
   background: transparent;
   color: var(--sp-ink);
-  text-align: center;
-  font: 300 2.1rem/1.15 var(--mono);
-  letter-spacing: 0.04em;
+  text-align: left;
+  font: 500 2.1rem/1.15 var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   caret-color: var(--sp-accent);
 }
 .sp-screen .sp-number.is-long { font-size: 1.45rem; }
@@ -2067,9 +2104,8 @@ html.light .sp-screen {
 .sp-screen-tab:active { transform: scale(0.96); }
 .sp-screen-tab.is-open {
   background: var(--sp-accent);
-  color: var(--sp-screen);
+  color: var(--on-accent);
   border-color: transparent;
-  box-shadow: 0 4px 14px -6px var(--sp-accent);
 }
 .sp-screen-tab-badge {
   min-width: 1.05rem;
@@ -2101,13 +2137,13 @@ html.light .sp-screen {
 .sp-screen.is-ended { --sp-accent: var(--text-muted); }
 
 /* Keypad and recents share one fixed-height area (4 key rows), so switching never resizes the phone */
-.sp-body { position: relative; margin-top: 0.9rem; height: calc(4 * 4.1rem + 3 * 0.55rem); }
+.sp-body { position: relative; margin-top: 0.75rem; height: calc(4 * 3.25rem + 3 * 0.5rem); }
 .sp-recents {
   height: 100%;
   overflow-y: auto;
-  border-radius: 1.2rem;
-  background: var(--bg-soft);
-  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  border: 1px solid var(--border);
   padding: 0.25rem 0;
   scrollbar-width: thin;
 }
@@ -2145,25 +2181,27 @@ html.light .sp-screen {
 .sp-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.55rem 0;
-  justify-items: center;
+  gap: 0.5rem;
 }
 .sp-key {
-  width: 4.1rem;
-  height: 4.1rem;
-  border-radius: 999px;
+  width: 100%;
+  height: 3.25rem;
+  border-radius: 0.7rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg-soft);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
   color: var(--text);
-  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-  transition: background 0.12s ease, transform 0.08s ease;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition-property: background, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
   user-select: none;
 }
-.sp-key:hover { background: color-mix(in oklab, var(--accent) 12%, var(--bg-soft)); }
-.sp-key:active { background: color-mix(in oklab, var(--accent) 24%, var(--bg-soft)); }
+.sp-key:hover { background: color-mix(in oklab, var(--accent) 12%, var(--card)); }
+.sp-key:active { background: color-mix(in oklab, var(--accent) 22%, var(--card)); transform: scale(0.96); }
 .sp-key-digit { font: 400 1.6rem/1 var(--font); }
 .sp-key-letters { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.14em; color: var(--text-muted); min-height: 0.7rem; margin-top: 0.15rem; }
 /* * and # have no letter row, so the glyph sits in the middle of the key */
@@ -2180,16 +2218,19 @@ html.light .sp-screen {
 .sp-act {
   width: 3rem;
   height: 3rem;
-  border-radius: 999px;
+  border-radius: 0.7rem;
   display: grid;
   place-items: center;
-  background: var(--bg-soft);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
   color: var(--text);
-  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease, opacity 0.15s ease;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition-property: background, color, transform, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
 }
-.sp-act:hover:not(:disabled) { background: color-mix(in oklab, var(--accent) 14%, var(--bg-soft)); }
-.sp-act:active:not(:disabled) { background: color-mix(in oklab, var(--accent) 24%, var(--bg-soft)); }
+.sp-act:hover:not(:disabled) { background: color-mix(in oklab, var(--accent) 14%, var(--card)); }
+.sp-act:active:not(:disabled) { background: color-mix(in oklab, var(--accent) 22%, var(--card)); transform: scale(0.96); }
 .sp-act:disabled { opacity: 0.35; cursor: not-allowed; }
 /* Toggled on (mute / hold / transfer / DND) — iOS-style inverted chip */
 .sp-device .sp-act.btn-primary {
@@ -2207,15 +2248,27 @@ html.light .sp-screen {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-accent);
   border: 0;
-  transition: background 0.2s ease, transform 0.08s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+  transition-property: background, transform, box-shadow, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
 }
-.sp-main:active:not(:disabled) { filter: brightness(0.92); }
+.sp-main:active:not(:disabled) { transform: scale(0.96); }
 .sp-main:disabled { opacity: 0.4; cursor: not-allowed; }
-.sp-main.is-call { background: var(--sp-call); box-shadow: 0 8px 22px -8px var(--sp-call); }
-.sp-main.is-end { background: var(--sp-end); box-shadow: 0 8px 22px -8px var(--sp-end); }
+.sp-main.is-call { background: var(--sp-call); }
+.sp-main.is-end { background: var(--sp-end); color: #fff; }
 .sp-main.is-end svg { transform: rotate(135deg); }
+.sp-key:focus-visible,
+.sp-act:focus-visible,
+.sp-main:focus-visible,
+.sp-screen-tab:focus-visible,
+.sp-backspace:focus-visible,
+.sp-recent:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .sp-main.is-ringing { animation: sp-ring-shake 1.2s ease-in-out infinite; }
 @keyframes sp-ring-shake {
   0%, 60%, 100% { transform: rotate(0); }
@@ -2259,6 +2312,10 @@ html.light .sp-screen {
 @media (prefers-reduced-motion: reduce) {
   .sp-main.is-ringing,
   .sp-status-dot.is-wait { animation: none; }
+  .sp-key:active,
+  .sp-act:active:not(:disabled),
+  .sp-main:active:not(:disabled),
+  .sp-screen-tab:active { transform: none; }
 }
 
 /* Call log: rows expand in place */
@@ -2405,10 +2462,11 @@ html.light .sp-screen {
   align-items: center;
   gap: 8px;
   padding: 10px 10px 10px 12px;
-  border-radius: var(--radius-md);
+  border-radius: 0.75rem;
   border: 1px solid var(--border);
-  background: var(--card);
+  background: color-mix(in srgb, var(--card) 78%, transparent);
   box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
   transition: border-color 0.2s, background 0.2s;
 }
 .mini-phone.is-ok { --mp-tone: var(--success); }

@@ -68,7 +68,6 @@ src/app/           Routes, metadata, sitemap, robots and CSS tokens
 src/components/    Preferences, navigation, SVGs, gallery and code controls
 src/lib/           Product facts, guide content and navigation
 public/brand/      Vector marks, favicon and sharing images
-public/images/     WebP product captures
 src/components/product-mockup.tsx  Animated SVG interface concepts
 scripts/           Preview server, export normalization and link checks
 tests/             Production-export browser verification

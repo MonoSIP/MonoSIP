@@ -45,7 +45,7 @@ export async function signOut(
   navigate("/login", { replace: true });
 }
 
-/** Theme, language, and sign-out. Stays at the top right of admin and portal. */
+/** Theme, language, and sign-out. The flow designer keeps these in the header; the admin logo and the portal user button open the same menu. */
 export function ShellTools() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();

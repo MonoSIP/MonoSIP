@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useLocation, useMatch } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Activity,
@@ -9,6 +9,9 @@ import {
   FileAudio,
   GitBranch,
   Headphones,
+  Languages,
+  LogOut,
+  Moon,
   Music,
   LayoutDashboard,
   ListTree,
@@ -16,16 +19,18 @@ import {
   PhoneMissed,
   PhoneOutgoing,
   Settings,
+  Sun,
   Users,
   Smartphone,
   Webhook,
   Workflow,
 } from "lucide-react";
-import i18n from "../i18n";
+import i18n, { toggleAppLocale } from "../i18n";
 import { AmbientBackground } from "../components/AmbientBackground";
-import { AppBrand, ProductSiteLink, ProductVersion, ShellTools } from "../components/AppBrand";
+import { ProductSiteLink, ProductVersion, ShellTools, signOut } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { Button } from "../components/ui";
+import { useStore } from "../store";
 
 const links = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", end: true },
@@ -83,7 +88,7 @@ export function AdminLayout() {
         <aside
           className={`aside-panel fixed inset-y-0 left-0 z-40 h-full w-64 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:z-auto md:h-full md:flex ${navOpen ? "flex" : "hidden"}`}
         >
-          <AppBrand lockup className="mb-4 shrink-0 px-1" />
+          <BrandMenu />
           <nav id="admin-nav" className="flex min-h-0 flex-col gap-0.5 overflow-auto">
             {links.map((l) => (
               <NavLink
@@ -119,7 +124,7 @@ export function AdminLayout() {
               {t("common.menu", { defaultValue: "Menu" })}
             </Button>
           )}
-          <ShellTools />
+          {flowDesigner ? <ShellTools /> : null}
         </div>
         <main
           className={`min-h-0 min-w-0 flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
@@ -130,6 +135,79 @@ export function AdminLayout() {
           </PageVeil>
         </main>
       </div>
+    </div>
+  );
+}
+
+function BrandMenu() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
+  const setActor = useStore((s) => s.setActor);
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const locale = (i18n.language || "en").slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: PointerEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  function choose(action: () => void) {
+    setOpen(false);
+    action();
+  }
+
+  return (
+    <div className="admin-brand-pop mb-4 shrink-0 px-1" ref={root}>
+      <button
+        type="button"
+        className="admin-brand-btn"
+        aria-label={t("app.name")}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls="admin-brand-menu"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <img
+          className="brand-lockup"
+          src={theme === "light" ? "/monosip-lockup.svg" : "/monosip-lockup-on-dark.svg"}
+          alt=""
+        />
+      </button>
+      {open ? (
+        <div className="portal-user-menu admin-brand-menu" id="admin-brand-menu" role="menu">
+          <button type="button" role="menuitem" onClick={() => choose(toggleTheme)}>
+            <span className="icon-swap" aria-hidden>
+              <Sun size={16} strokeWidth={2.25} className={theme === "dark" ? "is-on" : undefined} />
+              <Moon size={16} strokeWidth={2.25} className={theme === "light" ? "is-on" : undefined} />
+            </span>
+            {t("portal.darkMode")}
+          </button>
+          <button type="button" role="menuitem" onClick={() => choose(() => toggleAppLocale())}>
+            <Languages size={16} strokeWidth={2.25} aria-hidden />
+            {t("common.language")}
+            <span className="portal-user-meta">{locale}</span>
+          </button>
+          <span className="portal-user-sep" role="separator" />
+          <button type="button" role="menuitem" onClick={() => choose(() => void signOut(navigate, setActor))}>
+            <LogOut size={16} strokeWidth={2.25} aria-hidden />
+            {t("common.logout")}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

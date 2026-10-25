@@ -1,14 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { BookUser, FileAudio, History, Phone, Settings, Voicemail } from "lucide-react";
+import { BookUser, ChevronUp, FileAudio, History, Languages, LogOut, Moon, Phone, Settings, Sun, Voicemail } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
-import i18n from "../i18n";
+import i18n, { toggleAppLocale } from "../i18n";
 import { usePortalLive } from "../hooks/usePortalLive";
 import { AmbientBackground } from "../components/AmbientBackground";
-import { AppBrand, ProductSiteLink, ProductVersion, ShellTools } from "../components/AppBrand";
+import { AppBrand, ProductSiteLink, ProductVersion, signOut } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { MiniPhone } from "../components/MiniPhone";
 import { PhoneProvider, usePhone } from "../lib/phone-context";
@@ -37,7 +37,7 @@ function PortalChrome() {
   const { status, callPhase } = usePhone();
   const registered = status === "registered";
   usePortalLive();
-  // Desktop keeps the mini phone at the bottom of the rail, under the menu.
+  // Desktop keeps the mini phone directly under Settings.
   // On a phone the full screen is the only phone: an incoming call opens it,
   // and the ringtone already playing in the softphone is the sound.
   const { pathname } = useLocation();
@@ -92,8 +92,12 @@ function PortalChrome() {
             </NavLink>
           ))}
         </nav>
+        {!onPhonePage && (
+          <div className="portal-softphone">
+            <MiniPhone />
+          </div>
+        )}
         <div className="mt-auto shrink-0">
-          {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
           <UserCard
             name={actor?.type === "extension" ? actor.name : ""}
             number={actor?.type === "extension" ? actor.number : ""}
@@ -105,9 +109,6 @@ function PortalChrome() {
         </div>
       </aside>
       <div className="portal-stage flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="shell-tools">
-          <ShellTools />
-        </div>
         <main className="portal-main min-w-0 flex-1 p-4 pb-28 md:p-8">
           {/* Remount pages on a language switch so tr() copy re-renders */}
           <PageVeil>
@@ -142,17 +143,77 @@ function PortalChrome() {
 }
 
 function UserCard({ name, number }: { name: string; number: string }) {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
+  const setActor = useStore((s) => s.setActor);
   const label = name || number || "—";
   const initial = label.slice(0, 1).toUpperCase();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const locale = (i18n.language || "en").slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(event: PointerEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  function choose(action: () => void) {
+    setOpen(false);
+    action();
+  }
 
   return (
-    <div className="portal-user">
-      <div className="portal-user-card">
+    <div className="portal-user" ref={root}>
+      <div className="portal-user-pop">
+      {open ? (
+        <div className="portal-user-menu" id="portal-user-menu" role="menu">
+          <button type="button" role="menuitem" onClick={() => choose(toggleTheme)}>
+            <span className="icon-swap" aria-hidden>
+              <Sun size={16} strokeWidth={2.25} className={theme === "dark" ? "is-on" : undefined} />
+              <Moon size={16} strokeWidth={2.25} className={theme === "light" ? "is-on" : undefined} />
+            </span>
+            {t("portal.darkMode")}
+          </button>
+          <button type="button" role="menuitem" onClick={() => choose(() => toggleAppLocale())}>
+            <Languages size={16} strokeWidth={2.25} aria-hidden />
+            {t("common.language")}
+            <span className="portal-user-meta">{locale}</span>
+          </button>
+          <span className="portal-user-sep" role="separator" />
+          <button type="button" role="menuitem" onClick={() => choose(() => void signOut(navigate, setActor))}>
+            <LogOut size={16} strokeWidth={2.25} aria-hidden />
+            {t("common.logout")}
+          </button>
+        </div>
+      ) : null}
+      <button
+        type="button"
+        className="portal-user-card"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls="portal-user-menu"
+        onClick={() => setOpen((value) => !value)}
+      >
         <span className="portal-user-mark" aria-hidden="true">{initial}</span>
         <span className="min-w-0 flex-1">
           <span className="portal-user-name">{label}</span>
           {name && number ? <span className="portal-user-ext">{number}</span> : null}
         </span>
+        <ChevronUp size={16} strokeWidth={2.25} aria-hidden />
+      </button>
       </div>
     </div>
   );

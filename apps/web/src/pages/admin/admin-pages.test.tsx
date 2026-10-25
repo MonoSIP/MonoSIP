@@ -1183,7 +1183,12 @@ describe("AdminLayout", () => {
       "https://www.monosip.com",
     );
     expect(document.querySelector(".product-site-bar")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "common.logout" }));
+    expect(document.querySelector(".admin-shell .shell-tool-group")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "app.name" }));
+    const menu = aside.querySelector(".admin-brand-menu") as HTMLElement;
+    expect(within(menu).getByRole("menuitem", { name: /common\.language/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "portal.darkMode" })).toBeInTheDocument();
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "common.logout" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));
@@ -1242,13 +1247,15 @@ describe("PortalLayout", () => {
     expect(user).toBeTruthy();
     const site = within(aside).getByRole("link", { name: "www.monosip.com" });
     expect(site).toHaveAttribute("href", "https://www.monosip.com");
-    expect(settings.compareDocumentPosition(site) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(site.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(settings.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(phone.compareDocumentPosition(user) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const tools = document.querySelector(".shell-tools") as HTMLElement;
-    expect(within(tools).getByRole("button", { name: "common.language" })).toBeInTheDocument();
-    expect(within(tools).getByRole("button", { name: "common.theme" })).toBeInTheDocument();
-    await userEvent.click(within(tools).getByRole("button", { name: "common.logout" }));
+    expect(user.compareDocumentPosition(site) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelector(".portal-shell .shell-tools")).toBeNull();
+    await userEvent.click(user);
+    const menu = aside.querySelector(".portal-user-menu") as HTMLElement;
+    expect(within(menu).getByRole("menuitem", { name: /common\.language/ })).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "portal.darkMode" })).toBeInTheDocument();
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "common.logout" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith("/api/v1/auth/logout"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));
