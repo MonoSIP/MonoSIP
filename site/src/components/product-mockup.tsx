@@ -939,15 +939,13 @@ export function ProductMockup({
         <rect width="1120" height="700" className="mockup-base" />
         <path d="M0 0H174V700H0Z" className="mockup-sidebar" />
         <path d="M174 0V700M174 78H1120" className="mockup-grid" />
-        <rect
+        <image
+          href="/brand/monosip-mark.svg"
           x="24"
           y="26"
           width="26"
           height="26"
-          rx="7"
-          className="mockup-logo"
         />
-        <path d="M31 44V34L37 40L43 34V44" className="mockup-logo-mark" />
         <Label x={61} y={45} size={20} kind="strong">
           MonoSIP
         </Label>

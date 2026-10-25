@@ -136,10 +136,9 @@ export function DashboardPage() {
         }
         actions={
           <>
-            <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+            <label className="spy-listener">
               {tr("Spy listener")}
               <SelectInput
-                className="w-auto min-w-[8rem]"
                 aria-label={tr("Spy listener")}
                 value={listenerExt}
                 onValueChange={setListenerExt}
@@ -259,7 +258,7 @@ export function DashboardPage() {
           </table>
         </div>
       </div>
-      <div className="card overflow-hidden">
+      <div className="card overflow-x-auto">
         <div className="border-b border-[var(--border)] px-4 py-3 font-medium">
           {t("dashboard.activeCalls")}
         </div>
@@ -291,28 +290,31 @@ export function DashboardPage() {
                   <td>
                     <span className="badge">{c.state}</span>
                   </td>
-                  <td className="flex flex-wrap gap-1">
-                    <Button type="button" onClick={() => void spy(c.id, "listen")}>
-                      {tr("Spy")}
-                    </Button>
-                    <Button type="button" onClick={() => void spy(c.id, "whisper")}>
-                      {tr("Whisper")}
-                    </Button>
-                    <Button type="button" onClick={() => void spy(c.id, "barge")}>
-                      {tr("Barge")}
-                    </Button>
-                    <Button
-                      variant="solid" color="red"
-                      type="button"
-                      onClick={() =>
-                        void api
-                          .post(`/api/v1/admin/live/calls/${c.id}/hangup`)
-                          .then(() => qc.invalidateQueries({ queryKey: ["live"] }))
-                          .catch((e: Error) => toast.error(e.message))
-                      }
-                    >
-                      {tr("Hangup")}
-                    </Button>
+                  <td>
+                    <div className="call-actions">
+                      <Button type="button" onClick={() => void spy(c.id, "listen")}>
+                        {tr("Spy")}
+                      </Button>
+                      <Button type="button" onClick={() => void spy(c.id, "whisper")}>
+                        {tr("Whisper")}
+                      </Button>
+                      <Button type="button" onClick={() => void spy(c.id, "barge")}>
+                        {tr("Barge")}
+                      </Button>
+                      <Button
+                        variant="solid"
+                        color="red"
+                        type="button"
+                        onClick={() =>
+                          void api
+                            .post(`/api/v1/admin/live/calls/${c.id}/hangup`)
+                            .then(() => qc.invalidateQueries({ queryKey: ["live"] }))
+                            .catch((e: Error) => toast.error(e.message))
+                        }
+                      >
+                        {tr("Hangup")}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))

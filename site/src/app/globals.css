@@ -1151,13 +1151,6 @@ h1 > span {
 .mockup-beacon {
   fill: var(--accent);
 }
-.mockup-logo-mark {
-  fill: none;
-  stroke: var(--on-accent);
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 .mockup-nav-icon {
   fill: none;
   stroke: var(--muted);
@@ -2471,17 +2464,16 @@ figcaption {
   color: var(--text);
 }
 .brand-swatch > img {
-  max-height: 100px;
+  max-height: 140px;
   width: auto;
 }
-.brand-swatch.wordmark img {
+.brand-swatch.wide img {
   width: 100%;
-  max-width: 340px;
+  max-width: 420px;
+  max-height: 160px;
 }
-.brand-swatch.wordmark,
-.brand-swatch.mono {
-  background: #f3f6f8;
-  color: #152028;
+.brand-swatch.contrast {
+  background: #e6eeea;
 }
 .brand-card-bottom {
   padding: 24px;

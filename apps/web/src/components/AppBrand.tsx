@@ -24,6 +24,14 @@ export function ProductSiteLink({ className = "" }: { className?: string }) {
   );
 }
 
+export function ProductVersion() {
+  return (
+    <span className="brand-ver" title={`MonoSIP ${APP_VERSION}`}>
+      v{APP_VERSION}
+    </span>
+  );
+}
+
 /** Theme, language, and sign-out. Stays at the top right of admin and portal. */
 export function ShellTools() {
   const { t, i18n } = useTranslation();
@@ -49,7 +57,6 @@ export function ShellTools() {
           <Sun size={16} strokeWidth={2.25} className={theme === "dark" ? "is-on" : undefined} />
           <Moon size={16} strokeWidth={2.25} className={theme === "light" ? "is-on" : undefined} />
         </span>
-        {t("common.theme")}
       </Button>
       <Button type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
         <Languages size={16} strokeWidth={2.25} aria-hidden />
@@ -67,9 +74,23 @@ export function AppBrand({
   className = "mb-6 px-1",
   compact = false,
   asHeading = false,
-}: Props) {
+  lockup = false,
+}: Props & { lockup?: boolean }) {
   const { t } = useTranslation();
+  const theme = useStore((s) => s.theme);
   const TitleTag = asHeading ? "h1" : compact ? "strong" : "div";
+  if (lockup) {
+    return (
+      <div className={`admin-brand ${className}`}>
+        {asHeading ? <TitleTag className="sr-only">{t("app.name")}</TitleTag> : null}
+        <img
+          className="brand-lockup"
+          src={theme === "light" ? "/monosip-lockup.svg" : "/monosip-lockup-on-dark.svg"}
+          alt={asHeading ? "" : "MonoSIP"}
+        />
+      </div>
+    );
+  }
   return (
     <div className={className}>
       <div className="flex items-center gap-2.5">
@@ -85,9 +106,7 @@ export function AppBrand({
             >
               {t("app.name")}
             </TitleTag>
-            <span className="brand-ver" title={`MonoSIP ${APP_VERSION}`}>
-              v{APP_VERSION}
-            </span>
+            <ProductVersion />
           </div>
           {subtitle ? (
             <div className="truncate text-sm text-[var(--text-muted)]">{subtitle}</div>

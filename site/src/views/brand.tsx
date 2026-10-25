@@ -7,33 +7,105 @@ import { pathFor } from "@/lib/locale";
 
 const marks = (L: (en: string, tr: string) => string) => [
   {
-    file: "monosip-mark.svg",
-    title: L("The original mark.", "Özgün işaret."),
+    file: "monosip-stacked.svg",
+    title: L("Stacked logo.", "Dikey logo."),
     text: L(
-      "The handset and check, with the original green gradient and proportions.",
-      "Özgün yeşil geçiş ve oranlarla ahize ve onay.",
+      "The sound mark above the name. Use this where the logo stands alone.",
+      "Ses işaretinin altında ad. Logonun tek başına durduğu yerde bunu kullanın.",
     ),
-    type: "mark",
+    type: "wide",
+    width: 640,
+    height: 300,
+  },
+  {
+    file: "monosip-lockup.svg",
+    title: L("Horizontal lockup.", "Yatay logo."),
+    text: L(
+      "Gradient mark and the name on one line.",
+      "Geçişli işaret ve ad, tek satırda.",
+    ),
+    type: "wide",
+    width: 720,
+    height: 110,
+  },
+  {
+    file: "monosip-lockup-solid.svg",
+    title: L("Solid lockup.", "Tek renkli yatay logo."),
+    text: L(
+      "One ink for print and small sizes.",
+      "Baskı ve küçük boyutlar için tek mürekkep.",
+    ),
+    type: "wide",
+    width: 720,
+    height: 110,
+  },
+  {
+    file: "monosip-symbol.svg",
+    title: L("Sound mark.", "Ses işareti."),
+    text: L(
+      "The gradient M and its bars, without the name.",
+      "Ad olmadan, geçişli M ve çubukları.",
+    ),
+    type: "wide",
+    width: 640,
+    height: 320,
   },
   {
     file: "monosip-wordmark.svg",
-    title: L("The original wordmark.", "Özgün yazı işareti."),
-    text: L(
-      "The existing MonoSIP spelling and geometry. The SVG inherits text color when embedded inline.",
-      "Mevcut MonoSIP yazımı ve geometrisi. SVG satır içine gömüldüğünde metin rengini devralır.",
-    ),
-    type: "wordmark",
+    title: L("Wordmark.", "Yazı işareti."),
+    text: L("The MONOSIP lettering on its own.", "Tek başına MONOSIP yazısı."),
+    type: "wide",
+    width: 720,
+    height: 80,
   },
   {
-    file: "monosip-mark-mono.svg",
-    title: L("A single-color mark.", "Tek renkli işaret."),
+    file: "monosip-symbol-mono.svg",
+    title: L("Single-color mark.", "Tek renkli işaret."),
     text: L(
-      "The original monochrome SVG for single-color applications.",
-      "Tek renkli kullanımlar için özgün tek renk SVG.",
+      "The mark in the current text color, for one-ink use.",
+      "Tek mürekkep için, metin rengini alan işaret.",
     ),
-    type: "mono",
+    type: "wide",
+    width: 640,
+    height: 320,
+  },
+  {
+    file: "monosip-mark.svg",
+    title: L("App icon.", "Uygulama ikonu."),
+    text: L(
+      "Square tile for the product chrome, the favicon and avatars. Put it beside interface text, not in place of the lockup.",
+      "Ürün arayüzü, favicon ve avatar için kare karo. Yazının yanına koyun; yatay logonun yerine koymayın.",
+    ),
+    type: "tile",
+    width: 128,
+    height: 128,
+  },
+  {
+    file: "monosip-mark-light.svg",
+    title: L("Light app icon.", "Açık uygulama ikonu."),
+    text: L("Green mark on a light tile.", "Açık karo üzerinde yeşil işaret."),
+    type: "contrast",
+    width: 128,
+    height: 128,
+  },
+  {
+    file: "monosip-mark-dark.svg",
+    title: L("Dark app icon.", "Koyu uygulama ikonu."),
+    text: L("White mark on a deep green tile.", "Koyu yeşil karo üzerinde beyaz işaret."),
+    type: "tile",
+    width: 128,
+    height: 128,
+  },
+  {
+    file: "monosip-mark-inverse.svg",
+    title: L("Night app icon.", "Gece uygulama ikonu."),
+    text: L("Gradient mark on black.", "Siyah üzerinde geçişli işaret."),
+    type: "tile",
+    width: 128,
+    height: 128,
   },
 ];
+
 export function BrandPage({ locale = "en" }: { locale?: Locale }) {
   const L = (en: string, tr: string) => (locale === "tr" ? tr : en);
   const tr = locale === "tr";
@@ -50,10 +122,7 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
           {tr ? "Marka dosyaları" : "Brand assets"}
         </nav>
         <p className="eyebrow">
-          {L(
-            "A FAMILIAR MARK. A CLEAR CONNECTION.",
-            "TANIDIK BİR İŞARET. NET BİR BAĞLANTI.",
-          )}
+          {L("AN M, AND THE SOUND AROUND IT.", "BİR M, VE ETRAFINDAKİ SES.")}
         </p>
         <h1>
           {L("Made to be", "Görünce")}
@@ -62,8 +131,8 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
         </h1>
         <p>
           {L(
-            "The original MonoSIP brand files. Preserved as SVG, with a handset for the conversation and a check for the right fit.",
-            "Özgün MonoSIP marka dosyaları. Konuşma için bir ahize, doğru eşleşme için bir onay ile SVG olarak korundu.",
+            "The MonoSIP mark is an M between sound bars. Use the square icon beside interface text. Use a lockup where the logo stands alone.",
+            "MonoSIP işareti, ses çubuklarının arasındaki bir M'dir. Arayüz yazısının yanında kare ikonu kullanın. Logo tek başına duracaksa kilitli düzeni kullanın.",
           )}
         </p>
       </div>
@@ -73,12 +142,12 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
             <div className={`brand-swatch ${mark.type}`}>
               <Image
                 src={`/brand/${mark.file}`}
-                width={mark.type === "wordmark" ? 520 : 128}
-                height={128}
+                width={mark.width}
+                height={mark.height}
                 alt={
                   tr
-                    ? `Resmi MonoSIP ${mark.type}`
-                    : `Official MonoSIP ${mark.type}`
+                    ? `MonoSIP ${mark.title}`
+                    : `MonoSIP ${mark.title}`
                 }
               />
             </div>
@@ -94,19 +163,20 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
       </div>
       <div className="prose" style={{ paddingBottom: 80 }}>
         <h2>
-          {L("Keep the connection consistent.", "Bağlantıyı tutarlı tutun.")}
+          {L("Keep the mark intact.", "İşareti bozmadan kullanın.")}
         </h2>
         <p>
           {L(
-            "Use the supplied vector files without changing the handset, check, geometry or proportions. Give the mark clear space and keep it legible. The original mark keeps its green gradient and works on both light and dark surfaces. The interface uses this teal.",
-            "Ahizeyi, onayı, geometriyi veya oranları değiştirmeden verilen vektör dosyalarını kullanın. İşarete boşluk bırakın ve okunur tutun. Özgün işaret yeşil geçişini korur ve hem açık hem koyu zeminde durur. Arayüz bu teal rengini kullanır.",
+            "Use the supplied vectors without redrawing the M, the bars or the lettering. Leave clear space around the logo and do not recolor the gradient files. The solid lockup is the one-ink version.",
+            "M'yi, çubukları veya yazıyı yeniden çizmeden verilen vektörleri kullanın. Logonun çevresine boşluk bırakın ve geçişli dosyaların rengini değiştirmeyin. Tek mürekkep sürümü, düz renkli yatay logodur.",
           )}
         </p>
         <div className="palette">
           {[
-            [L("Teal", "Teal"), "#0f766e"],
-            [L("Signal", "Sinyal"), "#1aa892"],
-            [L("Mint", "Nane"), "#7ee0cf"],
+            [L("Leaf", "Yaprak"), "#2cb56a"],
+            [L("Grove", "Koruluk"), "#14945c"],
+            [L("Deep", "Derin"), "#064e3c"],
+            [L("Ink", "Mürekkep"), "#073f36"],
           ].map(([name, color]) => (
             <div key={color}>
               <i style={{ "--swatch": color } as CSSProperties} />
@@ -119,8 +189,8 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
         </div>
         <p style={{ marginTop: 32 }}>
           {L(
-            "The website uses Outfit for interface and body text, and JetBrains Mono for commands and technical labels. Buttons and links use the same teal as the product console. Original wordmark artwork is retained as provided.",
-            "Site, arayüz ve gövde metni için Outfit, komutlar ve teknik etiketler için JetBrains Mono kullanır. Düğmeler ve bağlantılar ürün konsoluyla aynı teal rengindedir. Özgün yazı işareti verildiği gibi durur.",
+            "The website uses Outfit for interface and body text, and JetBrains Mono for commands and technical labels.",
+            "Site, arayüz ve gövde metni için Outfit, komutlar ve teknik etiketler için JetBrains Mono kullanır.",
           )}
         </p>
       </div>

@@ -6,6 +6,7 @@ import { KeyRound, Languages, Mail, Moon, Phone, Shield, Smartphone, Sun } from 
 import { api } from "../lib/api";
 import { useStore } from "../store";
 import { toggleAppLocale } from "../i18n";
+import { AmbientBackground } from "../components/AmbientBackground";
 import { AppBrand, ProductSiteLink } from "../components/AppBrand";
 import { Button, Segmented, Surface, TextField } from "../components/ui";
 
@@ -58,6 +59,7 @@ export function LoginPage() {
 
   return (
     <div className="login-shell">
+      <AmbientBackground />
       <div className="login-tools">
         <Button
           type="button"
@@ -72,12 +74,11 @@ export function LoginPage() {
             <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
             <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
           </span>
-          {t("portal.darkMode")}
         </Button>
       </div>
       <Surface className="login-card relative z-10 w-full max-w-md">
       <form onSubmit={submit}>
-        <AppBrand className="mb-6" subtitle={t("app.tagline")} asHeading />
+        <AppBrand lockup asHeading className="mb-6" />
         <Segmented
           className="mb-5"
           aria-label={t("auth.adminLogin")}

@@ -22,7 +22,8 @@ import {
   Workflow,
 } from "lucide-react";
 import i18n from "../i18n";
-import { AppBrand, ProductSiteLink, ShellTools } from "../components/AppBrand";
+import { AmbientBackground } from "../components/AmbientBackground";
+import { AppBrand, ProductSiteLink, ProductVersion, ShellTools } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { Button } from "../components/ui";
 
@@ -67,7 +68,8 @@ export function AdminLayout() {
   }, [navOpen]);
 
   return (
-    <div className={`flex h-full min-h-0 ${flowDesigner ? "overflow-hidden" : ""}`}>
+    <div className={`admin-shell flex h-full min-h-0 ${flowDesigner ? "overflow-hidden" : ""}`}>
+      <AmbientBackground />
       {/* Hide admin nav in flow designer — fixed-height layout was forcing a sidebar scrollbar */}
       {!flowDesigner && navOpen && (
         <button
@@ -81,7 +83,7 @@ export function AdminLayout() {
         <aside
           className={`aside-panel fixed inset-y-0 left-0 z-40 h-full w-64 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:z-auto md:h-full md:flex ${navOpen ? "flex" : "hidden"}`}
         >
-          <AppBrand subtitle={t("app.tagline")} />
+          <AppBrand lockup className="mb-4 px-1" />
           <nav id="admin-nav" className="flex min-h-0 flex-col gap-0.5 overflow-auto">
             {links.map((l) => (
               <NavLink
@@ -97,10 +99,13 @@ export function AdminLayout() {
               </NavLink>
             ))}
           </nav>
-          <ProductSiteLink className="shell-site" />
+          <div className="shell-site admin-site-row">
+            <ProductSiteLink />
+            <ProductVersion />
+          </div>
         </aside>
       )}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="admin-stage flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="shell-tools">
           {!flowDesigner && (
             <Button

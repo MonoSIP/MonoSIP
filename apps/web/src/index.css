@@ -128,6 +128,19 @@ html.light {
   --warning: var(--amber-11);
   --info: var(--accent-11);
   --code-bg: var(--gray-a3);
+  /* Site button colors. The rest of the teal scale stays with the theme. */
+  --accent-9: #1aa892;
+  --accent-10: #148a78;
+  --accent-11: #7ee0cf;
+  --accent-a11: #1aa892;
+  --accent-contrast: #04211c;
+}
+html.light .radix-themes {
+  --accent-9: #0f766e;
+  --accent-10: #115e59;
+  --accent-11: #1aa892;
+  --accent-a11: #0f766e;
+  --accent-contrast: #ffffff;
 }
 
 * {
@@ -166,11 +179,11 @@ li,
   text-wrap: pretty;
 }
 
-img:not(.brand-mark) {
+img:not(.brand-mark, .brand-lockup) {
   outline: 1px solid oklch(1 0 0 / 0.1);
   outline-offset: -1px;
 }
-html.light img:not(.brand-mark) {
+html.light img:not(.brand-mark, .brand-lockup) {
   outline-color: oklch(0 0 0 / 0.1);
 }
 
@@ -566,6 +579,40 @@ textarea.input {
 .page-header .toolbar-actions {
   margin-left: auto;
 }
+/* Radix trigger width is unlayered, so a utility class cannot override it. */
+.rt-SelectTrigger {
+  width: 100%;
+}
+.spy-listener {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  color: var(--gray-11);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.spy-listener .rt-SelectTrigger {
+  width: auto;
+  min-width: 8rem;
+  max-width: 16rem;
+}
+.call-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+@media (max-width: 720px) {
+  .page-header .toolbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+.table td:has(.call-actions) {
+  width: auto;
+  white-space: normal;
+}
 .call-filters {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -857,6 +904,94 @@ textarea.input {
   border-right: 1px solid var(--border);
 }
 
+/* Public-site wire field, sitting behind the admin shell. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--accent);
+}
+.ambient > svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0.22;
+}
+.ambient-wires { opacity: 0.45; }
+.ambient-pulses {
+  opacity: 0.55;
+  animation: ambient-breathe 6s ease-in-out infinite;
+}
+.pointer-ripple {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  margin: -18px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  animation: pointer-ripple 1.3s ease-out forwards;
+}
+@keyframes pointer-ripple {
+  from { transform: scale(0.4); opacity: 0.4; }
+  to { transform: scale(9); opacity: 0; }
+}
+@keyframes ambient-breathe {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.8; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-pulses { animation: none; }
+}
+
+.admin-stage { position: relative; z-index: 1; }
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.brand-lockup {
+  display: block;
+  width: auto;
+  height: 28px;
+  max-width: 100%;
+}
+.login-card .brand-lockup {
+  height: 40px;
+}
+.admin-shell .aside-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 46%),
+    color-mix(in srgb, var(--card) 84%, transparent);
+  backdrop-filter: blur(18px);
+}
+.admin-shell .shell-tools {
+  background: color-mix(in srgb, var(--color-background) 78%, transparent);
+  backdrop-filter: blur(16px);
+}
+.admin-shell .nav-link {
+  transition-property: background, color;
+}
+.admin-shell .nav-link:hover {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent 80%);
+  color: var(--foreground);
+}
+.admin-shell .nav-link.active {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 28%, transparent),
+    color-mix(in srgb, var(--accent-bright) 8%, transparent) 72%,
+    transparent
+  );
+  box-shadow: none;
+  color: var(--foreground);
+}
+.admin-shell .nav-link.active .nav-ico {
+  color: var(--accent);
+}
+
 /* Row on a wide screen lives here: the shell class is built in a template, so
    Tailwind never emits md:flex-row and the rail was stacking above every page. */
 .portal-shell {
@@ -1133,16 +1268,26 @@ textarea.input {
 .login-card {
   margin-block: auto;
 }
+.login-tools,
+.login-shell > .product-site {
+  position: relative;
+  z-index: 1;
+}
 .login-card {
   width: min(100%, 28rem);
   box-sizing: border-box;
   padding: 2rem;
-  background: var(--login-surface);
+  background: transparent;
   color: var(--login-text);
-  border: 1px solid var(--login-line);
-  border-radius: var(--radius-4);
+  border: 0;
+  border-radius: var(--radius-5);
   box-shadow: var(--login-shadow);
   font-family: "Outfit", system-ui, sans-serif;
+}
+/* Size-4 card paints its face on ::before. Match that radius, then wash it with the site gradient. */
+.login-card.rt-BaseCard::before {
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--accent) 16%, var(--login-surface)), var(--login-surface) 52%);
 }
 .login-card .rt-Heading,
 .login-card .field-label,
@@ -1208,7 +1353,7 @@ textarea.input {
   width: 100%;
   height: 2.5rem;
   margin-top: 0.5rem;
-  background: var(--login-accent);
+  background: linear-gradient(180deg, var(--accent-11), var(--accent-9));
   color: var(--login-on-accent);
   font-family: "Outfit", system-ui, sans-serif;
   font-weight: 600;
@@ -1216,7 +1361,7 @@ textarea.input {
   transition-duration: 150ms;
 }
 .login-card .rt-Button.rt-variant-solid:hover {
-  background: var(--login-accent-hover);
+  background: linear-gradient(180deg, var(--accent-9), var(--login-accent-hover));
 }
 .login-card .rt-Button.rt-variant-solid:active {
   transform: scale(0.96);
@@ -1273,6 +1418,12 @@ textarea.input {
   padding-top: 0.65rem;
   border-top: 1px solid var(--gray-a3);
   text-align: center;
+}
+.admin-site-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
 }
 .login-shell::before {
   content: none;

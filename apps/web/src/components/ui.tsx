@@ -54,7 +54,7 @@ function InTheme({ children }: { children: ReactNode }) {
   }
   if (ready) return children;
   return (
-    <Theme appearance="dark" accentColor="indigo" grayColor="slate" hasBackground panelBackground="translucent" radius="medium" scaling="100%">
+    <Theme appearance="dark" accentColor="teal" grayColor="slate" hasBackground panelBackground="translucent" radius="medium" scaling="100%">
       {children}
     </Theme>
   );
@@ -74,7 +74,7 @@ export function TooltipProvider({ children }: { children: ReactNode }) {
   return (
     <Theme
       appearance={theme}
-      accentColor="indigo"
+      accentColor="teal"
       grayColor="slate"
       hasBackground
       panelBackground="translucent"
@@ -285,7 +285,6 @@ export function SelectInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         className={className}
-        style={{ width: "100%" }}
       />
       <ThemesSelect.Content position="popper" sideOffset={4}>
         {options.map((option) => (
