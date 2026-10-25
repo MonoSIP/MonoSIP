@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { KeyRound, Languages, Mic, Moon, PhoneForwarded, UserCog, Voicemail, Volume2 } from "lucide-react";
+import { KeyRound, Languages, LogOut, Mic, Moon, PhoneForwarded, UserCog, Voicemail, Volume2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { signOut } from "../../components/AppBrand";
+import { useNavigate } from "react-router-dom";
 import { usePhoneOptional } from "../../lib/phone-context";
 import { useStore } from "../../store";
 import { setAppLocale } from "../../i18n";
@@ -21,6 +23,8 @@ const DEVICE_KEY = "monosip.audioDevices";
 
 export function MySettingsPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const setActor = useStore((s) => s.setActor);
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const phoneState = usePhoneOptional();
@@ -108,7 +112,7 @@ export function MySettingsPage() {
           localStorage.setItem(DEVICE_KEY, JSON.stringify({ mic, speaker, ring }));
         }
       } catch {
-        toast.error("Microphone permission needed for device list");
+        toast.error(t("portal.micPermission"));
       }
     })();
   }, []);
@@ -128,7 +132,7 @@ export function MySettingsPage() {
     if (!ringOk) setRingId("");
     localStorage.setItem(DEVICE_KEY, JSON.stringify(next));
     void phoneState?.phone.loadPreferredDevices();
-    toast.success("Audio devices saved");
+    toast.success(t("portal.devicesSaved"));
   }
 
   const savePass = useMutation({
@@ -226,6 +230,12 @@ export function MySettingsPage() {
           {t("portal.darkMode")}: {theme === "dark" ? t("common.enabled") : t("common.disabled")}
         </Button>
       </SectionCard>
+      <SectionCard title={t("common.logout")} icon={LogOut} tone="cyan">
+        <Button type="button" variant="solid" onClick={() => void signOut(navigate, setActor)}>
+          <LogOut size={16} aria-hidden />
+          {t("common.logout")}
+        </Button>
+      </SectionCard>
       </div>
       <SectionCard title={t("auth.password")} icon={KeyRound} tone="cyan">
         <TextField
@@ -235,14 +245,16 @@ export function MySettingsPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <Button
-          variant="solid"
-          type="button"
-          onClick={() => savePass.mutate()}
-          disabled={password.length < 8}
-        >
-          {t("common.save")}
-        </Button>
+        <div className="settings-save">
+          <Button
+            variant="solid"
+            type="button"
+            onClick={() => savePass.mutate()}
+            disabled={password.length < 8}
+          >
+            {t("common.save")}
+          </Button>
+        </div>
       </SectionCard>
       <SectionCard title="Call forwarding" icon={PhoneForwarded} tone="cyan">
         {fwds.map((fwd) => (
@@ -290,9 +302,11 @@ export function MySettingsPage() {
             )}
           </div>
         ))}
-        <Button variant="solid" type="button" onClick={() => saveFwd.mutate()}>
-          Save forwarding
-        </Button>
+        <div className="settings-save">
+          <Button variant="solid" type="button" onClick={() => saveFwd.mutate()}>
+            Save forwarding
+          </Button>
+        </div>
       </SectionCard>
       </div>
       <div className="settings-columns-side">
@@ -330,49 +344,53 @@ export function MySettingsPage() {
             ]}
           />
         </div>
-        <Button
-          variant="solid"
-          type="button"
-          onClick={() => saveGreet.mutate()}
-          disabled={saveGreet.isPending}
-        >
-          {t("common.save")}
-        </Button>
+        <div className="settings-save">
+          <Button
+            variant="solid"
+            type="button"
+            onClick={() => saveGreet.mutate()}
+            disabled={saveGreet.isPending}
+          >
+            {t("common.save")}
+          </Button>
+        </div>
       </SectionCard>
-      <SectionCard title="Audio devices" icon={Mic} tone="cyan">
+      <SectionCard title={t("portal.audioDevices")} icon={Mic} tone="cyan">
         <SelectField
-          label="Microphone"
+          label={t("portal.microphone")}
           icon={Mic}
           value={micId}
           onValueChange={setMicId}
           options={[
-            { value: "", label: "System default" },
+            { value: "", label: t("portal.systemDefault") },
             ...inputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
           ]}
         />
         <SelectField
-          label="Speaker"
+          label={t("portal.speaker")}
           icon={Volume2}
           value={speakerId}
           onValueChange={setSpeakerId}
           options={[
-            { value: "", label: "System default" },
+            { value: "", label: t("portal.systemDefault") },
             ...outputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
           ]}
         />
         <SelectField
-          label="Ringtone output"
+          label={t("portal.ringtoneOutput")}
           icon={Volume2}
           value={ringId}
           onValueChange={setRingId}
           options={[
-            { value: "", label: "Same as speaker" },
+            { value: "", label: t("portal.sameAsSpeaker") },
             ...outputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
           ]}
         />
-        <Button variant="solid" type="button" onClick={saveDevices}>
-          Save devices
-        </Button>
+        <div className="settings-save">
+          <Button variant="solid" type="button" onClick={saveDevices}>
+            {t("common.save")}
+          </Button>
+        </div>
       </SectionCard>
       </div>
       </div>

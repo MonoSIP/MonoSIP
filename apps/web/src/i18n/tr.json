@@ -302,7 +302,15 @@
     "voiceMale": "Erkek",
     "voiceEma": "EMA (Türkçe, çevrimdışı)",
     "greetingLang": "Dil",
-    "greetingSaved": "Karşılama kaydedildi"
+    "greetingSaved": "Karşılama kaydedildi",
+    "audioDevices": "Ses cihazları",
+    "microphone": "Mikrofon",
+    "speaker": "Hoparlör",
+    "ringtoneOutput": "Zil sesi çıkışı",
+    "systemDefault": "Sistem varsayılanı",
+    "sameAsSpeaker": "Hoparlörle aynı",
+    "devicesSaved": "Ses cihazları kaydedildi",
+    "micPermission": "Cihaz listesi için mikrofon izni gerekli"
   },
   "langs": {
     "en": "İngilizce",
@@ -316,8 +324,8 @@
     "ignore": "Yoksay"
   },
   "softphone": {
-    "micNotFound": "Mikrofon bulunamadı. Sistem ayarlarından mikrofonu açın veya Ayarlar → Audio devices’ta varsayılanı seçip kaydedin.",
+    "micNotFound": "Mikrofon bulunamadı. Sistem ayarlarından mikrofonu açın veya Ayarlar → Ses cihazları’nda varsayılanı seçip kaydedin.",
     "micDenied": "Mikrofon izni gerekli. Tarayıcı adres çubuğundan mikrofona izin verin.",
-    "micInvalid": "Mikrofon ayarı bu tarayıcıda geçersiz. Ayarlar → Audio devices’ta «System default» seçip kaydedin, sonra tekrar deneyin."
+    "micInvalid": "Mikrofon ayarı bu tarayıcıda geçersiz. Ayarlar → Ses cihazları’nda «Sistem varsayılanı» seçip kaydedin, sonra tekrar deneyin."
   }
 }

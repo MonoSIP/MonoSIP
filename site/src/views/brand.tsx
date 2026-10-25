@@ -4,10 +4,12 @@ import Link from "next/link";
 import { Icon } from "@/components/icon";
 import type { Locale } from "@/lib/locale";
 import { pathFor } from "@/lib/locale";
+import { brandFile } from "@/lib/site";
 
 const marks = (L: (en: string, tr: string) => string) => [
   {
     file: "monosip-stacked.svg",
+    ground: "light",
     title: L("Stacked logo.", "Dikey logo."),
     text: L(
       "The sound mark above the name. Use this where the logo stands alone.",
@@ -19,10 +21,23 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-lockup.svg",
+    ground: "light",
     title: L("Horizontal lockup.", "Yatay logo."),
     text: L(
-      "Gradient mark and the name on one line.",
-      "Geçişli işaret ve ad, tek satırda.",
+      "Gradient mark and the name on one line, for light backgrounds.",
+      "Açık zemin için geçişli işaret ve ad, tek satırda.",
+    ),
+    type: "wide",
+    width: 720,
+    height: 110,
+  },
+  {
+    file: "monosip-lockup-on-dark.svg",
+    ground: "dark",
+    title: L("Horizontal lockup, dark.", "Yatay logo, koyu zemin."),
+    text: L(
+      "The same lockup with a light wordmark, for dark backgrounds.",
+      "Koyu zemin için aynı yatay logo, açık renk yazıyla.",
     ),
     type: "wide",
     width: 720,
@@ -30,6 +45,7 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-lockup-solid.svg",
+    ground: "light",
     title: L("Solid lockup.", "Tek renkli yatay logo."),
     text: L(
       "One ink for print and small sizes.",
@@ -41,6 +57,7 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-symbol.svg",
+    ground: "light",
     title: L("Sound mark.", "Ses işareti."),
     text: L(
       "The gradient M and its bars, without the name.",
@@ -52,6 +69,7 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-wordmark.svg",
+    ground: "light",
     title: L("Wordmark.", "Yazı işareti."),
     text: L("The MONOSIP lettering on its own.", "Tek başına MONOSIP yazısı."),
     type: "wide",
@@ -60,6 +78,7 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-symbol-mono.svg",
+    ground: "light",
     title: L("Single-color mark.", "Tek renkli işaret."),
     text: L(
       "The mark in the current text color, for one-ink use.",
@@ -71,6 +90,7 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-mark.svg",
+    ground: "light",
     title: L("App icon.", "Uygulama ikonu."),
     text: L(
       "Square tile for the product chrome, the favicon and avatars. Put it beside interface text, not in place of the lockup.",
@@ -82,14 +102,16 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-mark-light.svg",
+    ground: "light",
     title: L("Light app icon.", "Açık uygulama ikonu."),
     text: L("Green mark on a light tile.", "Açık karo üzerinde yeşil işaret."),
-    type: "contrast",
+    type: "tile",
     width: 128,
     height: 128,
   },
   {
     file: "monosip-mark-dark.svg",
+    ground: "dark",
     title: L("Dark app icon.", "Koyu uygulama ikonu."),
     text: L("White mark on a deep green tile.", "Koyu yeşil karo üzerinde beyaz işaret."),
     type: "tile",
@@ -98,6 +120,7 @@ const marks = (L: (en: string, tr: string) => string) => [
   },
   {
     file: "monosip-mark-inverse.svg",
+    ground: "night",
     title: L("Night app icon.", "Gece uygulama ikonu."),
     text: L("Gradient mark on black.", "Siyah üzerinde geçişli işaret."),
     type: "tile",
@@ -139,9 +162,9 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
       <div className="brand-grid">
         {items.map((mark) => (
           <article className="brand-card" key={mark.file}>
-            <div className={`brand-swatch ${mark.type}`}>
+            <div className={`brand-swatch ${mark.type}`} data-ground={mark.ground}>
               <Image
-                src={`/brand/${mark.file}`}
+                src={brandFile(mark.file)}
                 width={mark.width}
                 height={mark.height}
                 alt={
@@ -154,7 +177,7 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
             <div className="brand-card-bottom">
               <h2>{mark.title}</h2>
               <p>{mark.text}</p>
-              <a href={`/brand/${mark.file}`} download>
+              <a href={brandFile(mark.file)} download>
                 <Icon name="download" /> {L("Download SVG", "SVG indir")}
               </a>
             </div>

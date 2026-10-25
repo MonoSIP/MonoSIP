@@ -407,18 +407,22 @@ td code {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  letter-spacing: -0.06em;
-  font-size: 25px;
   white-space: nowrap;
   line-height: 1;
 }
-.brand-sip {
-  font-weight: 500;
+.brand-lockup {
+  display: block;
+  width: auto;
+  height: 32px;
 }
-.brand-period {
-  color: var(--accent);
+.brand-lockup.for-dark {
+  display: none;
+}
+[data-theme="dark"] .brand-lockup.for-light {
+  display: none;
+}
+[data-theme="dark"] .brand-lockup.for-dark {
+  display: block;
 }
 .main-nav {
   display: flex;
@@ -2460,8 +2464,16 @@ figcaption {
   padding: 35px;
   display: grid;
   place-items: center;
-  background: var(--surface-soft);
-  color: var(--text);
+  background: #ffffff;
+  color: #073f36;
+}
+.brand-swatch[data-ground="dark"] {
+  background: #0e151b;
+  color: #e7f4ef;
+}
+.brand-swatch[data-ground="night"] {
+  background: #111111;
+  color: #e7f4ef;
 }
 .brand-swatch > img {
   max-height: 140px;
@@ -2471,9 +2483,6 @@ figcaption {
   width: 100%;
   max-width: 420px;
   max-height: 160px;
-}
-.brand-swatch.contrast {
-  background: #e6eeea;
 }
 .brand-card-bottom {
   padding: 24px;
@@ -3322,13 +3331,8 @@ figcaption {
     height: 68px;
     gap: 8px;
   }
-  .brand {
-    font-size: 22px;
-    gap: 8px;
-  }
-  .brand img {
-    width: 29px;
-    height: 29px;
+  .brand img.brand-lockup {
+    height: 22px;
   }
   .header-actions {
     gap: 7px;

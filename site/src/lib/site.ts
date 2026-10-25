@@ -17,6 +17,9 @@ export const site = {
     "A self-hosted Asterisk PBX for small offices. Connect SIP providers, route calls with visual IVR, and give your team a browser softphone and voicemail inbox. Run it with Docker on your Linux server.",
 };
 
+/** Same path, new bytes. The query skips a CDN copy of the previous mark. */
+export const brandFile = (file: string) => `/brand/${file}?v=2`;
+
 export const sourceDoc = (file: string) =>
   `${site.repo}/blob/v${site.version}/docs/${file}.md`;
 

@@ -7,7 +7,8 @@ import { api } from "../lib/api";
 import { useStore } from "../store";
 import i18n from "../i18n";
 import { usePortalLive } from "../hooks/usePortalLive";
-import { AppBrand, ProductSiteLink, ShellTools } from "../components/AppBrand";
+import { AmbientBackground } from "../components/AmbientBackground";
+import { AppBrand, ProductSiteLink, ProductVersion, ShellTools } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { MiniPhone } from "../components/MiniPhone";
 import { PhoneProvider, usePhone } from "../lib/phone-context";
@@ -67,8 +68,9 @@ function PortalChrome() {
   return (
     // One softphone for the whole portal: switching pages keeps the call up.
     <div className={`portal-shell${callPhase === "ringing" ? " is-incoming" : ""}`}>
+      <AmbientBackground />
       <aside className="aside-panel portal-rail hidden w-56 shrink-0 flex-col overflow-hidden p-4 md:flex">
-        <AppBrand className="mb-4 shrink-0 px-1" />
+        <AppBrand lockup className="mb-4 shrink-0 px-1" />
         <nav className="flex min-h-0 flex-col gap-0.5 overflow-y-auto">
           {links.map((l) => (
             <NavLink
@@ -90,16 +92,19 @@ function PortalChrome() {
             </NavLink>
           ))}
         </nav>
-        <ProductSiteLink className="shell-site" />
-        <div className="mt-auto">
+        <div className="mt-auto shrink-0">
           {!onPhonePage && <MiniPhone className="mt-3 shrink-0" />}
           <UserCard
             name={actor?.type === "extension" ? actor.name : ""}
             number={actor?.type === "extension" ? actor.number : ""}
           />
         </div>
+        <div className="shell-site admin-site-row">
+          <ProductSiteLink />
+          <ProductVersion />
+        </div>
       </aside>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="portal-stage flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="shell-tools">
           <ShellTools />
         </div>

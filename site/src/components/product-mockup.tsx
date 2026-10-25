@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { brandFile } from "@/lib/site";
 import { MotionRegion } from "./background";
 
 export type MockupScreen =
@@ -940,7 +941,7 @@ export function ProductMockup({
         <path d="M0 0H174V700H0Z" className="mockup-sidebar" />
         <path d="M174 0V700M174 78H1120" className="mockup-grid" />
         <image
-          href="/brand/monosip-mark.svg"
+          href={brandFile("monosip-mark.svg")}
           x="24"
           y="26"
           width="26"

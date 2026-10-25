@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { Locale } from "./locale";
 import { pathFor } from "./locale";
-import { site } from "./site";
+import { brandFile, site } from "./site";
 
 export function pageMetadata(
   title: string,
@@ -27,7 +27,7 @@ export function pageMetadata(
       url: path,
       images: [
         {
-          url: "/brand/og-image.png",
+          url: brandFile("og-image.png"),
           width: 1200,
           height: 630,
           alt: "MonoSIP — self-hosted company PBX",
@@ -38,7 +38,7 @@ export function pageMetadata(
       card: "summary_large_image",
       title: `${title} — MonoSIP`,
       description,
-      images: ["/brand/og-image.png"],
+      images: [brandFile("og-image.png")],
     },
   };
 }

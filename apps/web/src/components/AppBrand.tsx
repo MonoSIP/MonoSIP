@@ -32,6 +32,19 @@ export function ProductVersion() {
   );
 }
 
+export async function signOut(
+  navigate: (path: string, opts?: { replace?: boolean }) => void,
+  setActor: (actor: null) => void,
+) {
+  try {
+    await api.post("/api/v1/auth/logout");
+  } catch {
+    /* still clear local session */
+  }
+  setActor(null);
+  navigate("/login", { replace: true });
+}
+
 /** Theme, language, and sign-out. Stays at the top right of admin and portal. */
 export function ShellTools() {
   const { t, i18n } = useTranslation();
@@ -40,14 +53,8 @@ export function ShellTools() {
   const toggleTheme = useStore((s) => s.toggleTheme);
   const setActor = useStore((s) => s.setActor);
 
-  async function logout() {
-    try {
-      await api.post("/api/v1/auth/logout");
-    } catch {
-      /* still clear local session */
-    }
-    setActor(null);
-    navigate("/login", { replace: true });
+  function logout() {
+    void signOut(navigate, setActor);
   }
 
   return (

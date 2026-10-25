@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Icon } from "./icon";
 import { chrome, localeFromPath, pathFor } from "@/lib/locale";
-import { site } from "@/lib/site";
+import { brandFile, site } from "@/lib/site";
 
 export function Footer() {
   const pathname = usePathname() || "/";
@@ -17,17 +17,21 @@ export function Footer() {
       <div className="container">
         <div className="footer-top">
           <div className="footer-intro">
-            <Link className="brand" href={href("/")}>
+            <Link className="brand" href={href("/")} aria-label={t.home}>
               <Image
-                src="/brand/monosip-mark.svg"
-                width={32}
+                className="brand-lockup for-light"
+                src={brandFile("monosip-lockup.svg")}
+                width={216}
                 height={32}
                 alt=""
               />
-              <span>
-                Mono<span className="brand-sip">SIP</span>
-                <span className="brand-period">.</span>
-              </span>
+              <Image
+                className="brand-lockup for-dark"
+                src={brandFile("monosip-lockup-on-dark.svg")}
+                width={216}
+                height={32}
+                alt=""
+              />
             </Link>
             <p>
               {t.footerLeadA}

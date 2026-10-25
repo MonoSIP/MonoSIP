@@ -38,7 +38,7 @@ for (const path of routes) {
   assert.match(html, /<html[^>]+lang="en"/, `Missing language: ${path}`);
   assert.ok(
     html.includes(
-      `property="og:image" content="${origin}/brand/og-image.png"`,
+      `property="og:image" content="${origin}/brand/og-image.png?v=2"`,
     ),
     `Missing Open Graph image: ${path}`,
   );

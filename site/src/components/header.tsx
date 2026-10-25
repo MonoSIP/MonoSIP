@@ -7,7 +7,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "./icon";
 import { usePreferences } from "./preferences";
 import { chrome, localeFromPath, pathFor, themeName } from "@/lib/locale";
-import { site } from "@/lib/site";
+import { brandFile, site } from "@/lib/site";
 
 export function Header() {
   const [menu, setMenu] = useState(false);
@@ -88,16 +88,21 @@ export function Header() {
       <div className="container header-inner">
         <Link href={href("/")} className="brand" aria-label={t.home}>
           <Image
-            src="/brand/monosip-mark.svg"
-            width={34}
-            height={34}
+            className="brand-lockup for-light"
+            src={brandFile("monosip-lockup.svg")}
+            width={216}
+            height={32}
             alt=""
             priority
           />
-          <span>
-            Mono<span className="brand-sip">SIP</span>
-            <span className="brand-period">.</span>
-          </span>
+          <Image
+            className="brand-lockup for-dark"
+            src={brandFile("monosip-lockup-on-dark.svg")}
+            width={216}
+            height={32}
+            alt=""
+            priority
+          />
         </Link>
         <nav
           ref={nav}

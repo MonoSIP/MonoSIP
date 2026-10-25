@@ -196,6 +196,7 @@ export function RoutesPage() {
             onChange={(e) => setCallerPattern(e.target.value)}
           />
           <DestPicker
+            className="sm:col-span-2"
             destType={destType}
             destId={destId || null}
             onChange={(t, id) => {

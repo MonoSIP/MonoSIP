@@ -474,14 +474,15 @@ function pageShell(page, body) {
     <title>${esc(page.title)}</title>
     <meta name="description" content="${esc(page.description)}" />
     <link rel="canonical" href="${canonical}" />
-    <meta name="theme-color" content="#047857" />
-    <link rel="apple-touch-icon" href="${asset}/brand/apple-touch-icon.png" />
-    <link rel="icon" type="image/svg+xml" href="${asset}/brand/monosip-mark.svg" />
+    <meta name="theme-color" content="#0f766e" />
+    <link rel="icon" href="${asset}/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="${asset}/brand/apple-touch-icon.png?v=2" />
+    <link rel="icon" type="image/svg+xml" href="${asset}/brand/monosip-mark.svg?v=2" />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:title" content="${esc(page.title)}" />
     <meta property="og:description" content="${esc(page.description)}" />
-    <meta property="og:image" content="${SITE}/brand/og-image.png" />
+    <meta property="og:image" content="${SITE}/brand/og-image.png?v=2" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -496,7 +497,7 @@ function pageShell(page, body) {
     <header class="nav" id="top">
       <div class="wrap nav-row">
         <a class="brand" href="${home}">
-          <img class="brand-mark" src="${asset}/brand/monosip-mark.svg" width="32" height="32" alt="" />
+          <img class="brand-mark" src="${asset}/brand/monosip-mark.svg?v=2" width="32" height="32" alt="" />
           <span class="brand-name">MonoSIP</span>
           <span class="brand-ver">v${esc(version)}</span>
         </a>
@@ -530,7 +531,7 @@ function pageShell(page, body) {
     </main>
     <footer class="footer">
       <div class="wrap footer-row">
-        <a class="brand" href="${home}"><img class="brand-mark" src="${asset}/brand/monosip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MonoSIP</span></a>
+        <a class="brand" href="${home}"><img class="brand-mark" src="${asset}/brand/monosip-mark.svg?v=2" width="32" height="32" alt="" /><span class="brand-name">MonoSIP</span></a>
         <span class="muted"><span data-i18n="footer.blurb">Self-hosted company PBX</span> · <a href="${docsHome}" data-i18n="nav.docs">Docs</a> · <a href="https://github.com/MonoSIP/MonoSIP/blob/main/LICENSE" data-i18n="footer.mit">MIT License</a></span>
         <a href="#top" class="muted" data-i18n="footer.top">Back to top ↑</a>
       </div>

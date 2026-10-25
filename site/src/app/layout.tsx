@@ -6,7 +6,7 @@ import { Footer } from "@/components/footer";
 import { SkipLink } from "@/components/skip-link";
 import { Background } from "@/components/background";
 import { FragmentNavigation } from "@/components/fragment-navigation";
-import { site } from "@/lib/site";
+import { brandFile, site } from "@/lib/site";
 import "@fontsource-variable/outfit/index.css";
 import "@fontsource-variable/jetbrains-mono/index.css";
 import "./globals.css";
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     url: "/",
     images: [
       {
-        url: "/brand/og-image.png",
+        url: brandFile("og-image.png"),
         width: 1200,
         height: 630,
         alt: "MonoSIP — self-hosted company PBX",
@@ -40,11 +40,14 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MonoSIP — Your calls. Your flow. Your control.",
     description: site.description,
-    images: ["/brand/og-image.png"],
+    images: [brandFile("og-image.png")],
   },
   icons: {
-    icon: "/brand/monosip-mark.svg",
-    apple: "/brand/apple-touch-icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: brandFile("monosip-mark.svg"), type: "image/svg+xml" },
+    ],
+    apple: brandFile("apple-touch-icon.png"),
   },
   robots: { index: true, follow: true },
 };

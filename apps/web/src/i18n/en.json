@@ -302,7 +302,15 @@
     "voiceMale": "Male",
     "voiceEma": "EMA (Turkish, offline)",
     "greetingLang": "Language",
-    "greetingSaved": "Greeting saved"
+    "greetingSaved": "Greeting saved",
+    "audioDevices": "Audio devices",
+    "microphone": "Microphone",
+    "speaker": "Speaker",
+    "ringtoneOutput": "Ringtone output",
+    "systemDefault": "System default",
+    "sameAsSpeaker": "Same as speaker",
+    "devicesSaved": "Audio devices saved",
+    "micPermission": "Microphone permission is needed to list devices"
   },
   "langs": {
     "en": "English",

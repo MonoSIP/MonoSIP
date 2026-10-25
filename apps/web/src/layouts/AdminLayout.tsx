@@ -83,7 +83,7 @@ export function AdminLayout() {
         <aside
           className={`aside-panel fixed inset-y-0 left-0 z-40 h-full w-64 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:z-auto md:h-full md:flex ${navOpen ? "flex" : "hidden"}`}
         >
-          <AppBrand lockup className="mb-4 px-1" />
+          <AppBrand lockup className="mb-4 shrink-0 px-1" />
           <nav id="admin-nav" className="flex min-h-0 flex-col gap-0.5 overflow-auto">
             {links.map((l) => (
               <NavLink

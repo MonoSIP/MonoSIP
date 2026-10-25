@@ -464,6 +464,10 @@ textarea.input {
 }
 
 /* Section cards: keep title padded even when body is flush (tables) */
+.settings-save {
+  display: flex;
+  justify-content: flex-end;
+}
 .settings-columns {
   display: grid;
   gap: 1rem;
@@ -759,7 +763,8 @@ textarea.input {
   max-width: 100%;
   overflow: hidden;
   border-top: 1px solid var(--border);
-  background: var(--card);
+  background: color-mix(in srgb, var(--color-background) 78%, transparent);
+  backdrop-filter: blur(16px);
   padding: 0.2rem 0.1rem calc(0.2rem + env(safe-area-inset-bottom));
 }
 .portal-tabs a {
@@ -772,8 +777,12 @@ textarea.input {
   color: var(--text-muted);
 }
 .portal-tabs a.active {
-  background: color-mix(in oklab, var(--accent) 16%, transparent);
-  color: var(--accent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 28%, transparent),
+    color-mix(in srgb, var(--accent-bright) 8%, transparent)
+  );
+  color: var(--foreground);
 }
 .portal-tabs .nav-tab-ico svg {
   width: clamp(1.05rem, 6vw, 1.5rem);
@@ -904,7 +913,7 @@ textarea.input {
   border-right: 1px solid var(--border);
 }
 
-/* Public-site wire field, sitting behind the admin shell. */
+/* Public-site wire field, sitting behind the admin and portal shells. */
 .ambient {
   position: fixed;
   inset: 0;
@@ -945,7 +954,8 @@ textarea.input {
   .ambient-pulses { animation: none; }
 }
 
-.admin-stage { position: relative; z-index: 1; }
+.admin-stage,
+.portal-stage { position: relative; z-index: 1; }
 .admin-brand {
   display: flex;
   align-items: center;
@@ -957,28 +967,38 @@ textarea.input {
   width: auto;
   height: 28px;
   max-width: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+.portal-rail .brand-lockup {
+  height: 24px;
 }
 .login-card .brand-lockup {
   height: 40px;
 }
-.admin-shell .aside-panel {
+.admin-shell .aside-panel,
+.portal-shell .aside-panel {
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 46%),
     color-mix(in srgb, var(--card) 84%, transparent);
   backdrop-filter: blur(18px);
 }
-.admin-shell .shell-tools {
+.admin-shell .shell-tools,
+.portal-shell .shell-tools {
   background: color-mix(in srgb, var(--color-background) 78%, transparent);
   backdrop-filter: blur(16px);
 }
-.admin-shell .nav-link {
+.admin-shell .nav-link,
+.portal-shell .nav-link {
   transition-property: background, color;
 }
-.admin-shell .nav-link:hover {
+.admin-shell .nav-link:hover,
+.portal-shell .nav-link:hover {
   background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent), transparent 80%);
   color: var(--foreground);
 }
-.admin-shell .nav-link.active {
+.admin-shell .nav-link.active,
+.portal-shell .nav-link.active {
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--accent) 28%, transparent),
@@ -988,7 +1008,8 @@ textarea.input {
   box-shadow: none;
   color: var(--foreground);
 }
-.admin-shell .nav-link.active .nav-ico {
+.admin-shell .nav-link.active .nav-ico,
+.portal-shell .nav-link.active .nav-ico {
   color: var(--accent);
 }
 
@@ -1212,10 +1233,10 @@ textarea.input {
 /* Version next to the product name: quiet, so the name leads */
 .brand-ver {
   flex: none;
-  padding: 0.05rem 0.4rem;
+  padding: 0 0.28rem;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
-  font: 500 0.625rem/1.4 var(--mono);
+  font: 500 0.5625rem/1.35 var(--mono);
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
 }
@@ -1408,6 +1429,10 @@ textarea.input {
   min-height: 40px;
   min-width: 40px;
 }
+@media (max-width: 767px) {
+  /* On a phone these live on the portal settings page, not above every screen. */
+  .portal-shell .shell-tools { display: none; }
+}
 @media (min-width: 768px) {
   .shell-menu { display: none; }
 }
@@ -1418,6 +1443,16 @@ textarea.input {
   padding-top: 0.65rem;
   border-top: 1px solid var(--gray-a3);
   text-align: center;
+}
+@media (min-width: 768px) {
+  /* Short menus leave a gap; pin the address and version to the column floor. */
+  .admin-shell .aside-panel > nav {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .admin-shell .aside-panel > .shell-site {
+    margin-top: auto;
+  }
 }
 .admin-site-row {
   display: flex;

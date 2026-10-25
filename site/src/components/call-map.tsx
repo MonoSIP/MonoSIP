@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Icon } from "./icon";
 import { MotionRegion } from "./background";
 import type { Locale } from "@/lib/locale";
+import { brandFile } from "@/lib/site";
 
 const routes = (tr: boolean) => [
   {
@@ -123,7 +124,7 @@ export function CallMap({ locale = "en" }: { locale?: Locale }) {
               className="pbx-inner"
             />
             <image
-              href="/brand/monosip-mark.svg"
+              href={brandFile("monosip-mark.svg")}
               x="294"
               y="193"
               width="52"
