@@ -22,8 +22,6 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     "out/**",
-    ".research/**",
-    "legacy/**",
     ".tools/**",
     "next-env.d.ts",
     "test-results/**",

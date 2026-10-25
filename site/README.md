@@ -2,7 +2,7 @@
 
 The English product site for the open-source [MonoSIP PBX](https://github.com/MonoSIP/MonoSIP). Next.js App Router and TypeScript, statically exported from this folder.
 
-Public address: **https://monosip.github.io/**. `.github/workflows/pages.yml` builds `site/` and publishes the export to [MonoSIP/monosip.github.io](https://github.com/MonoSIP/monosip.github.io).
+Public address: **https://www.monosip.com**. Source repository: **[MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP)**, folder `site/`. Cloudflare serves the static export. See [deployment](docs/DEPLOYMENT.md).
 
 ## Local development
 
@@ -46,7 +46,7 @@ pnpm check:links
 
 Browser checks cover twelve routes at 375, 768, 1024, 1440, 1920, 2560 and 3840px in both themes: viewport overflow, resources, theme persistence/system changes, reduced motion, ripple lifecycle, mobile navigation, keyboard screen tabs, release-to-install navigation, clipboard success/failure, direct links and refresh. axe checks all pages and the appearance panel for WCAG A/AA semantics and contrast. Reports and screenshots are ignored local artifacts.
 
-`check:export` validates canonical URLs, old anchors, local links/assets, sitemap, robots, `.nojekyll` and 404. `check:links` separately verifies external destinations with live HEAD requests.
+`check:export` validates canonical URLs, section anchors, local links/assets, sitemap, robots, `.nojekyll` and 404. `check:links` separately verifies external destinations with live HEAD requests.
 
 Windows builds currently reproduce [Next #85374](https://github.com/vercel/next.js/issues/85374). A post-export script creates the flat RSC segment filenames requested by the client. Framework source is untouched; correct Linux output is unchanged.
 
@@ -54,13 +54,12 @@ Windows builds currently reproduce [Next #85374](https://github.com/vercel/next.
 
 - Home, downloads, release updates, brand assets, documentation index and seven full guides, including voicemail and forwarding. The reference directory links twelve official documents to the pinned release source.
 - Release v1.8.0 is the pinned snapshot. Image, source archive, Compose commands and guide references use the central release value in `src/lib/site.ts`.
-- Original SVG logos, social PNG, Apple icon and legacy project captures preserved at their old URLs. The website presents ten theme-aware SVG interface mockups instead of screenshots, including the voicemail inbox, with call flows, audio waves and activity indicators. They use illustrative sample data.
+- SVG logos, social PNG and Apple icon live in `public/brand/`. The website presents ten theme-aware SVG interface mockups instead of screenshots, including the voicemail inbox, with call flows, audio waves and activity indicators. They use illustrative sample data.
 - Locally served Outfit and JetBrains Mono, with Latin/Turkish coverage. Central variables include the requested Quicksand token; no unnecessary third font is loaded.
 - Shared fluid container up to 1440px, centralized spacing and 4/6/8px component corners, light/dark tokens.
 - Light, Dark and System appearance tiles with native radio behavior, persistent preferences and an early theme script.
 - Mouse-icon control for pointer response and bounded click ripples. Turning mouse effects off removes their listeners/frames while continuous background and diagram animations keep running. Reduced motion and hidden tabs pause all effects; offscreen diagram motion pauses.
-- Original call-route SVG, Compose service map, clear example labels and a genuine screen gallery. No live PBX calls or microphone requests.
-- [Research record](docs/RESEARCH.md) covers official sources, corrected legacy claims, hosting, design references and version compatibility decisions.
+- Call-route SVG, Compose service map, clear example labels and a screen gallery. No live PBX calls or microphone requests.
 
 ## Structure
 
@@ -68,19 +67,18 @@ Windows builds currently reproduce [Next #85374](https://github.com/vercel/next.
 src/app/           Routes, metadata, sitemap, robots and CSS tokens
 src/components/    Preferences, navigation, SVGs, gallery and code controls
 src/lib/           Product facts, guide content and navigation
-public/brand/      Original vector marks, favicon and sharing images
-public/images/     Original WebP product captures
+public/brand/      Vector marks, favicon and sharing images
+public/images/     WebP product captures
 src/components/product-mockup.tsx  Animated SVG interface concepts
-legacy/            Preserved original website source (not deployed)
 scripts/           Preview server, export normalization and link checks
 tests/             Production-export browser verification
-../.github/workflows/pages.yml  Builds this folder and publishes the export
+wrangler.jsonc    Cloudflare asset directory for the static export
 ```
 
 Update the release and download links in `src/lib/site.ts`, then review article facts against the official product sources.
 
 ## Deployment and ownership
 
-A push to `main` that changes `site/` builds this folder and copies the static export to `MonoSIP/monosip.github.io`. That repository is what GitHub Pages serves at https://monosip.github.io/. There is no custom-domain CNAME in the export.
+Cloudflare builds `site/` from [MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP) and serves https://www.monosip.com. The custom domain is attached in Cloudflare. The export does not include a CNAME file.
 
 MonoSIP is MIT licensed. Original product and brand copyright: **2026 diggyen**. See the [official project](https://github.com/MonoSIP/MonoSIP) for current development and contribution guidance.

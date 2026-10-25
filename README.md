@@ -73,7 +73,7 @@ Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
 ## Documentation
 
-All docs live under **[docs/](docs/README.md)**. The product address is **[www.monosip.com](https://www.monosip.com)**. The published site is **[monosip.github.io](https://monosip.github.io/)**; its source is **[site/](site/)**.
+All docs live under **[docs/](docs/README.md)**. The site is **[www.monosip.com](https://www.monosip.com)**; its source is **[site/](site/)** in this repository.
 
 ## License
 
