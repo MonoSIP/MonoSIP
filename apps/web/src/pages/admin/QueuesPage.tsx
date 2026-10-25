@@ -222,7 +222,7 @@ export function QueuesPage() {
         icon={Headphones}
         title={t("queues.title")}
         tone="blue"
-        description={tr("Call queues, agents, and overflow destinations")}
+        description={tr("Queues, agents, overflow")}
       />
       <SectionCard title={tr("Queue list")} icon={ListOrdered} tone="blue" flush className="mb-6">
         <table className="table">

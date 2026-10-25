@@ -54,7 +54,7 @@ export function FlowsPage() {
         icon={GitBranch}
         title={t("flows.title")}
         tone="cyan"
-        description={tr("Visual IVR flows — assign a dialable extension for softphone testing")}
+        description={tr("Flows with a dialable extension")}
       />
       <SectionCard title={tr("All flows")} icon={List} tone="blue">
         <div className="grid gap-3">

@@ -142,7 +142,7 @@ export function RoutesPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description={tr("Inbound DIDs and outbound patterns")} />
+      <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description={tr("Inbound DIDs, outbound patterns")} />
       <SectionCard title={t("routes.inbound")} icon={Signpost} tone="cyan">
         <table className="table">
           <thead>

@@ -231,7 +231,7 @@ export function PromptsPage() {
         icon={Mic}
         title={t("nav.prompts")}
         tone="coral"
-        description={tr("IVR prompts — upload WAV or generate with TTS")}
+        description={tr("Upload WAV or use TTS")}
         actions={ttsBadge}
       />
 

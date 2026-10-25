@@ -839,14 +839,22 @@ textarea.input {
   background: color-mix(in oklab, var(--info) 12%, transparent);
   border-color: color-mix(in oklab, var(--info) 30%, var(--border));
 }
+.ssl-renew {
+  margin-left: auto;
+  flex-shrink: 0;
+}
 
 .page-header {
+  position: relative;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  padding: 6px 10px 9px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
 }
 @media (max-width: 720px) {
   .page-header {
@@ -858,6 +866,11 @@ textarea.input {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.page-header-title > div {
+  min-width: 0;
 }
 .page-header-icon {
   display: grid;
@@ -865,9 +878,23 @@ textarea.input {
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius);
-  background: var(--surface-soft);
+  background: var(--card);
   color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--border);
   flex-shrink: 0;
+}
+.page-header .rt-SelectTrigger,
+.page-header .rt-Button {
+  height: 2rem;
+  min-height: 2rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.page-header .rt-Button:hover,
+.page-header .rt-SelectTrigger:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
 }
 .page-header h1 {
   margin: 0;
@@ -881,12 +908,52 @@ textarea.input {
   color: var(--text-muted);
   font-size: 0.92rem;
 }
+.page-header p.page-header-desc {
+  margin: 0;
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.page-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent-bright) 80%, var(--accent)));
+  pointer-events: none;
+}
 
 .stat-tile {
   border-radius: var(--radius-md);
   padding: 0.85rem 1rem;
   border: 1px solid var(--border);
   background: var(--card);
+}
+.dash {
+  --dash-blue: #7eb0d4;
+}
+html.light .dash {
+  --dash-blue: #2563eb;
+}
+.dash .stat-tile {
+  --dash-wash: var(--accent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--dash-wash) 30%, var(--card)),
+    var(--card) 72%
+  );
+  border-color: color-mix(in srgb, var(--dash-wash) 46%, var(--border));
+}
+.dash .stat-tile[data-tone="success"] { --dash-wash: var(--success); }
+.dash .stat-tile[data-tone="danger"] { --dash-wash: var(--danger); }
+.dash .stat-tile[data-tone="blue"] { --dash-wash: var(--dash-blue); }
+.dash .section-card-head {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent), transparent 76%);
 }
 .stat-tile .stat-label {
   display: flex;
@@ -956,6 +1023,15 @@ textarea.input {
 
 .admin-stage,
 .portal-stage { position: relative; z-index: 1; }
+@media (min-width: 768px) {
+  /* First line of the page sits on the same row as the sidebar logo. */
+  .admin-shell:not(.overflow-hidden) .admin-stage > main {
+    padding-top: 7px;
+  }
+  .portal-shell .portal-stage > main {
+    padding-top: 8px;
+  }
+}
 .admin-brand {
   display: flex;
   align-items: center;
@@ -2417,8 +2493,21 @@ textarea.input {
 @media (prefers-reduced-motion: reduce) { .ui-switch-thumb, .ui-switch-thumb::after { transition: none; animation: none !important; } }
 
 /* Page load veil (components/PageVeil.tsx) */
-.page-veil { position: relative; min-height: 100%; }
-.page-veil-content { transition: filter 0.25s ease, opacity 0.25s ease; }
+.admin-stage > main,
+.portal-stage > main {
+  scrollbar-gutter: stable;
+}
+.page-veil { position: relative; min-height: 100%; min-width: 0; }
+.page-veil-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+.admin-stage .page-veil-content > * {
+  max-width: 100%;
+  min-width: 0;
+}
 .page-veil.is-loading .page-veil-content {
   opacity: 0.45;
   pointer-events: none;

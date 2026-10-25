@@ -254,7 +254,7 @@ export function SchedulesPage() {
         icon={CalendarClock}
         title={t("schedules.title")}
         tone="cyan"
-        description={tr("Open hours, overrides, and holiday routing")}
+        description={tr("Hours, overrides, holidays")}
       />
 
       {!list.data?.length ? (

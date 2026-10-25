@@ -87,7 +87,7 @@ export function RecordingsPage() {
         icon={Disc}
         title={t("nav.recordings")}
         tone="coral"
-        description={tr("Listen, download, and review access logs for stored call recordings")}
+        description={tr("Listen, download, access log")}
       />
       {playingId && (
         <SectionCard title={tr("Player")} icon={FileAudio} tone="coral">

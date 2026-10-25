@@ -87,7 +87,7 @@ export function CdrPage() {
         icon={History}
         title={t("cdr.title")}
         tone="blue"
-        description={tr("Call detail records and quality metrics")}
+        description={tr("Records and quality")}
         actions={
           <Button asChild>
             <a href={exportHref}>

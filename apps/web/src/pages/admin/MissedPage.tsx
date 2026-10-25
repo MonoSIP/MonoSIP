@@ -57,7 +57,7 @@ export function MissedPage() {
         icon={PhoneMissed}
         title={t("nav.missed")}
         tone="coral"
-        description={tr("Track missed calls and mark follow-up status")}
+        description={tr("Missed calls and follow-up")}
         actions={tabButtons}
       />
       <SectionCard title={tr("Missed calls")} icon={List} tone="coral" flush>

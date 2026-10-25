@@ -83,7 +83,7 @@
   },
   "trunks": {
     "title": "SIP providers",
-    "blurb": "Configure ITSP / carrier trunks: registration or IP auth, codecs, channel limit, and notes for your DIDs.",
+    "blurb": "Carrier trunks and DID notes",
     "host": "SIP host",
     "name": "Provider name",
     "port": "Port",
@@ -132,7 +132,7 @@
   },
   "blacklist": {
     "title": "Blocked numbers",
-    "blurb": "Block inbound or outbound calls by exact number or wildcard. Matching uses full country-code forms (e.g. 0532… and 90532…).",
+    "blurb": "Block a number or wildcard",
     "add": "Add block",
     "list": "Block list",
     "pattern": "Pattern",

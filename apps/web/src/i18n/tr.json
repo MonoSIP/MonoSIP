@@ -83,7 +83,7 @@
   },
   "trunks": {
     "title": "SIP sağlayıcıları",
-    "blurb": "ITSP / operatör hatları: kayıt veya IP kimlik doğrulama, codec, kanal limiti ve DID notları.",
+    "blurb": "Operatör hatları ve DID notları",
     "host": "SIP sunucu",
     "name": "Sağlayıcı adı",
     "port": "Port",
@@ -132,7 +132,7 @@
   },
   "blacklist": {
     "title": "Bloklanan numaralar",
-    "blurb": "Gelen veya giden çağrıları tam numara veya joker (*) ile engelleyin. Eşleştirme ülke kodlu formlarla yapılır (örn. 0532… ve 90532…).",
+    "blurb": "Numara veya joker engeli",
     "add": "Blok ekle",
     "list": "Blok listesi",
     "pattern": "Kalıp",

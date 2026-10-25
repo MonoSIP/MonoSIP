@@ -43,7 +43,7 @@ export function BlacklistPage() {
   });
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
         icon={Ban}
         title={t("blacklist.title")}

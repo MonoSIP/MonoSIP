@@ -84,7 +84,7 @@ export function RingGroupsPage() {
         icon={UsersRound}
         title={t("nav.ringGroups")}
         tone="cyan"
-        description={tr("Ring multiple extensions together with ringall or linear strategy")}
+        description={tr("Ring together or in order")}
       />
       <SectionCard title={tr("Ring groups")} icon={List} tone="blue" flush>
         <table className="table">

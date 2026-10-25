@@ -126,14 +126,20 @@ export function PageHeader({
           <Icon size={22} strokeWidth={2.25} />
         </Text>
         <div>
-          <Heading as="h1" size="6" weight="medium" wrap="balance">
-            {title}
-          </Heading>
           {description ? (
-            <Text as="p" size="2" color="gray" mt="1">
-              {description}
-            </Text>
-          ) : null}
+            <>
+              <Heading as="h1" className="sr-only">
+                {title}
+              </Heading>
+              <Text as="p" size="2" className="page-header-desc">
+                {description}
+              </Text>
+            </>
+          ) : (
+            <Heading as="h1" size="6" weight="medium" wrap="balance">
+              {title}
+            </Heading>
+          )}
         </div>
       </Flex>
       {actions ? (
@@ -159,7 +165,7 @@ export function StatTile({
 }) {
   return (
     <InTheme>
-    <Card size="2" className="stat-tile">
+    <Card size="2" className="stat-tile" data-tone={tone}>
       <Flex direction="column" gap="1">
         <Flex align="center" gap="2" className="stat-label">
           <Text color={TONE_COLOR[tone]} as="span">

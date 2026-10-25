@@ -169,7 +169,7 @@ export function MohPage() {
         icon={Music}
         title={tr("Music on Hold")}
         tone="blue"
-        description={tr("Upload WAV/MP3/OGG; non-WAV or wrong sample rate is converted to 8 kHz mono WAV for Asterisk. Use Play to preview.")}
+        description={tr("Hold music files")}
       />
       <div className="space-y-4">
         {(list.data ?? []).length === 0 ? (

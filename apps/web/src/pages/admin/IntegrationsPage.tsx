@@ -116,7 +116,7 @@ export function IntegrationsPage() {
         icon={Webhook}
         title={t("nav.integrations")}
         tone="blue"
-        description={tr("Webhooks, API keys, and website call widgets")}
+        description={tr("Webhooks, API keys, widgets")}
       />
       <SectionCard title={tr("Webhooks")} icon={Webhook} tone="coral">
         <ul className="mb-4 space-y-2">

@@ -256,7 +256,7 @@ export function ExtensionsPage() {
         icon={Users}
         title={t("extensions.title")}
         tone="blue"
-        description={tr("Desk phones, softphones, and portal accounts")}
+        description={tr("Phones and portal accounts")}
         actions={
           <div className="flex gap-2">
             <Button type="button" onClick={() => void exportCsv()}>

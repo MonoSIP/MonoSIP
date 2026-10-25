@@ -1,11 +1,7 @@
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Languages, LogOut, Moon, Sun } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
-import { toggleAppLocale } from "../i18n";
 import { APP_VERSION } from "../lib/version";
-import { Button } from "./ui";
 
 type Props = {
   subtitle?: React.ReactNode;
@@ -43,37 +39,6 @@ export async function signOut(
   }
   setActor(null);
   navigate("/login", { replace: true });
-}
-
-/** Theme, language, and sign-out. The flow designer keeps these in the header; the admin logo and the portal user button open the same menu. */
-export function ShellTools() {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const theme = useStore((s) => s.theme);
-  const toggleTheme = useStore((s) => s.toggleTheme);
-  const setActor = useStore((s) => s.setActor);
-
-  function logout() {
-    void signOut(navigate, setActor);
-  }
-
-  return (
-    <div className="shell-tool-group">
-      <Button type="button" aria-label={t("common.theme")} onClick={toggleTheme}>
-        <span className="icon-swap" aria-hidden>
-          <Sun size={16} strokeWidth={2.25} className={theme === "dark" ? "is-on" : undefined} />
-          <Moon size={16} strokeWidth={2.25} className={theme === "light" ? "is-on" : undefined} />
-        </span>
-      </Button>
-      <Button type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
-        <Languages size={16} strokeWidth={2.25} aria-hidden />
-        {(i18n.language || "en").slice(0, 2).toUpperCase()}
-      </Button>
-      <Button type="button" aria-label={t("common.logout")} onClick={() => void logout()}>
-        <LogOut size={16} strokeWidth={2.25} />
-      </Button>
-    </div>
-  );
 }
 
 export function AppBrand({

@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import i18n, { toggleAppLocale } from "../i18n";
 import { AmbientBackground } from "../components/AmbientBackground";
-import { ProductSiteLink, ProductVersion, ShellTools, signOut } from "../components/AppBrand";
+import { ProductSiteLink, ProductVersion, signOut } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 import { Button } from "../components/ui";
 import { useStore } from "../store";
@@ -111,8 +111,8 @@ export function AdminLayout() {
         </aside>
       )}
       <div className="admin-stage flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="shell-tools">
-          {!flowDesigner && (
+        {!flowDesigner && (
+          <div className="shell-tools">
             <Button
               type="button"
               className="shell-menu"
@@ -123,9 +123,8 @@ export function AdminLayout() {
               <Menu size={16} strokeWidth={2.25} />
               {t("common.menu", { defaultValue: "Menu" })}
             </Button>
-          )}
-          {flowDesigner ? <ShellTools /> : null}
-        </div>
+          </div>
+        )}
         <main
           className={`min-h-0 min-w-0 flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
         >

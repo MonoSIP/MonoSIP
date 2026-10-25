@@ -65,7 +65,7 @@ export function DevicesPage() {
         icon={QrCode}
         title={tr("Devices / Softphone QR")}
         tone="blue"
-        description={tr("Provision desk phones and generate SIP QR codes for mobile softphones")}
+        description={tr("Desk phones and SIP QR")}
       />
       <SectionCard title={tr("Devices")} icon={List} tone="cyan" flush>
         <table className="table">

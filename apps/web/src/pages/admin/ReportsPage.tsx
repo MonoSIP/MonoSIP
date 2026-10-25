@@ -80,7 +80,7 @@ export function ReportsPage() {
         icon={BarChart3}
         title={t("reports.title")}
         tone="cyan"
-        description={tr("Call volume, queues, IVR, and voice quality for the selected range")}
+        description={tr("Volume, queues, IVR, quality")}
       />
       <SectionCard title={tr("Date range")} icon={CalendarRange} tone="cyan">
         <div className="toolbar">

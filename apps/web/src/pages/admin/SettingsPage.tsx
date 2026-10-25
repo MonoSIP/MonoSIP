@@ -346,8 +346,8 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <PageHeader icon={Settings} title={t("settings.title")} tone="coral" description={tr("Company, security, mail, and system options")} />
+    <div className="space-y-6">
+      <PageHeader icon={Settings} title={t("settings.title")} tone="coral" description={tr("Company, security, mail, system")} />
       <SectionCard title={t("settings.hostnameSection")} icon={Globe} tone="cyan" className="space-y-4">
         <TextField
           label={t("settings.hostname")}
@@ -391,24 +391,25 @@ export function SettingsPage() {
           {sslStatus.data?.lastError ? (
             <span className="text-[var(--danger)] text-xs break-all">{sslStatus.data.lastError}</span>
           ) : null}
+          <Button
+            type="button"
+            className="ssl-renew"
+            disabled={!autoSsl || !hostname.trim()}
+            onClick={() => {
+              void api
+                .post<{ ok: boolean; error?: string; expiresAt?: string }>("/api/v1/admin/ssl/renew", {})
+                .then((r) => {
+                  if (r.ok) toast.success(t("settings.sslRenewOk"));
+                  else toast.error(r.error ?? tr("SSL failed"));
+                  void qc.invalidateQueries({ queryKey: ["ssl-status"] });
+                  void qc.invalidateQueries({ queryKey: ["settings"] });
+                })
+                .catch((e) => toast.error((e as Error).message));
+            }}
+          >
+            {t("settings.sslRenewNow")}
+          </Button>
         </div>
-        <Button
-          type="button"
-          disabled={!autoSsl || !hostname.trim()}
-          onClick={() => {
-            void api
-              .post<{ ok: boolean; error?: string; expiresAt?: string }>("/api/v1/admin/ssl/renew", {})
-              .then((r) => {
-                if (r.ok) toast.success(t("settings.sslRenewOk"));
-                else toast.error(r.error ?? tr("SSL failed"));
-                void qc.invalidateQueries({ queryKey: ["ssl-status"] });
-                void qc.invalidateQueries({ queryKey: ["settings"] });
-              })
-              .catch((e) => toast.error((e as Error).message));
-          }}
-        >
-          {t("settings.sslRenewNow")}
-        </Button>
       </SectionCard>
       <SectionCard title={t("settings.company")} icon={Building2} tone="blue" className="space-y-4">
         <TextField label={t("settings.company")} value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
