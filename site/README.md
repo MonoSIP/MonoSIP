@@ -2,7 +2,7 @@
 
 The English product site for the open-source [MonoSIP PBX](https://github.com/MonoSIP/MonoSIP). Next.js App Router and TypeScript, statically exported from this folder.
 
-Public address: **https://monosip.github.io/MonoSIP/**. Source repository: **[MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP)**, folder `site/`. GitHub Pages serves the static export. See [deployment](docs/DEPLOYMENT.md).
+Public address: **https://www.monosip.com**. Source repository: **[MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP)**, folder `site/`. GitHub Pages serves the static export. See [deployment](docs/DEPLOYMENT.md).
 
 ## Local development
 
@@ -78,6 +78,6 @@ Update the release and download links in `src/lib/site.ts`, then review article 
 
 ## Deployment and ownership
 
-GitHub Pages builds `site/` from [MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP) and serves https://monosip.github.io/MonoSIP/. The export does not include a CNAME file.
+GitHub Pages builds `site/` from [MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP) and serves https://www.monosip.com. The custom domain is `www.monosip.com` in `public/CNAME`.
 
 MonoSIP is MIT licensed. Original product and brand copyright: **2026 diggyen**. See the [official project](https://github.com/MonoSIP/MonoSIP) for current development and contribution guidance.

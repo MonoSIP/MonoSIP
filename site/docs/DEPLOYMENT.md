@@ -1,7 +1,7 @@
 # GitHub Pages
 
 Website source: the `site/` folder in **[MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP)**.
-Public URL: **https://monosip.github.io/MonoSIP/**.
+Public URL: **https://www.monosip.com**.
 
 Pushing `main` runs `.github/workflows/pages.yml`. The workflow builds this folder and publishes the static export with GitHub Pages.
 
@@ -10,5 +10,6 @@ Pushing `main` runs `.github/workflows/pages.yml`. The workflow builds this fold
 - Build: `pnpm install --frozen-lockfile && pnpm build`
 - Output: `out/`
 - Pages source: GitHub Actions
+- Custom domain: `www.monosip.com`, from `public/CNAME`
 
-The site is a project page, so `basePath` is `/MonoSIP`. Do not add a `CNAME` file to the export.
+DNS for `www` is a CNAME record pointing at `monosip.github.io`.

@@ -11,7 +11,7 @@ function walk(dir) {
         /href="(https:\/\/[^"<>]+)"/g,
       )) {
         const parsed = new URL(url.replaceAll("&amp;", "&"));
-        if (parsed.hostname !== "monosip.github.io") {
+        if (parsed.hostname !== "www.monosip.com") {
           parsed.hash = "";
           links.add(parsed.href);
         }

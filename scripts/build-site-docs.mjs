@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const siteDir = join(root, "site");
 const outDir = join(siteDir, "docs");
-const SITE = "https://monosip.github.io/MonoSIP";
+const SITE = "https://www.monosip.com";
 
 const pages = [
   {

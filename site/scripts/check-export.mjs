@@ -3,14 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = "out";
-const origin = "https://monosip.github.io/MonoSIP";
-const base = "/MonoSIP";
-const localPath = (pathname) =>
-  pathname === base || pathname === `${base}/`
-    ? "/"
-    : pathname.startsWith(`${base}/`)
-      ? pathname.slice(base.length)
-      : pathname;
+const origin = "https://www.monosip.com";
 const routes = [
   "/",
   "/download/",
@@ -87,7 +80,7 @@ for (const [path, html] of documents) {
     const value = raw.replaceAll("&amp;", "&");
     if (/^(https?:|mailto:|data:|tel:)/.test(value)) continue;
     const url = new URL(value, `${origin}${path}`);
-    const pathname = localPath(url.pathname);
+    const pathname = url.pathname;
     if (url.hash && (!pathname.includes(".") || documents.has(pathname))) {
       const target = documents.get(pathname);
       if (target)
@@ -105,9 +98,9 @@ for (const [path, html] of documents) {
 }
 assert.ok(existsSync(join(root, ".nojekyll")), "Missing .nojekyll");
 assert.equal(
-  existsSync(join(root, "CNAME")),
-  false,
-  `Do not publish a CNAME; the site is ${origin}`,
+  readFileSync(join(root, "CNAME"), "utf8").trim(),
+  "www.monosip.com",
+  "Pages custom domain must be www.monosip.com",
 );
 assert.ok(existsSync(join(root, "404.html")), "Missing 404");
 const home = documents.get("/");

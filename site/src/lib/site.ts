@@ -3,7 +3,7 @@ const repo = "https://github.com/MonoSIP/MonoSIP";
 
 export const site = {
   name: "MonoSIP",
-  url: "https://monosip.github.io/MonoSIP",
+  url: "https://www.monosip.com",
   repo,
   websiteRepo: "https://github.com/MonoSIP/MonoSIP",
   version,
