@@ -17,7 +17,7 @@ describe("mailboxOwner", () => {
 describe("mailbox identity", () => {
   it("treats the symlink path and the real path as the same recording", () => {
     expect(mailboxKey("/data/asterisk/voicemail/100-1729000.12.wav")).toBe(
-      mailboxKey("/var/lib/asterisk/munasip/voicemail/100-1729000.12.WAV"),
+      mailboxKey("/var/lib/asterisk/monosip/voicemail/100-1729000.12.WAV"),
     );
   });
 

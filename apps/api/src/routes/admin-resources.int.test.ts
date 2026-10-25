@@ -198,7 +198,7 @@ describe("internal hooks require the shared secret", () => {
       method: method as "POST",
       url,
       payload: {},
-      headers: { "x-munasip-internal": "wrong" },
+      headers: { "x-monosip-internal": "wrong" },
     });
     expect(res.statusCode).toBe(401);
   });
@@ -225,6 +225,85 @@ describe("unauthenticated endpoints stay open and inert", () => {
   it("GET /cfg/:mac 404s an unknown MAC rather than leaking config", async () => {
     const res = await app.inject({ method: "GET", url: `/cfg/${ID}` });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe("desk-phone provisioning requires the device secret", () => {
+  async function makeDevice(mac: string) {
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/devices",
+      headers: auth(fx.adminToken),
+      payload: { extensionId: fx.extensionId, mac, provisioningProfile: "yealink" },
+    });
+    expect(res.statusCode).toBe(200);
+    return (res.json() as { id: string }).id;
+  }
+
+  it("404s without the secret and serves the config with it", async () => {
+    const mac = "aabbccddeeff";
+    const id = await makeDevice(mac);
+    try {
+      // The admin hands the provisioning URL to the phone. Fetching it first
+      // provisions the device secret, so the checks below exercise a device
+      // that really has one.
+      const qr = await app.inject({
+        method: "GET",
+        url: `/api/v1/admin/devices/${id}/qr`,
+        headers: auth(fx.adminToken),
+      });
+      expect(qr.statusCode).toBe(200);
+      const { provisionUrl, user } = qr.json() as { provisionUrl: string | null; user: string };
+      expect(provisionUrl).toBeTruthy();
+      const url = new URL(provisionUrl!);
+
+      // The MAC alone must not be enough: it leaks over LAN and is guessable.
+      const bare = await app.inject({ method: "GET", url: `/cfg/${mac}.cfg` });
+      expect(bare.statusCode).toBe(404);
+
+      // A wrong secret is rejected the same way, so the response does not
+      // reveal that this MAC is registered.
+      const wrong = await app.inject({ method: "GET", url: `/cfg/${mac}.cfg?t=wrong-secret` });
+      expect(wrong.statusCode).toBe(404);
+
+      const ok = await app.inject({ method: "GET", url: url.pathname + url.search });
+      expect(ok.statusCode).toBe(200);
+      // The response carries the SIP credentials — which is exactly why it is
+      // gated behind the device secret.
+      expect(ok.body).toContain(user);
+    } finally {
+      await app.inject({
+        method: "DELETE",
+        url: `/api/v1/admin/devices/${id}`,
+        headers: auth(fx.adminToken),
+      });
+    }
+  });
+
+  it("does not echo the provisioning secret in the device list", async () => {
+    const id = await makeDevice("ffeeddccbbaa");
+    try {
+      await app.inject({
+        method: "GET",
+        url: `/api/v1/admin/devices/${id}/qr`,
+        headers: auth(fx.adminToken),
+      });
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/v1/admin/devices",
+        headers: auth(fx.adminToken),
+      });
+      expect(res.statusCode).toBe(200);
+      for (const row of res.json() as Array<Record<string, unknown>>) {
+        expect(row.provisionSecretEnc).toBeUndefined();
+      }
+    } finally {
+      await app.inject({
+        method: "DELETE",
+        url: `/api/v1/admin/devices/${id}`,
+        headers: auth(fx.adminToken),
+      });
+    }
   });
 });
 

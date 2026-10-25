@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MunaSIP host firewall helper (nftables).
+# MonoSIP host firewall helper (nftables).
 # Review and edit CIDRs before applying. Does NOT run automatically from Docker.
 #
 # Usage:
@@ -23,8 +23,8 @@ if ! command -v nft >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Flushing previous inet munasip_filter table (if any)…"
-nft delete table inet munasip_filter 2>/dev/null || true
+echo "Flushing previous inet monosip_filter table (if any)…"
+nft delete table inet monosip_filter 2>/dev/null || true
 
 SIP_RULES=""
 if [[ -z "$SIP_ALLOW" ]]; then
@@ -53,7 +53,7 @@ if [[ -n "$SSH_ALLOW" ]]; then
 fi
 
 nft -f - <<EOF
-table inet munasip_filter {
+table inet monosip_filter {
   chain input {
     type filter hook input priority 0; policy drop;
     iif lo accept
@@ -65,5 +65,5 @@ ${SIP_RULES}${SSH_RULES}  }
 }
 EOF
 
-echo "Applied inet munasip_filter. Persist with your distro (e.g. nft list ruleset > /etc/nftables.conf)."
+echo "Applied inet monosip_filter. Persist with your distro (e.g. nft list ruleset > /etc/nftables.conf)."
 echo "Prefer panel export for SIP CIDRs synced from Settings + trunks."

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const siteDir = join(root, "site");
 const outDir = join(siteDir, "docs");
-const SITE = "https://munasip.github.io";
+const SITE = "https://monosip.github.io";
 
 const pages = [
   {
@@ -13,16 +13,16 @@ const pages = [
     file: "README.md",
     slug: "",
     nav: "Overview",
-    title: "MunaSIP documentation",
+    title: "MonoSIP documentation",
     description:
-      "Guides for MunaSIP, a self-hosted Asterisk PBX: Docker install, visual IVR, browser softphone, API, security and deployment.",
+      "Guides for MonoSIP, a self-hosted Asterisk PBX: Docker install, visual IVR, browser softphone, API, security and deployment.",
   },
   {
     src: "docs/INSTALL.md",
     file: "INSTALL.md",
     slug: "install",
     nav: "Install",
-    title: "Install MunaSIP with Docker",
+    title: "Install MonoSIP with Docker",
     description:
       "Install the self-hosted company PBX from a prebuilt Docker image or Compose. Ports, volumes, lab logins and upgrading.",
   },
@@ -31,7 +31,7 @@ const pages = [
     file: "FEATURES.md",
     slug: "features",
     nav: "Features",
-    title: "MunaSIP features for a company PBX",
+    title: "MonoSIP features for a company PBX",
     description:
       "Extensions, queues, schedules, a visual IVR with API lookups, neural speech, a browser softphone and call logs in one PBX.",
   },
@@ -40,25 +40,25 @@ const pages = [
     file: "ARCHITECTURE.md",
     slug: "architecture",
     nav: "Architecture",
-    title: "MunaSIP architecture",
+    title: "MonoSIP architecture",
     description:
-      "How MunaSIP is wired: nginx, the React panel, the Fastify API, Asterisk 22, PostgreSQL and embedded text-to-speech.",
+      "How MonoSIP is wired: nginx, the React panel, the Fastify API, Asterisk 22, PostgreSQL and embedded text-to-speech.",
   },
   {
     src: "docs/DEPLOY-VPS.md",
     file: "DEPLOY-VPS.md",
     slug: "deploy",
     nav: "Deploy",
-    title: "Deploy MunaSIP on a VPS",
+    title: "Deploy MonoSIP on a VPS",
     description:
-      "Put MunaSIP on a Linux VPS: public hostname, NAT, firewall ports, desk phones and TURN for the browser softphone.",
+      "Put MonoSIP on a Linux VPS: public hostname, NAT, firewall ports, desk phones and TURN for the browser softphone.",
   },
   {
     src: "docs/USER-PORTAL.md",
     file: "USER-PORTAL.md",
     slug: "user-portal",
     nav: "Portal",
-    title: "MunaSIP user portal and softphone",
+    title: "MonoSIP user portal and softphone",
     description:
       "Each extension gets a browser softphone that stays on the call, plus directory, voicemail, recordings and forwarding.",
   },
@@ -67,72 +67,72 @@ const pages = [
     file: "FLOW-DESIGNER.md",
     slug: "ivr",
     nav: "IVR",
-    title: "Visual IVR designer for MunaSIP",
+    title: "Visual IVR designer for MonoSIP",
     description:
-      "Draw a MunaSIP IVR: menus, API lookups, neural speech, transfers and queues. Test the call, then publish it.",
+      "Draw a MonoSIP IVR: menus, API lookups, neural speech, transfers and queues. Test the call, then publish it.",
   },
   {
     src: "docs/DATA-MODEL.md",
     file: "DATA-MODEL.md",
     slug: "data-model",
     nav: "Data model",
-    title: "MunaSIP data model",
+    title: "MonoSIP data model",
     description:
-      "What MunaSIP stores in PostgreSQL: extensions, queues, call flows, CDR, recordings and system settings.",
+      "What MonoSIP stores in PostgreSQL: extensions, queues, call flows, CDR, recordings and system settings.",
   },
   {
     src: "docs/API.md",
     file: "API.md",
     slug: "api",
     nav: "API",
-    title: "MunaSIP HTTP API",
+    title: "MonoSIP HTTP API",
     description:
-      "HTTP API for the MunaSIP admin panel, the user portal and outside systems: extensions, flows, CDR, webhooks and API keys.",
+      "HTTP API for the MonoSIP admin panel, the user portal and outside systems: extensions, flows, CDR, webhooks and API keys.",
   },
   {
     src: "docs/SCREENS.md",
     file: "SCREENS.md",
     slug: "screens",
     nav: "Screens",
-    title: "MunaSIP admin and portal screens",
+    title: "MonoSIP admin and portal screens",
     description:
-      "What each MunaSIP screen is for: dashboard, extensions, queues, the IVR designer, call logs, reports and settings.",
+      "What each MonoSIP screen is for: dashboard, extensions, queues, the IVR designer, call logs, reports and settings.",
   },
   {
     src: "docs/TEST-PLAN.md",
     file: "TEST-PLAN.md",
     slug: "test-plan",
     nav: "Test plan",
-    title: "MunaSIP test plan",
+    title: "MonoSIP test plan",
     description:
-      "Checklist for testing a MunaSIP install: admin sign-in, the portal, IVR, live calls, recordings and deployment.",
+      "Checklist for testing a MonoSIP install: admin sign-in, the portal, IVR, live calls, recordings and deployment.",
   },
   {
     src: "docs/SERVER-SECURITY.md",
     file: "SERVER-SECURITY.md",
     slug: "security",
     nav: "Security",
-    title: "MunaSIP server security and KVKK",
+    title: "MonoSIP server security and KVKK",
     description:
-      "Harden a MunaSIP host: firewall, SIP exposure, toll-fraud limits, call recording and the KVKK announcement.",
+      "Harden a MonoSIP host: firewall, SIP exposure, toll-fraud limits, call recording and the KVKK announcement.",
   },
   {
     src: "docs/TTS.md",
     file: "TTS.md",
     slug: "text-to-speech",
     nav: "Speech",
-    title: "MunaSIP text-to-speech",
+    title: "MonoSIP text-to-speech",
     description:
-      "MunaSIP speech uses Edge Neural voices and offline Turkish EMA. Prompts are cached per sentence and spoken on the call.",
+      "MonoSIP speech uses Edge Neural voices and offline Turkish EMA. Prompts are cached per sentence and spoken on the call.",
   },
   {
     src: "TASKS.md",
     file: "TASKS.md",
     slug: "roadmap",
     nav: "Roadmap",
-    title: "MunaSIP roadmap",
+    title: "MonoSIP roadmap",
     description:
-      "What has shipped in MunaSIP: the core PBX and admin panel, the visual IVR and portal, then live monitoring and integrations.",
+      "What has shipped in MonoSIP: the core PBX and admin panel, the visual IVR and portal, then live monitoring and integrations.",
   },
 ];
 
@@ -175,7 +175,7 @@ function rewriteHref(href) {
 
 function linkLabel(text, href) {
   const path = href.split("#")[0];
-  if (path === "../site" || path === "../site/") return "MunaSIP site";
+  if (path === "../site" || path === "../site/") return "MonoSIP site";
   if (!path.endsWith(".md")) return text;
   const page = byFile.get(path.slice(path.lastIndexOf("/") + 1));
   if (page && (text.endsWith(".md") || text.includes("/"))) return page.nav;
@@ -435,8 +435,8 @@ function jsonLd(page) {
         url,
         inLanguage: "en",
         mainEntityOfPage: url,
-        author: { "@type": "Organization", name: "MunaSIP", url: `${SITE}/` },
-        publisher: { "@type": "Organization", name: "MunaSIP", url: `${SITE}/` },
+        author: { "@type": "Organization", name: "MonoSIP", url: `${SITE}/` },
+        publisher: { "@type": "Organization", name: "MonoSIP", url: `${SITE}/` },
       },
     ],
   };
@@ -476,7 +476,7 @@ function pageShell(page, body) {
     <link rel="canonical" href="${canonical}" />
     <meta name="theme-color" content="#047857" />
     <link rel="apple-touch-icon" href="${asset}/brand/apple-touch-icon.png" />
-    <link rel="icon" type="image/svg+xml" href="${asset}/brand/munasip-mark.svg" />
+    <link rel="icon" type="image/svg+xml" href="${asset}/brand/monosip-mark.svg" />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:title" content="${esc(page.title)}" />
@@ -496,8 +496,8 @@ function pageShell(page, body) {
     <header class="nav" id="top">
       <div class="wrap nav-row">
         <a class="brand" href="${home}">
-          <img class="brand-mark" src="${asset}/brand/munasip-mark.svg" width="32" height="32" alt="" />
-          <span class="brand-name">MünaSIP</span>
+          <img class="brand-mark" src="${asset}/brand/monosip-mark.svg" width="32" height="32" alt="" />
+          <span class="brand-name">MonoSIP</span>
           <span class="brand-ver">v${esc(version)}</span>
         </a>
         <nav class="nav-links" data-i18n-aria="nav.sections" aria-label="Sections">
@@ -510,7 +510,7 @@ function pageShell(page, body) {
             <button type="button" data-set-lang="tr" aria-pressed="false">TR</button>
           </div>
           <a class="btn btn-ghost btn-sm nav-docs" href="${docsHome}" data-i18n="nav.docs">Docs</a>
-          <a class="btn btn-ghost btn-sm nav-github" href="https://github.com/MunaSIP/MunaSIP">
+          <a class="btn btn-ghost btn-sm nav-github" href="https://github.com/MonoSIP/MonoSIP">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" fill="currentColor"/></svg>
             GitHub
           </a>
@@ -530,8 +530,8 @@ function pageShell(page, body) {
     </main>
     <footer class="footer">
       <div class="wrap footer-row">
-        <a class="brand" href="${home}"><img class="brand-mark" src="${asset}/brand/munasip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MünaSIP</span></a>
-        <span class="muted"><span data-i18n="footer.blurb">Self-hosted company PBX</span> · <a href="${docsHome}" data-i18n="nav.docs">Docs</a> · <a href="https://github.com/MunaSIP/MunaSIP/blob/main/LICENSE" data-i18n="footer.mit">MIT License</a></span>
+        <a class="brand" href="${home}"><img class="brand-mark" src="${asset}/brand/monosip-mark.svg" width="32" height="32" alt="" /><span class="brand-name">MonoSIP</span></a>
+        <span class="muted"><span data-i18n="footer.blurb">Self-hosted company PBX</span> · <a href="${docsHome}" data-i18n="nav.docs">Docs</a> · <a href="https://github.com/MonoSIP/MonoSIP/blob/main/LICENSE" data-i18n="footer.mit">MIT License</a></span>
         <a href="#top" class="muted" data-i18n="footer.top">Back to top ↑</a>
       </div>
     </footer>

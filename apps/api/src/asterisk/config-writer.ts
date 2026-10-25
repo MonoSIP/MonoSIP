@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import {
   extensions,
   trunks,
@@ -23,6 +23,7 @@ import {
   webWidgets,
 } from "../db/schema.js";
 import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
+import { EMERGENCY } from "../lib/call-policy.js";
 import { resolveExtensionNumber } from "./routing.js";
 import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
 import { queueLanguage, queueSoundLanguage } from "./queue-lang.js";
@@ -92,11 +93,11 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
   }
   // Only the generated conf files — never chown -R the whole tree (sounds hang seed).
   const confFiles = [
-    "pjsip_munasip.conf",
-    "acl_munasip.conf",
-    "queues_munasip.conf",
-    "extensions_munasip.conf",
-    "musiconhold_munasip.conf",
+    "pjsip_monosip.conf",
+    "acl_monosip.conf",
+    "queues_monosip.conf",
+    "extensions_monosip.conf",
+    "musiconhold_monosip.conf",
     "reload.flag",
   ];
   for (const name of confFiles) {
@@ -197,7 +198,7 @@ export type ConfigChanges = {
  * reload makes res_pjsip reload its whole config asynchronously, and an explicit
  * res_pjsip reload overlapping it never finishes ("The previous reload command
  * didn't finish yet" forever) — SIP over WebSocket then goes silent. When the ACL
- * changed, its own res_pjsip reload covers pjsip_munasip.conf too.
+ * changed, its own res_pjsip reload covers pjsip_monosip.conf too.
  *
  * `module load` (first run after boot only) revives modules that DECLINED at cold
  * start because their config was briefly unreadable; `load` on a running module is
@@ -269,7 +270,7 @@ export async function reloadAsteriskCli(changes: ConfigChanges): Promise<boolean
 function kvkkPlaybackLine(kvkkPromptId: string | null | undefined): string {
   if (kvkkPromptId) {
     const safe = kvkkPromptId.replace(/[^\w.-]/g, "");
-    if (safe) return ` same => n,Playback(munasip/${safe})`;
+    if (safe) return ` same => n,Playback(monosip/${safe})`;
   }
   // Fallback: short silence+beep when no prompt configured
   return ` same => n,Playback(beep)`;
@@ -286,43 +287,43 @@ function kvkkPlaybackLine(kvkkPromptId: string | null | undefined): string {
  */
 export function internalPost(apiPath: string, jsonBody: string): string {
   const url = `${config.internalApiUrl}/api/v1/internal/${apiPath}`;
-  return `Set(MUNASIP_HOOK=\${CURL(${url},secret=${config.internalApiSecret}&payload=\${URIENCODE(${jsonBody})})})`;
+  return `Set(MONOSIP_HOOK=\${CURL(${url},secret=${config.internalApiSecret}&payload=\${URIENCODE(${jsonBody})})})`;
 }
 
 /** Prep flat channel vars for CDR / recording JSON (no nested () in System()). */
 /**
  * After Queue(): agent extension, hold time (QEHOLDTIME) and talk time measured from
- * queue entry (MUNASIP_QSTART) — the channel was answered long before for MOH/announces.
+ * queue entry (MONOSIP_QSTART) — the channel was answered long before for MOH/announces.
  */
 function queueOutcomeLines(label: string): string[] {
   return [
-    ` same => n,Set(MUNASIP_AGENT=\${CUT(MEMBERINTERFACE,/,2)})`,
-    ` same => n,Set(MUNASIP_QWAIT=)`,
-    ` same => n,GotoIf($["\${MUNASIP_AGENT}" = "" | "\${MUNASIP_QSTART}" = ""]?${label})`,
-    ` same => n,Set(MUNASIP_QWAIT=\${QEHOLDTIME})`,
-    ` same => n,Set(MUNASIP_BILL=$[\${EPOCH} - \${MUNASIP_QSTART} - \${QEHOLDTIME}])`,
-    ` same => n(${label}),NoOp(Queue outcome agent=\${MUNASIP_AGENT} wait=\${MUNASIP_QWAIT})`,
+    ` same => n,Set(MONOSIP_AGENT=\${CUT(MEMBERINTERFACE,/,2)})`,
+    ` same => n,Set(MONOSIP_QWAIT=)`,
+    ` same => n,GotoIf($["\${MONOSIP_AGENT}" = "" | "\${MONOSIP_QSTART}" = ""]?${label})`,
+    ` same => n,Set(MONOSIP_QWAIT=\${QEHOLDTIME})`,
+    ` same => n,Set(MONOSIP_BILL=$[\${EPOCH} - \${MONOSIP_QSTART} - \${QEHOLDTIME}])`,
+    ` same => n(${label}),NoOp(Queue outcome agent=\${MONOSIP_AGENT} wait=\${MONOSIP_QWAIT})`,
   ];
 }
 
 function qosPrepLines(opts?: { dialedTime?: boolean; cdrDuration?: boolean }): string[] {
   const lines = [
-    ` same => n,Set(MUNASIP_CID=\${CALLERID(num)})`,
-    ` same => n,Set(MUNASIP_BILL=\${IF($["\${ANSWEREDTIME}"=""]?0:\${ANSWEREDTIME})})`,
-    ` same => n,Set(MUNASIP_MOS=\${CHANNEL(rtpqos,audio,local,mos)})`,
-    ` same => n,Set(MUNASIP_JIT=\${CHANNEL(rtpqos,audio,local,jitter)})`,
-    ` same => n,Set(MUNASIP_LOSS=\${CHANNEL(rtpqos,audio,local,lost)})`,
+    ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
+    ` same => n,Set(MONOSIP_BILL=\${IF($["\${ANSWEREDTIME}"=""]?0:\${ANSWEREDTIME})})`,
+    ` same => n,Set(MONOSIP_MOS=\${CHANNEL(rtpqos,audio,local,mos)})`,
+    ` same => n,Set(MONOSIP_JIT=\${CHANNEL(rtpqos,audio,local,jitter)})`,
+    ` same => n,Set(MONOSIP_LOSS=\${CHANNEL(rtpqos,audio,local,lost)})`,
   ];
   if (opts?.dialedTime !== false) {
     lines.splice(
       2,
       0,
-      ` same => n,Set(MUNASIP_DUR=\${IF($["\${DIALEDTIME}"=""]?0:\${DIALEDTIME})})`,
+      ` same => n,Set(MONOSIP_DUR=\${IF($["\${DIALEDTIME}"=""]?0:\${DIALEDTIME})})`,
     );
   }
   if (opts?.cdrDuration) {
     lines.push(
-      ` same => n,Set(MUNASIP_CDRDUR=\${IF($["\${CDR(duration)}"=""]?0:\${CDR(duration)})})`,
+      ` same => n,Set(MONOSIP_CDRDUR=\${IF($["\${CDR(duration)}"=""]?0:\${CDR(duration)})})`,
     );
   }
   return lines;
@@ -420,7 +421,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   // SIP IP ACL → acl.conf named ACL (pjsip type=acl is ignored; undefined ACL rejects all)
   let sipAclName: string | null = null;
-  const namedAclConf: string[] = ["; Auto-generated by MunaSIP — do not edit", ""];
+  const namedAclConf: string[] = ["; Auto-generated by MonoSIP — do not edit", ""];
   try {
     const { loadSecuritySettings } = await import("../lib/security-settings.js");
     const sec = await loadSecuritySettings();
@@ -452,7 +453,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const allDeny = [...new Set([...deny, ...banDeny])].filter((d) => !loopbackDeny.has(d));
     const hasAllowlist = (sec.sipIpAllowlist ?? []).some((s) => s.trim());
     if (hasAllowlist || allDeny.length > 0) {
-      sipAclName = "munasip_sip_acl";
+      sipAclName = "monosip_sip_acl";
       // Asterisk named ACL: last matching rule wins
       namedAclConf.push(`[${sipAclName}]`);
       if (hasAllowlist) {
@@ -467,7 +468,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
   }
 
   const pjsip: string[] = [
-    "; Auto-generated by MunaSIP — do not edit",
+    "; Auto-generated by MonoSIP — do not edit",
     "",
     ...transportUdp,
     "",
@@ -575,8 +576,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
         "media_encryption=dtls",
         "media_use_received_transport=yes",
         "rtp_timeout=60",
-        `set_var=MUNASIP_WIDGET_NUM=${g.widgetNumber}`,
-        `set_var=MUNASIP_WIDGET_MAX=${g.maxCallSeconds}`,
+        `set_var=MONOSIP_WIDGET_NUM=${g.widgetNumber}`,
+        `set_var=MONOSIP_WIDGET_MAX=${g.maxCallSeconds}`,
         g.callerName ? `callerid="${g.callerName.replace(/"/g, "")}" <${id}>` : `callerid=Web <${id}>`,
         "",
         `[${id}]`,
@@ -696,12 +697,12 @@ async function writeAsteriskConfigNow(): Promise<void> {
       return `Goto(from-internal,*${num},1)`;
     }
     if (destType === "flow" && destId) {
-      return `Stasis(munasip-flow,${destId})`;
+      return `Stasis(monosip-flow,${destId})`;
     }
     return "Hangup()";
   };
 
-  const queuesConf: string[] = ["; Auto-generated by MunaSIP", ""];
+  const queuesConf: string[] = ["; Auto-generated by MonoSIP", ""];
   for (const q of qs) {
     const empty = queueEmptyRules(Boolean(q.joinemptyDestType));
     const mohClass = moh.find((m) => m.id === q.mohId)?.name ?? "default";
@@ -740,19 +741,19 @@ async function writeAsteriskConfigNow(): Promise<void> {
   }
 
   const extensionsConf: string[] = [
-    "; Auto-generated by MunaSIP",
+    "; Auto-generated by MonoSIP",
     "",
     "[from-internal]",
     // Set() first + single-quoted JSON: System() shell otherwise mangles \" escapes
     // and nested CALLERID(num) parens are safer outside the curl -d string.
     "exten => *78,1,NoOp(DND on)",
-    " same => n,Set(MUNASIP_DND_EXT=${CALLERID(num)})",
-    ` same => n,${internalPost("dnd", '{"extension":"\${MUNASIP_DND_EXT}","dnd":true}')}`,
+    " same => n,Set(MONOSIP_DND_EXT=${CALLERID(num)})",
+    ` same => n,${internalPost("dnd", '{"extension":"\${MONOSIP_DND_EXT}","dnd":true}')}`,
     " same => n,Playback(beep)",
     " same => n,Hangup()",
     "exten => *79,1,NoOp(DND off)",
-    " same => n,Set(MUNASIP_DND_EXT=${CALLERID(num)})",
-    ` same => n,${internalPost("dnd", '{"extension":"\${MUNASIP_DND_EXT}","dnd":false}')}`,
+    " same => n,Set(MONOSIP_DND_EXT=${CALLERID(num)})",
+    ` same => n,${internalPost("dnd", '{"extension":"\${MONOSIP_DND_EXT}","dnd":false}')}`,
     " same => n,Playback(beep)",
     " same => n,Hangup()",
     "exten => *8,1,Pickup()",
@@ -769,8 +770,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
     if (!/^\d{2,8}$/.test(num)) continue;
     extensionsConf.push(
       `exten => ${num},1,NoOp(Flow ${f.name})`,
-      " same => n,Gosub(munasip-blacklist,s,1)",
-      ` same => n,Stasis(munasip-flow,${f.id})`,
+      " same => n,Gosub(monosip-blacklist,s,1)",
+      ` same => n,Stasis(monosip-flow,${f.id})`,
       ` same => n,Hangup()`,
       "",
     );
@@ -808,7 +809,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const recFile = `/var/spool/asterisk/recording/\${UNIQUEID}-${ext.number}.wav`;
     const recRegister = internalPost(
       "recording",
-      `{"callId":"\${UNIQUEID}","file":"/data/recordings/\${UNIQUEID}-${ext.number}.wav","extension":"${ext.number}","duration":\${MUNASIP_BILL}}`,
+      `{"callId":"\${UNIQUEID}","file":"/data/recordings/\${UNIQUEID}-${ext.number}.wav","extension":"${ext.number}","duration":\${MONOSIP_BILL}}`,
     );
     // on_demand / off / never: no auto MixMonitor. always and external record.
     // A call between extensions is kept when either side is set to record.
@@ -829,7 +830,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ]
       : [];
     const recLines = [
-      ` same => n,Set(MUNASIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
+      ` same => n,Set(MONOSIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
       ` same => n,MixMonitor(${recFile})`,
     ];
 
@@ -837,7 +838,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       extensionHintLine(ext.number),
       `exten => ${ext.number},1,NoOp(Dial ${ext.number})`,
       // Caller and dialed number, including extension-to-extension.
-      " same => n,Gosub(munasip-blacklist,s,1)",
+      " same => n,Gosub(monosip-blacklist,s,1)",
       // DND → treat as BUSY (honor busy/noanswer forwarding)
       ` same => n,GotoIf($["\${DB(DND/${ext.number})}" = "1"]?dndbusy)`,
     );
@@ -856,7 +857,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     }
     if (alwaysExternal) {
       extensionsConf.push(
-        ` same => n,Stasis(munasip-outbound,${alwaysExternal})`,
+        ` same => n,Stasis(monosip-outbound,${alwaysExternal})`,
         ` same => n,Hangup()`,
         ` same => n(dndbusy),Goto(s-BUSY-${ext.number},1)`,
         "",
@@ -864,12 +865,12 @@ async function writeAsteriskConfigNow(): Promise<void> {
     } else {
       const cdrPost = internalPost(
         "cdr",
-        `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"\${MUNASIP_CALLEE}","disposition":"\${DIALSTATUS}","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_DUR},"wait":"\${MUNASIP_WAIT}","direction":"internal","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
+        `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${MONOSIP_CALLEE}","disposition":"\${DIALSTATUS}","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_DUR},"wait":"\${MONOSIP_WAIT}","direction":"internal","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
       );
       extensionsConf.push(
         // Distinctive ring: short caller = internal, longer = external (desk phones use Alert-Info).
         // Escape ';' — bare ';' starts an Asterisk dialplan comment and truncates the Set().
-        ` same => n,Set(MUNASIP_CALLEE=${ext.number})`,
+        ` same => n,Set(MONOSIP_CALLEE=${ext.number})`,
         ` same => n,GotoIf($[\${LEN(\${CALLERID(num)})} > 5]?alerte)`,
         ` same => n,Set(PJSIP_HEADER(add,Alert-Info)=<http://127.0.0.1>\\;info=internal)`,
         ` same => n,Goto(dodial)`,
@@ -877,14 +878,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ` same => n(dodial),Dial(${dialTarget},${ringSec},tT)`,
         ...qosPrepLines(),
         // Ring time before answer (DIALEDTIME includes talk time)
-        ` same => n,Set(MUNASIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${MUNASIP_DUR} - \${MUNASIP_BILL}]:)})`,
-        ` same => n,GotoIf($["\${MUNASIP_RECFILE}" = ""]?skiprec)`,
+        ` same => n,Set(MONOSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${MONOSIP_DUR} - \${MONOSIP_BILL}]:)})`,
+        ` same => n,GotoIf($["\${MONOSIP_RECFILE}" = ""]?skiprec)`,
         ` same => n,StopMixMonitor()`,
         ` same => n,${recRegister}`,
-        ` same => n,Set(MUNASIP_REC_DONE=1)`,
+        ` same => n,Set(MONOSIP_REC_DONE=1)`,
         ` same => n(skiprec),NoOp(Recording)`,
         ` same => n,${cdrPost}`,
-        ` same => n,Set(MUNASIP_CDR_DONE=1)`,
+        ` same => n,Set(MONOSIP_CDR_DONE=1)`,
         // ANSWER: hang up cleanly. Failures jump to per-status forward/missed handlers.
         ` same => n,GotoIf($["\${DIALSTATUS}" != "ANSWER"]?fwd)`,
         ` same => n,Hangup()`,
@@ -895,8 +896,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
     }
 
     const missedCurl = [
-      ` same => n,Set(MUNASIP_CID=\${CALLERID(num)})`,
-      ` same => n,${internalPost("missed", `{"caller":"\${MUNASIP_CID}","target":"${ext.number}"}`)}`,
+      ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
+      ` same => n,${internalPost("missed", `{"caller":"\${MONOSIP_CID}","target":"${ext.number}"}`)}`,
     ];
 
     // Per-extension dialstatus forwarding
@@ -933,7 +934,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ext.mobileForwardAllowed
       ) {
         extensionsConf.push(
-          `exten => s-${st}-${ext.number},1,Stasis(munasip-outbound,${rule.destId})`,
+          `exten => s-${st}-${ext.number},1,Stasis(monosip-outbound,${rule.destId})`,
           ` same => n,Hangup()`,
           "",
         );
@@ -961,43 +962,43 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "",
     // Caller BYE during Dial aborts the dialplan — catch CDR here once.
     "exten => h,1,NoOp(Hangup handler CDR)",
-    ` same => n,GotoIf($["\${MUNASIP_CDR_DONE}" = "1"]?cdrdone)`,
-    ` same => n,GotoIf($["\${MUNASIP_QUEUE}" != ""]?hqueue)`,
-    ` same => n,GotoIf($["\${MUNASIP_CALLEE}" = ""]?cdrdone)`,
+    ` same => n,GotoIf($["\${MONOSIP_CDR_DONE}" = "1"]?cdrdone)`,
+    ` same => n,GotoIf($["\${MONOSIP_QUEUE}" != ""]?hqueue)`,
+    ` same => n,GotoIf($["\${MONOSIP_CALLEE}" = ""]?cdrdone)`,
     ...qosPrepLines(),
     // Caller BYE aborts the lines after Dial(), so the MixMonitor file never reached the panel.
-    ` same => n,GotoIf($["\${MUNASIP_REC_DONE}" = "1" | "\${MUNASIP_RECFILE}" = ""]?reccdr)`,
+    ` same => n,GotoIf($["\${MONOSIP_REC_DONE}" = "1" | "\${MONOSIP_RECFILE}" = ""]?reccdr)`,
     ` same => n,StopMixMonitor()`,
     ` same => n,${internalPost(
       "recording",
-      `{"callId":"\${UNIQUEID}","file":"\${MUNASIP_RECFILE}","duration":\${MUNASIP_BILL}}`,
+      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","duration":\${MONOSIP_BILL}}`,
     )}`,
-    ` same => n,Set(MUNASIP_REC_DONE=1)`,
+    ` same => n,Set(MONOSIP_REC_DONE=1)`,
     ` same => n(reccdr),NoOp(Recording)`,
-    ` same => n,Set(MUNASIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER" | "\${DIALSTATUS}" = ""]?$[\${MUNASIP_DUR} - \${MUNASIP_BILL}]:)})`,
-    ` same => n,Set(MUNASIP_DISP=\${IF($["\${DIALSTATUS}"=""]?ANSWER:\${DIALSTATUS})})`,
+    ` same => n,Set(MONOSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER" | "\${DIALSTATUS}" = ""]?$[\${MONOSIP_DUR} - \${MONOSIP_BILL}]:)})`,
+    ` same => n,Set(MONOSIP_DISP=\${IF($["\${DIALSTATUS}"=""]?ANSWER:\${DIALSTATUS})})`,
     ` same => n,${internalPost(
       "cdr",
-      `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"\${MUNASIP_CALLEE}","disposition":"\${MUNASIP_DISP}","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_DUR},"wait":"\${MUNASIP_WAIT}","direction":"internal","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
+      `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${MONOSIP_CALLEE}","disposition":"\${MONOSIP_DISP}","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_DUR},"wait":"\${MONOSIP_WAIT}","direction":"internal","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
     )}`,
     " same => n,Goto(cdrdone)",
     // Caller left a queue (abandoned while waiting, or hung up on the agent)
-    " same => n(hqueue),NoOp(Queue hangup CDR ${MUNASIP_QUEUE})",
-    " same => n,UnpauseQueueMember(${MUNASIP_QUEUE},PJSIP/${CALLERID(num)})",
+    " same => n(hqueue),NoOp(Queue hangup CDR ${MONOSIP_QUEUE})",
+    " same => n,UnpauseQueueMember(${MONOSIP_QUEUE},PJSIP/${CALLERID(num)})",
     ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
     ...queueOutcomeLines("hqout"),
-    ` same => n,Set(MUNASIP_DISP=\${IF($["\${MUNASIP_AGENT}" = ""]?NOANSWER:ANSWER)})`,
+    ` same => n,Set(MONOSIP_DISP=\${IF($["\${MONOSIP_AGENT}" = ""]?NOANSWER:ANSWER)})`,
     ` same => n,${internalPost(
       "cdr",
-      `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"\${MUNASIP_QUEUE}","disposition":"\${MUNASIP_DISP}","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_CDRDUR},"direction":"internal","queueNumber":"\${MUNASIP_QUEUE}","extension":"\${MUNASIP_AGENT}","wait":"\${MUNASIP_QWAIT}","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
+      `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${MONOSIP_QUEUE}","disposition":"\${MONOSIP_DISP}","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_CDRDUR},"direction":"internal","queueNumber":"\${MONOSIP_QUEUE}","extension":"\${MONOSIP_AGENT}","wait":"\${MONOSIP_QWAIT}","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
     )}`,
     " same => n(cdrdone),NoOp(CDR done)",
     // Hangup during Record() skips the lines after it. File the mailbox from here.
-    ` same => n,GotoIf($["\${MUNASIP_VM_DONE}" = "1" | "\${MUNASIP_VMFILE}" = ""]?vmdone)`,
-    ` same => n,Set(MUNASIP_VM_DONE=1)`,
+    ` same => n,GotoIf($["\${MONOSIP_VM_DONE}" = "1" | "\${MONOSIP_VMFILE}" = ""]?vmdone)`,
+    ` same => n,Set(MONOSIP_VM_DONE=1)`,
     ` same => n,${internalPost(
       "voicemail",
-      `{"extension":"\${MUNASIP_VMEXT}","caller":"\${MUNASIP_VMCID}","file":"\${MUNASIP_VMFILE}"}`,
+      `{"extension":"\${MONOSIP_VMEXT}","caller":"\${MONOSIP_VMCID}","file":"\${MONOSIP_VMFILE}"}`,
     )}`,
     " same => n(vmdone),NoOp(Voicemail filed)",
     "",
@@ -1005,7 +1006,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   // Voicemail deposit via Record → API (portal inbox). Path under the shared volume.
   // `#` or silence continues below and posts the file. A hangup skips those lines,
-  // so the `h` extension posts MUNASIP_VMFILE instead. `k` keeps the wav on hangup.
+  // so the `h` extension posts MONOSIP_VMFILE instead. `k` keeps the wav on hangup.
   const vmRoot = voicemailDir();
   const vmDeposit = (ext: { number: string; voicemailGreeting: string | null }) => {
     const num = ext.number;
@@ -1013,19 +1014,19 @@ async function writeAsteriskConfigNow(): Promise<void> {
     return [
     `exten => *${num},1,NoOp(Voicemail deposit ${num})`,
     ` same => n,Answer()`,
-    ...(greet ? [` same => n,Playback(munasip/${voicemailGreetingMediaId(num)})`] : []),
+    ...(greet ? [` same => n,Playback(monosip/${voicemailGreetingMediaId(num)})`] : []),
     ` same => n,Playback(beep)`,
-    // Keep the number taken before Record(). The hangup path rewrites MUNASIP_CID
+    // Keep the number taken before Record(). The hangup path rewrites MONOSIP_CID
     // from CALLERID(num), which is often empty by then and showed up as a dash.
-    ` same => n,Set(MUNASIP_VMCID=\${CALLERID(num)})`,
-    ` same => n,GotoIf($["\${MUNASIP_VMCID}" != "" & "\${MUNASIP_VMCID}" != "-"]?vmkeep)`,
-    ` same => n,Set(MUNASIP_VMCID=\${MUNASIP_CID})`,
-    ` same => n(vmkeep),Set(MUNASIP_VMEXT=${num})`,
+    ` same => n,Set(MONOSIP_VMCID=\${CALLERID(num)})`,
+    ` same => n,GotoIf($["\${MONOSIP_VMCID}" != "" & "\${MONOSIP_VMCID}" != "-"]?vmkeep)`,
+    ` same => n,Set(MONOSIP_VMCID=\${MONOSIP_CID})`,
+    ` same => n(vmkeep),Set(MONOSIP_VMEXT=${num})`,
     ` same => n,Set(VMFILE=${vmRoot}/${num}-\${UNIQUEID})`,
-    ` same => n,Set(MUNASIP_VMFILE=\${VMFILE}.wav)`,
-    ` same => n,Record(\${MUNASIP_VMFILE},3,120,kq)`,
-    ` same => n,${internalPost("voicemail", `{"extension":"${num}","caller":"\${MUNASIP_VMCID}","file":"\${MUNASIP_VMFILE}"}`)}`,
-    ` same => n,Set(MUNASIP_VM_DONE=1)`,
+    ` same => n,Set(MONOSIP_VMFILE=\${VMFILE}.wav)`,
+    ` same => n,Record(\${MONOSIP_VMFILE},3,120,kq)`,
+    ` same => n,${internalPost("voicemail", `{"extension":"${num}","caller":"\${MONOSIP_VMCID}","file":"\${MONOSIP_VMFILE}"}`)}`,
+    ` same => n,Set(MONOSIP_VM_DONE=1)`,
     ` same => n,Hangup()`,
     "",
   ];
@@ -1046,7 +1047,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // Ring one-by-one until answer
       const lines = [
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name} linear)`,
-        " same => n,Gosub(munasip-blacklist,s,1)",
+        " same => n,Gosub(monosip-blacklist,s,1)",
       ];
       for (const e of members) {
         lines.push(` same => n,Dial(PJSIP/${e!.number},${rg.ringSeconds},tT)`);
@@ -1058,7 +1059,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       const dial = members.map((e) => `PJSIP/${e!.number}`).join("&");
       extensionsConf.push(
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name})`,
-        " same => n,Gosub(munasip-blacklist,s,1)",
+        " same => n,Gosub(monosip-blacklist,s,1)",
         ` same => n,Dial(${dial},${rg.ringSeconds},tT)`,
         ` same => n,Hangup()`,
         "",
@@ -1087,19 +1088,19 @@ async function writeAsteriskConfigNow(): Promise<void> {
     // MEMBERINTERFACE=PJSIP/101 → agent extension for the portal call history
     const queueCdrLines = [
       ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
-      ` same => n,Set(MUNASIP_DISP=\${IF($["\${QUEUESTATUS}"=""]?ANSWER:\${QUEUESTATUS})})`,
+      ` same => n,Set(MONOSIP_DISP=\${IF($["\${QUEUESTATUS}"=""]?ANSWER:\${QUEUESTATUS})})`,
       ...queueOutcomeLines("qout"),
       ` same => n,${internalPost(
         "cdr",
-        `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"${q.number}","disposition":"\${MUNASIP_DISP}","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_CDRDUR},"direction":"internal","queueNumber":"${q.number}","extension":"\${MUNASIP_AGENT}","wait":"\${MUNASIP_QWAIT}","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
+        `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"${q.number}","disposition":"\${MONOSIP_DISP}","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_CDRDUR},"direction":"internal","queueNumber":"${q.number}","extension":"\${MONOSIP_AGENT}","wait":"\${MONOSIP_QWAIT}","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
       )}`,
-      ` same => n,Set(MUNASIP_CDR_DONE=1)`,
+      ` same => n,Set(MONOSIP_CDR_DONE=1)`,
     ];
     // Queue-level MixMonitor (shared spool → recordings panel)
     const qRecFile = `/var/spool/asterisk/recording/\${UNIQUEID}-q${q.number}.wav`;
     const qRecRegister = internalPost(
       "recording",
-      `{"callId":"\${UNIQUEID}","file":"/data/recordings/\${UNIQUEID}-q${q.number}.wav","extension":"${q.number}","duration":\${MUNASIP_BILL}}`,
+      `{"callId":"\${UNIQUEID}","file":"/data/recordings/\${UNIQUEID}-q${q.number}.wav","extension":"${q.number}","duration":\${MONOSIP_BILL}}`,
     );
     // TTS announce language (sounds under /var/lib/asterisk/sounds/<lang>/)
     let qLang: "tr" | "en" = config.defaultLocale === "tr" ? "tr" : "en";
@@ -1115,11 +1116,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const mohName = moh.find((m) => m.id === q.mohId)?.name ?? "default";
     const queueHead = [
       `exten => ${q.number},1,NoOp(Queue ${q.name})`,
-      " same => n,Gosub(munasip-blacklist,s,1)",
+      " same => n,Gosub(monosip-blacklist,s,1)",
       ` same => n,Answer()`,
       // Hangup handler `h` posts the CDR if the caller leaves before Queue() returns
-      ` same => n,Set(MUNASIP_QUEUE=${q.number})`,
-      ` same => n,Set(MUNASIP_QSTART=)`,
+      ` same => n,Set(MONOSIP_QUEUE=${q.number})`,
+      ` same => n,Set(MONOSIP_QSTART=)`,
       // tr_ema / en_male … = that voice's clips, falling back to tr / en
       ` same => n,Set(CHANNEL(language)=${queueSoundLanguage(qLang, q.voice)})`,
       ` same => n,Set(CHANNEL(musicclass)=${mohName})`,
@@ -1173,18 +1174,18 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ` same => n,Playback(queue-callback-offer)`,
         ` same => n,Read(CALLBACK_OPT,silence/1,1,,,2,5)`,
         ` same => n,GotoIf($["\${CALLBACK_OPT}" = "1"]?cb)`,
-        ` same => n,Set(MUNASIP_QSTART=\${EPOCH})`,
+        ` same => n,Set(MONOSIP_QSTART=\${EPOCH})`,
         ` same => n,${queueApp}`,
         ...queueTail,
         ` same => n(cb),NoOp(Queue callback requested — keep place)`,
         ` same => n,Set(CBPLACE=$[$\{QUEUE_WAITING_COUNT(${q.number})} + 1])`,
-        ` same => n,Set(MUNASIP_CID=\${CALLERID(num)})`,
-        ` same => n,Set(DB(QCB/${q.number}/\${MUNASIP_CID})=\${EPOCH}|\${CBPLACE})`,
-        ` same => n,${internalPost("queue-callback", `{"queue":"${q.number}","number":"\${MUNASIP_CID}","place":\${CBPLACE}}`)}`,
+        ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
+        ` same => n,Set(DB(QCB/${q.number}/\${MONOSIP_CID})=\${EPOCH}|\${CBPLACE})`,
+        ` same => n,${internalPost("queue-callback", `{"queue":"${q.number}","number":"\${MONOSIP_CID}","place":\${CBPLACE}}`)}`,
         // Callback keeps the caller's place — not an abandoned call
-        ` same => n,Set(MUNASIP_CDR_DONE=1)`,
+        ` same => n,Set(MONOSIP_CDR_DONE=1)`,
         ` same => n,StopMixMonitor()`,
-        ` same => n,UnpauseQueueMember(${q.number},PJSIP/\${MUNASIP_CID})`,
+        ` same => n,UnpauseQueueMember(${q.number},PJSIP/\${MONOSIP_CID})`,
         ` same => n,Playback(queue-callback-confirm)`,
         ` same => n,Hangup()`,
         "",
@@ -1192,7 +1193,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     } else {
       extensionsConf.push(
         ...queueHead,
-        ` same => n,Set(MUNASIP_QSTART=\${EPOCH})`,
+        ` same => n,Set(MONOSIP_QSTART=\${EPOCH})`,
         ` same => n,${queueApp}`,
         ...queueTail,
         "",
@@ -1200,11 +1201,12 @@ async function writeAsteriskConfigNow(): Promise<void> {
     }
   }
 
-  // Emergency numbers — always dial (bypass Stasis policy)
-  for (const em of ["112", "911", "155", "110"]) {
+  // Emergency numbers — always dial (skip the blacklist Gosub the _X. catch-all runs).
+  // Sources from the policy engine's single EMERGENCY set (lib/call-policy.ts).
+  for (const em of EMERGENCY) {
     extensionsConf.push(
       `exten => ${em},1,NoOp(Emergency ${em})`,
-      ` same => n,Stasis(munasip-outbound,${em})`,
+      ` same => n,Stasis(monosip-outbound,${em})`,
       ` same => n,Hangup()`,
       "",
     );
@@ -1212,14 +1214,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   extensionsConf.push(
     "exten => _X.,1,NoOp(Outbound ${EXTEN})",
-    " same => n,Gosub(munasip-blacklist,s,1)",
-    " same => n,Stasis(munasip-outbound,${EXTEN})",
+    " same => n,Gosub(monosip-blacklist,s,1)",
+    " same => n,Stasis(monosip-outbound,${EXTEN})",
     " same => n,Hangup()",
     "",
   );
 
   // Dedicated context for flow-runtime voicemail redirects (after from-internal)
-  extensionsConf.push("[munasip-voicemail]", "");
+  extensionsConf.push("[monosip-voicemail]", "");
   for (const ext of exts) {
     extensionsConf.push(
       `exten => *${ext.number},1,Goto(from-internal,*${ext.number},1)`,
@@ -1232,11 +1234,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
   extensionsConf.push(
     "[from-widget]",
     "exten => _X.,1,NoOp(Widget guest ${CHANNEL(endpoint)} dial ${EXTEN})",
-    " same => n,GotoIf($[\"${EXTEN}\" = \"${MUNASIP_WIDGET_NUM}\"]?ok:deny)",
+    " same => n,GotoIf($[\"${EXTEN}\" = \"${MONOSIP_WIDGET_NUM}\"]?ok:deny)",
     " same => n(deny),Playback(ss-noservice)",
     " same => n,Hangup(21)",
-    " same => n(ok),Set(TIMEOUT(absolute)=${IF($[\"${MUNASIP_WIDGET_MAX}\"=\"\"]?600:${MUNASIP_WIDGET_MAX})})",
-    " same => n,Stasis(munasip-inbound,${EXTEN},${CALLERID(num)})",
+    " same => n(ok),Set(TIMEOUT(absolute)=${IF($[\"${MONOSIP_WIDGET_MAX}\"=\"\"]?600:${MONOSIP_WIDGET_MAX})})",
+    " same => n,Stasis(monosip-inbound,${EXTEN},${CALLERID(num)})",
     " same => n,Hangup()",
     "",
   );
@@ -1255,19 +1257,19 @@ async function writeAsteriskConfigNow(): Promise<void> {
   extensionsConf.push(
     "[from-trunk]",
     "exten => _X.,1,NoOp(Inbound DID ${EXTEN})",
-    " same => n,Stasis(munasip-inbound,${EXTEN},${CALLERID(num)})",
+    " same => n,Stasis(monosip-inbound,${EXTEN},${CALLERID(num)})",
     " same => n,Hangup()",
     "",
     "[stasis-flow]",
-    "exten => _X.,1,Stasis(munasip-flow,${EXTEN})",
+    "exten => _X.,1,Stasis(monosip-flow,${EXTEN})",
     " same => n,Hangup()",
     "",
     // Flow transfer: Dial then re-enter Stasis with DIALSTATUS on failure
-    "[munasip-flow-dial]",
-    "exten => s,1,NoOp(Flow dial ${MUNASIP_DIAL_TARGET})",
-    " same => n,Dial(PJSIP/${MUNASIP_DIAL_TARGET},${IF($[\"${MUNASIP_DIAL_TIMEOUT}\"=\"\"]?30:${MUNASIP_DIAL_TIMEOUT})},tTm(${IF($[\"${MUNASIP_DIAL_MOH}\"=\"\"]?default:${MUNASIP_DIAL_MOH})}))",
+    "[monosip-flow-dial]",
+    "exten => s,1,NoOp(Flow dial ${MONOSIP_DIAL_TARGET})",
+    " same => n,Dial(PJSIP/${MONOSIP_DIAL_TARGET},${IF($[\"${MONOSIP_DIAL_TIMEOUT}\"=\"\"]?30:${MONOSIP_DIAL_TIMEOUT})},tTm(${IF($[\"${MONOSIP_DIAL_MOH}\"=\"\"]?default:${MONOSIP_DIAL_MOH})}))",
     " same => n,GotoIf($[\"${DIALSTATUS}\" = \"ANSWER\"]?done)",
-    " same => n,Stasis(munasip-flow,dial-failed,${DIALSTATUS})",
+    " same => n,Stasis(monosip-flow,dial-failed,${DIALSTATUS})",
     " same => n,Hangup()",
     // Answered: write CDR + MOS before hangup (inbound/IVR quality samples)
     " same => n(done),NoOp(Flow dial answered — CDR)",
@@ -1276,28 +1278,28 @@ async function writeAsteriskConfigNow(): Promise<void> {
     ),
     ` same => n,${internalPost(
       "cdr",
-      `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"\${MUNASIP_DIAL_TARGET}","disposition":"ANSWERED","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_CDRDUR},"direction":"internal","extension":"\${MUNASIP_DIAL_TARGET}","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
+      `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${MONOSIP_DIAL_TARGET}","disposition":"ANSWERED","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_CDRDUR},"direction":"internal","extension":"\${MONOSIP_DIAL_TARGET}","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
     )}`,
     " same => n,Hangup()",
     "",
     // ARI continue: trunk_XXXXXXXX_<digits> → Dial(PJSIP/digits@trunk_XXXXXXXX)
-    "[munasip-trunk-dial]",
+    "[monosip-trunk-dial]",
     // "[n]": a bare N in an Asterisk pattern means [2-9], so "_trunk_." never matched
     "exten => _tru[n]k_.,1,NoOp(Trunk dial ${EXTEN})",
     " same => n,Set(TRUNK=${EXTEN:0:14})",
     " same => n,Set(NUM=${EXTEN:15})",
     " same => n(dial),Dial(PJSIP/${NUM}@${TRUNK},120)",
-    // Provider failover: next trunk from MUNASIP_TRUNK_FALLBACK (set by ARI, '&'-separated)
-    ' same => n,GotoIf($[("${DIALSTATUS}" = "CHANUNAVAIL" | "${DIALSTATUS}" = "CONGESTION") & "${MUNASIP_TRUNK_FALLBACK}" != ""]?next)',
+    // Provider failover: next trunk from MONOSIP_TRUNK_FALLBACK (set by ARI, '&'-separated)
+    ' same => n,GotoIf($[("${DIALSTATUS}" = "CHANUNAVAIL" | "${DIALSTATUS}" = "CONGESTION") & "${MONOSIP_TRUNK_FALLBACK}" != ""]?next)',
     // Finalize CDR with real talk time (Stasis left via continue — no ARI hangup event)
     ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
     ` same => n,${internalPost(
       "cdr",
-      `{"callId":"\${UNIQUEID}","caller":"\${MUNASIP_CID}","callee":"\${NUM}","disposition":"\${DIALSTATUS}","billsec":\${MUNASIP_BILL},"duration":\${MUNASIP_CDRDUR},"direction":"outbound","mos":"\${MUNASIP_MOS}","jitter":"\${MUNASIP_JIT}","packetLoss":"\${MUNASIP_LOSS}"}`,
+      `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${NUM}","disposition":"\${DIALSTATUS}","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_CDRDUR},"direction":"outbound","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
     )}`,
     " same => n,Hangup()",
-    " same => n(next),Set(TRUNK=${CUT(MUNASIP_TRUNK_FALLBACK,&,1)})",
-    " same => n,Set(MUNASIP_TRUNK_FALLBACK=${CUT(MUNASIP_TRUNK_FALLBACK,&,2-)})",
+    " same => n(next),Set(TRUNK=${CUT(MONOSIP_TRUNK_FALLBACK,&,1)})",
+    " same => n,Set(MONOSIP_TRUNK_FALLBACK=${CUT(MONOSIP_TRUNK_FALLBACK,&,2-)})",
     " same => n,NoOp(Trunk failover ${DIALSTATUS} → ${TRUNK})",
     " same => n,Goto(dial)",
     "",
@@ -1317,20 +1319,20 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   // Live check so a blacklist row applies on the next call, including internal dials.
   extensionsConf.push(
-    "[munasip-blacklist]",
+    "[monosip-blacklist]",
     "exten => s,1,NoOp(Blacklist ${EXTEN} from ${CALLERID(num)})",
-    " same => n,Set(MUNASIP_BLCID=${CALLERID(num)})",
+    " same => n,Set(MONOSIP_BLCID=${CALLERID(num)})",
     ` same => n,${internalPost("blacklist", '{"number":"\${EXTEN}","direction":"outbound"}')}`,
-    ` same => n,GotoIf($["\${MUNASIP_HOOK:0:1}" = "1"]?block)`,
-    ` same => n,${internalPost("blacklist", '{"number":"\${MUNASIP_BLCID}","direction":"inbound"}')}`,
-    ` same => n,GotoIf($["\${MUNASIP_HOOK:0:1}" = "1"]?block)`,
+    ` same => n,GotoIf($["\${MONOSIP_HOOK:0:1}" = "1"]?block)`,
+    ` same => n,${internalPost("blacklist", '{"number":"\${MONOSIP_BLCID}","direction":"inbound"}')}`,
+    ` same => n,GotoIf($["\${MONOSIP_HOOK:0:1}" = "1"]?block)`,
     " same => n,Return()",
     " same => n(block),Hangup(17)",
     "",
   );
 
-  // MOH under shared munasip volume (API upload + Asterisk playback)
-  const mohConf = ["; MunaSIP musiconhold — generated", ""];
+  // MOH under shared monosip volume (API upload + Asterisk playback)
+  const mohConf = ["; MonoSIP musiconhold — generated", ""];
   const mohRoot = path.join(dir, "moh");
   await ensureDir(path.join(mohRoot, "default"));
   const seen = new Set<string>();
@@ -1356,20 +1358,20 @@ async function writeAsteriskConfigNow(): Promise<void> {
   // except the ACL, which only reloads on a real change — an ACL reload already
   // reloads res_pjsip, see reloadPlan.
   const changes: ConfigChanges = {
-    pjsip: (await put("pjsip_munasip.conf", pjsip.join("\n"))) || firstReload,
-    acl: await put("acl_munasip.conf", namedAclConf.join("\n")),
-    queues: (await put("queues_munasip.conf", queuesConf.join("\n"))) || firstReload,
-    extensions: (await put("extensions_munasip.conf", extensionsConf.join("\n"))) || firstReload,
-    moh: (await put("musiconhold_munasip.conf", mohConf.join("\n"))) || firstReload,
+    pjsip: (await put("pjsip_monosip.conf", pjsip.join("\n"))) || firstReload,
+    acl: await put("acl_monosip.conf", namedAclConf.join("\n")),
+    queues: (await put("queues_monosip.conf", queuesConf.join("\n"))) || firstReload,
+    extensions: (await put("extensions_monosip.conf", extensionsConf.join("\n"))) || firstReload,
+    moh: (await put("musiconhold_monosip.conf", mohConf.join("\n"))) || firstReload,
   };
 
   await ensureAsteriskCanReadConfig(dir);
   // One reload path only. The API reloads over the CLI when it can (all-in-one);
   // reload.flag (watched by start-asterisk.sh / the Compose sidecar) is the fallback.
   // Writing both made two reload sequences race — the deadlock described above.
-  // Seed sets MUNASIP_ASTERISK_CLI_RELOAD=0 so it never blocks on Asterisk.
+  // Seed sets MONOSIP_ASTERISK_CLI_RELOAD=0 so it never blocks on Asterisk.
   const cliReloaded =
-    process.env.MUNASIP_ASTERISK_CLI_RELOAD !== "0" ? await reloadAsteriskCli(changes) : false;
+    process.env.MONOSIP_ASTERISK_CLI_RELOAD !== "0" ? await reloadAsteriskCli(changes) : false;
   if (!cliReloaded) {
     await writeFile(path.join(dir, "reload.flag"), `${Date.now()}\n`, writeOpts);
   }

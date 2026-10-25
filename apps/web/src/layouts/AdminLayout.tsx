@@ -26,8 +26,8 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
-import i18n from "../i18n";
-import { AppBrand } from "../components/AppBrand";
+import i18n, { toggleAppLocale } from "../i18n";
+import { AppBrand, ProductSiteLink } from "../components/AppBrand";
 import { PageVeil } from "../components/PageVeil";
 
 const links = [
@@ -85,7 +85,8 @@ export function AdminLayout() {
   }
 
   return (
-    <div className={`flex ${flowDesigner ? "h-full overflow-hidden" : "min-h-full"}`}>
+    <div className={`flex h-full flex-col ${flowDesigner ? "overflow-hidden" : ""}`}>
+      <div className={`flex min-h-0 ${flowDesigner ? "min-h-0 flex-1 overflow-hidden" : "flex-1"}`}>
       {/* Hide admin nav in flow designer — fixed-height layout was forcing a sidebar scrollbar */}
       {!flowDesigner && navOpen && (
         <button
@@ -97,7 +98,7 @@ export function AdminLayout() {
       )}
       {!flowDesigner && (
         <aside
-          className={`aside-panel fixed inset-y-0 left-0 z-40 h-full w-64 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:z-auto md:h-screen md:flex ${navOpen ? "flex" : "hidden"}`}
+          className={`aside-panel fixed inset-y-0 left-0 z-40 h-full w-64 shrink-0 flex-col overflow-hidden p-4 md:sticky md:top-0 md:z-auto md:h-full md:flex ${navOpen ? "flex" : "hidden"}`}
         >
           <AppBrand subtitle={t("app.tagline")} />
           <nav id="admin-nav" className="flex flex-1 flex-col gap-0.5 overflow-auto">
@@ -123,15 +124,7 @@ export function AdminLayout() {
               </span>
               {t("common.theme")}
             </button>
-            <button
-              className="btn"
-              type="button"
-              onClick={() => {
-                const next = i18n.language === "en" ? "tr" : "en";
-                localStorage.setItem("munasip_locale", next);
-                void i18n.changeLanguage(next);
-              }}
-            >
+            <button className="btn" type="button" aria-label={t("common.language")} onClick={() => toggleAppLocale()}>
               {i18n.language.toUpperCase()}
             </button>
             <button
@@ -146,7 +139,7 @@ export function AdminLayout() {
         </aside>
       )}
       <main
-        className={`min-w-0 flex-1 ${flowDesigner ? "min-h-0 overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
+        className={`min-h-0 min-w-0 flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
       >
         {!flowDesigner && (
           <div className="mb-4 flex items-center justify-between gap-2 md:hidden">
@@ -177,6 +170,12 @@ export function AdminLayout() {
           <Outlet key={i18n.language} />
         </PageVeil>
       </main>
+      </div>
+      {!flowDesigner && (
+        <footer className="product-site-bar">
+          <ProductSiteLink />
+        </footer>
+      )}
     </div>
   );
 }

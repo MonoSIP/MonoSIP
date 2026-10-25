@@ -1,5 +1,5 @@
 {
-  "name": "munasip",
+  "name": "monosip",
   "private": true,
   "version": "1.7.5",
   "license": "MIT",
@@ -7,21 +7,21 @@
   "author": "diggyen",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MunaSIP/MunaSIP.git"
+    "url": "git+https://github.com/MonoSIP/MonoSIP.git"
   },
-  "homepage": "https://github.com/MunaSIP/MunaSIP",
+  "homepage": "https://github.com/MonoSIP/MonoSIP",
   "bugs": {
-    "url": "https://github.com/MunaSIP/MunaSIP/issues"
+    "url": "https://github.com/MonoSIP/MonoSIP/issues"
   },
   "packageManager": "pnpm@12.14.0+sha512.c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6",
   "scripts": {
-    "dev": "pnpm --filter @munasip/shared build && pnpm -r --parallel --filter @munasip/api --filter @munasip/web run dev",
+    "dev": "pnpm --filter @monosip/shared build && pnpm -r --parallel --filter @monosip/api --filter @monosip/web run dev",
     "build": "pnpm -r run build",
-    "db:generate": "pnpm --filter @munasip/api run db:generate",
-    "db:migrate": "pnpm --filter @munasip/api run db:migrate",
-    "db:seed": "pnpm --filter @munasip/api run db:seed",
+    "db:generate": "pnpm --filter @monosip/api run db:generate",
+    "db:migrate": "pnpm --filter @monosip/api run db:migrate",
+    "db:seed": "pnpm --filter @monosip/api run db:seed",
     "lint": "pnpm -r run lint",
-    "typecheck": "pnpm --filter @munasip/shared build && pnpm -r run typecheck",
+    "typecheck": "pnpm --filter @monosip/shared build && pnpm -r run typecheck",
     "test": "pnpm -r run test"
   },
   "engines": {

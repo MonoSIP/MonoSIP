@@ -38,6 +38,11 @@ function runFfmpeg(input: string, output: string): Promise<boolean> {
 }
 
 export function startOpusConvertJob(intervalMs = 3600_000) {
-  void convertWavToOpus();
-  return setInterval(() => void convertWavToOpus(), intervalMs);
+  // A failed conversion (ffmpeg missing, a deleted file) must not become an
+  // unhandled rejection — that is fatal for the whole API process.
+  void convertWavToOpus().catch((e) => console.warn("[opus]", (e as Error).message));
+  return setInterval(
+    () => void convertWavToOpus().catch((e) => console.warn("[opus]", (e as Error).message)),
+    intervalMs,
+  );
 }

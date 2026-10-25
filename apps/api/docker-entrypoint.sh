@@ -2,9 +2,9 @@
 set -e
 cd /app
 
-# Image already builds @munasip/shared — only rebuild if dist is missing (dev/override images).
+# Image already builds @monosip/shared — only rebuild if dist is missing (dev/override images).
 if [ ! -f /app/packages/shared/dist/index.js ]; then
-  pnpm --filter @munasip/shared build
+  pnpm --filter @monosip/shared build
 fi
 
 cd /app/apps/api
@@ -12,7 +12,7 @@ cd /app/apps/api
 # shellcheck disable=SC1091
 . /app/apps/api/scripts/bootstrap-runtime.sh
 
-# Files named before the MunaSIP rename (configs, sounds folder) move once.
+# Files named before the MonoSIP rename (configs, sounds folder) move once.
 # shellcheck disable=SC1091
 . /app/apps/api/scripts/migrate-legacy-names.sh
 

@@ -2,30 +2,30 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-munasip}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-munasip_secret_change_me}
-      POSTGRES_DB: ${POSTGRES_DB:-munasip}
+      POSTGRES_USER: ${POSTGRES_USER:-monosip}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monosip_secret_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-monosip}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-munasip} -d ${POSTGRES_DB:-munasip}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-monosip} -d ${POSTGRES_DB:-monosip}"]
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
-      - munasip
+      - monosip
 
   asterisk:
     build:
       context: ./docker/asterisk
     volumes:
-      - asterisk_config:/var/lib/asterisk/munasip
+      - asterisk_config:/var/lib/asterisk/monosip
       - recordings:/var/spool/asterisk/recording
       - asterisk_logs:/var/log/asterisk
     environment:
-      ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-munasip}
+      ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-monosip}
       ASTERISK_ARI_PASSWORD: ${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}
-      ASTERISK_AMI_USER: ${ASTERISK_AMI_USER:-munasip}
+      ASTERISK_AMI_USER: ${ASTERISK_AMI_USER:-monosip}
       ASTERISK_AMI_PASSWORD: ${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}
       EXTERNAL_IP: ${EXTERNAL_IP:-}
     expose:
@@ -41,12 +41,12 @@ services:
       - "5061:5061/tcp"
       - "10000-10100:10000-10100/udp"
     networks:
-      - munasip
+      - monosip
     depends_on:
       - postgres
 
   # TTS runs embedded inside the api/all-in-one image (127.0.0.1:5500).
-  # Optional standalone: docker build -t munasip-tts ./docker/tts
+  # Optional standalone: docker build -t monosip-tts ./docker/tts
 
   api:
     # EMA/Kokoro TTS is amd64-oriented (normalizer-tr); match production VPS.
@@ -55,7 +55,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-munasip}:${POSTGRES_PASSWORD:-munasip_secret_change_me}@postgres:5432/${POSTGRES_DB:-munasip}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-monosip}:${POSTGRES_PASSWORD:-monosip_secret_change_me}@postgres:5432/${POSTGRES_DB:-monosip}
       API_PORT: 3000
       SESSION_SECRET: ${SESSION_SECRET:-change-me-to-a-long-random-session-secret-32chars}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
@@ -64,19 +64,21 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-https://localhost}
       EXTERNAL_IP: ${EXTERNAL_IP:-}
       LOCAL_NETS: ${LOCAL_NETS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32}
+      # Only the nginx container may set the client IP via X-Forwarded-For.
+      MONOSIP_TRUSTED_PROXY_CIDRS: ${MONOSIP_TRUSTED_PROXY_CIDRS:-172.16.0.0/12,127.0.0.1/32,::1/128}
       SIP_DOMAIN: ${SIP_DOMAIN:-localhost}
       SIP_WSS_URL: ${SIP_WSS_URL:-wss://localhost/asterisk-ws}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
       ASTERISK_ARI_URL: http://asterisk:8088
-      ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-munasip}
+      ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-monosip}
       ASTERISK_ARI_PASSWORD: ${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}
       ASTERISK_AMI_HOST: asterisk
       ASTERISK_AMI_PORT: 5038
-      ASTERISK_AMI_USER: ${ASTERISK_AMI_USER:-munasip}
+      ASTERISK_AMI_USER: ${ASTERISK_AMI_USER:-monosip}
       ASTERISK_AMI_PASSWORD: ${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}
-      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-munasip_internal_change_me}
-      ASTERISK_CONFIG_DIR: /var/lib/asterisk/munasip
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-monosip_internal_change_me}
+      ASTERISK_CONFIG_DIR: /var/lib/asterisk/monosip
       RECORDINGS_DIR: /data/recordings
       UPLOADS_DIR: /data/uploads
       SECURITY_LOG_PATH: /data/logs/api-security.log
@@ -84,11 +86,11 @@ services:
       TTS_EMBEDDED: ${TTS_EMBEDDED:-1}
       CERTS_DIR: /etc/nginx/certs
       ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-}
-      TURN_SECRET: ${TURN_SECRET:-munasip_turn_secret_change_me}
+      TURN_SECRET: ${TURN_SECRET:-monosip_turn_secret_change_me}
       TURN_REALM: ${TURN_REALM:-localhost}
-      MUNASIP_TURNS_ON_443: ${MUNASIP_TURNS_ON_443:-1}
+      MONOSIP_TURNS_ON_443: ${MONOSIP_TURNS_ON_443:-1}
     volumes:
-      - asterisk_config:/var/lib/asterisk/munasip
+      - asterisk_config:/var/lib/asterisk/monosip
       - recordings:/data/recordings
       - uploads:/data/uploads
       - api_logs:/data/logs
@@ -99,7 +101,7 @@ services:
       asterisk:
         condition: service_started
     networks:
-      - munasip
+      - monosip
     expose:
       - "3000"
 
@@ -108,7 +110,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     networks:
-      - munasip
+      - monosip
     expose:
       - "80"
 
@@ -130,7 +132,7 @@ services:
     environment:
       EXTERNAL_IP: ${EXTERNAL_IP:-}
       TURN_REALM: ${TURN_REALM:-localhost}
-      TURN_SECRET: ${TURN_SECRET:-munasip_turn_secret_change_me}
+      TURN_SECRET: ${TURN_SECRET:-monosip_turn_secret_change_me}
     volumes:
       - ./docker/nginx/certs:/etc/coturn/certs:ro
     ports:
@@ -141,7 +143,7 @@ services:
     expose:
       - "5349"
     networks:
-      - munasip
+      - monosip
 
   nginx:
     image: nginx:1.27-alpine
@@ -163,7 +165,7 @@ services:
       - asterisk
       - coturn
     networks:
-      - munasip
+      - monosip
 
   # Lab fail2ban: watches Asterisk message/security logs (host harden is separate)
   fail2ban:
@@ -175,7 +177,7 @@ services:
     volumes:
       - ./docker/fail2ban:/data
       - asterisk_logs:/var/log/asterisk:ro
-      - api_logs:/var/log/munasip:ro
+      - api_logs:/var/log/monosip:ro
     environment:
       TZ: ${TZ:-Europe/Istanbul}
       F2B_LOG_TARGET: STDOUT
@@ -193,5 +195,5 @@ volumes:
   api_logs:
 
 networks:
-  munasip:
+  monosip:
     driver: bridge

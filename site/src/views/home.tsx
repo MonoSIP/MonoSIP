@@ -124,10 +124,10 @@ const features = (L: L) => [
 
 const faqs = (L: L) => [
   [
-    L("What is MunaSIP?", "MunaSIP nedir?"),
+    L("What is MonoSIP?", "MonoSIP nedir?"),
     L(
-      "MunaSIP is an open-source Asterisk-based company PBX for small offices, designed around roughly 20 extensions. It includes an admin panel, visual IVR designer, browser softphone and employee portal.",
-      "MunaSIP, yaklaşık 20 dahiliye göre tasarlanmış, küçük ofisler için açık kaynaklı Asterisk şirket santralidir. Yönetici paneli, görsel IVR tasarımcısı, tarayıcı telefonu ve çalışan portalı içerir.",
+      "MonoSIP is an open-source Asterisk-based company PBX for small offices, designed around roughly 20 extensions. It includes an admin panel, visual IVR designer, browser softphone and employee portal.",
+      "MonoSIP, yaklaşık 20 dahiliye göre tasarlanmış, küçük ofisler için açık kaynaklı Asterisk şirket santralidir. Yönetici paneli, görsel IVR tasarımcısı, tarayıcı telefonu ve çalışan portalı içerir.",
     ),
   ],
   [
@@ -143,8 +143,8 @@ const faqs = (L: L) => [
       "SIP operatörümü ve masa telefonlarımı kullanabilir miyim?",
     ),
     L(
-      "MunaSIP supports registered and IP-based SIP trunks, multiple providers and route failover. Yealink, Fanvil and Grandstream provisioning profiles are documented. Check your provider’s transport, codecs, networking and device configuration before switching.",
-      "MunaSIP kayıtlı ve IP tabanlı SIP trunk’ları, birden fazla operatörü ve rota yedeğini destekler. Yealink, Fanvil ve Grandstream hazırlama profilleri belgelidir. Geçmeden önce operatörünüzün taşıma, kodek, ağ ve cihaz ayarlarını kontrol edin.",
+      "MonoSIP supports registered and IP-based SIP trunks, multiple providers and route failover. Yealink, Fanvil and Grandstream provisioning profiles are documented. Check your provider’s transport, codecs, networking and device configuration before switching.",
+      "MonoSIP kayıtlı ve IP tabanlı SIP trunk’ları, birden fazla operatörü ve rota yedeğini destekler. Yealink, Fanvil ve Grandstream hazırlama profilleri belgelidir. Geçmeden önce operatörünüzün taşıma, kodek, ağ ve cihaz ayarlarını kontrol edin.",
     ),
   ],
   [
@@ -153,8 +153,8 @@ const faqs = (L: L) => [
       "Yazılımsal telefon mobilde çalışır mı?",
     ),
     L(
-      "The portal works in a mobile browser, but mobile browsers can suspend background tabs. Inbound calls with the screen off are unreliable. For dependable mobile reachability, use a compatible native SIP softphone with QR provisioning. MunaSIP does not ship a first-party mobile app.",
-      "Portal mobil tarayıcıda açılır, ancak mobil tarayıcılar arka plandaki sekmeleri durdurabilir. Ekran kapalıyken gelen aramalar güvenilir değildir. Mobil erişim şartsa, QR ile hazırlanan uyumlu bir yerel SIP telefonu kullanın. MunaSIP’in kendi mobil uygulaması yoktur.",
+      "The portal works in a mobile browser, but mobile browsers can suspend background tabs. Inbound calls with the screen off are unreliable. For dependable mobile reachability, use a compatible native SIP softphone with QR provisioning. MonoSIP does not ship a first-party mobile app.",
+      "Portal mobil tarayıcıda açılır, ancak mobil tarayıcılar arka plandaki sekmeleri durdurabilir. Ekran kapalıyken gelen aramalar güvenilir değildir. Mobil erişim şartsa, QR ile hazırlanan uyumlu bir yerel SIP telefonu kullanın. MonoSIP’in kendi mobil uygulaması yoktur.",
     ),
   ],
   [
@@ -166,12 +166,12 @@ const faqs = (L: L) => [
   ],
   [
     L(
-      "Can I use MunaSIP commercially or contribute?",
-      "MunaSIP’i ticari kullanabilir veya katkı verebilir miyim?",
+      "Can I use MonoSIP commercially or contribute?",
+      "MonoSIP’i ticari kullanabilir veya katkı verebilir miyim?",
     ),
     L(
-      "Yes, the MIT license allows commercial use, modification and redistribution with the copyright notice. You can fork and adapt MunaSIP freely. Visit the official repository for current development and contribution guidance.",
-      "Evet. MIT lisansı, telif notu durduğu sürece ticari kullanıma, değiştirmeye ve yeniden dağıtmaya izin verir. MunaSIP’i özgürce çatallayıp uyarlayabilirsiniz. Güncel geliştirme ve katkı için resmi depoya bakın.",
+      "Yes, the MIT license allows commercial use, modification and redistribution with the copyright notice. You can fork and adapt MonoSIP freely. Visit the official repository for current development and contribution guidance.",
+      "Evet. MIT lisansı, telif notu durduğu sürece ticari kullanıma, değiştirmeye ve yeniden dağıtmaya izin verir. MonoSIP’i özgürce çatallayıp uyarlayabilirsiniz. Güncel geliştirme ve katkı için resmi depoya bakın.",
     ),
   ],
 ];
@@ -203,7 +203,7 @@ export function HomePage({ locale = "en" }: { locale?: Locale }) {
   const structured = {
     "@context": "https://schema.org",
     "@type": ["SoftwareApplication", "SoftwareSourceCode"],
-    name: "MunaSIP",
+    name: "MonoSIP",
     applicationCategory: "CommunicationApplication",
     operatingSystem: "Linux (linux/amd64), Docker",
     softwareVersion: site.version,
@@ -260,7 +260,7 @@ export function HomePage({ locale = "en" }: { locale?: Locale }) {
           </p>
           <div className="button-row">
             <Link className="button primary" href={href("/download/")}>
-              {L("Get MunaSIP", "MunaSIP’i alın")} <Icon name="arrow" />
+              {L("Get MonoSIP", "MonoSIP’i alın")} <Icon name="arrow" />
             </Link>
             <Link className="button secondary" href={href("/docs/")}>
               {L("Read the docs", "Belgeleri okuyun")} <Icon name="external" />
@@ -336,7 +336,7 @@ export function HomePage({ locale = "en" }: { locale?: Locale }) {
         </div>
         <nav
           className="product-shortcuts"
-          aria-label={L("Explore MunaSIP", "MunaSIP’i gezin")}
+          aria-label={L("Explore MonoSIP", "MonoSIP’i gezin")}
         >
           <a href="#panel">
             {L("Explore the interface", "Arayüzü gezin")} <Icon name="arrow" />

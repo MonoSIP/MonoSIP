@@ -76,7 +76,7 @@ const H = () => auth(fx.adminToken);
 
 /** Build a single-file multipart/form-data body plus its content-type header. */
 function multipart(field: string, filename: string, filePath: string) {
-  const boundary = `----munasiptest${Date.now().toString(16)}`;
+  const boundary = `----monosiptest${Date.now().toString(16)}`;
   const buf = readFileSync(filePath);
   const head = Buffer.from(
     `--${boundary}\r\nContent-Disposition: form-data; name="${field}"; filename="${filename}"\r\n` +
@@ -130,7 +130,7 @@ describe("prompt multipart upload", () => {
     expect(res.statusCode).toBe(200);
     const body = res.json() as { ok: boolean; filePath: string; media: string };
     expect(body.ok).toBe(true);
-    expect(body.media).toBe(`sound:munasip/${id}`);
+    expect(body.media).toBe(`sound:monosip/${id}`);
     // The file must really exist on disk.
     expect(existsSync(body.filePath)).toBe(true);
     createdFiles.push(body.filePath);

@@ -9,6 +9,7 @@ import { db } from "../db/client.js";
 import { webWidgets, widgetDailyStats, widgetSessions } from "../db/schema.js";
 import { config } from "../config.js";
 import { encrypt } from "../lib/crypto.js";
+import { originAllowed } from "../lib/origin-allow.js";
 import { buildIceServers } from "../lib/turn-credentials.js";
 import { requireAdmin } from "../lib/auth.js";
 
@@ -43,27 +44,6 @@ function sipGuestUser(): string {
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function originAllowed(allowed: unknown, origin: string | undefined): boolean {
-  if (!origin) return false;
-  const list = Array.isArray(allowed) ? (allowed as string[]) : [];
-  if (!list.length) return true; // empty = allow any (lab); production should set hosts
-  let host = origin;
-  try {
-    host = new URL(origin).hostname;
-  } catch {
-    /* use raw */
-  }
-  return list.some((rule) => {
-    const r = rule.trim().toLowerCase();
-    if (!r) return false;
-    if (r.startsWith("*.")) {
-      const base = r.slice(2);
-      return host === base || host.endsWith(`.${base}`);
-    }
-    return host === r || origin.toLowerCase() === r || origin.toLowerCase().includes(r);
-  });
 }
 
 const ipHits = new Map<string, { n: number; resetAt: number }>();

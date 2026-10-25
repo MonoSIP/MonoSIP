@@ -1,5 +1,5 @@
 /**
- * Minimal SIP UA for MunaSIP Docker-network call test (no extra deps).
+ * Minimal SIP UA for MonoSIP Docker-network call test (no extra deps).
  *   node sip-call-test.mjs <ext> <password> --answer
  *   node sip-call-test.mjs <ext> <password> <dialExt> [dtmfDigits]
  * Env: DTMF=12  (optional digits to send via SIP INFO after answer)
@@ -87,7 +87,7 @@ function sdp() {
   return [
     "v=0",
     `o=${ext} 1 1 IN IP4 ${ourIp}`,
-    "s=MunaSIP",
+    "s=MonoSIP",
     `c=IN IP4 ${ourIp}`,
     "t=0 0",
     "m=audio 12000 RTP/AVP 0 8 101",
@@ -143,7 +143,7 @@ function register(auth) {
       CSeq: `${regCseq++} REGISTER`,
       Contact: `<sip:${ext}@${ourIp}:${localPort}>`,
       Expires: "300",
-      "User-Agent": "MunaSIP-TestUA/1.0",
+      "User-Agent": "MonoSIP-TestUA/1.0",
       "Content-Length": "0",
       ...(auth ? { Authorization: auth } : {}),
     }),
@@ -168,7 +168,7 @@ function invite(target, auth) {
       Contact: `<sip:${ext}@${ourIp}:${localPort}>`,
       "Content-Type": "application/sdp",
       "Content-Length": String(Buffer.byteLength(body)),
-      "User-Agent": "MunaSIP-TestUA/1.0",
+      "User-Agent": "MonoSIP-TestUA/1.0",
       Allow: "INVITE, ACK, BYE, CANCEL, OPTIONS",
       ...(auth ? { Authorization: auth } : {}),
     }),

@@ -1,8 +1,8 @@
-# MunaSIP
+# MonoSIP
 
 **Company PBX** — open-source Asterisk VoIP with an admin panel, a visual IVR designer and a browser softphone. Built for small offices (~20 extensions). Runs as one prebuilt Docker image (or Docker Compose) on a Linux VM.
 
-[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](https://munasip.github.io/) · [Release v1.7.5](https://github.com/MunaSIP/MunaSIP/releases/tag/v1.7.5) · [MIT License](LICENSE)
+[Install](docs/INSTALL.md) · [Features](docs/FEATURES.md) · [Architecture](docs/ARCHITECTURE.md) · [Website](https://www.monosip.com/) · [Release v1.7.5](https://github.com/MonoSIP/MonoSIP/releases/tag/v1.7.5) · [MIT License](LICENSE)
 
 Default UI language: **English** (Turkish available in the app).
 
@@ -11,11 +11,11 @@ Default UI language: **English** (Turkish available in the app).
 Prebuilt image (linux/amd64, published on every release):
 
 ```bash
-docker run -d --name munasip --restart unless-stopped \
+docker run -d --name monosip --restart unless-stopped \
   -p 3000:3000 -p 10000-10100:10000-10100/udp \
-  -v munasip-data:/data \
+  -v monosip-data:/data \
   -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
-  ghcr.io/munasip/munasip:latest
+  ghcr.io/monosip/monosip:latest
 ```
 
 Recommended: 2 vCPU and 4 GB RAM (neural speech runs on the PBX CPU).
@@ -23,8 +23,8 @@ Recommended: 2 vCPU and 4 GB RAM (neural speech runs on the PBX CPU).
 From source with Docker Compose:
 
 ```bash
-git clone https://github.com/MunaSIP/MunaSIP.git
-cd MunaSIP
+git clone https://github.com/MonoSIP/MonoSIP.git
+cd MonoSIP
 cp .env.example .env
 chmod +x scripts/gen-certs.sh && ./scripts/gen-certs.sh
 docker compose up --build -d
@@ -73,8 +73,8 @@ Guide: **[docs/DEPLOY-VPS.md](docs/DEPLOY-VPS.md)**
 
 ## Documentation
 
-All docs live under **[docs/](docs/README.md)**. The product site is **[munasip.github.io](https://munasip.github.io/)**; its source is **[site/](site/)**.
+All docs live under **[docs/](docs/README.md)**. The product address is **[www.monosip.com](https://www.monosip.com)**. The published site is **[monosip.github.io](https://monosip.github.io/)**; its source is **[site/](site/)**.
 
 ## License
 
-MunaSIP is released under the **[MIT License](LICENSE)** — use, modify and redistribute it freely, keeping the copyright notice.
+MonoSIP is released under the **[MIT License](LICENSE)** — use, modify and redistribute it freely, keeping the copyright notice.

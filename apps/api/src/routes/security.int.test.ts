@@ -122,7 +122,7 @@ describe("internal hook authentication", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/v1/internal/security/ban",
-      headers: { "x-munasip-internal": "wrong-secret" },
+      headers: { "x-monosip-internal": "wrong-secret" },
       payload: { ip: "203.0.113.12" },
     });
     expect(res.statusCode).toBe(401);

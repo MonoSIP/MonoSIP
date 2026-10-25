@@ -11,7 +11,7 @@ function walk(dir) {
         /href="(https:\/\/[^"<>]+)"/g,
       )) {
         const parsed = new URL(url.replaceAll("&amp;", "&"));
-        if (parsed.hostname !== "munasip.github.io") {
+        if (parsed.hostname !== "monosip.github.io") {
           parsed.hash = "";
           links.add(parsed.href);
         }
@@ -27,7 +27,7 @@ for (const url of links) {
       method: "HEAD",
       redirect: "follow",
       signal: AbortSignal.timeout(20000),
-      headers: { "User-Agent": "MunaSIP-website-link-check" },
+      headers: { "User-Agent": "MonoSIP-website-link-check" },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log(`PASS ${response.status} ${url}`);

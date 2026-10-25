@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Download, KeyRound, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField, Switch } from "../../components/ui";
+import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = {
@@ -74,6 +74,10 @@ export function ExtensionsPage() {
   const [cli, setCli] = useState("");
   const [spendDaily, setSpendDaily] = useState("");
   const [spendMonthly, setSpendMonthly] = useState("");
+  // Passwords handed out by a CSV import. Shown once, then forgotten.
+  const [importedCredentials, setImportedCredentials] = useState<
+    Array<{ number: string; portalPassword: string }>
+  >([]);
 
   const list = useQuery({
     queryKey: ["extensions"],
@@ -232,10 +236,17 @@ export function ExtensionsPage() {
 
   async function importCsv(file: File) {
     const csv = await file.text();
-    const r = await api.post<{ created: number; updated: number }>("/api/v1/admin/extensions/import", {
-      csv,
-    });
+    const r = await api.post<{
+      created: number;
+      updated: number;
+      credentials: Array<{ number: string; portalPassword: string }>;
+    }>("/api/v1/admin/extensions/import", { csv });
     toast.success(tr("Import: +{{v0}} / ~{{v1}}", { v0: r.created, v1: r.updated }));
+    // Imported extensions get a generated password (one for portal + SIP), so
+    // it has to be handed to the admin — it is never shown again.
+    if (r.credentials?.length) {
+      setImportedCredentials(r.credentials);
+    }
     void qc.invalidateQueries({ queryKey: ["extensions"] });
   }
 
@@ -268,6 +279,34 @@ export function ExtensionsPage() {
           </div>
         }
       />
+      {importedCredentials.length > 0 && (
+        <SectionCard
+          title={tr("Imported extension passwords")}
+          icon={KeyRound}
+          tone="coral"
+          className="mb-6"
+        >
+          <p className="text-sm text-[var(--text-muted)]">
+            {tr("Each imported extension has one password for both portal and SIP. It is shown only once.")}
+          </p>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>{t("extensions.number")}</th>
+                <th>{tr("Password")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {importedCredentials.map((c) => (
+                <tr key={c.number}>
+                  <td className="font-mono">{c.number}</td>
+                  <td className="font-mono">{c.portalPassword}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </SectionCard>
+      )}
       <SectionCard title={tr("Extensions")} icon={Users} tone="blue" flush className="mb-6">
         <table className="table">
           <thead>
@@ -363,26 +402,25 @@ export function ExtensionsPage() {
             <SelectField
               label={tr("Recording")}
               value={editRecording}
-              onChange={(e) => setEditRecording(e.target.value)}
-            >
-              <option value="off">off</option>
-              <option value="always">always</option>
-              <option value="external">{tr("external only")}</option>
-            </SelectField>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={editPortal} onChange={(e) => setEditPortal(e.target.checked)} />
-              {tr("Portal enabled")}
-            </label>
-            <SelectField label={tr("Secretary of")} value={editBoss} onChange={(e) => setEditBoss(e.target.value)}>
-              <option value="">{tr("— none —")}</option>
-              {list.data
-                ?.filter((x) => x.id !== edit.id)
-                .map((x) => (
-                  <option key={x.id} value={x.id}>
-                    {x.number} — {x.name}
-                  </option>
-                ))}
-            </SelectField>
+              onValueChange={setEditRecording}
+              options={[
+                { value: "off", label: "off" },
+                { value: "always", label: "always" },
+                { value: "external", label: tr("external only") },
+              ]}
+            />
+            <Checkbox checked={editPortal} onCheckedChange={setEditPortal} label={tr("Portal enabled")} />
+            <SelectField
+              label={tr("Secretary of")}
+              value={editBoss}
+              onValueChange={setEditBoss}
+              options={[
+                { value: "", label: tr("— none —") },
+                ...(list.data ?? [])
+                  .filter((x) => x.id !== edit.id)
+                  .map((x) => ({ value: x.id, label: `${x.number} — ${x.name}` })),
+              ]}
+            />
             <div className="sm:col-span-2 flex items-end gap-2">
               <TextField
                 className="flex-1"
@@ -442,20 +480,19 @@ export function ExtensionsPage() {
             {fwdRules.map((rule, i) => (
               <div key={i} className="space-y-2 rounded border border-[var(--border)] p-3">
                 <div className="flex flex-wrap gap-2">
-                  <select
-                    className="input"
+                  <SelectInput
+                    aria-label={tr("Forwarding rules")}
                     value={rule.condition}
-                    onChange={(e) =>
-                      setFwdRules((rs) =>
-                        rs.map((x, j) => (j === i ? { ...x, condition: e.target.value } : x)),
-                      )
+                    onValueChange={(next) =>
+                      setFwdRules((rs) => rs.map((x, j) => (j === i ? { ...x, condition: next } : x)))
                     }
-                  >
-                    <option value="always">always</option>
-                    <option value="noanswer">noanswer</option>
-                    <option value="busy">busy</option>
-                    <option value="chanunavail">chanunavail</option>
-                  </select>
+                    options={[
+                      { value: "always", label: "always" },
+                      { value: "noanswer", label: "noanswer" },
+                      { value: "busy", label: "busy" },
+                      { value: "chanunavail", label: "chanunavail" },
+                    ]}
+                  />
                   <input
                     className="input w-24"
                     type="number"
@@ -498,23 +535,15 @@ export function ExtensionsPage() {
                 ["recording", "Allow recording"],
               ] as const
             ).map(([k, label]) => (
-              <label key={k} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={perms[k]}
-                  onChange={(e) => setPerms({ ...perms, [k]: e.target.checked })}
-                />
-                {tr(label)}
-              </label>
+              <Checkbox
+                key={k}
+                checked={perms[k]}
+                onCheckedChange={(next) => setPerms({ ...perms, [k]: next })}
+                label={tr(label)}
+              />
             ))}
-            <label className="flex items-center gap-1">
-              <input type="checkbox" checked={mobileFwd} onChange={(e) => setMobileFwd(e.target.checked)} />
-              {tr("Mobile forward OK")}
-            </label>
-            <label className="flex items-center gap-1">
-              <input type="checkbox" checked={listenRec} onChange={(e) => setListenRec(e.target.checked)} />
-              {tr("Listen recordings")}
-            </label>
+            <Checkbox checked={mobileFwd} onCheckedChange={setMobileFwd} label={tr("Mobile forward OK")} />
+            <Checkbox checked={listenRec} onCheckedChange={setListenRec} label={tr("Listen recordings")} />
           </div>
           <div className="flex flex-wrap gap-2">
             <button disabled={!!passwordProblem(editPassword)} className="btn btn-primary" type="button" onClick={() => saveEdit.mutate()}>

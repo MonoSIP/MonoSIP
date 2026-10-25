@@ -29,7 +29,7 @@ export function DocArticle({
         aria-label={tr ? "Belge menüsü" : "Documentation navigation"}
       >
         <p className="eyebrow">
-          {tr ? "MUNASIP / BELGELER" : "MUNASIP / DOCUMENTATION"}
+          {tr ? "MONOSIP / BELGELER" : "MONOSIP / DOCUMENTATION"}
         </p>
         {docNav.map((item) => (
           <Link
@@ -55,7 +55,7 @@ export function DocArticle({
         <h1>{doc.title}</h1>
         <p className="doc-summary">{doc.summary}</p>
         <div className="doc-meta">
-          <span className="mono">MUNASIP v{site.version}</span>
+          <span className="mono">MONOSIP v{site.version}</span>
           <span>
             {tr ? "İncelendi" : "Reviewed"}{" "}
             {tr ? "22 Ekim 2026" : site.reviewed} · v{site.version}

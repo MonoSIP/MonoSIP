@@ -1,4 +1,4 @@
-import type { Settings } from "@munasip/shared";
+import type { Settings } from "@monosip/shared";
 import { config } from "../config.js";
 
 function lines(list: string[]): string[] {
@@ -33,12 +33,12 @@ export function buildFirewallExport(opts: {
           .join("\n") + "\n";
 
   const nftDeny = sipDeny
-    .map((cidr) => `  ip saddr ${cidr} drop comment "munasip-sip-deny"`)
+    .map((cidr) => `  ip saddr ${cidr} drop comment "monosip-sip-deny"`)
     .join("\n");
 
-  const nftables = `# MunaSIP firewall export — review before apply
+  const nftables = `# MonoSIP firewall export — review before apply
 # Generated ${new Date().toISOString()}
-table inet munasip_filter {
+table inet monosip_filter {
   chain input {
     type filter hook input priority 0; policy drop;
     iif lo accept
@@ -63,7 +63,7 @@ ${nftDeny ? nftDeny + "\n" : ""}${nftSip}    # SSH — tighten to admin allowlis
           )
           .join("\n") + "\n";
 
-  const ufw = `# MunaSIP ufw export — review before apply
+  const ufw = `# MonoSIP ufw export — review before apply
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow 443/tcp

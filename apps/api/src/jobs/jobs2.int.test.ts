@@ -401,7 +401,7 @@ describe("runNightlyBackup", () => {
 
     await runNightlyBackup();
 
-    const file = path.join(dest, `munasip-settings-${NOW.toISOString().slice(0, 10)}.json`);
+    const file = path.join(dest, `monosip-settings-${NOW.toISOString().slice(0, 10)}.json`);
     expect(existsSync(file)).toBe(true);
     const payload = JSON.parse(readFileSync(file, "utf8"));
     expect(payload).toHaveProperty("settings");
@@ -427,7 +427,7 @@ describe("runNightlyBackup", () => {
     await runNightlyBackup();
 
     const raw = readFileSync(
-      path.join(dest, `munasip-settings-${NOW.toISOString().slice(0, 10)}.json`),
+      path.join(dest, `monosip-settings-${NOW.toISOString().slice(0, 10)}.json`),
       "utf8",
     );
     expect(raw).not.toContain("SUPER-SECRET-CIPHERTEXT");

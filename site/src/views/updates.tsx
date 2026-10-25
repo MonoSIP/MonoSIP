@@ -42,7 +42,7 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
             <span className="release-status">
               {L("LATEST RELEASE", "SON SÜRÜM")}
             </span>
-            <h2 id="stable-release">MunaSIP {site.version}</h2>
+            <h2 id="stable-release">MonoSIP {site.version}</h2>
             <p>
               {L(
                 "Released 21 October 2026 · Linux / AMD64 · MIT",
@@ -159,7 +159,7 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
       </section>
       <div className="updates-next">
         <Link className="button primary" href={href("/download/")}>
-          {L("Install", "Kurun")} MunaSIP {site.version} <Icon name="arrow" />
+          {L("Install", "Kurun")} MonoSIP {site.version} <Icon name="arrow" />
         </Link>
         <Link className="button secondary" href={href("/docs/")}>
           {L("Read the guides", "Rehberleri okuyun")} <Icon name="arrow" />

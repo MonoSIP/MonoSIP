@@ -7,7 +7,7 @@
  *   4 Exchange rates     5 Gold          6 Borsa Istanbul
  *   0 Exit
  *
- * The API key is stored encrypted in MunaSIP's secrets table (sent as
+ * The API key is stored encrypted in MonoSIP's secrets table (sent as
  * `authorization: apikey <key>`), never in the flow JSON or in git.
  *
  * Run:

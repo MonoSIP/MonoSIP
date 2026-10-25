@@ -2,16 +2,19 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { KeyRound, Mail, Phone, Shield, Smartphone } from "lucide-react";
+import { KeyRound, Languages, Mail, Moon, Phone, Shield, Smartphone, Sun } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
-import { AppBrand } from "../components/AppBrand";
-import { TextField } from "../components/ui";
+import { toggleAppLocale } from "../i18n";
+import { AppBrand, ProductSiteLink } from "../components/AppBrand";
+import { Segmented, TextField } from "../components/ui";
 
 export function LoginPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const setActor = useStore((s) => s.setActor);
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
   const [mode, setMode] = useState<"admin" | "portal">("admin");
   const [email, setEmail] = useState("admin@example.com");
   const [extension, setExtension] = useState("101");
@@ -55,34 +58,56 @@ export function LoginPage() {
 
   return (
     <div className="login-shell">
+      <div className="login-tools">
+        <button
+          className="btn"
+          type="button"
+          aria-label={t("common.language")}
+          onClick={() => toggleAppLocale()}
+        >
+          <Languages size={16} aria-hidden />
+          {(i18n.language || "en").slice(0, 2).toUpperCase()}
+        </button>
+        <button className="btn" type="button" aria-label={t("portal.darkMode")} onClick={toggleTheme}>
+          <span className="icon-swap" aria-hidden>
+            <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
+            <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
+          </span>
+          {t("portal.darkMode")}
+        </button>
+      </div>
       <form onSubmit={submit} className="card relative z-10 w-full max-w-md p-8">
         <AppBrand className="mb-6" subtitle={t("app.tagline")} asHeading />
-        <div className="segmented mb-5">
-          <button
-            type="button"
-            className={`btn ${mode === "admin" ? "btn-primary" : ""}`}
-            onClick={() => {
-              setMode("admin");
-              setPassword("");
-              setNeedTotp(false);
-            }}
-          >
-            <Shield size={16} />
-            {t("auth.adminLogin")}
-          </button>
-          <button
-            type="button"
-            className={`btn ${mode === "portal" ? "btn-primary" : ""}`}
-            onClick={() => {
-              setMode("portal");
-              setPassword("");
-              setNeedTotp(false);
-            }}
-          >
-            <Phone size={16} />
-            {t("auth.portalLogin")}
-          </button>
-        </div>
+        <Segmented
+          className="mb-5"
+          aria-label={t("auth.adminLogin")}
+          value={mode}
+          onValueChange={(next) => {
+            setMode(next);
+            setPassword("");
+            setNeedTotp(false);
+          }}
+          options={[
+            {
+              value: "admin",
+              label: (
+                <>
+                  <Shield size={16} />
+                  {t("auth.adminLogin")}
+                </>
+              ),
+            },
+            {
+              value: "portal",
+              label: (
+                <>
+                  <Phone size={16} />
+                  {t("auth.portalLogin")}
+                </>
+              ),
+            },
+          ]}
+        />
         {mode === "admin" ? (
           <TextField
             label={t("auth.email")}
@@ -125,6 +150,7 @@ export function LoginPage() {
           {loading ? t("common.loading") : t("auth.signIn")}
         </button>
       </form>
+      <ProductSiteLink />
     </div>
   );
 }

@@ -37,3 +37,6 @@ packages/shared/tsconfig.tsbuildinfo
 
 __pycache__/
 *.pyc
+!/.wrongstack/
+/.wrongstack/*
+!/.wrongstack/project.json

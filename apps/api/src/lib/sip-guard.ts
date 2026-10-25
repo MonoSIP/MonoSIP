@@ -134,7 +134,7 @@ async function banAddress(ip: string, failures: number): Promise<void> {
 
 /** Keep an AMI session open for security events; reconnects with backoff. */
 export function startSipGuard(): void {
-  if (process.env.MUNASIP_SIP_GUARD === "0") return;
+  if (process.env.MONOSIP_SIP_GUARD === "0") return;
   const guard = createSipGuard({ isExempt: isExemptAddress, onBan: banAddress });
   setInterval(() => guard.sweep(), 5 * 60_000).unref();
   let delay = 2_000;

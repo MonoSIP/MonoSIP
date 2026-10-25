@@ -71,7 +71,7 @@ export function DownloadPage({ locale = "en" }: { locale?: Locale }) {
           </p>
           <CodeBlock
             code={dockerCommand}
-            title={L("install MunaSIP", "MunaSIP kurulumu")}
+            title={L("install MonoSIP", "MonoSIP kurulumu")}
           />
           <div className="terminal-note">
             <Icon name="shield" />
@@ -192,7 +192,7 @@ export function DownloadPage({ locale = "en" }: { locale?: Locale }) {
             </p>
             <a
               className="text-link"
-              href="https://github.com/orgs/MunaSIP/packages/container/package/munasip"
+              href="https://github.com/orgs/MonoSIP/packages/container/package/monosip"
             >
               {L("View container package", "Konteyner paketine bakın")}{" "}
               <Icon name="external" />

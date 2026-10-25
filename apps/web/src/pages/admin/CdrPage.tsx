@@ -110,13 +110,18 @@ export function CdrPage() {
             value={caller}
             onChange={(e) => setCaller(e.target.value)}
           />
-          <SelectField label={t("cdr.disposition")} value={disposition} onChange={(e) => setDisposition(e.target.value)}>
-            <option value="">{tr("All dispositions")}</option>
-            <option value="ANSWERED">{tr("ANSWERED")}</option>
-            <option value="NOANSWER">{tr("NOANSWER")}</option>
-            <option value="BUSY">{tr("BUSY")}</option>
-            <option value="FAILED">{tr("FAILED")}</option>
-          </SelectField>
+          <SelectField
+            label={t("cdr.disposition")}
+            value={disposition}
+            onValueChange={setDisposition}
+            options={[
+              { value: "", label: tr("All dispositions") },
+              { value: "ANSWERED", label: tr("ANSWERED") },
+              { value: "NOANSWER", label: tr("NOANSWER") },
+              { value: "BUSY", label: tr("BUSY") },
+              { value: "FAILED", label: tr("FAILED") },
+            ]}
+          />
           <button className="btn btn-primary" type="submit">
             <Filter size={16} />
             {tr("Filter")}

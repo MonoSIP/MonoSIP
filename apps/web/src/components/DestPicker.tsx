@@ -82,28 +82,17 @@ export function DestPicker({ destType, destId, onChange, className }: Props) {
         label={tr("Type")}
         icon={Route}
         value={destType}
-        onChange={(e) => onChange(e.target.value, e.target.value === "hangup" ? null : destId)}
-      >
-        {DEST_TYPES.map((d) => (
-          <option key={d.value} value={d.value}>
-            {tr(d.label)}
-          </option>
-        ))}
-      </SelectField>
+        onValueChange={(next) => onChange(next, next === "hangup" ? null : destId)}
+        options={DEST_TYPES.map((d) => ({ value: d.value, label: tr(d.label) }))}
+      />
       {needsId && useSelect && (
         <SelectField
           label={tr("Target")}
           icon={MapPin}
           value={destId ?? ""}
-          onChange={(e) => onChange(destType, e.target.value || null)}
-        >
-          <option value="">{tr("— select —")}</option>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </SelectField>
+          onValueChange={(next) => onChange(destType, next || null)}
+          options={[{ value: "", label: tr("— select —") }, ...options]}
+        />
       )}
       {needsId && !useSelect && (
         <TextField

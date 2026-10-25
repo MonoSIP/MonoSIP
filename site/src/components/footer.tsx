@@ -19,13 +19,13 @@ export function Footer() {
           <div className="footer-intro">
             <Link className="brand" href={href("/")}>
               <Image
-                src="/brand/munasip-mark.svg"
+                src="/brand/monosip-mark.svg"
                 width={32}
                 height={32}
                 alt=""
               />
               <span>
-                Müna<span className="brand-sip">SIP</span>
+                Mono<span className="brand-sip">SIP</span>
                 <span className="brand-period">.</span>
               </span>
             </Link>
@@ -68,6 +68,9 @@ export function Footer() {
         </div>
         <div className="footer-bottom">
           <span>{t.copyright}</span>
+          <a className="footer-site" href="https://www.monosip.com">
+            www.monosip.com
+          </a>
           <span className="footer-end">
             <span className="status-dot" /> {t.built}
             <a href="#top" aria-label={t.top}>

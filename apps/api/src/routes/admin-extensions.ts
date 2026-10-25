@@ -4,18 +4,14 @@ import {
   ExtensionCreateSchema,
   ExtensionUpdateSchema,
   ForwardingRuleSchema,
-} from "@munasip/shared";
+} from "@monosip/shared";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import { extensionForwarding, extensions, spendLimits } from "../db/schema.js";
 import { requireAdmin } from "../lib/auth.js";
 import { writeAudit } from "../lib/audit.js";
-import {
-  deriveSipPassword,
-  encrypt,
-  randomSecret,
-  scryptHash,
-} from "../lib/crypto.js";
+import { encrypt, randomSecret, scryptHash } from "../lib/crypto.js";
+import { csvCell } from "../lib/csv.js";
 import { tryReloadAsterisk, writeAsteriskConfig } from "../asterisk/config-writer.js";
 import { ari } from "../asterisk/ari.js";
 
@@ -258,7 +254,9 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     const csv =
       header +
       rows
-        .map((r) => `${r.number},${r.name},${r.email ?? ""},${r.dnd},${r.portalEnabled}`)
+        .map((r) =>
+          [r.number, r.name, r.email ?? "", r.dnd, r.portalEnabled].map(csvCell).join(","),
+        )
         .join("\n");
     reply.header("content-type", "text/csv");
     reply.header("content-disposition", "attachment; filename=extensions.csv");
@@ -276,15 +274,29 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     const start = lines[0]?.toLowerCase().startsWith("number") ? 1 : 0;
     let created = 0;
     let updated = 0;
+    // Same contract as the create route: rows that would fail
+    // ExtensionCreateSchema (number /^\d{2,6}$/, name 1–100 chars) are skipped
+    // and counted, not silently inserted into the generated pjsip/dialplan.
+    const importRowSchema = ExtensionCreateSchema.pick({ number: true, name: true });
+    let rejected = 0;
+    // Passwords for extensions created by this import. One password serves both
+    // the portal login and the SIP registration, so they are generated together.
+    const credentials: Array<{ number: string; portalPassword: string }> = [];
     for (const line of lines.slice(start)) {
       const [number, name, email, dnd, portalEnabled] = line.split(",").map((s) => s.trim());
-      if (!number || !name) continue;
-      const existing = await db.select().from(extensions).where(eq(extensions.number, number));
+      const row = importRowSchema.safeParse({ number: number ?? "", name: name ?? "" });
+      if (!row.success) {
+        rejected++;
+        continue;
+      }
+      const rowNumber = row.data.number;
+      const rowName = row.data.name;
+      const existing = await db.select().from(extensions).where(eq(extensions.number, rowNumber));
       if (existing[0]) {
         await db
           .update(extensions)
           .set({
-            name,
+            name: rowName,
             email: email || null,
             dnd: dnd === "true" || dnd === "1",
             portalEnabled: portalEnabled !== "false" && portalEnabled !== "0",
@@ -293,26 +305,29 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
           .where(eq(extensions.id, existing[0].id));
         updated++;
       } else {
-        const sipPass = deriveSipPassword();
+        // Same credential path as the create route: one generated password
+        // serves both the portal login and the SIP registration. It is never
+        // derived from the extension number, which would be guessable.
+        const portalPassword = randomSecret(12);
         await db.insert(extensions).values({
-          number,
-          name,
+          number: rowNumber,
+          name: rowName,
           email: email || null,
-          sipSecretEnc: encrypt(sipPass),
-          portalPasswordHash: scryptHash(`portal${number}`),
+          ...extensionCredentials(portalPassword),
           dnd: dnd === "true" || dnd === "1",
           portalEnabled: portalEnabled !== "false" && portalEnabled !== "0",
         });
         created++;
+        credentials.push({ number: rowNumber, portalPassword });
       }
     }
     await writeAsteriskConfig();
     await writeAudit({
       actor: actor as never,
       action: "extension.import",
-      after: { created, updated },
+      after: { created, updated, rejected },
       ip: req.ip,
     });
-    return { created, updated };
+    return { created, updated, rejected, credentials };
   });
 }

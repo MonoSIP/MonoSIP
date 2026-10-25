@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music, Pause, Play, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { ConfirmDialog, IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type MohClass = { id: string; name: string; files: unknown };
@@ -11,6 +11,7 @@ type MohClass = { id: string; name: string; files: unknown };
 export function MohPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
+  const [pendingClass, setPendingClass] = useState<MohClass | null>(null);
   const [playing, setPlaying] = useState<{ id: string; file: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -192,11 +193,7 @@ export function MohPage() {
                       label={tr("Delete class")}
                       danger
                       disabled={removeClass.isPending}
-                      onClick={() => {
-                        if (confirm(tr("Delete hold music class “{{name}}” and its files?", { name: m.name }))) {
-                          removeClass.mutate(m);
-                        }
-                      }}
+                      onClick={() => setPendingClass(m)}
                     />
                     <input
                       ref={(el) => {
@@ -293,6 +290,20 @@ export function MohPage() {
           )}
         </form>
       </SectionCard>
+      <ConfirmDialog
+        open={pendingClass != null}
+        onOpenChange={(open) => {
+          if (!open) setPendingClass(null);
+        }}
+        title={tr("Delete class")}
+        description={tr("Delete hold music class “{{name}}” and its files?", { name: pendingClass?.name ?? "" })}
+        confirmLabel={tr("Delete class")}
+        cancelLabel={tr("Cancel")}
+        pending={removeClass.isPending}
+        onConfirm={() => {
+          if (pendingClass) removeClass.mutate(pendingClass);
+        }}
+      />
     </div>
   );
 }

@@ -46,6 +46,16 @@ export function deriveSipPassword(): string {
   return randomBytes(24).toString("base64url");
 }
 
+/**
+ * Constant-time comparison of two secrets. Both sides are hashed first so the
+ * comparison length never leaks the length of the secret.
+ */
+export function safeEqual(a: string, b: string): boolean {
+  const ha = createHash("sha256").update(a).digest();
+  const hb = createHash("sha256").update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
+
 export function hmacSign(secret: string, body: string): string {
   // Real HMAC: a raw sha256(secret + body) concat is vulnerable to length-extension
   // forgery once the signature for one body is observed.

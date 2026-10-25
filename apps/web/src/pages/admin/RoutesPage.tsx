@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Inbound = {
@@ -282,24 +282,28 @@ export function RoutesPage() {
             onChange={(e) => setObPattern(e.target.value)}
             required
           />
-          <SelectField label={tr("Trunk")} value={obTrunk} onChange={(e) => setObTrunk(e.target.value)} required>
-            <option value="">{tr("Trunk…")}</option>
-            {(trunks.data ?? []).map((tr) => (
-              <option key={tr.id} value={tr.id}>
-                {tr.name}
-              </option>
-            ))}
-          </SelectField>
-          <SelectField label={tr("Permission")} value={obPerm} onChange={(e) => setObPerm(e.target.value)}>
-            <option value="localFixed">{tr("Local landline")}</option>
-            <option value="mobile">mobile</option>
-            <option value="short444">short444</option>
-            <option value="international">international</option>
-          </SelectField>
-          <label className="flex items-center gap-2 pb-[0.85rem] text-sm">
-            <input type="checkbox" checked={obEnabled} onChange={(e) => setObEnabled(e.target.checked)} />
-            {t("common.enabled")}
-          </label>
+          <SelectField
+            label={tr("Trunk")}
+            value={obTrunk}
+            onValueChange={setObTrunk}
+            required
+            options={[
+              { value: "", label: tr("Trunk…") },
+              ...(trunks.data ?? []).map((trunk) => ({ value: trunk.id, label: trunk.name })),
+            ]}
+          />
+          <SelectField
+            label={tr("Permission")}
+            value={obPerm}
+            onValueChange={setObPerm}
+            options={[
+              { value: "localFixed", label: tr("Local landline") },
+              { value: "mobile", label: "mobile" },
+              { value: "short444", label: "short444" },
+              { value: "international", label: "international" },
+            ]}
+          />
+          <Checkbox checked={obEnabled} onCheckedChange={setObEnabled} label={t("common.enabled")} />
           <div className="flex gap-2 pb-[0.85rem]">
             <button className="btn btn-primary" type="submit">
               <Plus size={16} />

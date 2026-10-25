@@ -6,7 +6,8 @@ import { KeyRound, Languages, Mic, Moon, PhoneForwarded, UserCog, Voicemail, Vol
 import { api } from "../../lib/api";
 import { usePhoneOptional } from "../../lib/phone-context";
 import { useStore } from "../../store";
-import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { setAppLocale } from "../../i18n";
+import { PageHeader, SectionCard, Segmented, SelectField, TextAreaField, TextField } from "../../components/ui";
 
 type Fwd = {
   id?: string;
@@ -16,7 +17,7 @@ type Fwd = {
   destId: string | null;
 };
 
-const DEVICE_KEY = "munasip.audioDevices";
+const DEVICE_KEY = "monosip.audioDevices";
 
 export function MySettingsPage() {
   const { t, i18n } = useTranslation();
@@ -188,9 +189,8 @@ export function MySettingsPage() {
   }
 
   function setLang(next: "en" | "tr") {
-    localStorage.setItem("munasip_locale", next);
+    setAppLocale(next);
     setLangState(next);
-    void i18n?.changeLanguage?.(next);
   }
 
   return (
@@ -259,18 +259,19 @@ export function MySettingsPage() {
             <SelectField
               label="Destination"
               value={fwd.destType}
-              onChange={(e) =>
+              onValueChange={(next) =>
                 patchFwd(fwd.condition, {
-                  destType: e.target.value,
-                  destId: e.target.value === "voicemail" || e.target.value === "hangup" ? null : fwd.destId,
+                  destType: next,
+                  destId: next === "voicemail" || next === "hangup" ? null : fwd.destId,
                 })
               }
-            >
-              <option value="voicemail">Voicemail</option>
-              <option value="extension">Extension</option>
-              <option value="hangup">Hangup</option>
-              {me.data?.mobileForwardAllowed && <option value="external">Mobile / external</option>}
-            </SelectField>
+              options={[
+                { value: "voicemail", label: "Voicemail" },
+                { value: "extension", label: "Extension" },
+                { value: "hangup", label: "Hangup" },
+                ...(me.data?.mobileForwardAllowed ? [{ value: "external", label: "Mobile / external" }] : []),
+              ]}
+            />
             {(fwd.destType === "extension" || fwd.destType === "external") && (
               <TextField
                 label={fwd.destType === "external" ? "Mobile number" : "Extension number"}
@@ -307,35 +308,27 @@ export function MySettingsPage() {
         <SelectField
           label={t("portal.greetingVoice")}
           value={greetVoice}
-          onChange={(e) => {
-            const next = e.target.value;
+          onValueChange={(next) => {
             setGreetVoice(next);
             if (next === "ema-lightning") setGreetLang("tr");
           }}
-        >
-          <option value="female">{t("portal.voiceFemale")}</option>
-          <option value="male">{t("portal.voiceMale")}</option>
-          <option value="ema-lightning">{t("portal.voiceEma")}</option>
-        </SelectField>
+          options={[
+            { value: "female", label: t("portal.voiceFemale") },
+            { value: "male", label: t("portal.voiceMale") },
+            { value: "ema-lightning", label: t("portal.voiceEma") },
+          ]}
+        />
         <div className="space-y-1">
           <span className="field-label">{t("portal.greetingLang")}</span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              className={`btn ${greetLang === "tr" ? "btn-primary" : ""}`}
-              type="button"
-              onClick={() => setGreetLang("tr")}
-            >
-              Türkçe
-            </button>
-            <button
-              className={`btn ${greetLang === "en" ? "btn-primary" : ""}`}
-              type="button"
-              disabled={greetVoice === "ema-lightning"}
-              onClick={() => setGreetLang("en")}
-            >
-              English
-            </button>
-          </div>
+          <Segmented
+            aria-label={t("portal.greetingLang")}
+            value={greetLang}
+            onValueChange={setGreetLang}
+            options={[
+              { value: "tr", label: "Türkçe" },
+              { value: "en", label: "English", disabled: greetVoice === "ema-lightning" },
+            ]}
+          />
         </div>
         <button
           className="btn btn-primary"
@@ -347,30 +340,36 @@ export function MySettingsPage() {
         </button>
       </SectionCard>
       <SectionCard title="Audio devices" icon={Mic} tone="cyan">
-        <SelectField label="Microphone" icon={Mic} value={micId} onChange={(e) => setMicId(e.target.value)}>
-          <option value="">System default</option>
-          {inputs.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || d.deviceId.slice(0, 8)}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField label="Speaker" icon={Volume2} value={speakerId} onChange={(e) => setSpeakerId(e.target.value)}>
-          <option value="">System default</option>
-          {outputs.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || d.deviceId.slice(0, 8)}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField label="Ringtone output" icon={Volume2} value={ringId} onChange={(e) => setRingId(e.target.value)}>
-          <option value="">Same as speaker</option>
-          {outputs.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || d.deviceId.slice(0, 8)}
-            </option>
-          ))}
-        </SelectField>
+        <SelectField
+          label="Microphone"
+          icon={Mic}
+          value={micId}
+          onValueChange={setMicId}
+          options={[
+            { value: "", label: "System default" },
+            ...inputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
+          ]}
+        />
+        <SelectField
+          label="Speaker"
+          icon={Volume2}
+          value={speakerId}
+          onValueChange={setSpeakerId}
+          options={[
+            { value: "", label: "System default" },
+            ...outputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
+          ]}
+        />
+        <SelectField
+          label="Ringtone output"
+          icon={Volume2}
+          value={ringId}
+          onValueChange={setRingId}
+          options={[
+            { value: "", label: "Same as speaker" },
+            ...outputs.map((d) => ({ value: d.deviceId, label: d.label || d.deviceId.slice(0, 8) })),
+          ]}
+        />
         <button className="btn btn-primary" type="button" onClick={saveDevices}>
           Save devices
         </button>

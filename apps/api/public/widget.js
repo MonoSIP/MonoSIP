@@ -1,5 +1,5 @@
 /*!
- * MunaSIP website call widget — drop-in script.
+ * MonoSIP website call widget — drop-in script.
  * Usage: <script src="https://pbx.example.com/widget.js" data-widget="w_xxxx" async></script>
  */
 (function () {
@@ -8,7 +8,7 @@
   if (!script) return;
   var key = script.getAttribute("data-widget");
   if (!key) {
-    console.warn("[MunaSIP widget] data-widget attribute required");
+    console.warn("[MonoSIP widget] data-widget attribute required");
     return;
   }
   var base =
@@ -333,7 +333,7 @@
         setStatus("");
       };
 
-      panel.appendChild(el("strong", { text: cfg.name || "MunaSIP", style: { display: "block", marginBottom: "8px" } }));
+      panel.appendChild(el("strong", { text: cfg.name || "MonoSIP", style: { display: "block", marginBottom: "8px" } }));
       panel.appendChild(statusEl);
       if (nameInput) panel.appendChild(nameInput);
       if (phoneInput) panel.appendChild(phoneInput);
@@ -351,6 +351,6 @@
       document.body.appendChild(panel);
     })
     .catch(function (e) {
-      console.warn("[MunaSIP widget]", e.message || e);
+      console.warn("[MonoSIP widget]", e.message || e);
     });
 })();

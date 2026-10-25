@@ -4,7 +4,7 @@ import { DocsIndex } from "@/views/docs-index";
 
 export const metadata: Metadata = pageMetadata(
   "Belgeler",
-  "MunaSIP’i kurun, IVR akışları tasarlayın, tarayıcı telefonunu bağlayın ve kendi sunucunuzdaki santralin mimarisini anlayın.",
+  "MonoSIP’i kurun, IVR akışları tasarlayın, tarayıcı telefonunu bağlayın ve kendi sunucunuzdaki santralin mimarisini anlayın.",
   "/tr/docs/",
   "tr",
 );

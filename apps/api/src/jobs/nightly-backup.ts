@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { eq } from "drizzle-orm";
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import { db } from "../db/client.js";
 import {
   blacklist,
@@ -44,7 +44,7 @@ export async function runNightlyBackup(): Promise<void> {
 
   await mkdir(archive, { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
-  const jsonPath = path.join(archive, `munasip-settings-${stamp}.json`);
+  const jsonPath = path.join(archive, `monosip-settings-${stamp}.json`);
   const payload = await collectBackupJson();
   await writeFile(jsonPath, JSON.stringify(payload, null, 2), "utf8");
   console.log(`[backup] wrote ${jsonPath}`);
@@ -52,7 +52,7 @@ export async function runNightlyBackup(): Promise<void> {
   // Optional pg_dump when pg_dump binary + DATABASE_URL available
   try {
     const { spawn } = await import("node:child_process");
-    const dumpPath = path.join(archive, `munasip-db-${stamp}.sql`);
+    const dumpPath = path.join(archive, `monosip-db-${stamp}.sql`);
     await new Promise<void>((resolve, reject) => {
       const p = spawn("pg_dump", [config.databaseUrl, "-f", dumpPath], {
         stdio: ["ignore", "ignore", "pipe"],

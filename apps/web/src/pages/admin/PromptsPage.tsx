@@ -4,7 +4,7 @@ import { AudioLines, Languages, List, Mic, Pause, Play, Tag, Trash2, Upload, Wan
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { voiceOptions } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
 
@@ -361,28 +361,23 @@ export function PromptsPage() {
               label={t("prompts.language", { defaultValue: "Language" })}
               icon={Languages}
               value={language}
-              onChange={(e) => {
-                const lang = e.target.value as "en" | "tr";
+              onValueChange={(next) => {
+                const lang = next as "en" | "tr";
                 setLanguage(lang);
-                // EMA is TR-only — fall back if the voice becomes invalid.
                 if (!voiceOptions(lang).some((o) => o.value === voice)) setVoice("female");
               }}
-            >
-              <option value="tr">{t("langs.tr")}</option>
-              <option value="en">{t("langs.en")}</option>
-            </SelectField>
+              options={[
+                { value: "tr", label: t("langs.tr") },
+                { value: "en", label: t("langs.en") },
+              ]}
+            />
             <SelectField
               label={t("prompts.voice", { defaultValue: "TTS model" })}
               icon={AudioLines}
               value={voice}
-              onChange={(e) => setVoice(e.target.value)}
-            >
-              {voiceOptions(language, { includeDefault: false }).map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </SelectField>
+              onValueChange={setVoice}
+              options={voiceOptions(language, { includeDefault: false })}
+            />
           </div>
           <TextAreaField
             label={tr("TTS text")}
@@ -445,36 +440,26 @@ export function PromptsPage() {
         </form>
       </SectionCard>
 
-      {pendingDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="prompt-delete-title"
-          onClick={() => !remove.isPending && setPendingDelete(null)}
-        >
-          <div
-            className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--bg)] p-5 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 id="prompt-delete-title" className="text-lg font-semibold">
-              {pendingDelete.source === "cache"
-                ? t("prompts.deleteCacheTitle", { defaultValue: "Delete cache entry?" })
-                : t("prompts.deleteTitle", { defaultValue: "Delete prompt?" })}
-            </h2>
-            <p className="mt-2 text-sm text-[var(--text-muted)]">
-              {t("prompts.deleteConfirm", {
-                name: pendingDelete.name,
-                defaultValue: `Delete “${pendingDelete.name}”? The audio file will be removed. This cannot be undone.`,
-              })}
-            </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                className="btn"
-                type="button"
-                disabled={remove.isPending}
-                onClick={() => setPendingDelete(null)}
-              >
+      {pendingDelete ? (
+        <Modal
+          open
+          onOpenChange={(open) => {
+            if (!open && !remove.isPending) setPendingDelete(null);
+          }}
+          dismissable={!remove.isPending}
+          className="max-w-md"
+          title={
+            pendingDelete.source === "cache"
+              ? t("prompts.deleteCacheTitle", { defaultValue: "Delete cache entry?" })
+              : t("prompts.deleteTitle", { defaultValue: "Delete prompt?" })
+          }
+          description={t("prompts.deleteConfirm", {
+            name: pendingDelete.name,
+            defaultValue: `Delete “${pendingDelete.name}”? The audio file will be removed. This cannot be undone.`,
+          })}
+          footer={
+            <>
+              <button className="btn" type="button" disabled={remove.isPending} onClick={() => setPendingDelete(null)}>
                 {t("common.cancel", { defaultValue: "Cancel" })}
               </button>
               <button
@@ -487,10 +472,10 @@ export function PromptsPage() {
                   ? t("common.deleting", { defaultValue: "Deleting…" })
                   : t("common.delete", { defaultValue: "Delete" })}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          }
+        />
+      ) : null}
     </div>
   );
 }

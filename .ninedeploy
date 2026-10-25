@@ -20,7 +20,7 @@ run:
 #   (creates volume nd-svc-<slug>-data). Without that, every Deploy wipes
 #   Postgres/settings/trunks because /data lives on the container overlay.
 # Or set DATABASE_URL to managed Postgres.
-# Optional vault: MUNASIP_REQUIRE_PERSISTENT_DATA=1 — also auto-fatal when
+# Optional vault: MONOSIP_REQUIRE_PERSISTENT_DATA=1 — also auto-fatal when
 # PUBLIC_HOST is set and /data is not a mount (see bootstrap-runtime.sh).
 volume:
   mount: "/data"
@@ -31,7 +31,7 @@ volume:
 # Softphone audio (WebRTC RTP) — publish these in the NineDeploy UI if the
 # platform does not map them from this file:
 #   UDP 10000-10100 → container 10000-10100
-# Then set vault env MUNASIP_RTP_PUBLISHED=1 (and EXTERNAL_IP). Deploy logs +
+# Then set vault env MONOSIP_RTP_PUBLISHED=1 (and EXTERNAL_IP). Deploy logs +
 # /api/v1/health.media warn until that is done.
 
 resources:

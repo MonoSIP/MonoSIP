@@ -16,14 +16,14 @@ maxretry = 8
 findtime = 600
 bantime = 900
 action = iptables-allports[name=asterisk]
-         munasip-notify[name=asterisk]
+         monosip-notify[name=asterisk]
 
-[munasip-admin-login]
+[monosip-admin-login]
 enabled = true
-filter = munasip-admin
-logpath = /var/log/munasip/api-security.log
+filter = monosip-admin
+logpath = /var/log/monosip/api-security.log
 maxretry = 8
 findtime = 600
 bantime = 900
-action = iptables-allports[name=munasip-admin]
-         munasip-notify[name=munasip-admin]
+action = iptables-allports[name=monosip-admin]
+         monosip-notify[name=monosip-admin]

@@ -27,8 +27,8 @@ const screens = (
       ? "Aktif aramaları, dahili durumunu ve kuyruk hareketini tek canlı görünümde görün. Ekip için TV moduna geçin."
       : "See active calls, extension presence and queue activity in one live view. Switch to TV mode for the team.",
     alt: tr
-      ? "Arama sayıları, canlı dahili durumu ve kuyrukları gösteren MunaSIP panosu"
-      : "MunaSIP dashboard showing call counts, live extension presence and queues",
+      ? "Arama sayıları, canlı dahili durumu ve kuyrukları gösteren MonoSIP panosu"
+      : "MonoSIP dashboard showing call counts, live extension presence and queues",
   },
   {
     name: tr ? "Görsel IVR" : "Visual IVR",
@@ -41,8 +41,8 @@ const screens = (
       ? "Menü, API isteği, koşul ve hedefleri bağlayın. Çağrı akışınızı doğrulayın, simüle edin ve yayınlayın."
       : "Connect menus, API requests, conditions and destinations. Validate, simulate and publish your call flow.",
     alt: tr
-      ? "Ana hat demosu, menü, API sorgusu ve koşullu rotalarla MunaSIP görsel IVR tasarımcısı"
-      : "MunaSIP visual IVR designer with the Main line demo, a menu, API lookup and conditional routes",
+      ? "Ana hat demosu, menü, API sorgusu ve koşullu rotalarla MonoSIP görsel IVR tasarımcısı"
+      : "MonoSIP visual IVR designer with the Main line demo, a menu, API lookup and conditional routes",
   },
   {
     name: tr ? "Arama kayıtları" : "Call logs",
@@ -55,8 +55,8 @@ const screens = (
       ? "IVR zaman çizelgesini görmek için bir arama satırını açın. Kayıtları süzün, CSV dışa aktarın ve ilgili ses kaydını bulun."
       : "Open a call row to inspect its IVR timeline. Filter records, export CSV and find the associated recording.",
     alt: tr
-      ? "Süzgeçler, arama yönü ve kayıt denetimleriyle MunaSIP arama ayrıntı kayıtları"
-      : "MunaSIP call detail records with filters, call direction and recording controls",
+      ? "Süzgeçler, arama yönü ve kayıt denetimleriyle MonoSIP arama ayrıntı kayıtları"
+      : "MonoSIP call detail records with filters, call direction and recording controls",
   },
   {
     name: tr ? "Sesli mesaj" : "Voicemail",
@@ -69,8 +69,8 @@ const screens = (
       ? `Dahilinizin kutusunu açın, kim aradığını görün, mesajı dinleyin ve okundu durumunu yönetin. v${site.version} ile gelir.`
       : `Open your extension’s mailbox, see who called, listen to the message and manage its read state. Included in v${site.version}.`,
     alt: tr
-      ? "Arayan ayrıntıları, okunmamış mesajlar ve oynatıcıyla MunaSIP çalışan sesli mesaj kutusu"
-      : "MunaSIP employee voicemail inbox with caller details, unread messages and a playback panel",
+      ? "Arayan ayrıntıları, okunmamış mesajlar ve oynatıcıyla MonoSIP çalışan sesli mesaj kutusu"
+      : "MonoSIP employee voicemail inbox with caller details, unread messages and a playback panel",
   },
   {
     name: tr ? "Kuyruklar" : "Queues",
@@ -83,8 +83,8 @@ const screens = (
       ? "Bir çalma stratejisi seçin, üyeleri yönetin, bekleme anonsu, taşma ve geri aramayı ayarlayın."
       : "Choose a ring strategy, manage members and configure wait announcements, overflow and callback.",
     alt: tr
-      ? "Üyeler ve yönlendirme ayarlarıyla MunaSIP kuyruk yönetimi"
-      : "MunaSIP queue management with members and routing configuration",
+      ? "Üyeler ve yönlendirme ayarlarıyla MonoSIP kuyruk yönetimi"
+      : "MonoSIP queue management with members and routing configuration",
   },
   {
     name: tr ? "Dahililer" : "Extensions",
@@ -95,8 +95,8 @@ const screens = (
       ? "Dahili izinlerini, yönlendirmeyi, arayan kimliklerini ve paylaşılan portal/SIP parolalarını yönetin. CSV içe veya dışa aktarın."
       : "Manage extension permissions, forwarding, caller IDs and shared portal/SIP passwords. Import or export CSV.",
     alt: tr
-      ? "Ofis dahililerini ve durumlarını gösteren MunaSIP dahili yönetimi"
-      : "MunaSIP extensions management showing office extensions and presence",
+      ? "Ofis dahililerini ve durumlarını gösteren MonoSIP dahili yönetimi"
+      : "MonoSIP extensions management showing office extensions and presence",
   },
   {
     name: tr ? "Raporlar" : "Reports",
@@ -107,8 +107,8 @@ const screens = (
       ? "Cevaplanan, kaçan ve terk edilen aramaları, kuyruk veya dahiliye göre bekleme ve konuşma süreleriyle inceleyin."
       : "Review answered, missed and abandoned calls, with wait and talk times by queue or extension.",
     alt: tr
-      ? "Tarih süzgeçleri ve arama istatistikleriyle MunaSIP rapor ekranı"
-      : "MunaSIP reporting screen with date filters and call statistics",
+      ? "Tarih süzgeçleri ve arama istatistikleriyle MonoSIP rapor ekranı"
+      : "MonoSIP reporting screen with date filters and call statistics",
   },
   {
     name: tr ? "Ayarlar ve SSL" : "Settings & SSL",
@@ -119,8 +119,8 @@ const screens = (
       ? "Herkese açık alan adını koyun, güvenlik seçeneklerini yönetin ve otomatik Let’s Encrypt sertifikalarını ayarlayın."
       : "Set the public hostname, manage security options and configure automatic Let’s Encrypt certificates.",
     alt: tr
-      ? "Alan adı ve otomatik SSL ayarını içeren MunaSIP sistem ayarları"
-      : "MunaSIP system settings including hostname and automatic SSL configuration",
+      ? "Alan adı ve otomatik SSL ayarını içeren MonoSIP sistem ayarları"
+      : "MonoSIP system settings including hostname and automatic SSL configuration",
   },
 ];
 

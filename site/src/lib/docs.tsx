@@ -64,7 +64,7 @@ export const docs: Record<
   "getting-started": {
     title: "Your first connection.",
     summary:
-      "Run MunaSIP on your Linux server, configure the essentials and connect your first extension.",
+      "Run MonoSIP on your Linux server, configure the essentials and connect your first extension.",
     source: "INSTALL",
     sections: [
       {
@@ -125,7 +125,7 @@ export const docs: Record<
             <Callout>
               <p>
                 Keep the <code>/data</code> volume and{" "}
-                <code>/data/.munasip-secrets</code> backed up. They contain the
+                <code>/data/.monosip-secrets</code> backed up. They contain the
                 database, generated configuration, recordings and keys needed to
                 read encrypted secrets. With a public hostname, boot checks that
                 the data directory is a real volume.
@@ -208,8 +208,8 @@ export const docs: Record<
             />
             <p>
               On a platform edge without the Compose ALPN mux, the install guide
-              documents <code>MUNASIP_RTP_PUBLISHED=1</code> when RTP is
-              actually published, and <code>MUNASIP_TURNS_ON_443=0</code> for a
+              documents <code>MONOSIP_RTP_PUBLISHED=1</code> when RTP is
+              actually published, and <code>MONOSIP_TURNS_ON_443=0</code> for a
               deliberate STUN-only deployment. Review your network before
               applying either option.
             </p>
@@ -432,7 +432,7 @@ export const docs: Record<
         content: (
           <>
             <p>
-              MunaSIP targets a small office around 20 extensions. It is not a
+              MonoSIP targets a small office around 20 extensions. It is not a
               documented automatic high-availability cluster. Carrier-side
               failover can redirect inbound calls if the PBX host or uplink
               fails.
@@ -728,7 +728,7 @@ export const docs: Record<
               behavior on your devices.
             </p>
             <p>
-              MunaSIP does not provide a first-party mobile or desktop app. It
+              MonoSIP does not provide a first-party mobile or desktop app. It
               does provide documented provisioning profiles for Yealink, Fanvil
               and Grandstream desk phones.
             </p>
@@ -844,7 +844,7 @@ export const docs: Record<
         content: (
           <>
             <p>
-              MunaSIP separates the session-authenticated admin API,
+              MonoSIP separates the session-authenticated admin API,
               extension-authenticated portal API and API-key-authenticated
               integration API. External integrations use{" "}
               <code>/api/v1/ext</code>.
@@ -981,7 +981,7 @@ export const docs: Record<
         content: (
           <>
             <p>
-              MunaSIP provides optional admin TOTP two-factor authentication,
+              MonoSIP provides optional admin TOTP two-factor authentication,
               admin/portal/SIP IP allowlists, login-flood bans, SIP scanning
               visibility, audit logging and outbound dialing controls. Enable
               and configure the controls your deployment needs.
@@ -1061,7 +1061,7 @@ export const docs: Record<
           <>
             <p>
               For the single image, persist <code>/data</code> and protect{" "}
-              <code>/data/.munasip-secrets</code>. Compose uses separate
+              <code>/data/.monosip-secrets</code>. Compose uses separate
               database, recording, upload and Asterisk configuration volumes,
               plus certificate files. Keep encryption keys with your recovery
               material.
@@ -1076,7 +1076,7 @@ export const docs: Record<
               Plan recording disk usage around real traffic and retention. If
               the host or uplink fails, inbound failover to a mobile number is a
               carrier-side configuration; automatic clustered failover is not a
-              documented MunaSIP feature.
+              documented MonoSIP feature.
             </p>
           </>
         ),
@@ -1100,7 +1100,7 @@ export const docs: Record<
             </p>
             <p>
               Read the{" "}
-              <a href="https://github.com/MunaSIP/MunaSIP#readme">
+              <a href="https://github.com/MonoSIP/MonoSIP#readme">
                 project readme
               </a>{" "}
               and <a href={sourceDoc("DEPLOY-VPS")}>VPS deployment guide</a> for

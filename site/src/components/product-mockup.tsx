@@ -931,7 +931,7 @@ export function ProductMockup({
         }
         data-screen={screen}
       >
-        <title>{`${title} · MunaSIP interface illustration`}</title>
+        <title>{`${title} · MonoSIP interface illustration`}</title>
         <desc>
           An illustrative interface mockup, not a live phone system or a product
           screenshot.
@@ -949,7 +949,7 @@ export function ProductMockup({
         />
         <path d="M31 44V34L37 40L43 34V44" className="mockup-logo-mark" />
         <Label x={61} y={45} size={20} kind="strong">
-          MunaSIP
+          MonoSIP
         </Label>
         <Label x={24} y={104} kind="muted" size={9}>
           YOUR PHONE SYSTEM
@@ -997,7 +997,7 @@ export function ProductMockup({
         <Pill x={918} y={25} text="SAMPLE DATA" width={154} tone="muted" />
         {content[screen]}
         <Label x={202} y={677} kind="muted" size={10}>
-          MunaSIP / A clearer connection.
+          MonoSIP / A clearer connection.
         </Label>
         <Label x={919} y={677} kind="muted" size={9}>
           INTERFACE CONCEPT

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   agentRules: false,
-  // Published at the root of https://munasip.github.io.
+  // Published at the root of https://monosip.github.io.
   output: "export",
   trailingSlash: true,
   images: { unoptimized: true },

@@ -2,7 +2,7 @@
 
 ## Repository refresh — 22 October 2026
 
-The official repository was fetched again at `18e42f6` (main). The latest published release is [v1.7.5](https://github.com/MunaSIP/MunaSIP/releases/tag/v1.7.5), commit `3f9deec1c3de77a5aeb4d8ac0f3d60153f01d418`. Its release notes and tagged portal/trunk/readiness sources support the voicemail inbox, provider caller ID and database/Asterisk/dialplan health gate. The `1.7.5` GHCR manifest returns HTTP 200 with digest `sha256:eca7e22917c0ba8696b7ba0ea33f2a26aa2f26ea6fc5513eb63e7a0d6966c968`.
+The official repository was fetched again at `18e42f6` (main). The latest published release is [v1.7.5](https://github.com/MonoSIP/MonoSIP/releases/tag/v1.7.5), commit `3f9deec1c3de77a5aeb4d8ac0f3d60153f01d418`. Its release notes and tagged portal/trunk/readiness sources support the voicemail inbox, provider caller ID and database/Asterisk/dialplan health gate. The `1.7.5` GHCR manifest returns HTTP 200 with digest `sha256:eca7e22917c0ba8696b7ba0ea33f2a26aa2f26ea6fc5513eb63e7a0d6966c968`.
 
 Post-tag changes were reviewed separately: inline mailbox waveforms and counts, saved greetings, missed-call acknowledgement, portal layout/settings updates, and softphone disconnection/re-registration. The updates page labels these as main-branch work, not part of the v1.7.5 release snapshot. Main publishes the `main` image tag; release tags publish version tags and `latest`.
 
@@ -10,15 +10,15 @@ The refresh adds a release page, voicemail guide and SVG concept, eight feature 
 
 ## Original implementation review
 
-Reviewed 21 October 2026. Product claims come from official MunaSIP sources.
+Reviewed 21 October 2026. Product claims come from official MonoSIP sources.
 
 ## Repository and hosting investigation
 
-- Product: [MunaSIP/MunaSIP](https://github.com/MunaSIP/MunaSIP), revision `e8b6183afde8fff50e16d4a7a62a892f78986417`.
-- Current stable release: [v1.6.0](https://github.com/MunaSIP/MunaSIP/releases/tag/v1.6.0). No native installer assets. The Docker workflow publishes `linux/amd64` to GHCR.
-- Website: [MunaSIP/munasip.github.io](https://github.com/MunaSIP/munasip.github.io), original revision `9c670e33329dee6e628145525e2684fb0ed9a489`.
-- Pages API: `main:/`, legacy publishing, `cname: null`, HTTPS enforced. This describes the original site at <https://munasip.github.io/>.
-- The product repository also mentions `munasip.gatex.uk` in its homepage metadata. This is not the Pages custom-domain configuration. That original domain investigation did not require a CNAME.
+- Product: [MonoSIP/MonoSIP](https://github.com/MonoSIP/MonoSIP), revision `e8b6183afde8fff50e16d4a7a62a892f78986417`.
+- Current stable release: [v1.6.0](https://github.com/MonoSIP/MonoSIP/releases/tag/v1.6.0). No native installer assets. The Docker workflow publishes `linux/amd64` to GHCR.
+- Website: [MonoSIP/monosip.github.io](https://github.com/MonoSIP/monosip.github.io), original revision `9c670e33329dee6e628145525e2684fb0ed9a489`.
+- Pages API: `main:/`, legacy publishing, `cname: null`, HTTPS enforced. This describes the original site at <https://monosip.github.io/>.
+- The product repository also mentions `monosip.gatex.uk` in its homepage metadata. This is not the Pages custom-domain configuration. That original domain investigation did not require a CNAME.
 - The product repository's `.github/workflows/pages.yml` copies `site/` into the website repository and removes other files. It would have to be retired for a migration of that original repository. The user subsequently selected a separate repository, so that publisher is left unchanged.
 - Product copyright: 2026 diggyen, MIT. The original revision included an exclusive-maintenance policy; current upstream revision `d72b1ba570a649f06be020c637fa3f8f75e910a5` removed it. Current site text does not claim that earlier contribution restriction still applies.
 
@@ -89,4 +89,4 @@ References: [Next static export](https://nextjs.org/docs/app/guides/static-expor
 
 ## User-selected hosting destination
 
-The site now lives in the MunaSIP repository (`site/`) and is published to https://munasip.github.io/. Canonical URLs use that host.
+The site now lives in the MonoSIP repository (`site/`) and is published to https://monosip.github.io/. Canonical URLs use that host.

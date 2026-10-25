@@ -3,19 +3,19 @@
 # Must be sourced:  . /app/apps/api/scripts/bootstrap-runtime.sh
 set -e
 
-# Before the MunaSIP rename the env prefix was DSIP_: an old DSIP_X fills
-# MUNASIP_X when that is not set (vaults of existing deployments keep working).
+# Before the MonoSIP rename the env prefix was DSIP_: an old DSIP_X fills
+# MONOSIP_X when that is not set (vaults of existing deployments keep working).
 for legacy in $(env | sed -n 's/^DSIP_\([A-Za-z0-9_]*\)=.*/\1/p'); do
-  if [ -z "$(printenv "MUNASIP_$legacy")" ]; then
-    export "MUNASIP_$legacy=$(printenv "DSIP_$legacy")"
+  if [ -z "$(printenv "MONOSIP_$legacy")" ]; then
+    export "MONOSIP_$legacy=$(printenv "DSIP_$legacy")"
   fi
 done
 
-DATA_DIR="${MUNASIP_DATA_DIR:-/data}"
-SECRETS_FILE="$DATA_DIR/.munasip-secrets"
-PERSIST_MARKER="$DATA_DIR/.munasip-persistent"
+DATA_DIR="${MONOSIP_DATA_DIR:-/data}"
+SECRETS_FILE="$DATA_DIR/.monosip-secrets"
+PERSIST_MARKER="$DATA_DIR/.monosip-persistent"
 # Files written under the old name move once
-for pair in ".dsip-secrets:.munasip-secrets" ".dsip-persistent:.munasip-persistent"; do
+for pair in ".dsip-secrets:.monosip-secrets" ".dsip-persistent:.monosip-persistent"; do
   old="$DATA_DIR/${pair%%:*}"
   new="$DATA_DIR/${pair#*:}"
   if [ -f "$old" ] && [ ! -e "$new" ]; then
@@ -39,19 +39,19 @@ if ! data_is_persistent_mount; then
   echo "║  FATAL RISK: ${DATA_DIR} is NOT a Docker volume — data will vanish ║"
   echo "║  on every rebuild/redeploy (settings, extensions, trunks, CDR).    ║"
   echo "║  Fix (NineDeploy): Service → Volume → mount path ${DATA_DIR}       ║"
-  echo "║  Fix (docker):     -v munasip-data:${DATA_DIR}                        ║"
+  echo "║  Fix (docker):     -v monosip-data:${DATA_DIR}                        ║"
   echo "╚══════════════════════════════════════════════════════════════════════╝"
   echo ""
   # Production hosts must not boot on ephemeral storage (silent wipe).
-  # Local/dev: set MUNASIP_ALLOW_EPHEMERAL_DATA=1 to skip this check.
-  if [ "${MUNASIP_REQUIRE_PERSISTENT_DATA:-}" = "1" ] || [ "${MUNASIP_REQUIRE_PERSISTENT_DATA:-}" = "true" ]; then
-    echo "FATAL: MUNASIP_REQUIRE_PERSISTENT_DATA=1 and ${DATA_DIR} is not a mount"
+  # Local/dev: set MONOSIP_ALLOW_EPHEMERAL_DATA=1 to skip this check.
+  if [ "${MONOSIP_REQUIRE_PERSISTENT_DATA:-}" = "1" ] || [ "${MONOSIP_REQUIRE_PERSISTENT_DATA:-}" = "true" ]; then
+    echo "FATAL: MONOSIP_REQUIRE_PERSISTENT_DATA=1 and ${DATA_DIR} is not a mount"
     return 1
   fi
   if [ -n "${PUBLIC_HOST:-}" ] && [ "$PUBLIC_HOST" != "localhost" ] && [ "$PUBLIC_HOST" != "127.0.0.1" ]; then
-    if [ "${MUNASIP_ALLOW_EPHEMERAL_DATA:-}" != "1" ] && [ "${MUNASIP_ALLOW_EPHEMERAL_DATA:-}" != "true" ]; then
+    if [ "${MONOSIP_ALLOW_EPHEMERAL_DATA:-}" != "1" ] && [ "${MONOSIP_ALLOW_EPHEMERAL_DATA:-}" != "true" ]; then
       echo "FATAL: PUBLIC_HOST=${PUBLIC_HOST} requires a persistent volume at ${DATA_DIR}"
-      echo "  (set MUNASIP_ALLOW_EPHEMERAL_DATA=1 only for disposable lab deploys)"
+      echo "  (set MONOSIP_ALLOW_EPHEMERAL_DATA=1 only for disposable lab deploys)"
       return 1
     fi
   fi
@@ -68,15 +68,15 @@ mkdir -p "$DATA_DIR/recordings" "$DATA_DIR/uploads" "$DATA_DIR/asterisk" "$PGDAT
 chown -R postgres:postgres "$PGDATA" /var/run/postgresql 2>/dev/null || true
 chmod 700 "$PGDATA" 2>/dev/null || true
 
-echo "MunaSIP data dir: $DATA_DIR (secrets=$HAD_SECRETS pg_cluster=$HAD_PG)"
+echo "MonoSIP data dir: $DATA_DIR (secrets=$HAD_SECRETS pg_cluster=$HAD_PG)"
 if [ "$HAD_SECRETS" = "1" ] && [ "$HAD_PG" = "0" ]; then
   echo "╔══════════════════════════════════════════════════════════════════════╗"
   echo "║  DATA LOSS RISK: secrets file exists but Postgres cluster is gone  ║"
   echo "║  /data volume may not be mounted persistently across deploys.      ║"
   echo "║  Fix: ensure NineDeploy volume → /data, or set DATABASE_URL.       ║"
   echo "╚══════════════════════════════════════════════════════════════════════╝"
-  if [ "${MUNASIP_REQUIRE_PERSISTENT_DATA:-}" = "1" ]; then
-    echo "FATAL: MUNASIP_REQUIRE_PERSISTENT_DATA=1 — refusing to init empty DB over existing secrets"
+  if [ "${MONOSIP_REQUIRE_PERSISTENT_DATA:-}" = "1" ]; then
+    echo "FATAL: MONOSIP_REQUIRE_PERSISTENT_DATA=1 — refusing to init empty DB over existing secrets"
     return 1
   fi
 fi
@@ -107,10 +107,10 @@ if [ -z "${ASTERISK_AMI_PASSWORD:-}" ]; then
   ASTERISK_AMI_PASSWORD="$(openssl rand -hex 16)"
 fi
 if [ -z "${ASTERISK_ARI_USER:-}" ]; then
-  ASTERISK_ARI_USER="munasip"
+  ASTERISK_ARI_USER="monosip"
 fi
 if [ -z "${ASTERISK_AMI_USER:-}" ]; then
-  ASTERISK_AMI_USER="munasip"
+  ASTERISK_AMI_USER="monosip"
 fi
 
 # Only the secrets file is private: a global umask 077 leaked into Asterisk's
@@ -159,11 +159,11 @@ fi
 
 # Softphone audio = host UDP RTP. Users often skip this; shout early in deploy logs.
 if [ -n "${PUBLIC_HOST:-}" ] && [ "$PUBLIC_HOST" != "localhost" ] && [ "$PUBLIC_HOST" != "127.0.0.1" ]; then
-  if [ "${MUNASIP_RTP_PUBLISHED:-}" != "1" ] && [ "${MUNASIP_RTP_PUBLISHED:-}" != "true" ]; then
+  if [ "${MONOSIP_RTP_PUBLISHED:-}" != "1" ] && [ "${MONOSIP_RTP_PUBLISHED:-}" != "true" ]; then
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════════╗"
-    echo "║  MunaSIP softphone AUDIO: publish UDP 10000-10100 to this container   ║"
-    echo "║  Then set: EXTERNAL_IP=<public IP>  MUNASIP_RTP_PUBLISHED=1            ║"
+    echo "║  MonoSIP softphone AUDIO: publish UDP 10000-10100 to this container   ║"
+    echo "║  Then set: EXTERNAL_IP=<public IP>  MONOSIP_RTP_PUBLISHED=1            ║"
     echo "║  Without this, calls connect but stay SILENT.                      ║"
     echo "╚══════════════════════════════════════════════════════════════════════╝"
     echo ""
@@ -251,12 +251,12 @@ echo "Starting embedded Postgres…"
 if ! start_pg; then
   echo "ERROR: Postgres failed to start with existing data (NOT wiping)."
   echo "  If this is a major-version mismatch, attach a managed DATABASE_URL or set"
-  echo "  MUNASIP_PG_WIPE_ON_FAIL=1 once (destructive) after backing up /data."
+  echo "  MONOSIP_PG_WIPE_ON_FAIL=1 once (destructive) after backing up /data."
   tail -n 80 "$PGLOG" 2>/dev/null || true
   ls -la "$DATA_DIR" "$PGDATA" 2>/dev/null || true
   df -h "$DATA_DIR" /dev/shm 2>/dev/null || true
-  if [ "${MUNASIP_PG_WIPE_ON_FAIL:-}" = "1" ] && [ -s "$PGDATA/PG_VERSION" ]; then
-    echo "MUNASIP_PG_WIPE_ON_FAIL=1 — wiping cluster and re-initializing (DATA LOSS)"
+  if [ "${MONOSIP_PG_WIPE_ON_FAIL:-}" = "1" ] && [ -s "$PGDATA/PG_VERSION" ]; then
+    echo "MONOSIP_PG_WIPE_ON_FAIL=1 — wiping cluster and re-initializing (DATA LOSS)"
     wipe_pgdata
     init_pgdata
     if ! start_pg; then
@@ -284,24 +284,24 @@ if ! su -s /bin/sh postgres -c "$PG_BIN/pg_isready -h 127.0.0.1 -p 5432" >/dev/n
   return 1
 fi
 
-# Clusters created before the MunaSIP rename have role + database "dsip":
+# Clusters created before the MonoSIP rename have role + database "dsip":
 # rename them once (nothing is connected yet — the API starts later).
 pgq() { su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tAc \"$1\""; }
-if [ "$(pgq "SELECT 1 FROM pg_roles WHERE rolname='dsip'")" = "1" ] && [ "$(pgq "SELECT 1 FROM pg_roles WHERE rolname='munasip'")" != "1" ]; then
-  pgq "ALTER ROLE dsip RENAME TO munasip" >/dev/null && pgq "ALTER ROLE munasip PASSWORD 'munasip'" >/dev/null \
-    && echo "Renamed Postgres role dsip → munasip"
+if [ "$(pgq "SELECT 1 FROM pg_roles WHERE rolname='dsip'")" = "1" ] && [ "$(pgq "SELECT 1 FROM pg_roles WHERE rolname='monosip'")" != "1" ]; then
+  pgq "ALTER ROLE dsip RENAME TO monosip" >/dev/null && pgq "ALTER ROLE monosip PASSWORD 'monosip'" >/dev/null \
+    && echo "Renamed Postgres role dsip → monosip"
 fi
-if [ "$(pgq "SELECT 1 FROM pg_database WHERE datname='dsip'")" = "1" ] && [ "$(pgq "SELECT 1 FROM pg_database WHERE datname='munasip'")" != "1" ]; then
-  pgq "ALTER DATABASE dsip RENAME TO munasip" >/dev/null && echo "Renamed database dsip → munasip"
+if [ "$(pgq "SELECT 1 FROM pg_database WHERE datname='dsip'")" = "1" ] && [ "$(pgq "SELECT 1 FROM pg_database WHERE datname='monosip'")" != "1" ]; then
+  pgq "ALTER DATABASE dsip RENAME TO monosip" >/dev/null && echo "Renamed database dsip → monosip"
 fi
 
-su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 FROM pg_roles WHERE rolname='munasip'\"" | grep -q 1 \
-  || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE ROLE munasip LOGIN PASSWORD 'munasip' SUPERUSER;\""
+su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 FROM pg_roles WHERE rolname='monosip'\"" | grep -q 1 \
+  || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE ROLE monosip LOGIN PASSWORD 'monosip' SUPERUSER;\""
 
-su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='munasip'\"" | grep -q 1 \
-  || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE DATABASE munasip OWNER munasip;\""
+su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='monosip'\"" | grep -q 1 \
+  || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE DATABASE monosip OWNER monosip;\""
 
-export DATABASE_URL="postgresql://munasip:munasip@127.0.0.1:5432/munasip"
+export DATABASE_URL="postgresql://monosip:monosip@127.0.0.1:5432/monosip"
 # Marker proves /data survived at least one previous boot (helps spot volume wipes).
 if [ ! -f "$PERSIST_MARKER" ]; then
   echo "first_boot=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$PERSIST_MARKER" 2>/dev/null || true

@@ -2,7 +2,7 @@ import { createPrivateKey } from "node:crypto";
 import { mkdir, readFile, writeFile, access } from "node:fs/promises";
 import { join } from "node:path";
 import * as acme from "acme-client";
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { settings } from "../db/schema.js";

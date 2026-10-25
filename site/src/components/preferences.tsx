@@ -14,9 +14,9 @@ function storage(key: string) {
   }
 }
 function snapshot() {
-  const saved = transientTheme ?? storage("munasip-theme");
+  const saved = transientTheme ?? storage("monosip-theme");
   const theme = saved === "dark" || saved === "light" ? saved : "system";
-  const motion = transientMotion ?? storage("munasip-motion") !== "off";
+  const motion = transientMotion ?? storage("monosip-motion") !== "off";
   return `${theme}|${motion}|${matchMedia("(prefers-reduced-motion: reduce)").matches}|${document.hidden}|${matchMedia("(prefers-color-scheme: dark)").matches}`;
 }
 function apply() {
@@ -45,14 +45,14 @@ function subscribe(callback: () => void) {
   color.addEventListener("change", update);
   motion.addEventListener("change", update);
   document.addEventListener("visibilitychange", update);
-  window.addEventListener("munasip-preferences", update);
+  window.addEventListener("monosip-preferences", update);
   window.addEventListener("storage", sync);
   apply();
   return () => {
     color.removeEventListener("change", update);
     motion.removeEventListener("change", update);
     document.removeEventListener("visibilitychange", update);
-    window.removeEventListener("munasip-preferences", update);
+    window.removeEventListener("monosip-preferences", update);
     window.removeEventListener("storage", sync);
   };
 }
@@ -79,20 +79,20 @@ export function PreferencesProvider({
   function setTheme(next: Theme) {
     transientTheme = next;
     try {
-      localStorage.setItem("munasip-theme", next);
+      localStorage.setItem("monosip-theme", next);
     } catch {
       /* Session preference still works. */
     }
-    window.dispatchEvent(new Event("munasip-preferences"));
+    window.dispatchEvent(new Event("monosip-preferences"));
   }
   function toggleMotion() {
     transientMotion = motion !== "true";
     try {
-      localStorage.setItem("munasip-motion", transientMotion ? "on" : "off");
+      localStorage.setItem("monosip-motion", transientMotion ? "on" : "off");
     } catch {
       /* Session preference still works. */
     }
-    window.dispatchEvent(new Event("munasip-preferences"));
+    window.dispatchEvent(new Event("monosip-preferences"));
   }
   return (
     <Preferences.Provider

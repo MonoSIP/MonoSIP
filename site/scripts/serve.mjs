@@ -57,5 +57,5 @@ createServer((req, res) => {
     res.writeHead(500).end("Run pnpm build first.");
   }
 }).listen(port, "127.0.0.1", () =>
-  process.stdout.write(`MunaSIP static export: http://127.0.0.1:${port}\n`),
+  process.stdout.write(`MonoSIP static export: http://127.0.0.1:${port}\n`),
 );

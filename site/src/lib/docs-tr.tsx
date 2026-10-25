@@ -58,7 +58,7 @@ export const docsTr = {
   "getting-started": {
     title: "İlk bağlantınız.",
     summary:
-      "MunaSIP’i Linux sunucunuzda çalıştırın, temel ayarları yapın ve ilk dahilinizi bağlayın.",
+      "MonoSIP’i Linux sunucunuzda çalıştırın, temel ayarları yapın ve ilk dahilinizi bağlayın.",
     source: "INSTALL",
     sections: [
       {
@@ -119,7 +119,7 @@ export const docsTr = {
             <Callout>
               <p>
                 <code>/data</code> birimini ve{" "}
-                <code>/data/.munasip-secrets</code> dosyasını yedekleyin.
+                <code>/data/.monosip-secrets</code> dosyasını yedekleyin.
                 Veritabanı, üretilen yapılandırma, ses kayıtları ve şifreli
                 sırları okumak için gereken anahtarlar buradadır. Herkese açık
                 bir alan adıyla açılış, veri dizininin gerçek bir birim olduğunu
@@ -204,8 +204,8 @@ export const docsTr = {
             <p>
               Compose ALPN çoğullaması olmayan bir platform kenarında, RTP
               gerçekten yayınlanıyorsa kurulum rehberi{" "}
-              <code>MUNASIP_RTP_PUBLISHED=1</code> değerini, bilinçli yalnızca
-              STUN kurulumu için <code>MUNASIP_TURNS_ON_443=0</code> değerini
+              <code>MONOSIP_RTP_PUBLISHED=1</code> değerini, bilinçli yalnızca
+              STUN kurulumu için <code>MONOSIP_TURNS_ON_443=0</code> değerini
               belgeler. İkisini de uygulamadan önce ağınızı gözden geçirin.
             </p>
           </>
@@ -432,7 +432,7 @@ export const docsTr = {
         content: (
           <>
             <p>
-              MunaSIP yaklaşık 20 dahililik küçük bir ofisi hedefler. Belgeli
+              MonoSIP yaklaşık 20 dahililik küçük bir ofisi hedefler. Belgeli
               otomatik yüksek erişilebilirlik kümesi değildir. Operatör tarafı
               yedekleme, santral sunucusu veya uplink düşerse gelen aramaları
               yönlendirebilir.
@@ -735,7 +735,7 @@ export const docsTr = {
               doğrulayın.
             </p>
             <p>
-              MunaSIP birinci taraf mobil veya masaüstü uygulaması sunmaz.
+              MonoSIP birinci taraf mobil veya masaüstü uygulaması sunmaz.
               Yealink, Fanvil ve Grandstream masa telefonları için belgeli
               hazırlama profilleri sunar.
             </p>
@@ -849,7 +849,7 @@ export const docsTr = {
         content: (
           <>
             <p>
-              MunaSIP oturumla doğrulanan yönetici API’sini, dahiliyle
+              MonoSIP oturumla doğrulanan yönetici API’sini, dahiliyle
               doğrulanan portal API’sini ve API anahtarıyla doğrulanan
               entegrasyon API’sini ayırır. Dış entegrasyonlar{" "}
               <code>/api/v1/ext</code> kullanır.
@@ -986,7 +986,7 @@ export const docsTr = {
         content: (
           <>
             <p>
-              MunaSIP isteğe bağlı yönetici TOTP iki adımlı doğrulama,
+              MonoSIP isteğe bağlı yönetici TOTP iki adımlı doğrulama,
               yönetici/portal/SIP IP izin listeleri, giriş taşkını yasakları,
               SIP tarama görünürlüğü, denetim günlüğü ve giden arama denetimleri
               sağlar. Kurulumunuzun ihtiyaç duyduğu denetimleri açıp
@@ -1069,7 +1069,7 @@ export const docsTr = {
           <>
             <p>
               Tek imaj için <code>/data</code> kalıcı kalsın ve{" "}
-              <code>/data/.munasip-secrets</code> korunsun. Compose ayrı
+              <code>/data/.monosip-secrets</code> korunsun. Compose ayrı
               veritabanı, kayıt, yükleme ve Asterisk yapılandırma birimleri ile
               sertifika dosyaları kullanır. Şifreleme anahtarlarını kurtarma
               malzemenizle birlikte tutun.
@@ -1084,7 +1084,7 @@ export const docsTr = {
               Kayıt disk kullanımını gerçek trafik ve saklamaya göre planlayın.
               Sunucu veya uplink düşerse gelen yedeklemenin bir mobil numaraya
               gitmesi operatör tarafı bir ayardır; otomatik kümelenmiş yedekleme
-              belgeli bir MunaSIP özelliği değildir.
+              belgeli bir MonoSIP özelliği değildir.
             </p>
           </>
         ),
@@ -1107,7 +1107,7 @@ export const docsTr = {
             </p>
             <p>
               Güncel yönergeler için{" "}
-              <a href="https://github.com/MunaSIP/MunaSIP#readme">
+              <a href="https://github.com/MonoSIP/MonoSIP#readme">
                 proje açıklamasını
               </a>{" "}
               ve <a href={sourceDoc("DEPLOY-VPS")}>VPS kurulum rehberini</a>{" "}

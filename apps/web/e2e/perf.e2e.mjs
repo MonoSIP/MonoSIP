@@ -1,6 +1,6 @@
 /**
  * Front-end performance probe: loads key admin and portal pages from a running
- * MunaSIP (production build) in a fresh browser and reports, per page, the JS / CSS
+ * MonoSIP (production build) in a fresh browser and reports, per page, the JS / CSS
  * downloaded, FCP, LCP, long tasks (main-thread blocking), CLS and the time until
  * the page's data has arrived (the loading veil is gone).
  *

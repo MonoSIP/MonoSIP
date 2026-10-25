@@ -1,5 +1,5 @@
 /**
- * Points the API at the throwaway `munasip_test` database before any test module
+ * Points the API at the throwaway `monosip_test` database before any test module
  * imports `db/client.js`. Setup files run before test files are imported, so
  * process.env.DATABASE_URL is already correct when the pg Pool is constructed.
  *
@@ -7,7 +7,7 @@
  * the local TCP forwarder on TEST_PG_PORT (see README/testing notes).
  *
  * Also applies pending Drizzle migrations so host vitest stays in sync with
- * compose (API entrypoint migrates `munasip`, not `munasip_test`).
+ * compose (API entrypoint migrates `monosip`, not `monosip_test`).
  */
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
@@ -31,13 +31,13 @@ function baseDatabaseUrl(): string {
 const port = process.env.TEST_PG_PORT ?? "55433";
 const testUrl = baseDatabaseUrl()
   .replace(/@[^/]+\//, `@localhost:${port}/`)
-  .replace(/\/[^/?]+(\?|$)/, "/munasip_test$1");
+  .replace(/\/[^/?]+(\?|$)/, "/monosip_test$1");
 
 process.env.DATABASE_URL = testUrl;
 
 /**
  * Redirect every media directory into a writable scratch tree. The defaults
- * (`/var/lib/asterisk/munasip`, `/data/...`) only exist inside the containers, so
+ * (`/var/lib/asterisk/monosip`, `/data/...`) only exist inside the containers, so
  * multipart upload / streaming tests would otherwise fail on ENOENT/EACCES.
  * Set before `config.ts` is imported by any test module.
  */

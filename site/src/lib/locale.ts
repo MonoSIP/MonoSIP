@@ -31,7 +31,7 @@ export function themeName(locale: Locale, theme: "light" | "dark" | "system") {
 
 export const chrome = {
   en: {
-    home: "MünaSIP. home",
+    home: "MonoSIP. home",
     nav: "Main navigation",
     features: "Features",
     updates: "What’s new",
@@ -51,7 +51,7 @@ export const chrome = {
       "Your system prefers reduced motion. Mouse effects stay paused.",
     motionTitleOn: "Mouse effects on — click to disable",
     motionTitleOff: "Mouse effects off — click to enable",
-    github: "MunaSIP on GitHub",
+    github: "MonoSIP on GitHub",
     menuClose: "Close navigation",
     menuOpen: "Open navigation",
     skip: "Skip to content",
@@ -71,7 +71,7 @@ export const chrome = {
     readme: "Project readme",
     author: "Original author",
     website: "Website source",
-    copyright: "© 2026 diggyen. MunaSIP is MIT licensed.",
+    copyright: "© 2026 diggyen. MonoSIP is MIT licensed.",
     built: "Built for your own server.",
     top: "Back to top",
     copy: "Copy",
@@ -88,7 +88,7 @@ export const chrome = {
     notFoundDocs: "Documentation",
   },
   tr: {
-    home: "MünaSIP. ana sayfa",
+    home: "MonoSIP. ana sayfa",
     nav: "Ana menü",
     features: "Özellikler",
     updates: "Yenilikler",
@@ -108,7 +108,7 @@ export const chrome = {
       "Sisteminiz azaltılmış hareketi tercih ediyor. Fare etkileri duruyor.",
     motionTitleOn: "Fare etkileri açık — kapatmak için tıklayın",
     motionTitleOff: "Fare etkileri kapalı — açmak için tıklayın",
-    github: "GitHub’da MunaSIP",
+    github: "GitHub’da MonoSIP",
     menuClose: "Menüyü kapat",
     menuOpen: "Menüyü aç",
     skip: "İçeriğe geç",
@@ -128,7 +128,7 @@ export const chrome = {
     readme: "Proje açıklaması",
     author: "Asıl yazar",
     website: "Site kaynağı",
-    copyright: "© 2026 diggyen. MunaSIP, MIT lisanslıdır.",
+    copyright: "© 2026 diggyen. MonoSIP, MIT lisanslıdır.",
     built: "Kendi sunucunuz için.",
     top: "Başa dön",
     copy: "Kopyala",

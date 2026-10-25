@@ -55,7 +55,7 @@ export function CallMap({ locale = "en" }: { locale?: Locale }) {
           aria-labelledby="call-map-title call-map-desc"
         >
           <title id="call-map-title">
-            {tr ? "MunaSIP üzerinden bir arama" : "A call through MunaSIP"}
+            {tr ? "MonoSIP üzerinden bir arama" : "A call through MonoSIP"}
           </title>
           <desc id="call-map-desc">
             {tr
@@ -123,14 +123,14 @@ export function CallMap({ locale = "en" }: { locale?: Locale }) {
               className="pbx-inner"
             />
             <image
-              href="/brand/munasip-mark.svg"
+              href="/brand/monosip-mark.svg"
               x="294"
               y="193"
               width="52"
               height="52"
             />
             <text x="320" y="277" textAnchor="middle" className="pbx-name">
-              MunaSIP
+              MonoSIP
             </text>
             <text
               x="320"

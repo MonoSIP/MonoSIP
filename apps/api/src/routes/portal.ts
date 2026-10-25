@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { and, desc, eq, or } from "drizzle-orm";
 import { z } from "zod";
-import { ExtensionPasswordSchema, ForwardingRuleSchema } from "@munasip/shared";
+import { ExtensionPasswordSchema, ForwardingRuleSchema } from "@monosip/shared";
 import { db } from "../db/client.js";
 import {
   cdr,
@@ -314,7 +314,7 @@ export async function portalRoutes(app: FastifyInstance) {
     const voice = body.voice;
     const language = voice === "ema-lightning" ? "tr" : body.language;
     const mediaId = voicemailGreetingMediaId(a.number);
-    const wavPath = path.join(config.asterisk.configDir, "sounds", "munasip", `${mediaId}.wav`);
+    const wavPath = path.join(config.asterisk.configDir, "sounds", "monosip", `${mediaId}.wav`);
     if (text) {
       try {
         const { synthesizeSpeech, writePromptWav } = await import("../lib/tts.js");

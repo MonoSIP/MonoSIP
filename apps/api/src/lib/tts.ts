@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { eq, lt } from "drizzle-orm";
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
 import { settings, ttsCache } from "../db/schema.js";
@@ -46,7 +46,7 @@ export async function ttsHealth(): Promise<{
 
 /** Last-resort fallback when embedded TTS (127.0.0.1:5500) is unreachable. */
 async function synthesizeWithEspeak(text: string, language: TtsLanguage): Promise<Buffer> {
-  const dir = await mkdtemp(path.join(tmpdir(), "munasip-tts-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "monosip-tts-"));
   const raw = path.join(dir, "raw.wav");
   const out = path.join(dir, "8k.wav");
   try {
@@ -196,7 +196,7 @@ export async function ensureSpeechMedia(
     if (row && row.expiresAt > now) {
       try {
         await access(row.filePath);
-        return { media: `sound:munasip/${cacheKey}`, cached: true, ms: Date.now() - t0 };
+        return { media: `sound:monosip/${cacheKey}`, cached: true, ms: Date.now() - t0 };
       } catch {
         /* file missing — fall through to resynth */
       }
@@ -206,7 +206,7 @@ export async function ensureSpeechMedia(
   }
 
   // Orphan file from pre-DB cache: adopt into DB without resynth
-  const soundsDir = path.join(config.asterisk.configDir, "sounds", "munasip");
+  const soundsDir = path.join(config.asterisk.configDir, "sounds", "monosip");
   const filePath = path.join(soundsDir, `${cacheKey}.wav`);
   const retentionDays = await ttsCacheRetentionDays();
   const expiresAt = expiresFromNow(retentionDays);
@@ -221,7 +221,7 @@ export async function ensureSpeechMedia(
       filePath,
       expiresAt,
     });
-    return { media: `sound:munasip/${cacheKey}`, cached: true, ms: Date.now() - t0 };
+    return { media: `sound:monosip/${cacheKey}`, cached: true, ms: Date.now() - t0 };
   } catch {
     /* miss */
   }
@@ -315,6 +315,11 @@ export function convertWavToAsterisk8k(buf: Buffer): Buffer {
   }
 
   if (dataOffset < 0 || bitsPerSample !== 16) return buf;
+  // A truncated upload's data-chunk size can exceed the actual bytes; clamp it
+  // (same repair as recording-files.ts repairWavHeader) so the resample loop
+  // never reads past the buffer, and reject degenerate channel counts.
+  dataSize = Math.min(dataSize, buf.length - dataOffset);
+  if (dataSize <= 0 || channels < 1) return buf;
   if (sampleRate === 8000 && channels === 1) return buf;
 
   const frameCount = Math.floor(dataSize / (channels * 2));
@@ -364,7 +369,7 @@ export async function writePromptWav(
   ext = "wav",
 ): Promise<{ filePath: string; media: string }> {
   const safeExt = ext.replace(/^\./, "").toLowerCase() || "wav";
-  const soundsDir = path.join(config.asterisk.configDir, "sounds", "munasip");
+  const soundsDir = path.join(config.asterisk.configDir, "sounds", "monosip");
   await mkdir(soundsDir, { recursive: true });
   // Asterisk runs as non-root — keep dirs/files world-readable (API may run as root).
   await chmod(soundsDir, 0o755).catch(() => undefined);
@@ -373,8 +378,8 @@ export async function writePromptWav(
   const out = safeExt === "wav" && isLikelyWav(wav) ? convertWavToAsterisk8k(wav) : wav;
   await writeFile(filePath, out);
   await chmod(filePath, 0o644).catch(() => undefined);
-  // Relative to Asterisk sounds/ (symlink sounds/munasip → munasip/sounds/munasip)
-  const media = `sound:munasip/${safeId}`;
+  // Relative to Asterisk sounds/ (symlink sounds/monosip → monosip/sounds/monosip)
+  const media = `sound:monosip/${safeId}`;
   return { filePath, media };
 }
 
@@ -391,14 +396,14 @@ export function extFromUpload(filename?: string | null, mime?: string | null, bu
 }
 
 export function promptMediaUri(filePath: string | null | undefined, promptId?: string): string | null {
-  // Prefer sound:munasip/<id> (works with Asterisk sounds path + symlink)
+  // Prefer sound:monosip/<id> (works with Asterisk sounds path + symlink)
   if (promptId) {
     const safeId = promptId.replace(/[^\w.-]/g, "");
-    if (safeId) return `sound:munasip/${safeId}`;
+    if (safeId) return `sound:monosip/${safeId}`;
   }
   if (filePath) {
     const base = path.basename(filePath).replace(/\.[^.]+$/i, "");
-    if (base) return `sound:munasip/${base}`;
+    if (base) return `sound:monosip/${base}`;
   }
   return null;
 }

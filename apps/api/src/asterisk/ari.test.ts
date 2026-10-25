@@ -89,7 +89,7 @@ describe("ari.start — socket wiring", () => {
   it("opens one socket per application with an authenticated ws:// URL", async () => {
     await ari.start();
     expect(FakeWebSocket.instances).toHaveLength(3);
-    for (const app of ["munasip-inbound", "munasip-flow", "munasip-outbound"]) {
+    for (const app of ["monosip-inbound", "monosip-flow", "monosip-outbound"]) {
       expect(FakeWebSocket.instances.some((w) => w.url.includes(`app=${app}`))).toBe(true);
     }
     const url = FakeWebSocket.instances[0]!.url;
@@ -161,13 +161,13 @@ describe("ari event handling", () => {
       "message",
       JSON.stringify({
         type: "StasisStart",
-        application: "munasip-flow",
+        application: "monosip-flow",
         channel: { id: "ch-1" },
         args: ["main"],
       }),
     );
     expect(seen).toEqual([
-      { application: "munasip-flow", channel: { id: "ch-1" }, args: ["main"] },
+      { application: "monosip-flow", channel: { id: "ch-1" }, args: ["main"] },
     ]);
   });
 
@@ -277,11 +277,11 @@ describe("ari REST commands", () => {
   it("originate returns the created channel body", async () => {
     routeFetch([[/\/ari\/channels\?/, () => json({ id: "ch-new" })]]);
     await expect(
-      ari.originate({ endpoint: "PJSIP/101", extension: "1000", callerId: "MunaSIP <100>" }),
+      ari.originate({ endpoint: "PJSIP/101", extension: "1000", callerId: "MonoSIP <100>" }),
     ).resolves.toEqual({ id: "ch-new" });
     const url = String(fetchMock().mock.calls[0]![0]);
     expect(url).toContain("endpoint=PJSIP%2F101");
-    expect(url).toContain("callerId=MunaSIP");
+    expect(url).toContain("callerId=MonoSIP");
   });
 
   it("originate throws with the Asterisk error text", async () => {
@@ -594,14 +594,14 @@ describe("ari.poll", () => {
     expect(snoopUrl).toContain("spy=both");
   });
 
-  it("labels the listener leg as a MunaSIP Spy call", async () => {
+  it("labels the listener leg as a MonoSIP Spy call", async () => {
     routeFetch(spyRoutes());
     await ari.chanspy(spy);
     const origUrl = fetchMock()
       .mock.calls.map(([u]) => String(u))
       .find((u) => u.includes("endpoint="));
     // URLSearchParams encodes spaces as "+", not %20.
-    expect(origUrl).toContain("callerId=%22MunaSIP+Spy%22+%3C101%3E");
+    expect(origUrl).toContain("callerId=%22MonoSIP+Spy%22+%3C101%3E");
     expect(origUrl).toContain("appArgs=bridge%2Cbr-1");
   });
 

@@ -50,3 +50,29 @@ describe("extFromUpload", () => {
     expect(extFromUpload(undefined, undefined, makeWav(8000, 8))).toBe("wav");
   });
 });
+
+describe("convertWavToAsterisk8k with a corrupt header", () => {
+  it("clamps a truncated data chunk instead of reading past the buffer", () => {
+    // Upload cut short: the header claims 320 bytes of data, the buffer has 12.
+    // repairWavHeader clamps the same lie for recordings; this path must not
+    // throw RangeError on admin prompt uploads.
+    const src = makeWav(16000, 160);
+    const truncated = src.subarray(0, 44 + 12);
+    let out: Buffer;
+    expect(() => {
+      out = convertWavToAsterisk8k(truncated);
+    }).not.toThrow();
+    expect(isLikelyWav(out!)).toBe(true);
+    expect(out!.readUInt32LE(24)).toBe(8000);
+  });
+
+  it("returns the buffer unchanged for a degenerate zero-channel header", () => {
+    const src = makeWav(16000, 160);
+    src.writeUInt16LE(0, 22); // fmt channels = 0
+    let out: Buffer;
+    expect(() => {
+      out = convertWavToAsterisk8k(src);
+    }).not.toThrow();
+    expect(out!.equals(src)).toBe(true);
+  });
+});

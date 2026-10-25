@@ -6,6 +6,8 @@ import { db, pool } from "../db/client.js";
 import { admins, extensions, sessions } from "../db/schema.js";
 import { scryptHash } from "../lib/crypto.js";
 import { enforceAdminIpAccess } from "../lib/admin-ip-guard.js";
+import { createTrustProxy } from "../lib/trust-proxy.js";
+import { config } from "../config.js";
 import { authRoutes } from "../routes/auth.js";
 import { portalRoutes } from "../routes/portal.js";
 import { securityRoutes } from "../routes/security.js";
@@ -18,8 +20,16 @@ import { adminResourceRoutes } from "../routes/admin-resources.js";
  * Asterisk ARI/AMI connections and the background jobs, which have no place in
  * an integration test.
  */
-export async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify({ logger: false });
+export async function buildApp(opts?: {
+  /** Override the trusted reverse-proxy list; defaults to the production config. */
+  trustedProxyCidrs?: string[];
+}): Promise<FastifyInstance> {
+  const app = Fastify({
+    logger: false,
+    // Mirrors index.ts: only the configured reverse proxies may set the client
+    // address via X-Forwarded-For; every other peer keeps its socket address.
+    trustProxy: createTrustProxy(opts?.trustedProxyCidrs ?? config.trustedProxyCidrs),
+  });
   await app.register(cookie, { secret: "integration-test-secret-not-used-in-prod" });
   // Mirrors index.ts — required by the prompt / MOH multipart upload routes.
   await app.register(multipart, { limits: { fileSize: 25 * 1024 * 1024, files: 1 } });

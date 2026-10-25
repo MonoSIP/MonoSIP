@@ -31,13 +31,13 @@ for (const path of routes) {
   assert.ok(existsSync(file), `Missing static route ${path}`);
   const html = readFileSync(file, "utf8");
   assert.ok(
-    html.includes(`rel="canonical" href="https://munasip.github.io${path}"`),
+    html.includes(`rel="canonical" href="https://monosip.github.io${path}"`),
     `Canonical mismatch: ${path}`,
   );
   assert.match(html, /<html[^>]+lang="en"/, `Missing language: ${path}`);
   assert.ok(
     html.includes(
-      'property="og:image" content="https://munasip.github.io/brand/og-image.png"',
+      'property="og:image" content="https://monosip.github.io/brand/og-image.png"',
     ),
     `Missing Open Graph image: ${path}`,
   );
@@ -60,7 +60,7 @@ for (const path of turkish) {
   assert.ok(existsSync(file), `Missing static route ${path}`);
   const html = readFileSync(file, "utf8");
   assert.ok(
-    html.includes(`rel="canonical" href="https://munasip.github.io${path}"`),
+    html.includes(`rel="canonical" href="https://monosip.github.io${path}"`),
     `Canonical mismatch: ${path}`,
   );
   assert.match(
@@ -81,7 +81,7 @@ for (const [path, html] of documents) {
   for (const [, raw] of html.matchAll(/(?:href|src)="([^"<>]+)"/g)) {
     const value = raw.replaceAll("&amp;", "&");
     if (/^(https?:|mailto:|data:|tel:)/.test(value)) continue;
-    const url = new URL(value, `https://munasip.github.io${path}`);
+    const url = new URL(value, `https://monosip.github.io${path}`);
     if (
       url.hash &&
       (!url.pathname.includes(".") || documents.has(url.pathname))
@@ -104,7 +104,7 @@ assert.ok(existsSync(join(root, ".nojekyll")), "Missing .nojekyll");
 assert.equal(
   existsSync(join(root, "CNAME")),
   false,
-  "Do not publish a CNAME; the site is https://munasip.github.io",
+  "Do not publish a CNAME; the site is https://monosip.github.io",
 );
 assert.ok(existsSync(join(root, "404.html")), "Missing 404");
 const home = documents.get("/");
@@ -121,12 +121,12 @@ for (const anchor of [
 const sitemap = readFileSync(join(root, "sitemap.xml"), "utf8");
 for (const path of [...routes, ...turkish])
   assert.ok(
-    sitemap.includes(`https://munasip.github.io${path}</loc>`),
+    sitemap.includes(`https://monosip.github.io${path}</loc>`),
     `Sitemap missing ${path}`,
   );
 assert.ok(
   readFileSync(join(root, "robots.txt"), "utf8").includes(
-    "https://munasip.github.io/sitemap.xml",
+    "https://monosip.github.io/sitemap.xml",
   ),
 );
 let size = 0;

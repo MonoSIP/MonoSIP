@@ -83,6 +83,8 @@ export const devices = pgTable("devices", {
   model: varchar("model", { length: 64 }),
   mac: varchar("mac", { length: 32 }),
   provisioningProfile: varchar("provisioning_profile", { length: 64 }),
+  /** Encrypted secret the handset must present on GET /cfg/:mac. */
+  provisionSecretEnc: text("provision_secret_enc"),
   lastRegisteredAt: timestamp("last_registered_at", { withTimezone: true }),
 });
 

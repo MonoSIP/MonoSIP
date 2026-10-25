@@ -1,8 +1,8 @@
-# MunaSIP website
+# MonoSIP website
 
-The English product site for the open-source [MunaSIP PBX](https://github.com/MunaSIP/MunaSIP). Next.js App Router and TypeScript, statically exported from this folder.
+The English product site for the open-source [MonoSIP PBX](https://github.com/MonoSIP/MonoSIP). Next.js App Router and TypeScript, statically exported from this folder.
 
-Public address: **https://munasip.github.io/**. `.github/workflows/pages.yml` builds `site/` and publishes the export to [MunaSIP/munasip.github.io](https://github.com/MunaSIP/munasip.github.io).
+Public address: **https://monosip.github.io/**. `.github/workflows/pages.yml` builds `site/` and publishes the export to [MonoSIP/monosip.github.io](https://github.com/MonoSIP/monosip.github.io).
 
 ## Local development
 
@@ -81,6 +81,6 @@ Update the release and download links in `src/lib/site.ts`, then review article 
 
 ## Deployment and ownership
 
-A push to `main` that changes `site/` builds this folder and copies the static export to `MunaSIP/munasip.github.io`. That repository is what GitHub Pages serves at https://munasip.github.io/. There is no custom-domain CNAME in the export.
+A push to `main` that changes `site/` builds this folder and copies the static export to `MonoSIP/monosip.github.io`. That repository is what GitHub Pages serves at https://monosip.github.io/. There is no custom-domain CNAME in the export.
 
-MunaSIP is MIT licensed. Original product and brand copyright: **2026 diggyen**. See the [official project](https://github.com/MunaSIP/MunaSIP) for current development and contribution guidance.
+MonoSIP is MIT licensed. Original product and brand copyright: **2026 diggyen**. See the [official project](https://github.com/MonoSIP/MonoSIP) for current development and contribution guidance.

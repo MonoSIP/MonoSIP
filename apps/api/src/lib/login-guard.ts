@@ -28,9 +28,15 @@ export function recordLoginFailure(
   const banMs = (opts?.banMinutes ?? 15) * 60_000;
   const row = fails.get(ip) ?? { count: 0, until: 0 };
   row.count += 1;
-  if (row.count >= maxRetry) {
-    row.until = Date.now() + (banMs || DEFAULT_BAN_MS);
-  }
+  // Every failure refreshes the window. `until` is when this record expires,
+  // and it also bounds how long a ban outlives the last failure.
+  //
+  // It has to be set on every failure, not only once the threshold is
+  // reached: isIpBanned() runs before each login attempt and deletes a row
+  // whose `until` has passed. With `until` left at 0 until the threshold, every
+  // pre-threshold row looked expired, so the check wiped the count on each
+  // attempt and no IP was ever banned — the counter reset on every request.
+  row.until = Date.now() + (banMs || DEFAULT_BAN_MS);
   fails.set(ip, row);
   return { banned: row.count >= maxRetry, count: row.count };
 }

@@ -15,8 +15,25 @@ export async function wsRoutes(app: FastifyInstance) {
       }
     };
 
+    // A client that disconnects while auth is still awaiting has already fired
+    // "close": listeners and timers registered after resolveActor() would then
+    // never see it and would leak for the life of the process (one /ws connect
+    // + quick disconnect = one permanent listener set + ping interval). All
+    // teardown therefore goes through one hook, installed before the first
+    // await; the auth continuation bails out when the socket died meanwhile.
+    let tick: ReturnType<typeof setInterval> | undefined;
+    let ping: ReturnType<typeof setInterval> | undefined;
+    let teardown: () => void = () => {
+      closed = true;
+    };
+    socket.on("close", () => teardown());
+
+    // A rejection here (resolveActor hitting a down database) would be an
+    // unhandled rejection, which is fatal and would take the whole API down.
+    // An unauthenticated client must not be able to trigger that.
     void (async () => {
       const actor = await resolveActor(getSessionToken(req));
+      if (closed) return; // socket died during auth — nothing was registered
       if (!actor) {
         send("error", { message: "Unauthorized" });
         socket.close();
@@ -70,7 +87,6 @@ export async function wsRoutes(app: FastifyInstance) {
       liveEvents.on("missed.new", onMissed);
 
       // Periodic trunk/queue snapshot for live pano (AMI)
-      let tick: ReturnType<typeof setInterval> | undefined;
       if (actor.type === "admin") {
         const pushLive = () => {
           void (async () => {
@@ -98,9 +114,9 @@ export async function wsRoutes(app: FastifyInstance) {
         tick = setInterval(pushLive, 20000);
       }
 
-      const ping = setInterval(() => send("ping", {}), 15000);
+      ping = setInterval(() => send("ping", {}), 15000);
 
-      socket.on("close", () => {
+      teardown = () => {
         closed = true;
         clearInterval(ping);
         if (tick) clearInterval(tick);
@@ -111,7 +127,14 @@ export async function wsRoutes(app: FastifyInstance) {
         ari.off("alert", onAlert);
         liveEvents.off("voicemail.new", onVm);
         liveEvents.off("missed.new", onMissed);
-      });
-    })();
+      };
+    })().catch((e) => {
+      console.warn("[ws] handler failed:", (e as Error).message);
+      try {
+        socket.close();
+      } catch {
+        /* already closed */
+      }
+    });
   });
 }

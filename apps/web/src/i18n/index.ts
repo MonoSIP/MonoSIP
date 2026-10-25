@@ -4,7 +4,15 @@ import en from "./en.json";
 import trJson from "./tr.json";
 import uiTr from "./ui.tr.json";
 
-const saved = localStorage.getItem("munasip_locale") ?? "en";
+function readSavedLocale(): "en" | "tr" {
+  try {
+    return localStorage.getItem("monosip_locale") === "tr" ? "tr" : "en";
+  } catch {
+    return "en";
+  }
+}
+
+const saved = readSavedLocale();
 
 void i18n.use(initReactI18next).init({
   resources: {
@@ -23,12 +31,20 @@ i18n.on("languageChanged", (lng) => {
   document.documentElement.lang = lng;
 });
 
-/**
- * Translate UI copy written in English: `tr("Saved")` → "Kaydedildi" in Turkish,
- * the text itself in English (or when no translation exists yet). Keys are the
- * English strings, so dots/colons inside them are not separators.
- * Layouts remount page content on a language change, so plain calls stay current.
- */
+/** Login, admin and the portal write the same key, so a choice on one screen stays on the others. */
+export function setAppLocale(next: "en" | "tr") {
+  try {
+    localStorage.setItem("monosip_locale", next);
+  } catch {
+    /* storage blocked — keep the language for this session only */
+  }
+  void i18n.changeLanguage(next);
+}
+
+export function toggleAppLocale() {
+  setAppLocale((i18n.language || "en").startsWith("tr") ? "en" : "tr");
+}
+
 export function tr(text: string, vars?: Record<string, string | number>): string {
   // Without vars, show copy verbatim: help texts teach the literal {{var}} syntax.
   return i18n.t(text, {

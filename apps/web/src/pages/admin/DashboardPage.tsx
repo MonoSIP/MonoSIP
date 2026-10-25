@@ -12,7 +12,7 @@ import {
   Tv,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, StatTile } from "../../components/ui";
+import { PageHeader, SelectInput, StatTile } from "../../components/ui";
 import { LiveDot } from "../../components/motion";
 import { tr } from "../../i18n";
 
@@ -138,20 +138,20 @@ export function DashboardPage() {
           <>
             <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
               {tr("Spy listener")}
-              <select
-                className="input w-auto min-w-[8rem]"
+              <SelectInput
+                className="w-auto min-w-[8rem]"
+                aria-label={tr("Spy listener")}
                 value={listenerExt}
-                onChange={(e) => setListenerExt(e.target.value)}
-              >
-                {(extensions.data ?? []).map((e) => (
-                  <option key={e.id} value={e.number}>
-                    {e.number} — {e.name}
-                  </option>
-                ))}
-                {(extensions.data ?? []).length === 0 && (
-                  <option value={listenerExt}>{listenerExt}</option>
-                )}
-              </select>
+                onValueChange={setListenerExt}
+                options={
+                  (extensions.data ?? []).length > 0
+                    ? (extensions.data ?? []).map((e) => ({
+                        value: e.number,
+                        label: `${e.number} — ${e.name}`,
+                      }))
+                    : [{ value: listenerExt || " ", label: listenerExt || "—" }]
+                }
+              />
             </label>
             <button className="btn" type="button" onClick={() => void cleanupSnoops()}>
               <Trash2 size={16} />

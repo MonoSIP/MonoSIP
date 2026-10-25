@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { CalendarClock, CalendarDays, Plus } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { Checkbox, ConfirmDialog, PageHeader, SectionCard, SelectInput, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Range = {
@@ -107,6 +107,7 @@ export function SchedulesPage() {
   const [holName, setHolName] = useState("");
   const [holHalf, setHolHalf] = useState(false);
   const [newName, setNewName] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ["schedules"],
@@ -389,17 +390,13 @@ export function SchedulesPage() {
                   <div key={i} className="flex flex-wrap items-end gap-2 rounded-lg border border-[var(--border)] p-2">
                     <label className="text-xs text-[var(--text-muted)]">
                       {t("schedules.day", { defaultValue: "Day" })}
-                      <select
-                        className="input mt-1"
-                        value={r.dayOfWeek}
-                        onChange={(e) => updateRange(i, { dayOfWeek: Number(e.target.value) })}
-                      >
-                        {DAYS.map((d) => (
-                          <option key={d.v} value={d.v}>
-                            {d[lang]}
-                          </option>
-                        ))}
-                      </select>
+                      <SelectInput
+                        className="mt-1"
+                        aria-label={t("schedules.day", { defaultValue: "Day" })}
+                        value={String(r.dayOfWeek)}
+                        onValueChange={(next) => updateRange(i, { dayOfWeek: Number(next) })}
+                        options={DAYS.map((d) => ({ value: String(d.v), label: d[lang] }))}
+                      />
                     </label>
                     <label className="text-xs text-[var(--text-muted)]">
                       {t("schedules.from", { defaultValue: "From" })}
@@ -421,16 +418,16 @@ export function SchedulesPage() {
                     </label>
                     <label className="text-xs text-[var(--text-muted)]">
                       {t("schedules.status", { defaultValue: "Status" })}
-                      <select
-                        className="input mt-1"
+                      <SelectInput
+                        className="mt-1"
+                        aria-label={t("schedules.status", { defaultValue: "Status" })}
                         value={r.status}
-                        onChange={(e) =>
-                          updateRange(i, { status: e.target.value as "open" | "lunch" })
-                        }
-                      >
-                        <option value="open">{t("schedules.openHours", { defaultValue: "Open" })}</option>
-                        <option value="lunch">{t("schedules.lunch", { defaultValue: "Lunch" })}</option>
-                      </select>
+                        onValueChange={(next) => updateRange(i, { status: next as "open" | "lunch" })}
+                        options={[
+                          { value: "open", label: t("schedules.openHours", { defaultValue: "Open" }) },
+                          { value: "lunch", label: t("schedules.lunch", { defaultValue: "Lunch" }) },
+                        ]}
+                      />
                     </label>
                     <button
                       className="btn btn-danger"
@@ -507,10 +504,11 @@ export function SchedulesPage() {
                   required
                 />
               </label>
-              <label className="flex items-center gap-2 pb-2 text-sm">
-                <input type="checkbox" checked={holHalf} onChange={(e) => setHolHalf(e.target.checked)} />
-                {t("schedules.halfDay", { defaultValue: "Half day (open until noon)" })}
-              </label>
+              <Checkbox
+                checked={holHalf}
+                onCheckedChange={setHolHalf}
+                label={t("schedules.halfDay", { defaultValue: "Half day (open until noon)" })}
+              />
               <button className="btn btn-primary" type="submit">
                 {t("common.create")}
               </button>
@@ -568,20 +566,23 @@ export function SchedulesPage() {
             <button className="btn btn-primary" type="button" onClick={() => save.mutate()} disabled={save.isPending}>
               {t("common.save")}
             </button>
-            <button
-              className="btn btn-danger"
-              type="button"
-              onClick={() => {
-                if (confirm(t("schedules.confirmDelete", { defaultValue: "Delete this schedule?" }))) {
-                  remove.mutate(selected.id);
-                }
-              }}
-            >
+            <button className="btn btn-danger" type="button" onClick={() => setDeleteOpen(true)}>
               {t("common.delete")}
             </button>
           </div>
         </SectionCard>
       )}
+      {selected ? (
+        <ConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t("common.delete")}
+          description={t("schedules.confirmDelete", { defaultValue: "Delete this schedule?" })}
+          confirmLabel={t("common.delete")}
+          cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
+          onConfirm={() => remove.mutate(selected.id)}
+        />
+      ) : null}
     </div>
   );
 }

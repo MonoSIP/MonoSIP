@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Copy, KeyRound, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
+import { Checkbox, IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 const ALL_PERMS = ["cdr", "originate", "recordings"] as const;
@@ -250,10 +250,7 @@ export function IntegrationsPage() {
             value={wOrigins}
             onChange={(e) => setWOrigins(e.target.value)}
           />
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={wCallback} onChange={(e) => setWCallback(e.target.checked)} />
-            {tr("Enable call-back form")}
-          </label>
+          <Checkbox checked={wCallback} onCheckedChange={setWCallback} label={tr("Enable call-back form")} />
           <TextField
             label={tr("Call-back prefixes")}
             value={wPrefixes}
@@ -289,17 +286,16 @@ export function IntegrationsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ALL_PERMS.map((p) => (
-                    <label key={p} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={kp.includes(p)}
-                        onChange={() => {
-                          const next = kp.includes(p) ? kp.filter((x) => x !== p) : [...kp, p];
-                          void saveKeyPerms(k.id, next);
-                        }}
-                      />
-                      {p}
-                    </label>
+                    <Checkbox
+                      key={p}
+                      className="rounded-lg border border-[var(--border)] px-2"
+                      checked={kp.includes(p)}
+                      onCheckedChange={() => {
+                        const next = kp.includes(p) ? kp.filter((x) => x !== p) : [...kp, p];
+                        void saveKeyPerms(k.id, next);
+                      }}
+                      label={p}
+                    />
                   ))}
                 </div>
               </li>
@@ -322,10 +318,13 @@ export function IntegrationsPage() {
           />
           <div className="flex flex-wrap items-center gap-2 self-end text-sm">
             {ALL_PERMS.map((p) => (
-              <label key={p} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2 py-1">
-                <input type="checkbox" checked={perms.includes(p)} onChange={() => togglePerm(p)} />
-                {p}
-              </label>
+              <Checkbox
+                key={p}
+                className="rounded-lg border border-[var(--border)] px-2"
+                checked={perms.includes(p)}
+                onCheckedChange={() => togglePerm(p)}
+                label={p}
+              />
             ))}
           </div>
           <button className="btn btn-primary self-end" type="submit">

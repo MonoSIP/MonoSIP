@@ -1,4 +1,5 @@
 import { DestPicker } from "../../../components/DestPicker";
+import { SelectInput } from "../../../components/ui";
 import { ApiNodeSettings } from "./ApiNodeSettings";
 import type { FlowNodeData } from "./FlowNodes";
 import {
@@ -122,19 +123,15 @@ export function NodeSettings({
             />
           </Field>
           <Field label={tr("While waiting")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.moh ?? "")}
-              onChange={(e) => patch({ moh: e.target.value })}
-            >
-              <option value="">{tr("Silence")}</option>
-              <option value="default">{tr("Hold music (default)")}</option>
-              {ctx.mohClasses.map((m) => (
-                <option key={m.id} value={m.name}>
-                  {tr("Hold music")}: {m.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={(next) => patch({ moh: next })}
+              options={[
+                { value: "", label: tr("Silence") },
+                { value: "default", label: tr("Hold music (default)") },
+                ...ctx.mohClasses.map((m) => ({ value: m.name, label: `${tr("Hold music")}: ${m.name}` })),
+              ]}
+            />
           </Field>
         </SettingsSection>
       )}
@@ -159,18 +156,14 @@ export function NodeSettings({
           hint={tr("Pick a schedule from Schedules. The live status chooses the exit.")}
         >
           <Field label={tr("Schedule")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.scheduleId ?? "")}
-              onChange={(e) => patch({ scheduleId: e.target.value })}
-            >
-              <option value="">{tr("— select schedule —")}</option>
-              {ctx.schedules.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={(next) => patch({ scheduleId: next })}
+              options={[
+                { value: "", label: tr("— select schedule —") },
+                ...ctx.schedules.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+            />
           </Field>
         </SettingsSection>
       )}
@@ -231,20 +224,16 @@ export function NodeSettings({
           hint={tr("Runs the published version, then continues on return.")}
         >
           <Field label={tr("Flow")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.flowId ?? "")}
-              onChange={(e) => patch({ flowId: e.target.value })}
-            >
-              <option value="">{tr("— select flow —")}</option>
-              {ctx.flows
-                .filter((f) => f.id !== ctx.currentFlowId)
-                .map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-            </select>
+              onValueChange={(next) => patch({ flowId: next })}
+              options={[
+                { value: "", label: tr("— select flow —") },
+                ...ctx.flows
+                  .filter((f) => f.id !== ctx.currentFlowId)
+                  .map((f) => ({ value: f.id, label: f.name })),
+              ]}
+            />
           </Field>
         </SettingsSection>
       )}
@@ -293,26 +282,20 @@ export function NodeSettings({
           hint={tr("Overflow (timeout / full) is set on the Queues screen — edges after this node are unused.")}
         >
           <Field label={tr("Queue")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.queueNumber ?? data.queueId ?? "")}
-              onChange={(e) => {
-                const q = ctx.queues.find(
-                  (x) => x.number === e.target.value || x.id === e.target.value,
-                );
+              onValueChange={(next) => {
+                const q = ctx.queues.find((x) => x.number === next || x.id === next);
                 patch({
                   queueId: q?.id,
-                  queueNumber: q?.number ?? e.target.value,
+                  queueNumber: q?.number ?? next,
                 });
               }}
-            >
-              <option value="">{tr("— select queue —")}</option>
-              {ctx.queues.map((q) => (
-                <option key={q.id} value={q.number}>
-                  {q.number} — {q.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: tr("— select queue —") },
+                ...ctx.queues.map((q) => ({ value: q.number, label: `${q.number} — ${q.name}` })),
+              ]}
+            />
           </Field>
           <Field label={tr("Priority (0–99)")} hint={tr("Higher jumps ahead. vip=true in flow vars also applies.")}>
             <input
@@ -332,18 +315,14 @@ export function NodeSettings({
       {type === "voicemail" && (
         <SettingsSection step={1} title={tr("Mailbox")} hint={tr("Ends the flow and opens that mailbox.")}>
           <Field label={tr("Extension")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.extension ?? data.extensionId ?? "")}
-              onChange={(e) => patch({ extension: e.target.value, extensionId: e.target.value })}
-            >
-              <option value="">{tr("— select extension —")}</option>
-              {ctx.extensions.map((e) => (
-                <option key={e.id} value={e.number}>
-                  {e.number} — {e.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={(next) => patch({ extension: next, extensionId: next })}
+              options={[
+                { value: "", label: tr("— select extension —") },
+                ...ctx.extensions.map((e) => ({ value: e.number, label: `${e.number} — ${e.name}` })),
+              ]}
+            />
           </Field>
         </SettingsSection>
       )}
@@ -383,18 +362,14 @@ function SpeechSettings({
           />
         </Field>
         <Field label={tr("Or play saved prompt (WAV)")}>
-          <select
-            className="input w-full"
+          <SelectInput
             value={String(data.promptId ?? "")}
-            onChange={(e) => patch({ promptId: e.target.value || undefined })}
-          >
-            <option value="">{tr("— synthesize text above —")}</option>
-            {prompts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={(next) => patch({ promptId: next || undefined })}
+            options={[
+              { value: "", label: tr("— synthesize text above —") },
+              ...prompts.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+          />
         </Field>
       </SettingsSection>
       <SettingsSection step={2} title={tr("Voice")}>
@@ -674,25 +649,25 @@ function ConditionSettings({
         />
       </Field>
       <Field label={tr("Operator")}>
-        <select
-          className="input w-full"
+        <SelectInput
           value={op}
-          onChange={(e) => patch({ op: e.target.value })}
-        >
-          <option value="=">{tr("equals (=)")}</option>
-          <option value="!=">{tr("not equal (!=)")}</option>
-          <option value=">">{tr("greater (>)")}</option>
-          <option value="<">{tr("less (<)")}</option>
-          <option value=">=">{tr("greater or equal")}</option>
-          <option value="<=">{tr("less or equal")}</option>
-          <option value="contains">contains</option>
-          <option value="starts_with">{tr("starts with")}</option>
-          <option value="ends_with">{tr("ends with")}</option>
-          <option value="empty">{tr("is empty")}</option>
-          <option value="regex">{tr("matches regex")}</option>
-          <option value="area_code">{tr("area code")}</option>
-          <option value="country_code">{tr("country code")}</option>
-        </select>
+          onValueChange={(next) => patch({ op: next })}
+          options={[
+            { value: "=", label: tr("equals (=)") },
+            { value: "!=", label: tr("not equal (!=)") },
+            { value: ">", label: tr("greater (>)") },
+            { value: "<", label: tr("less (<)") },
+            { value: ">=", label: tr("greater or equal") },
+            { value: "<=", label: tr("less or equal") },
+            { value: "contains", label: "contains" },
+            { value: "starts_with", label: tr("starts with") },
+            { value: "ends_with", label: tr("ends with") },
+            { value: "empty", label: tr("is empty") },
+            { value: "regex", label: tr("matches regex") },
+            { value: "area_code", label: tr("area code") },
+            { value: "country_code", label: tr("country code") },
+          ]}
+        />
       </Field>
       {op !== "empty" && (
         <Field label={tr("Value")}>

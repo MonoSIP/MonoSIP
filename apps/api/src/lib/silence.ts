@@ -38,19 +38,19 @@ export function silenceWav(ms: number): Buffer {
 
 const ready = new Map<number, Promise<string>>();
 
-/** `sound:` URI of an `ms`-long silence clip, written once under sounds/munasip. */
+/** `sound:` URI of an `ms`-long silence clip, written once under sounds/monosip. */
 export function silenceMedia(ms: number): Promise<string> {
   let p = ready.get(ms);
   if (!p) {
     p = (async () => {
-      const dir = path.join(config.asterisk.configDir, "sounds", "munasip");
+      const dir = path.join(config.asterisk.configDir, "sounds", "monosip");
       const file = path.join(dir, `silence-${ms}.wav`);
       if (!existsSync(file)) {
         await mkdir(dir, { recursive: true });
         await writeFile(file, silenceWav(ms));
         await chmod(file, 0o644).catch(() => undefined);
       }
-      return `sound:munasip/silence-${ms}`;
+      return `sound:monosip/silence-${ms}`;
     })();
     p.catch(() => ready.delete(ms));
     ready.set(ms, p);

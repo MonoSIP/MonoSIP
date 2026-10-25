@@ -4,7 +4,7 @@ import { BrandPage } from "@/views/brand";
 
 export const metadata: Metadata = pageMetadata(
   "Brand assets",
-  "Official MunaSIP SVG logo files, monochrome mark and brand colors, preserved from the original project.",
+  "Official MonoSIP SVG logo files, monochrome mark and brand colors, preserved from the original project.",
   "/brand/",
 );
 

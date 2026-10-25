@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from "node:fs";
 import https from "node:https";
 import http from "node:http";
 
-const BASE = process.env.MUNASIP_BASE || "https://localhost";
+const BASE = process.env.MONOSIP_BASE || "https://localhost";
 const insecure = new https.Agent({ rejectUnauthorized: false });
 
 let pass = 0;
@@ -40,7 +40,7 @@ function loadEnv() {
 }
 
 const ENV = loadEnv();
-const SECRET = ENV.INTERNAL_API_SECRET || "munasip_internal_change_me";
+const SECRET = ENV.INTERNAL_API_SECRET || "monosip_internal_change_me";
 
 async function req(method, path, { cookie, body, headers = {}, raw = false } = {}) {
   const url = new URL(path.startsWith("http") ? path : BASE + path);
@@ -246,8 +246,8 @@ async function main() {
   await expectStatus("system reload", "POST", "/api/v1/admin/system/reload", { cookie: admin, body: {} }, 200);
 
   // Dialplan greps
-  const conf = docker("asterisk sh -c 'cat /var/lib/asterisk/munasip/extensions_munasip.conf'");
-  const qconf = docker("asterisk sh -c 'cat /var/lib/asterisk/munasip/queues_munasip.conf'");
+  const conf = docker("asterisk sh -c 'cat /var/lib/asterisk/monosip/extensions_monosip.conf'");
+  const qconf = docker("asterisk sh -c 'cat /var/lib/asterisk/monosip/queues_monosip.conf'");
   const greps = [
     ["DND *78", /\*78/],
     ["DND *79", /\*79/],
@@ -278,14 +278,14 @@ async function main() {
   else bad("internal secret required", `HTTP ${noSec.status}`);
 
   const withSec = await req("POST", "/api/v1/internal/dnd", {
-    headers: { "x-munasip-internal": SECRET },
+    headers: { "x-monosip-internal": SECRET },
     body: { extension: "101", dnd: false },
   });
   if (withSec.status === 200) ok("internal DND");
   else bad("internal DND", withSec.text);
 
   const qcb = await req("POST", "/api/v1/internal/queue-callback", {
-    headers: { "x-munasip-internal": SECRET },
+    headers: { "x-monosip-internal": SECRET },
     body: { queue: "300", number: "05321118888", place: 2 },
   });
   if (qcb.status === 200 && qcb.json?.ok) ok("internal queue-callback place");
@@ -338,10 +338,20 @@ async function main() {
       });
       if (created.json?.id) {
         ok("device create");
+        const qr = await req("GET", `/api/v1/admin/devices/${created.json.id}/qr`, { cookie: admin });
         await expectStatus("device QR", "GET", `/api/v1/admin/devices/${created.json.id}/qr`, { cookie: admin }, 200);
-        const cfg = await req("GET", "/cfg/aabbccddeeff.cfg", {});
-        if (cfg.status === 200 && cfg.text.length > 20) ok("provision cfg");
-        else bad("provision cfg", `HTTP ${cfg.status}`);
+        // /cfg/:mac hands out the SIP password, so it needs the device secret.
+        const cfgPath = qr.json?.provisionUrl
+          ? new URL(qr.json.provisionUrl).pathname + new URL(qr.json.provisionUrl).search
+          : null;
+        const noSecret = await req("GET", "/cfg/aabbccddeeff.cfg", {});
+        if (noSecret.status === 404) ok("provision cfg requires secret");
+        else bad("provision cfg requires secret", `HTTP ${noSecret.status}`);
+        if (cfgPath) {
+          const cfg = await req("GET", cfgPath, {});
+          if (cfg.status === 200 && cfg.text.length > 20) ok("provision cfg");
+          else bad("provision cfg", `HTTP ${cfg.status}`);
+        } else skp("provision cfg", "no provisioning URL (device has no MAC)");
         await req("DELETE", `/api/v1/admin/devices/${created.json.id}`, { cookie: admin });
       } else bad("device create", created.text);
     } else skp("device QR", "no extension");
@@ -492,7 +502,7 @@ async function main() {
 
   // Unit tests
   try {
-    execSync("pnpm --filter @munasip/api test", { encoding: "utf8", cwd: process.cwd(), stdio: "pipe" });
+    execSync("pnpm --filter @monosip/api test", { encoding: "utf8", cwd: process.cwd(), stdio: "pipe" });
     ok("vitest suite");
   } catch (e) {
     bad("vitest suite", e.stdout?.toString?.().slice(-200) || e.message);

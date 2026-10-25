@@ -1,12 +1,12 @@
-// Browser preferences saved before the MunaSIP rename (dsip_* keys) move to the
+// Browser preferences saved before the MonoSIP rename (dsip_* keys) move to the
 // new keys once, so nobody loses their language, theme or audio devices.
 // Imported first in main.tsx: other modules read these keys at load time.
 const RENAMED: Array<[string, string]> = [
-  ["dsip_locale", "munasip_locale"],
-  ["dsip_theme", "munasip_theme"],
-  ["dsip_ab", "munasip_ab"],
-  ["dsip.audioDevices", "munasip.audioDevices"],
-  ["dsip.recentsSeenAt", "munasip.recentsSeenAt"],
+  ["dsip_locale", "monosip_locale"],
+  ["dsip_theme", "monosip_theme"],
+  ["dsip_ab", "monosip_ab"],
+  ["dsip.audioDevices", "monosip.audioDevices"],
+  ["dsip.recentsSeenAt", "monosip.recentsSeenAt"],
 ];
 
 try {

@@ -1,15 +1,15 @@
 const version = "1.7.5";
-const repo = "https://github.com/MunaSIP/MunaSIP";
+const repo = "https://github.com/MonoSIP/MonoSIP";
 
 export const site = {
-  name: "MunaSIP",
-  url: "https://munasip.github.io",
+  name: "MonoSIP",
+  url: "https://monosip.github.io",
   repo,
-  websiteRepo: "https://github.com/MunaSIP/MunaSIP",
+  websiteRepo: "https://github.com/MonoSIP/MonoSIP",
   version,
   release: `${repo}/releases/tag/v${version}`,
   sourceZip: `${repo}/archive/refs/tags/v${version}.zip`,
-  image: `ghcr.io/munasip/munasip:${version}`,
+  image: `ghcr.io/monosip/monosip:${version}`,
   sourceRevision: "3f9deec1c3de77a5aeb4d8ac0f3d60153f01d418",
   developmentRevision: "18e42f6",
   reviewed: "22 October 2026",
@@ -81,17 +81,17 @@ export const referenceDocs = [
   ],
 ];
 
-export const dockerCommand = `docker run -d --name munasip \\
+export const dockerCommand = `docker run -d --name monosip \\
   --restart unless-stopped \\
   -p 3000:3000 \\
   -p 10000-10100:10000-10100/udp \\
-  -v munasip-data:/data \\
+  -v monosip-data:/data \\
   -e EXTERNAL_IP=203.0.113.10 \\
   -e PUBLIC_HOST=pbx.example.com \\
   ${site.image}`;
 
-export const composeCommand = `git clone https://github.com/MunaSIP/MunaSIP.git
-cd MunaSIP
+export const composeCommand = `git clone https://github.com/MonoSIP/MonoSIP.git
+cd MonoSIP
 git checkout v${site.version}
 cp .env.example .env
 chmod +x scripts/gen-certs.sh

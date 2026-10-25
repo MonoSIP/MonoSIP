@@ -1,6 +1,6 @@
 /**
  * PromptsPage / MohPage file-upload e2e (Playwright + Vite dev server).
- * Run: pnpm --filter @munasip/web test:e2e   (chained after flow-designer.e2e.mjs)
+ * Run: pnpm --filter @monosip/web test:e2e   (chained after flow-designer.e2e.mjs)
  *
  * Uses Playwright's file-chooser API against the real upload inputs:
  *  - PromptsPage create-with-upload (visible input[type=file] in the form)

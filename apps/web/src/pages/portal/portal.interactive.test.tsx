@@ -100,6 +100,11 @@ function fwdSelects() {
   return within(card).getAllByRole("combobox");
 }
 
+async function chooseOption(combobox: HTMLElement, name: string) {
+  await userEvent.click(combobox);
+  await userEvent.click(await screen.findByRole("option", { name }));
+}
+
 /** Tab-bar buttons, scoped so tab labels never collide with row actions. */
 function tab(name: string) {
   const bar = screen.getByRole("button", { name: "missed.all" }).parentElement as HTMLElement;
@@ -142,7 +147,7 @@ describe("voicemail greeting", () => {
     await waitFor(() => expect(box).toHaveValue("Merhaba"));
     await userEvent.clear(box);
     await userEvent.type(box, "Birakin");
-    await userEvent.selectOptions(screen.getByLabelText("portal.greetingVoice"), "male");
+    await chooseOption(screen.getByLabelText("portal.greetingVoice"), "portal.voiceMale");
 
     const card = screen.getByRole("heading", { name: "portal.voicemailGreeting" }).closest("section")!;
     await userEvent.click(within(card).getByRole("button", { name: "common.save" }));
@@ -177,7 +182,7 @@ describe("call forwarding", () => {
     const selects = fwdSelects();
     expect(screen.queryByPlaceholderText("Extension number")).not.toBeInTheDocument();
 
-    await userEvent.selectOptions(selects[0]!, "extension");
+    await chooseOption(selects[0]!, "Extension");
 
     expect(await screen.findByPlaceholderText("Extension number")).toBeInTheDocument();
   });
@@ -186,7 +191,7 @@ describe("call forwarding", () => {
     renderPage(<MySettingsPage />);
 
     const selects = fwdSelects();
-    await userEvent.selectOptions(selects[0]!, "extension");
+    await chooseOption(selects[0]!, "Extension");
     await userEvent.type(await screen.findByPlaceholderText("Extension number"), "205");
 
     await userEvent.click(screen.getByRole("button", { name: "Save forwarding" }));
@@ -220,7 +225,7 @@ describe("call forwarding", () => {
     renderPage(<MySettingsPage />);
 
     await waitFor(() => expect(screen.getByDisplayValue("101")).toBeInTheDocument());
-    await userEvent.selectOptions(fwdSelects()[0]!, "voicemail");
+    await chooseOption(fwdSelects()[0]!, "Voicemail");
     await userEvent.click(screen.getByRole("button", { name: "Save forwarding" }));
 
     await waitFor(() => expect(put).toHaveBeenCalled());
@@ -284,7 +289,7 @@ describe("password and voicemail error handling", () => {
 
     const langCard = screen.getByRole("heading", { name: "common.language" }).closest("section")!;
     await userEvent.click(within(langCard).getByRole("button", { name: "Türkçe" }));
-    expect(localStorage.getItem("munasip_locale")).toBe("tr");
+    expect(localStorage.getItem("monosip_locale")).toBe("tr");
     expect(within(langCard).getByRole("button", { name: "Türkçe" }).className).toContain("btn-primary");
 
     await userEvent.click(screen.getByRole("button", { name: "portal.darkMode: common.enabled" }));

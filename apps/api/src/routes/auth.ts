@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { and, eq, ne, sql } from "drizzle-orm";
-import { AdminLoginSchema, PortalLoginSchema } from "@munasip/shared";
+import { AdminLoginSchema, PortalLoginSchema } from "@monosip/shared";
 import {
   COOKIE, LEGACY_COOKIE,
   destroySession,

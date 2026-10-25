@@ -2065,6 +2065,14 @@ figcaption {
   font-size: 10px;
   color: var(--faint);
 }
+.footer-site {
+  color: var(--faint);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.footer-site:hover {
+  color: var(--accent);
+}
 .footer-end {
   display: flex;
   align-items: center;

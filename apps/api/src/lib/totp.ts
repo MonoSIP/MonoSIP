@@ -6,7 +6,7 @@ export function generateTotpSecret(): string {
 }
 
 export function totpUri(email: string, secret: string): string {
-  return authenticator.keyuri(email, "MunaSIP", secret);
+  return authenticator.keyuri(email, "MonoSIP", secret);
 }
 
 export async function totpQrDataUrl(email: string, secret: string): Promise<string> {

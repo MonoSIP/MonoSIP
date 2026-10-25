@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Checkbox, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { SPEECH_VOICES } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
 import { Link } from "react-router-dom";
@@ -88,7 +88,7 @@ type BanRow = {
 export function SettingsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const [companyName, setCompanyName] = useState("MunaSIP");
+  const [companyName, setCompanyName] = useState("MonoSIP");
   const [defaultLocale, setDefaultLocale] = useState<"en" | "tr">("en");
   const [retention, setRetention] = useState(12);
   const [kvkk, setKvkk] = useState(true);
@@ -174,7 +174,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (settings.data) {
-      setCompanyName(settings.data.companyName ?? "MunaSIP");
+      setCompanyName(settings.data.companyName ?? "MonoSIP");
       setDefaultLocale(settings.data.defaultLocale === "tr" ? "tr" : "en");
       setRetention(settings.data.recordingRetentionMonths ?? 12);
       setKvkk(settings.data.kvkkAnnouncementEnabled ?? true);
@@ -333,7 +333,7 @@ export function SettingsPage() {
     const blob = await res.blob();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `munasip-backup-${Date.now()}.json`;
+    a.download = `monosip-backup-${Date.now()}.json`;
     a.click();
   }
 
@@ -356,10 +356,7 @@ export function SettingsPage() {
           placeholder="pbx.example.com"
           autoComplete="off"
         />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={autoSsl} onChange={(e) => setAutoSsl(e.target.checked)} />
-          {t("settings.autoSsl")}
-        </label>
+        <Checkbox checked={autoSsl} onCheckedChange={setAutoSsl} label={t("settings.autoSsl")} />
         <p className="text-xs text-[var(--text-muted)]">{t("settings.autoSslHint")}</p>
         <TextField
           label={t("settings.sslEmail")}
@@ -419,32 +416,31 @@ export function SettingsPage() {
         <SelectField
           label={t("settings.queueLanguage")}
           value={defaultLocale}
-          onChange={(e) => setDefaultLocale(e.target.value === "tr" ? "tr" : "en")}
+          onValueChange={(next) => setDefaultLocale(next === "tr" ? "tr" : "en")}
           hint={t("settings.queueLanguageHint")}
-        >
-          <option value="tr">Türkçe</option>
-          <option value="en">English</option>
-        </SelectField>
+          options={[
+            { value: "tr", label: "Türkçe" },
+            { value: "en", label: "English" },
+          ]}
+        />
         <TextField
           label={t("settings.retention")}
           type="number"
           value={retention}
           onChange={(e) => setRetention(Number(e.target.value))}
         />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={kvkk} onChange={(e) => setKvkk(e.target.checked)} />
-          {tr("KVKK announcement")}
-        </label>
-        <SelectField label={tr("KVKK prompt")} value={kvkkPromptId} onChange={(e) => setKvkkPromptId(e.target.value)}>
-          <option value="">{tr("Beep (default)")}</option>
-          {(prompts.data ?? [])
-            .filter((p) => p.source !== "cache")
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-        </SelectField>
+        <Checkbox checked={kvkk} onCheckedChange={setKvkk} label={tr("KVKK announcement")} />
+        <SelectField
+          label={tr("KVKK prompt")}
+          value={kvkkPromptId}
+          onValueChange={setKvkkPromptId}
+          options={[
+            { value: "", label: tr("Beep (default)") },
+            ...(prompts.data ?? [])
+              .filter((p) => p.source !== "cache")
+              .map((p) => ({ value: p.id, label: p.name })),
+          ]}
+        />
         {prompts.isSuccess && !(prompts.data ?? []).some((p) => p.source !== "cache") && (
           <p className="text-xs text-[var(--text-muted)]">
             {tr("No saved prompts yet. Create one from text (TTS) or upload a file on the")}{" "}
@@ -458,23 +454,17 @@ export function SettingsPage() {
           label={tr("IVR TTS model")}
           icon={AudioLines}
           value={ttsVoice}
-          onChange={(e) => setTtsVoice(e.target.value)}
-        >
-          {SPEECH_VOICES.map((v) => (
-            <option key={v.value} value={v.value}>
-              {v.label}
-              {v.value === "ema-lightning" ? ` — ${tr("Turkish offline")}` : ""}
-            </option>
-          ))}
-        </SelectField>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={ttsVoiceApplyAll}
-            onChange={(e) => setTtsVoiceApplyAll(e.target.checked)}
-          />
-          {tr("Apply TTS model to all IVR prompts (ignore per-node voice)")}
-        </label>
+          onValueChange={setTtsVoice}
+          options={SPEECH_VOICES.map((v) => ({
+            value: v.value,
+            label: `${v.label}${v.value === "ema-lightning" ? ` — ${tr("Turkish offline")}` : ""}`,
+          }))}
+        />
+        <Checkbox
+          checked={ttsVoiceApplyAll}
+          onCheckedChange={setTtsVoiceApplyAll}
+          label={tr("Apply TTS model to all IVR prompts (ignore per-node voice)")}
+        />
         <p className="text-xs text-[var(--text-muted)]">
           {tr("When enabled, live IVR speech uses this model without editing flow nodes. EMA is Turkish-only.")}
         </p>
@@ -518,10 +508,7 @@ export function SettingsPage() {
             onChange={(e) => setMonthly(Number(e.target.value))}
           />
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={blockAnon} onChange={(e) => setBlockAnon(e.target.checked)} />
-          {tr("Block anonymous inbound")}
-        </label>
+        <Checkbox checked={blockAnon} onCheckedChange={setBlockAnon} label={tr("Block anonymous inbound")} />
         <TextField
           label={tr("Max outbound calls / hour / extension")}
           type="number"

@@ -464,7 +464,7 @@ describe("loadPreferredDevices", () => {
 
   it("drops saved ids that the browser no longer enumerates", async () => {
     localStorage.setItem(
-      "munasip.audioDevices",
+      "monosip.audioDevices",
       JSON.stringify({ mic: "gone-mic", speaker: "spk-1", ring: "gone-ring" }),
     );
     stubDevices(["mic-1"], ["spk-1"]);
@@ -480,7 +480,7 @@ describe("loadPreferredDevices", () => {
     expect(internal.preferredMicId).toBe("");
     expect(internal.preferredSpeakerId).toBe("spk-1");
     expect(internal.preferredRingId).toBe("");
-    expect(JSON.parse(localStorage.getItem("munasip.audioDevices") ?? "{}")).toEqual({
+    expect(JSON.parse(localStorage.getItem("monosip.audioDevices") ?? "{}")).toEqual({
       mic: "",
       speaker: "spk-1",
       ring: "",
@@ -489,7 +489,7 @@ describe("loadPreferredDevices", () => {
 
   it("keeps ids that are still present", async () => {
     localStorage.setItem(
-      "munasip.audioDevices",
+      "monosip.audioDevices",
       JSON.stringify({ mic: "mic-1", speaker: "spk-1", ring: "ring-1" }),
     );
     stubDevices(["mic-1"], ["spk-1", "ring-1"]);
@@ -508,7 +508,7 @@ describe("loadPreferredDevices", () => {
   });
 
   it("survives corrupt stored JSON and clears preferences", async () => {
-    localStorage.setItem("munasip.audioDevices", "{not json");
+    localStorage.setItem("monosip.audioDevices", "{not json");
     stubDevices(["mic-1"], ["spk-1"]);
 
     const sp = new Softphone();

@@ -1,9 +1,10 @@
-import { CallPermissionsSchema, SettingsSchema, type Settings } from "@munasip/shared";
+import { CallPermissionsSchema, SettingsSchema, type Settings } from "@monosip/shared";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { cdr, extensions, outboundRoutes, spendLimits, trunks } from "../db/schema.js";
 
-const EMERGENCY = new Set(["112", "911", "155", "110", "119"]);
+/** Single source of truth for emergency numbers (dialplan shortcuts included). */
+export const EMERGENCY = new Set(["112", "911", "155", "110", "119"]);
 
 export function isEmergencyNumber(dialed: string): boolean {
   const n = dialed.replace(/\D/g, "");
@@ -180,7 +181,13 @@ export function matchDialPattern(dialed: string, pattern: string): boolean {
     );
     return re.test(dialed) || re.test(n);
   }
-  return dialed.startsWith(p) || n.startsWith(p.replace(/\D/g, ""));
+  // Only compare against the digit-stripped form when the pattern actually has
+  // digits: "abc".replace(/\D/g,"") === "" and "anything".startsWith("") is
+  // true, which would otherwise match this route for every dialed number and
+  // turn it into an accidental catch-all in resolveOutboundDial.
+  const digits = p.replace(/\D/g, "");
+  if (!digits) return false;
+  return dialed.startsWith(p) || n.startsWith(digits);
 }
 
 export async function checkExtensionOutbound(
@@ -236,7 +243,7 @@ export async function checkExtensionOutbound(
                 from: settings.emailFrom,
                 to: settings.smtpTo,
               },
-              `MunaSIP rate-limit: extension ${callerExt} suspended`,
+              `MonoSIP rate-limit: extension ${callerExt} suspended`,
               `Extension ${callerExt} hit maxOutboundPerHour (${maxPerHour}) and was set to DND.\nAt: ${new Date().toISOString()}`,
             );
           }
@@ -272,7 +279,7 @@ export async function checkExtensionOutbound(
             from: settings.emailFrom,
             to: settings.smtpTo,
           },
-          `MunaSIP daily spend limit hit`,
+          `MonoSIP daily spend limit hit`,
           `Outbound blocked for ${callerExt} → ${dialed}\nReason: daily-spend\nAt: ${new Date().toISOString()}`,
         );
       }
@@ -294,7 +301,7 @@ export async function checkExtensionOutbound(
             from: settings.emailFrom,
             to: settings.smtpTo,
           },
-          `MunaSIP monthly spend limit hit`,
+          `MonoSIP monthly spend limit hit`,
           `Outbound blocked for ${callerExt} → ${dialed}\nReason: monthly-spend\nAt: ${new Date().toISOString()}`,
         );
       }

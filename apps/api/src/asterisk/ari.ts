@@ -71,8 +71,13 @@ class AriClient extends EventEmitter {
 
   async start() {
     await this.health();
-    this.pollTimer = setInterval(() => void this.poll(), 5000);
-    this.connectApps(["munasip-inbound", "munasip-flow", "munasip-outbound"]);
+    // poll() hits the ARI REST API and rejects when Asterisk is unreachable;
+    // without a handler that is an unhandled rejection, which is fatal.
+    this.pollTimer = setInterval(
+      () => void this.poll().catch((e) => console.warn("[ari] poll failed:", (e as Error).message)),
+      5000,
+    );
+    this.connectApps(["monosip-inbound", "monosip-flow", "monosip-outbound"]);
   }
 
   stop() {
@@ -220,7 +225,9 @@ class AriClient extends EventEmitter {
           String(ch.dialplan?.app_data ?? "").includes("snoop-wait");
         if (waiting && targetGone) {
           console.log(`[ari] hanging orphan snoop ${ch.id} (${name})`);
-          void this.hangup(ch.id);
+          // Cleanup path: the fetch rejects when Asterisk is unreachable, and an
+          // unhandled rejection would take the whole API down.
+          void this.hangup(ch.id).catch(() => undefined);
         }
       }
 
@@ -302,7 +309,7 @@ class AriClient extends EventEmitter {
    * `snoop-wait`); it follows the caller through dialplan and ends at hangup.
    */
   async record(channelId: string, name: string): Promise<string | null> {
-    const snoopParams = new URLSearchParams({ spy: "both", app: "munasip-flow", appArgs: "snoop-wait" });
+    const snoopParams = new URLSearchParams({ spy: "both", app: "monosip-flow", appArgs: "snoop-wait" });
     const snoopRes = await fetch(`${this.baseUrl()}/ari/channels/${channelId}/snoop?${snoopParams}`, {
       method: "POST",
       headers: { Authorization: this.authHeader() },
@@ -365,7 +372,7 @@ class AriClient extends EventEmitter {
     const snoopParams = new URLSearchParams({
       spy,
       whisper,
-      app: "munasip-flow",
+      app: "monosip-flow",
       appArgs: "snoop-wait",
     });
     const snoopRes = await fetch(
@@ -390,10 +397,10 @@ class AriClient extends EventEmitter {
 
       const origParams = new URLSearchParams({
         endpoint: opts.listenerEndpoint,
-        app: "munasip-flow",
+        app: "monosip-flow",
         appArgs: `bridge,${bridge.id}`,
         timeout: "30",
-        callerId: `"MunaSIP Spy" <${ext}>`,
+        callerId: `"MonoSIP Spy" <${ext}>`,
       });
       const orig = await fetch(`${this.baseUrl()}/ari/channels?${origParams}`, {
         method: "POST",
@@ -410,7 +417,7 @@ class AriClient extends EventEmitter {
       return { snoopId: snoop.id, bridgeId: bridge.id, listener: await orig.json() };
     } catch (e) {
       // Always clean up snoop/bridge so live-calls list does not fill with orphans
-      void this.hangup(snoop.id);
+      void this.hangup(snoop.id).catch(() => undefined);
       if (bridgeId) {
         void fetch(`${this.baseUrl()}/ari/bridges/${bridgeId}`, {
           method: "DELETE",
@@ -699,7 +706,7 @@ class AriClient extends EventEmitter {
       endpoint: opts.endpoint,
       extension: opts.extension,
       context: opts.context ?? "from-internal",
-      callerId: opts.callerId ?? "MunaSIP",
+      callerId: opts.callerId ?? "MonoSIP",
       timeout: "30",
     });
     const res = await fetch(`${this.baseUrl()}/ari/channels?${params}`, {

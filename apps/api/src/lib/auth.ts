@@ -9,7 +9,7 @@ export type Actor =
   | { type: "admin"; id: string; email: string }
   | { type: "extension"; id: string; number: string; name: string };
 
-const COOKIE = "munasip_session";
+const COOKIE = "monosip_session";
 const LEGACY_COOKIE = "dsip_session";
 
 export async function createSession(

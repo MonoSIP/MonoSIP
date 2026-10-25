@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
   auth,
   buildApp,
@@ -212,6 +212,83 @@ describe("one extension password for portal and SIP", () => {
     for (const bad of ["short1", "has;semicolon", 'quote"d-pass', "with space 1", "back\\slash1"]) {
       const res = await call("POST", "/api/v1/admin/extensions", { number: "18880", name: "Bad", portalPassword: bad });
       expect(res.statusCode, bad).toBe(400);
+    }
+  });
+});
+
+describe("CSV import credentials", () => {
+  const importCsv = (csv: string) =>
+    app.inject({
+      method: "POST",
+      url: "/api/v1/admin/extensions/import",
+      headers: auth(fx.adminToken),
+      payload: { csv },
+    });
+
+  it("gives an imported extension an unguessable password instead of portal<number>", async () => {
+    const number = "18890";
+    const res = await importCsv(`number,name,email,dnd,portalEnabled\n${number},Imported,,false,false`);
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      created: number;
+      credentials: Array<{ number: string; portalPassword: string }>;
+    };
+    expect(body.created).toBe(1);
+
+    const [row] = await db.select().from(extensions).where(eq(extensions.number, number));
+    try {
+      // The password must not be derivable from the extension number.
+      expect(scryptVerify(`portal${number}`, row.portalPasswordHash)).toBe(false);
+      // It is one password for both the portal login and the SIP registration.
+      const issued = body.credentials.find((c) => c.number === number);
+      expect(issued).toBeDefined();
+      expect(scryptVerify(issued!.portalPassword, row.portalPasswordHash)).toBe(true);
+      expect(decrypt(row.sipSecretEnc)).toBe(issued!.portalPassword);
+    } finally {
+      await db.delete(extensions).where(eq(extensions.number, number));
+    }
+  });
+
+  it("issues a distinct password per imported extension", async () => {
+    const res = await importCsv("number,name\n18891,A\n18892,B");
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      credentials: Array<{ number: string; portalPassword: string }>;
+    };
+    try {
+      const passwords = body.credentials.map((c) => c.portalPassword);
+      expect(passwords).toHaveLength(2);
+      expect(new Set(passwords).size).toBe(2);
+    } finally {
+      await db.delete(extensions).where(inArray(extensions.number, ["18891", "18892"]));
+    }
+  });
+
+  it("does not change the password of an extension that already exists", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/extensions",
+      headers: auth(fx.adminToken),
+      payload: { number: "18893", name: "Existing" },
+    });
+    const id = (created.json() as { id: string }).id;
+    const before = (created.json() as { portalPassword: string }).portalPassword;
+    try {
+      const res = await importCsv("number,name\n18893,Renamed");
+      expect(res.statusCode).toBe(200);
+      const body = res.json() as { updated: number; credentials: unknown[] };
+      expect(body.updated).toBe(1);
+      expect(body.credentials).toHaveLength(0);
+
+      const [row] = await db.select().from(extensions).where(eq(extensions.number, "18893"));
+      expect(scryptVerify(before, row.portalPasswordHash)).toBe(true);
+      expect(row.name).toBe("Renamed");
+    } finally {
+      await app.inject({
+        method: "DELETE",
+        url: `/api/v1/admin/extensions/${id}`,
+        headers: auth(fx.adminToken),
+      });
     }
   });
 });

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "../../../lib/api";
+import { Checkbox, SelectInput } from "../../../components/ui";
 import type { FlowNodeData } from "./FlowNodes";
 import { ExitsHint, Field, SegmentedSelect, SettingsSection } from "./settingsUi";
 import { tr } from "../../../i18n";
@@ -78,14 +79,14 @@ function SecretPicker({ value, onChange }: { value: string; onChange: (id: strin
   return (
     <div className="space-y-2">
       <Field label={tr("Secret")}>
-        <select className="input w-full" value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">{tr("— select secret —")}</option>
-          {(secrets.data ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+        <SelectInput
+          value={value}
+          onValueChange={onChange}
+          options={[
+            { value: "", label: tr("— select secret —") },
+            ...(secrets.data ?? []).map((s) => ({ value: s.id, label: s.name })),
+          ]}
+        />
       </Field>
       <div className="flex flex-wrap gap-1">
         <input
@@ -258,29 +259,26 @@ export function ApiNodeSettings({
               }
             />
           </Field>
-          <label className="flex items-end gap-2 pb-2 text-xs text-[var(--text)]">
-            <input
-              type="checkbox"
-              checked={Number(data.retry ?? 0) > 0}
-              onChange={(e) => patch({ retry: e.target.checked ? 1 : 0 })}
-            />
-            {tr("Retry once on failure")}
-          </label>
+          <Checkbox
+            checked={Number(data.retry ?? 0) > 0}
+            onCheckedChange={(next) => patch({ retry: next ? 1 : 0 })}
+            label={tr("Retry once on failure")}
+          />
         </div>
       </SettingsSection>
 
       <SettingsSection step={2} title={tr("Auth & headers")} hint={tr("Secrets stay encrypted — never stored in the flow JSON.")}>
         <Field label={tr("Auth type")}>
-          <select
-            className="input w-full"
+          <SelectInput
             value={String(data.authType ?? "none")}
-            onChange={(e) => patch({ authType: e.target.value })}
-          >
-            <option value="none">{tr("None")}</option>
-            <option value="bearer">{tr("Bearer token")}</option>
-            <option value="basic">{tr("Basic (secret = base64 user:pass)")}</option>
-            <option value="header">{tr("Custom header + secret")}</option>
-          </select>
+            onValueChange={(next) => patch({ authType: next })}
+            options={[
+              { value: "none", label: tr("None") },
+              { value: "bearer", label: tr("Bearer token") },
+              { value: "basic", label: tr("Basic (secret = base64 user:pass)") },
+              { value: "header", label: tr("Custom header + secret") },
+            ]}
+          />
         </Field>
         {(data.authType === "bearer" || data.authType === "basic" || data.authType === "header") && (
           <SecretPicker
@@ -353,38 +351,30 @@ export function ApiNodeSettings({
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={tr("Prompt")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.waitPromptId ?? "")}
-              onChange={(e) =>
+              onValueChange={(next) =>
                 patch({
-                  waitPromptId: e.target.value || undefined,
-                  waitMoh: e.target.value ? undefined : data.waitMoh,
+                  waitPromptId: next || undefined,
+                  waitMoh: next ? undefined : data.waitMoh,
                 })
               }
-            >
-              <option value="">{tr("— none —")}</option>
-              {prompts.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: tr("— none —") },
+                ...prompts.map((p) => ({ value: p.id, label: p.name })),
+              ]}
+            />
           </Field>
           <Field label={tr("Music on hold")} hint={tr("Used only if no prompt")}>
-            <select
-              className="input w-full"
+            <SelectInput
               value={String(data.waitMoh ?? "")}
               disabled={Boolean(data.waitPromptId)}
-              onChange={(e) => patch({ waitMoh: e.target.value || undefined })}
-            >
-              <option value="">{tr("— none —")}</option>
-              {mohClasses.map((m) => (
-                <option key={m.id} value={m.name}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={(next) => patch({ waitMoh: next || undefined })}
+              options={[
+                { value: "", label: tr("— none —") },
+                ...mohClasses.map((m) => ({ value: m.name, label: m.name })),
+              ]}
+            />
           </Field>
         </div>
       </SettingsSection>

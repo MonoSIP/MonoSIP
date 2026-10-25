@@ -4,7 +4,7 @@ import { DocsIndex } from "@/views/docs-index";
 
 export const metadata: Metadata = pageMetadata(
   "Documentation",
-  "Install MunaSIP, design IVR flows, connect a browser softphone and understand the self-hosted PBX architecture.",
+  "Install MonoSIP, design IVR flows, connect a browser softphone and understand the self-hosted PBX architecture.",
   "/docs/",
 );
 

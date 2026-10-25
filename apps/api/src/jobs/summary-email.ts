@@ -1,4 +1,4 @@
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { cdr, callEvents, settings } from "../db/schema.js";
@@ -55,9 +55,9 @@ export async function sendSummaryReport(kind: "daily" | "monthly" = "daily"): Pr
   const ivr = await db.select().from(callEvents);
   const ivrHits = ivr.filter((e) => e.type === "ivr.dtmf" && e.at && e.at >= since).length;
 
-  const subject = `MunaSIP ${kind} summary`;
+  const subject = `MonoSIP ${kind} summary`;
   const lines = [
-    `MunaSIP ${kind} summary`,
+    `MonoSIP ${kind} summary`,
     `Period start: ${since.toISOString()}`,
     `Total CDR: ${slice.length}`,
     `Answered: ${answered}`,
@@ -91,12 +91,12 @@ export async function sendSummaryReport(kind: "daily" | "monthly" = "daily"): Pr
         body,
         [
           {
-            filename: `munasip-${kind}-${since.toISOString().slice(0, 10)}.csv`,
+            filename: `monosip-${kind}-${since.toISOString().slice(0, 10)}.csv`,
             contentType: "text/csv",
             buffer: Buffer.from(csvBody, "utf8"),
           },
           {
-            filename: `munasip-${kind}-${since.toISOString().slice(0, 10)}.pdf`,
+            filename: `monosip-${kind}-${since.toISOString().slice(0, 10)}.pdf`,
             contentType: "application/pdf",
             buffer: simplePdf(lines),
           },

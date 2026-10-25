@@ -1,5 +1,5 @@
 {
-  "name": "@munasip/web",
+  "name": "@monosip/web",
   "version": "1.7.5",
   "license": "MIT",
   "private": true,
@@ -18,11 +18,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@munasip/shared": "workspace:*",
+    "@monosip/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.2",
     "@xyflow/react": "^12.8.6",
     "i18next": "^25.5.3",
     "lucide-react": "^0.544.0",
+    "radix-ui": "1.8.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.63.0",

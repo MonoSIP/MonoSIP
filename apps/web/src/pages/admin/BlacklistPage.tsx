@@ -115,12 +115,13 @@ export function BlacklistPage() {
           <SelectField
             label={t("blacklist.direction")}
             value={direction}
-            onChange={(e) => setDirection(e.target.value as typeof direction)}
-          >
-            <option value="both">{t("blacklist.dirBoth")}</option>
-            <option value="inbound">{t("blacklist.dirInbound")}</option>
-            <option value="outbound">{t("blacklist.dirOutbound")}</option>
-          </SelectField>
+            onValueChange={(next) => setDirection(next as typeof direction)}
+            options={[
+              { value: "both", label: t("blacklist.dirBoth") },
+              { value: "inbound", label: t("blacklist.dirInbound") },
+              { value: "outbound", label: t("blacklist.dirOutbound") },
+            ]}
+          />
           <TextField
             label={t("blacklist.note")}
             value={note}

@@ -7,7 +7,7 @@ import { pathFor } from "@/lib/locale";
 
 const marks = (L: (en: string, tr: string) => string) => [
   {
-    file: "munasip-mark.svg",
+    file: "monosip-mark.svg",
     title: L("The original mark.", "Özgün işaret."),
     text: L(
       "The handset and check, with the original green gradient and proportions.",
@@ -16,16 +16,16 @@ const marks = (L: (en: string, tr: string) => string) => [
     type: "mark",
   },
   {
-    file: "munasip-wordmark.svg",
+    file: "monosip-wordmark.svg",
     title: L("The original wordmark.", "Özgün yazı işareti."),
     text: L(
-      "The existing MünaSIP spelling and geometry. The SVG inherits text color when embedded inline.",
-      "Mevcut MünaSIP yazımı ve geometrisi. SVG satır içine gömüldüğünde metin rengini devralır.",
+      "The existing MonoSIP spelling and geometry. The SVG inherits text color when embedded inline.",
+      "Mevcut MonoSIP yazımı ve geometrisi. SVG satır içine gömüldüğünde metin rengini devralır.",
     ),
     type: "wordmark",
   },
   {
-    file: "munasip-mark-mono.svg",
+    file: "monosip-mark-mono.svg",
     title: L("A single-color mark.", "Tek renkli işaret."),
     text: L(
       "The original monochrome SVG for single-color applications.",
@@ -62,8 +62,8 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
         </h1>
         <p>
           {L(
-            "The original MunaSIP brand files. Preserved as SVG, with a handset for the conversation and a check for the right fit.",
-            "Özgün MunaSIP marka dosyaları. Konuşma için bir ahize, doğru eşleşme için bir onay ile SVG olarak korundu.",
+            "The original MonoSIP brand files. Preserved as SVG, with a handset for the conversation and a check for the right fit.",
+            "Özgün MonoSIP marka dosyaları. Konuşma için bir ahize, doğru eşleşme için bir onay ile SVG olarak korundu.",
           )}
         </p>
       </div>
@@ -77,8 +77,8 @@ export function BrandPage({ locale = "en" }: { locale?: Locale }) {
                 height={128}
                 alt={
                   tr
-                    ? `Resmi MunaSIP ${mark.type}`
-                    : `Official MunaSIP ${mark.type}`
+                    ? `Resmi MonoSIP ${mark.type}`
+                    : `Official MonoSIP ${mark.type}`
                 }
               />
             </div>

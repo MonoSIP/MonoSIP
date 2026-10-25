@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DIAL_COUNTRIES } from "../../lib/dialCountries";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type DialSettings = {
@@ -362,20 +362,22 @@ export function TrunksPage() {
           <SelectField
             label={t("trunks.transport")}
             value={form.transport}
-            onChange={(e) => set("transport", e.target.value as TrunkForm["transport"])}
-          >
-            <option value="udp">{tr("UDP")}</option>
-            <option value="tcp">{tr("TCP")}</option>
-            <option value="tls">{tr("TLS")}</option>
-          </SelectField>
+            onValueChange={(next) => set("transport", next as TrunkForm["transport"])}
+            options={[
+              { value: "udp", label: tr("UDP") },
+              { value: "tcp", label: tr("TCP") },
+              { value: "tls", label: tr("TLS") },
+            ]}
+          />
           <SelectField
             label={t("trunks.authType")}
             value={form.authType}
-            onChange={(e) => set("authType", e.target.value as TrunkForm["authType"])}
-          >
-            <option value="userpass">{t("trunks.authUserpass")}</option>
-            <option value="ip">{t("trunks.authIp")}</option>
-          </SelectField>
+            onValueChange={(next) => set("authType", next as TrunkForm["authType"])}
+            options={[
+              { value: "userpass", label: t("trunks.authUserpass") },
+              { value: "ip", label: t("trunks.authIp") },
+            ]}
+          />
           <TextField
             label={t("trunks.maxChannels")}
             type="number"
@@ -404,14 +406,12 @@ export function TrunksPage() {
               autoComplete="new-password"
               required={!editingId}
             />
-            <label className="flex items-center gap-2 text-sm md:col-span-2">
-              <input
-                type="checkbox"
-                checked={form.register}
-                onChange={(e) => set("register", e.target.checked)}
-              />
-              {t("trunks.register")}
-            </label>
+            <Checkbox
+              className="md:col-span-2"
+              checked={form.register}
+              onCheckedChange={(next) => set("register", next)}
+              label={t("trunks.register")}
+            />
           </div>
         ) : (
           <p className="text-xs text-[var(--text-muted)]">{t("trunks.authIpHint")}</p>
@@ -457,14 +457,11 @@ export function TrunksPage() {
             onChange={(e) => set("notes", e.target.value)}
             placeholder={t("trunks.notesPlaceholder")}
           />
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.enabled}
-              onChange={(e) => set("enabled", e.target.checked)}
-            />
-            {t("common.enabled")}
-          </label>
+          <Checkbox
+            checked={form.enabled}
+            onCheckedChange={(next) => set("enabled", next)}
+            label={t("common.enabled")}
+          />
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -494,14 +491,11 @@ export function TrunksPage() {
       <SectionCard title={t("trunks.dialPolicy")} icon={ShieldBan} tone="coral" className="space-y-4">
         <p className="text-sm text-[var(--text-muted)]">{t("trunks.dialPolicyHint")}</p>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={allowAllIntl}
-            onChange={(e) => setAllowAllIntl(e.target.checked)}
-          />
-          {t("trunks.allowAllIntl")}
-        </label>
+        <Checkbox
+          checked={allowAllIntl}
+          onCheckedChange={setAllowAllIntl}
+          label={t("trunks.allowAllIntl")}
+        />
 
         {!allowAllIntl && (
           <div className="space-y-2">

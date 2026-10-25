@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
+import { Modal, SelectInput } from "../../components/ui";
 import {
   FlowCanvasActionsProvider,
   flowEdgeTypes,
@@ -464,7 +465,7 @@ export function FlowDesignerPage() {
               const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
               const a = document.createElement("a");
               a.href = URL.createObjectURL(blob);
-              a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.munasip-flow.json`;
+              a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.monosip-flow.json`;
               a.click();
               URL.revokeObjectURL(a.href);
               toast.success(tr("Exported"));
@@ -503,22 +504,16 @@ export function FlowDesignerPage() {
           />
         </label>
         {versions[0] && (
-          <select
-            className="input w-auto max-w-[12rem]"
-            defaultValue=""
-            onChange={(e) => {
-              const vid = e.target.value;
+          <SelectInput
+            className="w-auto max-w-[12rem]"
+            aria-label={tr("Rollback…")}
+            placeholder={tr("Rollback…")}
+            value=""
+            onValueChange={(vid) => {
               if (vid) void rollback(vid).catch((err) => toast.error((err as Error).message));
-              e.target.value = "";
             }}
-          >
-            <option value="">{tr("Rollback…")}</option>
-            {versions.map((v) => (
-              <option key={v.id} value={v.id}>
-                v{v.version}
-              </option>
-            ))}
-          </select>
+            options={versions.map((v) => ({ value: v.id, label: `v${v.version}` }))}
+          />
         )}
       </div>
 
@@ -657,88 +652,63 @@ export function FlowDesignerPage() {
         </div>
       </div>
 
-      {selected && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={tr("Node settings")}
-          onClick={() => closeInspector()}
+      {selected ? (
+        <Modal
+          open
+          onOpenChange={(open) => {
+            if (!open) closeInspector();
+          }}
+          className={modalMaxWidth(selected.data.flowType)}
+          eyebrow={tr("Node settings")}
+          title={nodeTitle(selected.data.flowType)}
+          description={nodeBlurb(selected.data.flowType) || undefined}
+          headerAside={
+            <button className="btn shrink-0" type="button" onClick={() => closeInspector()}>
+              {tr("Done")}
+            </button>
+          }
         >
-          <div
-            className={`card flex max-h-[min(92vh,820px)] w-full flex-col overflow-hidden shadow-xl ${modalMaxWidth(selected.data.flowType)}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-              <div className="min-w-0">
-                <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-                  {tr("Node settings")}
-                </div>
-                <div className="text-base font-semibold text-[var(--text)]">
-                  {nodeTitle(selected.data.flowType)}
-                </div>
-                {nodeBlurb(selected.data.flowType) ? (
-                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                    {nodeBlurb(selected.data.flowType)}
-                  </p>
-                ) : null}
-              </div>
-              <button className="btn shrink-0" type="button" onClick={() => closeInspector()}>
-                {tr("Done")}
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-auto p-4">
-              <NodeSettings
-                data={selected.data}
-                patch={patchSelected}
-                ctx={{
-                  prompts: prompts.data ?? [],
-                  mohClasses: mohClasses.data ?? [],
-                  queues: queues.data ?? [],
-                  extensions: exts.data ?? [],
-                  schedules: schedules.data ?? [],
-                  flows: allFlows.data ?? [],
-                  currentFlowId: id,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+          <NodeSettings
+            data={selected.data}
+            patch={patchSelected}
+            ctx={{
+              prompts: prompts.data ?? [],
+              mohClasses: mohClasses.data ?? [],
+              queues: queues.data ?? [],
+              extensions: exts.data ?? [],
+              schedules: schedules.data ?? [],
+              flows: allFlows.data ?? [],
+              currentFlowId: id,
+            }}
+          />
+        </Modal>
+      ) : null}
 
-      {pendingDeleteId && (
-        <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={tr("Confirm delete")}
-          onClick={() => setPendingDeleteId(null)}
-        >
-          <div
-            className="card w-full max-w-sm space-y-4 p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div>
-              <div className="text-sm font-semibold">{t("common.delete")}</div>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">
-                {(() => {
-                  const n = nodes.find((x) => x.id === pendingDeleteId);
-                  const label = n?.data.label || n?.data.flowType || pendingDeleteId;
-                  return `Delete “${label}” from the IVR map? Connected links will be removed.`;
-                })()}
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
+      {pendingDeleteId ? (
+        <Modal
+          open
+          onOpenChange={(open) => {
+            if (!open) setPendingDeleteId(null);
+          }}
+          className="max-w-sm"
+          title={t("common.delete")}
+          description={(() => {
+            const n = nodes.find((x) => x.id === pendingDeleteId);
+            const label = n?.data.label || n?.data.flowType || pendingDeleteId;
+            return `Delete “${label}” from the IVR map? Connected links will be removed.`;
+          })()}
+          footer={
+            <>
               <button className="btn" type="button" onClick={() => setPendingDeleteId(null)}>
                 {t("common.cancel")}
               </button>
               <button className="btn btn-danger" type="button" onClick={() => confirmDeleteNode()}>
                 {t("common.delete")}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          }
+        />
+      ) : null}
     </div>
   );
 }

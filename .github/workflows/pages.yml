@@ -1,9 +1,9 @@
 name: Publish website
 
 # site/ is the Next.js product site. This job exports it and copies the result
-# to MunaSIP/munasip.github.io (an organization's root Pages site must live in
+# to MonoSIP/monosip.github.io (an organization's root Pages site must live in
 # that repo). The deploy key (secret SITE_DEPLOY_KEY) can only write there.
-# Live: https://munasip.github.io/
+# Live: https://monosip.github.io/
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
           pnpm check:export
-      - name: Push export to MunaSIP/munasip.github.io
+      - name: Push export to MonoSIP/monosip.github.io
         env:
           SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
         run: |
@@ -49,7 +49,7 @@ jobs:
           chmod 600 ~/.ssh/site_deploy
           ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
           export GIT_SSH_COMMAND="ssh -i ~/.ssh/site_deploy -o IdentitiesOnly=yes"
-          git clone --depth 1 git@github.com:MunaSIP/munasip.github.io.git publish
+          git clone --depth 1 git@github.com:MonoSIP/monosip.github.io.git publish
           find publish -mindepth 1 -maxdepth 1 ! -name .git ! -name README.md -exec rm -rf {} +
           cp -R site/out/. publish/
           rm -f publish/CNAME

@@ -2,32 +2,45 @@
 
 :root {
   color-scheme: dark;
-  /* Calm teal console. One accent; status hues stay separate from chrome. */
-  --background: #0e151b;
-  --foreground: #e6eef3;
-  --card: #1b2832;
-  --card-foreground: var(--foreground);
-  --popover: #243642;
-  --popover-foreground: var(--foreground);
-  --primary: #1aa892;
-  --primary-foreground: #04211c;
-  --secondary: #2a3c48;
-  --secondary-foreground: var(--foreground);
-  --muted: #2a3c48;
-  --muted-foreground: #9aafbe;
-  --accent: #7ee0cf;
-  --accent-foreground: #04211c;
-  --border: #4a6574;
-  --input: #121a21;
-  --ring: #7ee0cf;
-  --destructive: #c2414e;
-  --destructive-foreground: #fff;
-  --danger: #f0a0a8;
-  --warning: #f0cf86;
+  /* MonoSIP site palette (dark). Chrome uses these roles; IVR hues stay below. */
+  --bg: #0e151b;
+  --surface: #1b2832;
+  --surface-soft: #2a3c48;
+  --surface-accent: #243642;
+  --text: #e6eef3;
+  --muted: #9aafbe;
+  --faint: #8aa0b0;
+  --line: #3d5564;
+  --line-strong: #4a6574;
+  --accent: #1aa892;
+  --accent-bright: #7ee0cf;
+  --accent-hover: #148a78;
+  --on-accent: #04211c;
   --success: #8ee0b8;
-  --info: #b7cdf5;
+  --warning: #f0cf86;
+  --danger: #f0a0a8;
+  --code-bg: #121a21;
+  /* Names already used across the console */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface-accent);
+  --popover-foreground: var(--text);
+  --primary: var(--accent);
+  --primary-foreground: var(--on-accent);
+  --secondary: var(--surface-soft);
+  --secondary-foreground: var(--text);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--on-accent);
+  --border: var(--line);
+  --input: var(--code-bg);
+  --ring: var(--accent-bright);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--on-accent);
+  --info: var(--accent-bright);
+  --accent-dim: var(--accent-hover);
   /* IVR node hues — not used for chrome */
-  --accent-dim: #148a78;
   --accent-2: #e08a72;
   --accent-3: #8aaddd;
   --violet-line: #b3a6db;
@@ -39,38 +52,32 @@
   --radius-pill: 999px;
   --control-h: 2.5rem;
   --shadow: 0 8px 24px rgb(0 0 0 / 0.28);
-  /* Legacy names used across pages */
-  --bg: var(--background);
-  --bg-elevated: var(--card);
-  --bg-soft: var(--muted);
-  --text: var(--foreground);
-  --text-muted: var(--muted-foreground);
+  --bg-elevated: var(--surface);
+  --bg-soft: var(--surface-soft);
+  --text-muted: var(--muted);
 }
 
 html.light {
   color-scheme: light;
-  --background: #f3f6f8;
-  --foreground: #152028;
-  --card: #ffffff;
-  --popover: #ffffff;
-  --primary: #0f766e;
-  --primary-foreground: #ffffff;
-  --secondary: #e7eef3;
-  --secondary-foreground: var(--foreground);
-  --muted: #e7eef3;
-  --muted-foreground: #4e6270;
+  --bg: #f3f6f8;
+  --surface: #ffffff;
+  --surface-soft: #e7eef3;
+  --surface-accent: #dce8ea;
+  --text: #152028;
+  --muted: #4e6270;
+  --faint: #5a7080;
+  --line: #c3d0da;
+  --line-strong: #7d96a8;
   --accent: #0f766e;
-  --accent-foreground: #ffffff;
-  --border: #7d96a8;
-  --input: #ffffff;
-  --ring: #0f766e;
-  --destructive: #be123c;
-  --destructive-foreground: #ffffff;
-  --danger: #9f1239;
-  --warning: #9a3412;
+  --accent-bright: #1aa892;
+  --accent-hover: #115e59;
+  --on-accent: #ffffff;
   --success: #047857;
-  --info: #1d4ed8;
-  --accent-dim: #115e59;
+  --warning: #9a3412;
+  --danger: #9f1239;
+  --code-bg: #121a21;
+  --input: var(--surface);
+  --ring: var(--accent);
   --accent-2: #c2410c;
   --accent-3: #1d4ed8;
   --violet-line: #6d28d9;
@@ -202,7 +209,7 @@ a {
   border-color: transparent;
 }
 .btn-primary:hover {
-  background: color-mix(in oklab, var(--primary) 88%, #000);
+  background: var(--accent-hover);
 }
 .btn-danger {
   background: color-mix(in oklab, var(--destructive) 12%, var(--card));
@@ -223,7 +230,7 @@ a {
   opacity: 1;
   cursor: not-allowed;
   color: var(--muted-foreground);
-  background: var(--muted);
+  background: var(--surface-soft);
   border-color: var(--border);
   box-shadow: none;
 }
@@ -271,7 +278,7 @@ a.btn-icon {
 }
 .input:disabled {
   color: var(--muted-foreground);
-  background: var(--muted);
+  background: var(--surface-soft);
   cursor: not-allowed;
 }
 select.input {
@@ -364,7 +371,7 @@ textarea.input {
   font-weight: 600;
   font-size: 0.75rem;
   letter-spacing: 0.01em;
-  background: var(--muted);
+  background: var(--surface-soft);
   border-bottom: 1px solid var(--border);
 }
 .table tbody tr {
@@ -703,7 +710,7 @@ textarea.input {
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.3;
-  background: var(--muted);
+  background: var(--surface-soft);
   color: var(--foreground);
   border: 1px solid var(--border);
 }
@@ -753,7 +760,7 @@ textarea.input {
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius);
-  background: var(--muted);
+  background: var(--surface-soft);
   color: var(--primary);
   flex-shrink: 0;
 }
@@ -1011,7 +1018,7 @@ textarea.input {
   line-height: 1.45;
 }
 
-/* MunaSIP mark (public/munasip-mark.svg) — the tile and its corners are in the SVG */
+/* MonoSIP mark (public/monosip-mark.svg) — the tile and its corners are in the SVG */
 .brand-mark {
   display: block;
   flex: none;
@@ -1032,11 +1039,52 @@ textarea.input {
 
 .login-shell {
   min-height: 100%;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 1.25rem;
   position: relative;
   overflow: hidden;
+}
+.login-tools {
+  align-self: stretch;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.login-shell > form {
+  margin-block: auto;
+}
+.product-site {
+  color: var(--muted-foreground);
+  font: 500 0.75rem/1.4 var(--mono);
+  text-decoration: none;
+}
+.product-site:hover {
+  color: var(--accent-bright);
+}
+.product-site-bar {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  padding: 0.55rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+}
+.portal-site-mobile {
+  position: fixed;
+  z-index: 21;
+  inset-inline: 0;
+  bottom: calc(3.55rem + env(safe-area-inset-bottom));
+  padding: 0.2rem 0.5rem;
+  text-align: center;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+@media (min-width: 768px) {
+  .portal-site-mobile {
+    display: none;
+  }
 }
 .login-shell::before {
   content: none;
@@ -1052,7 +1100,7 @@ textarea.input {
   gap: 0.25rem;
   padding: 0.2rem;
   border-radius: calc(var(--radius) + 0.2rem);
-  background: var(--muted);
+  background: var(--surface-soft);
   border: 1px solid var(--border);
 }
 .segmented .btn {
@@ -1068,10 +1116,20 @@ textarea.input {
   background: color-mix(in oklab, var(--foreground) 5%, transparent);
 }
 .segmented .btn.btn-primary,
-.segmented .btn.btn-primary:hover {
+.segmented .btn.btn-primary:hover,
+.segmented .btn[data-state="on"],
+.segmented .btn[data-state="on"]:hover {
   background: var(--primary);
   color: var(--primary-foreground);
   box-shadow: none;
+}
+.segmented-compact {
+  flex-wrap: wrap;
+}
+.segmented-compact .btn {
+  min-height: 0;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.75rem;
 }
 
 /* IVR designer — colored add-node chips (one per row) */
@@ -2083,6 +2141,150 @@ html.light .mini-phone-btn.is-answer { color: #fff; }
   .mini-phone-btn:active { scale: none; }
   .icon-swap > svg,
   .portal-user-card > svg { transition: none; }
+}
+.ui-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: auto;
+  min-width: 8rem;
+  text-align: left;
+  cursor: pointer;
+}
+.field-control .ui-select-trigger {
+  width: 100%;
+}
+.ui-select-trigger[data-placeholder] {
+  color: var(--muted);
+}
+.ui-select-icon {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.ui-select-content {
+  z-index: 200;
+  overflow: hidden;
+  min-width: var(--radix-select-trigger-width);
+  max-height: min(20rem, var(--radix-select-content-available-height));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.ui-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.7rem;
+  outline: none;
+  cursor: pointer;
+}
+.ui-select-item[data-highlighted] {
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+.ui-select-item[data-state="checked"] {
+  color: var(--accent);
+}
+.ui-select-indicator {
+  display: grid;
+  place-items: center;
+}
+.ui-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgb(0 0 0 / 0.45);
+}
+.ui-dialog {
+  position: fixed;
+  z-index: 81;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 2rem);
+  max-height: min(92vh, 820px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  padding: 0;
+}
+.ui-dialog-pad {
+  padding: 1.25rem;
+}
+.ui-tooltip {
+  z-index: 210;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--popover);
+  color: var(--text);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+.ui-menu {
+  z-index: 200;
+  min-width: var(--radix-dropdown-menu-trigger-width);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem;
+  border-radius: calc(var(--radius) + 0.35rem);
+  border: 1px solid var(--line);
+  background: var(--popover);
+  box-shadow: var(--shadow);
+}
+.ui-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.ui-menu-item[data-highlighted] {
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.ui-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+}
+.ui-checkbox {
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1px solid var(--line-strong);
+  background: var(--input);
+  color: var(--on-accent);
+}
+.ui-checkbox[data-state="checked"] {
+  background: var(--accent);
+  border-color: transparent;
+}
+.ui-checkbox:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.ui-check-label {
+  cursor: pointer;
 }
 .shadow-xl {
   box-shadow: var(--shadow);

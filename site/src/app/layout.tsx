@@ -14,8 +14,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "MunaSIP — Your calls. Your flow. Your control.",
-    template: "%s — MunaSIP",
+    default: "MonoSIP — Your calls. Your flow. Your control.",
+    template: "%s — MonoSIP",
   },
   description: site.description,
   applicationName: site.name,
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: site.name,
-    title: "MunaSIP — Your calls. Your flow. Your control.",
+    title: "MonoSIP — Your calls. Your flow. Your control.",
     description: site.description,
     url: "/",
     images: [
@@ -32,18 +32,18 @@ export const metadata: Metadata = {
         url: "/brand/og-image.png",
         width: 1200,
         height: 630,
-        alt: "MunaSIP — self-hosted company PBX",
+        alt: "MonoSIP — self-hosted company PBX",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MunaSIP — Your calls. Your flow. Your control.",
+    title: "MonoSIP — Your calls. Your flow. Your control.",
     description: site.description,
     images: ["/brand/og-image.png"],
   },
   icons: {
-    icon: "/brand/munasip-mark.svg",
+    icon: "/brand/monosip-mark.svg",
     apple: "/brand/apple-touch-icon.png",
   },
   robots: { index: true, follow: true },

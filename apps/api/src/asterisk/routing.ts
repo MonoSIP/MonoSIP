@@ -14,7 +14,7 @@ import {
   ringGroups,
   webWidgets,
 } from "../db/schema.js";
-import type { FlowJson } from "@munasip/shared";
+import type { FlowJson } from "@monosip/shared";
 
 export type Dest = { destType: string; destId: string | null | undefined };
 

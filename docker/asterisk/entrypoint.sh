@@ -1,41 +1,41 @@
 #!/bin/sh
 set -e
 
-ARI_USER="${ASTERISK_ARI_USER:-munasip}"
+ARI_USER="${ASTERISK_ARI_USER:-monosip}"
 ARI_PASS="${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}"
-AMI_USER="${ASTERISK_AMI_USER:-munasip}"
+AMI_USER="${ASTERISK_AMI_USER:-monosip}"
 AMI_PASS="${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}"
 
-mkdir -p /var/lib/asterisk/munasip /var/lib/asterisk/munasip/sounds/munasip \
-  /var/lib/asterisk/munasip/sounds/tr/digits /var/lib/asterisk/munasip/sounds/tr/qpos \
-  /var/lib/asterisk/munasip/sounds/en/digits /var/lib/asterisk/munasip/sounds/en/qpos \
-  /var/lib/asterisk/munasip/voicemail \
+mkdir -p /var/lib/asterisk/monosip /var/lib/asterisk/monosip/sounds/monosip \
+  /var/lib/asterisk/monosip/sounds/tr/digits /var/lib/asterisk/monosip/sounds/tr/qpos \
+  /var/lib/asterisk/monosip/sounds/en/digits /var/lib/asterisk/monosip/sounds/en/qpos \
+  /var/lib/asterisk/monosip/voicemail \
   /var/lib/asterisk/moh/default \
   /var/lib/asterisk/sounds/en \
   /var/spool/asterisk/recording /var/lib/asterisk/sounds /etc/asterisk/keys \
   /var/log/asterisk
-chmod 777 /var/spool/asterisk/recording /var/lib/asterisk/munasip/voicemail /var/log/asterisk 2>/dev/null || true
+chmod 777 /var/spool/asterisk/recording /var/lib/asterisk/monosip/voicemail /var/log/asterisk 2>/dev/null || true
 # Ensure log files exist for fail2ban before Asterisk starts
 touch /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security 2>/dev/null || true
-# Expose MunaSIP prompt WAVs as sound:munasip/<id>
-ln -sfn /var/lib/asterisk/munasip/sounds/munasip /var/lib/asterisk/sounds/munasip
+# Expose MonoSIP prompt WAVs as sound:monosip/<id>
+ln -sfn /var/lib/asterisk/monosip/sounds/monosip /var/lib/asterisk/sounds/monosip
 # TR queue TTS: sounds/tr must be the symlink itself (not a dir containing a symlink)
 rm -rf /var/lib/asterisk/sounds/tr
-ln -sfn /var/lib/asterisk/munasip/sounds/tr /var/lib/asterisk/sounds/tr
+ln -sfn /var/lib/asterisk/monosip/sounds/tr /var/lib/asterisk/sounds/tr
 # EN: overlay generated clips into stock en/ (keep builtin beep etc.)
 overlay_en_sounds() {
-  for f in /var/lib/asterisk/munasip/sounds/en/*.wav; do
+  for f in /var/lib/asterisk/monosip/sounds/en/*.wav; do
     [ -f "$f" ] || continue
     ln -sfn "$f" "/var/lib/asterisk/sounds/en/$(basename "$f")"
   done
   # Per-queue voice packs (sounds/tr_ema, en_male …) — Asterisk language variants
-  for d in /var/lib/asterisk/munasip/sounds/*_*; do
+  for d in /var/lib/asterisk/monosip/sounds/*_*; do
     [ -d "$d" ] || continue
     ln -sfn "$d" "/var/lib/asterisk/sounds/$(basename "$d")"
   done
   for d in digits qpos qhold; do
     mkdir -p "/var/lib/asterisk/sounds/en/$d"
-    for f in /var/lib/asterisk/munasip/sounds/en/$d/*.wav; do
+    for f in /var/lib/asterisk/monosip/sounds/en/$d/*.wav; do
       [ -f "$f" ] || continue
       ln -sfn "$f" "/var/lib/asterisk/sounds/en/$d/$(basename "$f")"
     done
@@ -65,7 +65,7 @@ def write_tone(path: Path, secs: float, freq: float, duty: float = 1.0):
             frames += struct.pack("<h", max(-32767, min(32767, sample)))
         w.writeframes(frames)
 
-moh = Path("/var/lib/asterisk/munasip/moh/default/wait.wav")
+moh = Path("/var/lib/asterisk/monosip/moh/default/wait.wav")
 if not moh.is_file():
     write_tone(moh, 4.0, 440, duty=0.2)
     print("moh default wait.wav written")
@@ -75,7 +75,7 @@ Path("/var/lib/asterisk/moh").mkdir(parents=True, exist_ok=True)
 legacy = Path("/var/lib/asterisk/moh/default")
 if not legacy.exists():
     try:
-        os.symlink("/var/lib/asterisk/munasip/moh/default", str(legacy))
+        os.symlink("/var/lib/asterisk/monosip/moh/default", str(legacy))
     except OSError:
         pass
 
@@ -119,19 +119,19 @@ else
 fi
 
 # Ensure generated includes exist
-touch /var/lib/asterisk/munasip/pjsip_munasip.conf
-touch /var/lib/asterisk/munasip/acl_munasip.conf
-touch /var/lib/asterisk/munasip/queues_munasip.conf
-touch /var/lib/asterisk/munasip/extensions_munasip.conf
-touch /var/lib/asterisk/munasip/musiconhold_munasip.conf
+touch /var/lib/asterisk/monosip/pjsip_monosip.conf
+touch /var/lib/asterisk/monosip/acl_monosip.conf
+touch /var/lib/asterisk/monosip/queues_monosip.conf
+touch /var/lib/asterisk/monosip/extensions_monosip.conf
+touch /var/lib/asterisk/monosip/musiconhold_monosip.conf
 
 # Named ACLs live in acl.conf (not pjsip type=acl)
 cat > /etc/asterisk/acl.conf <<'EOF'
 ;
-; Named Access Control Lists — MunaSIP generated rules are included below.
+; Named Access Control Lists — MonoSIP generated rules are included below.
 ;
 
-#include /var/lib/asterisk/munasip/acl_munasip.conf
+#include /var/lib/asterisk/monosip/acl_monosip.conf
 EOF
 
 # Logging for fail2ban (messages.log on shared asterisk_logs volume)
@@ -148,11 +148,11 @@ full => notice,warning,error,verbose
 security => security
 EOF
 
-# Asterisk base image ships a sample musiconhold.conf — always overwrite with MunaSIP include
+# Asterisk base image ships a sample musiconhold.conf — always overwrite with MonoSIP include
 cat > /etc/asterisk/musiconhold.conf <<'EOF'
 [general]
 
-#include /var/lib/asterisk/munasip/musiconhold_munasip.conf
+#include /var/lib/asterisk/monosip/musiconhold_monosip.conf
 
 [default]
 mode=files
@@ -164,8 +164,8 @@ EOF
 (
   LAST=""
   while true; do
-    if [ -f /var/lib/asterisk/munasip/reload.flag ]; then
-      CUR="$(cat /var/lib/asterisk/munasip/reload.flag 2>/dev/null || true)"
+    if [ -f /var/lib/asterisk/monosip/reload.flag ]; then
+      CUR="$(cat /var/lib/asterisk/monosip/reload.flag 2>/dev/null || true)"
       if [ "$CUR" != "$LAST" ] && [ -n "$CUR" ]; then
         LAST="$CUR"
         sleep 1
@@ -183,7 +183,7 @@ EOF
         asterisk -rx "module reload res_musiconhold.so" 2>/dev/null || true
         asterisk -rx "module load pbx_config.so" 2>/dev/null || true
         asterisk -rx "module reload pbx_config.so" 2>/dev/null || true
-        echo "MunaSIP: Asterisk reloaded"
+        echo "MonoSIP: Asterisk reloaded"
       fi
     fi
     sleep 3

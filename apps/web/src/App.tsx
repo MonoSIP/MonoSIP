@@ -11,7 +11,7 @@ function lazyNamed<M extends Record<string, unknown>>(loader: () => Promise<M>, 
       mod = await loader();
     } catch (err) {
       // After a redeploy the old chunk hashes are gone: reload once to pick up the new build.
-      const key = "munasip:chunk-reload";
+      const key = "monosip:chunk-reload";
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, "1");
         window.location.reload();
@@ -19,7 +19,7 @@ function lazyNamed<M extends Record<string, unknown>>(loader: () => Promise<M>, 
       }
       throw err;
     }
-    sessionStorage.removeItem("munasip:chunk-reload");
+    sessionStorage.removeItem("monosip:chunk-reload");
     return { default: mod[exportName] as React.ComponentType };
   });
 }
@@ -53,7 +53,7 @@ const MyRecordingsPage = lazyNamed(() => import("./pages/portal/MyRecordingsPage
 const MyVoicemailPage = lazyNamed(() => import("./pages/portal/MyVoicemailPage"), "MyVoicemailPage");
 const MySettingsPage = lazyNamed(() => import("./pages/portal/MySettingsPage"), "MySettingsPage");
 
-function BootScreen({ label = "Loading MunaSIP…" }: { label?: string }) {
+function BootScreen({ label = "Loading MonoSIP…" }: { label?: string }) {
   return (
     <div className="grid h-full place-items-center text-[var(--text-muted)]">
       <div className="flex flex-col items-center gap-3 text-sm">

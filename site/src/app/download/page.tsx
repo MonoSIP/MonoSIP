@@ -5,7 +5,7 @@ import { DownloadPage } from "@/views/download";
 
 export const metadata: Metadata = pageMetadata(
   "Download & install",
-  `Get MunaSIP ${site.version} for your Linux x86-64 server: pull the prebuilt Docker image or download the release source.`,
+  `Get MonoSIP ${site.version} for your Linux x86-64 server: pull the prebuilt Docker image or download the release source.`,
   "/download/",
 );
 

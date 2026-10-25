@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "MünaSIP",
+    "name": "MonoSIP",
     "tagline": "Company PBX"
   },
   "common": {
@@ -216,7 +216,7 @@
     "hostnameSection": "Hostname & SSL",
     "hostname": "Public hostname",
     "autoSsl": "Automatic SSL (Let's Encrypt)",
-    "autoSslHint": "When on, MunaSIP requests a certificate for the hostname, installs it for nginx, and renews it before expiry. Port 80 must reach this server.",
+    "autoSslHint": "When on, MonoSIP requests a certificate for the hostname, installs it for nginx, and renews it before expiry. Port 80 must reach this server.",
     "sslEmail": "SSL contact email",
     "sslExpires": "Expires",
     "sslRenewNow": "Issue / renew now",

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
+import { Copy, Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
@@ -24,6 +24,7 @@ export function DevicesPage() {
   const [mac, setMac] = useState("");
   const [profile, setProfile] = useState("softphone");
   const [qr, setQr] = useState<string | null>(null);
+  const [provisionUrl, setProvisionUrl] = useState<string | null>(null);
 
   const exts = useQuery({
     queryKey: ["extensions"],
@@ -50,8 +51,11 @@ export function DevicesPage() {
   });
 
   async function showQr(id: string) {
-    const r = await api.get<{ qr: string; uri: string }>("/api/v1/admin/devices/" + id + "/qr");
+    const r = await api.get<{ qr: string; uri: string; provisionUrl: string | null }>(
+      "/api/v1/admin/devices/" + id + "/qr",
+    );
     setQr(r.qr);
+    setProvisionUrl(r.provisionUrl);
     toast.message(r.uri);
   }
 
@@ -115,6 +119,23 @@ export function DevicesPage() {
       {qr && (
         <SectionCard title={tr("SIP QR")} icon={QrCode} tone="cyan">
           <img src={qr} alt="SIP QR" className="h-48 w-48 rounded" />
+          {provisionUrl && (
+            <div className="mt-3">
+              <p className="text-sm text-[var(--text-muted)]">{tr("Provisioning URL")}</p>
+              <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">
+                {provisionUrl}
+              </code>
+              <IconBtn
+                className="mt-2"
+                icon={Copy}
+                label={tr("Copy provisioning URL")}
+                onClick={() => {
+                  void navigator.clipboard.writeText(provisionUrl);
+                  toast.success(tr("Provisioning URL copied"));
+                }}
+              />
+            </div>
+          )}
         </SectionCard>
       )}
       <SectionCard title={tr("Add device")} icon={Smartphone} tone="blue">
@@ -129,16 +150,13 @@ export function DevicesPage() {
             label={tr("Extension")}
             icon={Smartphone}
             value={extensionId}
-            onChange={(e) => setExtensionId(e.target.value)}
+            onValueChange={setExtensionId}
             required
-          >
-            <option value="">{tr("Extension…")}</option>
-            {exts.data?.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.number} — {e.name}
-              </option>
-            ))}
-          </SelectField>
+            options={[
+              { value: "", label: tr("Extension…") },
+              ...(exts.data ?? []).map((e) => ({ value: e.id, label: `${e.number} — ${e.name}` })),
+            ]}
+          />
           <TextField
             label={tr("Model")}
             icon={Cpu}
@@ -157,14 +175,9 @@ export function DevicesPage() {
           <SelectField
             label={tr("Provisioning profile")}
             value={profile}
-            onChange={(e) => setProfile(e.target.value)}
-          >
-            {PROFILES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </SelectField>
+            onValueChange={setProfile}
+            options={PROFILES.map((p) => ({ value: p, label: p }))}
+          />
           <button className="btn btn-primary w-fit" type="submit">
             {tr("Add device")}
           </button>

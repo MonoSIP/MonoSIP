@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Headphones, ListOrdered, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 import { SPEECH_VOICES, voiceOptions } from "./flow/nodeMeta";
 
@@ -314,14 +314,9 @@ export function QueuesPage() {
             label={t("queues.strategy")}
             className="w-[10rem]"
             value={strategy}
-            onChange={(e) => setStrategy(e.target.value)}
-          >
-            {STRATEGIES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </SelectField>
+            onValueChange={setStrategy}
+            options={STRATEGIES.map((s) => ({ value: s, label: s }))}
+          />
           <TextField
             label={tr("Max wait (s)")}
             className="w-[7rem]"
@@ -355,54 +350,44 @@ export function QueuesPage() {
             label={tr("Announcement language")}
             className="w-[10rem]"
             value={language}
-            onChange={(e) => {
-              const next = e.target.value as "" | "tr" | "en";
-              setLanguage(next);
-              // EMA is TR-only
-              if (next && voice && !voiceOptions(next).some((v) => v.value === voice)) setVoice("");
+            onValueChange={(next) => {
+              const lang = next as "" | "tr" | "en";
+              setLanguage(lang);
+              if (lang && voice && !voiceOptions(lang).some((v) => v.value === voice)) setVoice("");
             }}
-          >
-            <option value="">{tr("System default")}</option>
-            <option value="tr">Türkçe</option>
-            <option value="en">English</option>
-          </SelectField>
+            options={[
+              { value: "", label: tr("System default") },
+              { value: "tr", label: "Türkçe" },
+              { value: "en", label: "English" },
+            ]}
+          />
           <SelectField
             label={tr("Voice model")}
             className="w-[10rem]"
             value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-          >
-            <option value="">{tr("Default")}</option>
-            {(language ? voiceOptions(language) : SPEECH_VOICES.map((v) => ({ value: v.value, label: tr(v.label) }))).map(
-              (v) => (
-                <option key={v.value} value={v.value}>
-                  {v.label}
-                </option>
-              ),
-            )}
-          </SelectField>
-          <SelectField label={tr("MOH class")} className="w-[10rem]" value={mohId} onChange={(e) => setMohId(e.target.value)}>
-            <option value="">default</option>
-            {(moh.data ?? []).map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </SelectField>
+            onValueChange={setVoice}
+            options={[
+              { value: "", label: tr("Default") },
+              ...(language
+                ? voiceOptions(language)
+                : SPEECH_VOICES.map((v) => ({ value: v.value, label: tr(v.label) }))),
+            ]}
+          />
+          <SelectField
+            label={tr("MOH class")}
+            className="w-[10rem]"
+            value={mohId}
+            onValueChange={setMohId}
+            options={[
+              { value: "", label: "default" },
+              ...(moh.data ?? []).map((m) => ({ value: m.id, label: m.name })),
+            ]}
+          />
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={callback} onChange={(e) => setCallback(e.target.checked)} />
-            {tr("Queue callback")}
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={announceHold} onChange={(e) => setAnnounceHold(e.target.checked)} />
-            {tr("Announce hold time (TTS, MOH pauses)")}
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={announcePos} onChange={(e) => setAnnouncePos(e.target.checked)} />
-            {tr("Announce position (TTS ~30s, MOH pauses)")}
-          </label>
+          <Checkbox checked={callback} onCheckedChange={setCallback} label={tr("Queue callback")} />
+          <Checkbox checked={announceHold} onCheckedChange={setAnnounceHold} label={tr("Announce hold time (TTS, MOH pauses)")} />
+          <Checkbox checked={announcePos} onCheckedChange={setAnnouncePos} label={tr("Announce position (TTS ~30s, MOH pauses)")} />
         </div>
         <div className="space-y-2">
           <div className="text-sm text-[var(--text-muted)]">{tr("Timeout overflow")}</div>
@@ -437,14 +422,13 @@ export function QueuesPage() {
           <div className="mb-1 text-sm text-[var(--text-muted)]">{t("queues.members")}</div>
           <div className="mb-2 flex flex-wrap gap-2">
             {exts.data?.map((e) => (
-              <label key={e.id} className="flex items-center gap-1 rounded border border-[var(--border)] px-2 py-1 text-sm">
-                <input
-                  type="checkbox"
-                  checked={members.some((m) => m.extensionId === e.id)}
-                  onChange={() => toggleMember(e.id)}
-                />
-                {e.number}
-              </label>
+              <Checkbox
+                key={e.id}
+                className="rounded border border-[var(--border)] px-2"
+                checked={members.some((m) => m.extensionId === e.id)}
+                onCheckedChange={() => toggleMember(e.id)}
+                label={e.number}
+              />
             ))}
           </div>
           {members.length > 0 && (

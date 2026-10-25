@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
+import { TooltipProvider } from "./components/ui";
 import { useStore } from "./store";
 import App from "./App";
 import "./i18n";
@@ -34,10 +35,12 @@ function ThemedToaster() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={qc}>
-      <BrowserRouter>
-        <App />
-        <ThemedToaster />
-      </BrowserRouter>
+      <TooltipProvider>
+        <BrowserRouter>
+          <App />
+          <ThemedToaster />
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

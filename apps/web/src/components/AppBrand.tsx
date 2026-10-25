@@ -10,6 +10,14 @@ type Props = {
   asHeading?: boolean;
 };
 
+export function ProductSiteLink({ className = "" }: { className?: string }) {
+  return (
+    <a className={className ? `product-site ${className}` : "product-site"} href="https://www.monosip.com">
+      www.monosip.com
+    </a>
+  );
+}
+
 export function AppBrand({
   subtitle,
   className = "mb-6 px-1",
@@ -21,7 +29,7 @@ export function AppBrand({
   return (
     <div className={className}>
       <div className="flex items-center gap-2.5">
-        <img className="brand-mark" src="/munasip-mark.svg" width={36} height={36} alt="" aria-hidden />
+        <img className="brand-mark" src="/monosip-mark.svg" width={36} height={36} alt="" aria-hidden />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <TitleTag
@@ -33,7 +41,7 @@ export function AppBrand({
             >
               {t("app.name")}
             </TitleTag>
-            <span className="brand-ver" title={`MünaSIP ${APP_VERSION}`}>
+            <span className="brand-ver" title={`MonoSIP ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
           </div>

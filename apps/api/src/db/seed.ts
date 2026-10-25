@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { emptyFlow } from "@munasip/shared";
+import { emptyFlow } from "@monosip/shared";
 import { config } from "../config.js";
 import { db, pool } from "./client.js";
 import {
@@ -38,7 +38,7 @@ async function seed() {
   }
 
   const defaultSettings = {
-    companyName: "MunaSIP",
+    companyName: "MonoSIP",
     defaultLocale: config.defaultLocale,
     recordingRetentionMonths: 12,
     kvkkAnnouncementEnabled: false,
@@ -154,7 +154,7 @@ async function seed() {
       id: "announce1",
       type: "announce",
       position: { x: 280, y: 120 },
-      data: { text: "Welcome to MunaSIP", label: "Welcome" },
+      data: { text: "Welcome to MonoSIP", label: "Welcome" },
     });
     draft.nodes.push({
       id: "menu1",
@@ -273,7 +273,7 @@ async function seed() {
 
   // Demo trunk only when explicitly requested — never re-create after a volume wipe
   // in a way that looks like "we replaced your SIP provider".
-  const labSeed = process.env.MUNASIP_LAB_SEED === "1" || process.env.MUNASIP_LAB_SEED === "true";
+  const labSeed = process.env.MONOSIP_LAB_SEED === "1" || process.env.MONOSIP_LAB_SEED === "true";
   const existingTrunk = await db.select().from(trunks).limit(1);
   if (labSeed && !existingTrunk.length) {
     await db.insert(trunks).values({
@@ -287,7 +287,7 @@ async function seed() {
       enabled: false,
       status: "disabled",
     });
-    console.log("Lab seed: example SIP trunk inserted (MUNASIP_LAB_SEED=1)");
+    console.log("Lab seed: example SIP trunk inserted (MONOSIP_LAB_SEED=1)");
   } else if (!existingTrunk.length) {
     console.log("No SIP trunks yet — add one in Admin → SIP providers (demo trunk not auto-seeded)");
   }
@@ -303,7 +303,7 @@ async function seed() {
   }
 
   try {
-    process.env.MUNASIP_ASTERISK_CLI_RELOAD = "0";
+    process.env.MONOSIP_ASTERISK_CLI_RELOAD = "0";
     await writeAsteriskConfig();
     console.log("Asterisk config written");
   } catch (e) {

@@ -1,6 +1,6 @@
 /**
  * FlowDesignerPage real-browser e2e (Playwright + Vite dev server).
- * Run: pnpm --filter @munasip/web test:e2e
+ * Run: pnpm --filter @monosip/web test:e2e
  *
  * Covers what jsdom cannot: the designer toolbar renders (React Flow canvas),
  * and the Save / Validate / Publish flows issue their API contracts with the

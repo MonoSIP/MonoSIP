@@ -98,6 +98,11 @@ export async function originateQueueCallback(
 }
 
 export function startQueueCallbackJob(intervalMs = 15_000) {
-  void processQueueCallbacks();
-  return setInterval(() => void processQueueCallbacks(), intervalMs);
+  // The ARI originate throws on network failure (Asterisk restarting), so the
+  // run needs a rejection handler — an unhandled rejection is fatal.
+  void processQueueCallbacks().catch((e) => console.warn("[qcb]", (e as Error).message));
+  return setInterval(
+    () => void processQueueCallbacks().catch((e) => console.warn("[qcb]", (e as Error).message)),
+    intervalMs,
+  );
 }

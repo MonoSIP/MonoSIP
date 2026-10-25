@@ -78,6 +78,8 @@ import { FlowDesignerPage } from "./FlowDesignerPage";
 import { LoginPage } from "../LoginPage";
 import { AdminLayout } from "../../layouts/AdminLayout";
 import { PortalLayout } from "../../layouts/PortalLayout";
+import i18n, { setAppLocale } from "../../i18n";
+import { useStore } from "../../store";
 
 function renderPage(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -256,7 +258,7 @@ describe("SettingsPage", () => {
   function seedSettings() {
     apiGet.mockImplementation(async (path: string) => {
       if (path === "/api/v1/admin/settings") {
-        return { companyName: "MunaSIP", recordingRetentionMonths: 12 };
+        return { companyName: "MonoSIP", recordingRetentionMonths: 12 };
       }
       if (path === "/api/v1/admin/audit") return [];
       if (path === "/api/v1/admin/auth/totp/status") return { enabled: false };
@@ -300,7 +302,7 @@ describe("SettingsPage", () => {
     const [path, payload] = apiPatch.mock.calls[0] as [string, Record<string, unknown>];
     expect(path).toBe("/api/v1/admin/settings");
     // Seeded from the GET response, then round-tripped by the save.
-    expect(payload.companyName).toBe("MunaSIP");
+    expect(payload.companyName).toBe("MonoSIP");
     expect(payload.defaultLocale).toBe("en");
     expect(payload).toHaveProperty("recordingRetentionMonths");
     expect(toastSuccess).toHaveBeenCalledWith("Saved");
@@ -362,7 +364,7 @@ function seedAdmin() {
       return [{ id: "w1", url: "https://x.test/hook", active: true }];
     }
     if (path.includes("/admin/api-keys")) {
-      return [{ id: "k1", name: "ci", keyPrefix: "munasip_ab", permissions: ["read"] }];
+      return [{ id: "k1", name: "ci", keyPrefix: "monosip_ab", permissions: ["read"] }];
     }
     if (path.includes("/admin/ring-groups")) {
       return [{ id: "g1", name: "Sales ring", number: "700", strategy: "ringall", memberIds: ["e1"] }];
@@ -970,8 +972,6 @@ describe("SchedulesPage overrides and delete", () => {
 
   beforeEach(() => {
     seedSchedulesWithOverride();
-    // The delete flow guards with window.confirm, which jsdom leaves undefined.
-    window.confirm = vi.fn(() => true);
   });
 
   it("marks the active override mode as primary", async () => {
@@ -1022,7 +1022,8 @@ describe("SchedulesPage overrides and delete", () => {
     const deletes = screen.getAllByRole("button", { name: "common.delete" });
     await userEvent.click(deletes[deletes.length - 1]!);
 
-    expect(window.confirm).toHaveBeenCalled();
+    const dialog = await screen.findByRole("alertdialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.delete" }));
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/schedules/s1"));
   });
 });
@@ -1032,7 +1033,7 @@ describe("IntegrationsPage API-key permissions", () => {
     apiGet.mockImplementation(async (path: string) => {
       if (path.includes("/admin/webhooks")) return [];
       if (path.includes("/admin/api-keys")) {
-        return [{ id: "k1", name: "ci", keyPrefix: "munasip_ab", permissions: ["read"] }];
+        return [{ id: "k1", name: "ci", keyPrefix: "monosip_ab", permissions: ["read"] }];
       }
       return [];
     });
@@ -1073,9 +1074,29 @@ describe("LoginPage", () => {
     expect(await screen.findByRole("heading", { name: "app.name" })).toBeInTheDocument();
     // Admin mode shows the authenticator field; portal mode hides it.
     expect(screen.getByPlaceholderText("000000")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "auth.adminLogin" }),
-    ).toHaveClass("btn-primary");
+    expect(screen.getByRole("radio", { name: "auth.adminLogin" })).toHaveClass("btn-primary");
+    expect(screen.getByRole("link", { name: "www.monosip.com" })).toHaveAttribute(
+      "href",
+      "https://www.monosip.com",
+    );
+  });
+
+  it("remembers the language and dark mode chosen before sign-in", async () => {
+    setAppLocale("en");
+    useStore.getState().setTheme("dark");
+    renderPage(<LoginPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "common.language" }));
+    await waitFor(() => expect(i18n.language).toBe("tr"));
+    expect(localStorage.getItem("monosip_locale")).toBe("tr");
+
+    await userEvent.click(screen.getByRole("button", { name: "portal.darkMode" }));
+    expect(useStore.getState().theme).toBe("light");
+    expect(localStorage.getItem("monosip_theme")).toBe("light");
+    expect(document.documentElement.classList.contains("light")).toBe(true);
+
+    setAppLocale("en");
+    useStore.getState().setTheme("dark");
   });
 
   it("signs in as admin, loads the actor, and navigates home", async () => {
@@ -1115,7 +1136,7 @@ describe("LoginPage", () => {
     apiPost.mockResolvedValue({});
     renderPage(<LoginPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "auth.portalLogin" }));
+    await userEvent.click(await screen.findByRole("radio", { name: "auth.portalLogin" }));
     expect(screen.queryByPlaceholderText("000000")).not.toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText("auth.password"), "portal101");
@@ -1216,12 +1237,13 @@ describe("PortalLayout", () => {
     const user = aside.querySelector(".portal-user-card") as HTMLElement;
     expect(user).toBeTruthy();
     expect(phone.compareDocumentPosition(user) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(within(aside).queryByTitle("common.language")).toBeNull();
+    expect(within(aside).queryByRole("menuitem", { name: /common\.language/ })).toBeNull();
     await userEvent.click(user);
-    const language = within(aside).getByTitle("common.language");
-    const theme = within(aside).getByTitle("common.theme");
-    const logout = within(aside).getByTitle("common.logout");
-    expect(logout.parentElement?.className).toContain("portal-user-menu");
+    const menu = await screen.findByRole("menu");
+    expect(menu.className).toContain("ui-menu");
+    const language = within(menu).getByRole("menuitem", { name: /common\.language/ });
+    const theme = within(menu).getByRole("menuitem", { name: /portal\.darkMode/ });
+    const logout = within(menu).getByRole("menuitem", { name: /common\.logout/ });
     expect(user.compareDocumentPosition(language) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(language.compareDocumentPosition(theme) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(theme.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

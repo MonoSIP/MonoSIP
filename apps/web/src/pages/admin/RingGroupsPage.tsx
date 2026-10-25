@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { BellRing, Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -158,17 +158,25 @@ export function RingGroupsPage() {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <SelectField label={tr("Strategy")} value={strategy} onChange={(e) => setStrategy(e.target.value)}>
-              <option value="ringall">ringall</option>
-              <option value="linear">linear</option>
-            </SelectField>
+            <SelectField
+              label={tr("Strategy")}
+              value={strategy}
+              onValueChange={setStrategy}
+              options={[
+                { value: "ringall", label: "ringall" },
+                { value: "linear", label: "linear" },
+              ]}
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             {exts.data?.map((e) => (
-              <label key={e.id} className="flex items-center gap-1 rounded border border-[var(--border)] px-2 py-1 text-sm">
-                <input type="checkbox" checked={memberIds.includes(e.id)} onChange={() => toggle(e.id)} />
-                {e.number}
-              </label>
+              <Checkbox
+                key={e.id}
+                className="rounded border border-[var(--border)] px-2"
+                checked={memberIds.includes(e.id)}
+                onCheckedChange={() => toggle(e.id)}
+                label={e.number}
+              />
             ))}
           </div>
           <div className="flex gap-2">

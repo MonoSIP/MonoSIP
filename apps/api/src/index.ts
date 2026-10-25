@@ -9,6 +9,7 @@ import { chmod, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
+import { createTrustProxy } from "./lib/trust-proxy.js";
 import { ari } from "./asterisk/ari.js";
 import { attachFlowRuntime } from "./asterisk/flow-runtime.js";
 import { authRoutes } from "./routes/auth.js";
@@ -29,7 +30,9 @@ async function main() {
 
   const app = Fastify({
     logger: true,
-    trustProxy: true,
+    // Only the configured reverse proxies may set the client address via
+    // X-Forwarded-For; every other peer is identified by its socket address.
+    trustProxy: createTrustProxy(config.trustedProxyCidrs),
   });
 
   await app.register(cors, {
@@ -203,7 +206,7 @@ async function main() {
   }
 
   await app.listen({ port: config.port, host: "0.0.0.0" });
-  app.log.info(`MunaSIP API listening on :${config.port}`);
+  app.log.info(`MonoSIP API listening on :${config.port}`);
 
   // NineDeploy logs: tell operators softphone needs host UDP RTP (no port-forward expertise assumed).
   void import("./lib/media-readiness.js")

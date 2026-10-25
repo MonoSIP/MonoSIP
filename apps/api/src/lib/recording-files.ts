@@ -180,26 +180,30 @@ function wavFormatTag(buf: Buffer): number | null {
 function transcodeToPcmWav(source: string | Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const fromBuffer = Buffer.isBuffer(source);
-    const child = spawn(
-      "ffmpeg",
-      [
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-i",
-        fromBuffer ? "pipe:0" : source,
-        "-f",
-        "wav",
-        "-acodec",
-        "pcm_s16le",
-        "-ar",
-        "8000",
-        "-ac",
-        "1",
-        "pipe:1",
-      ],
-      { stdio: [fromBuffer ? "pipe" : "ignore", "pipe", "pipe"] },
-    );
+    const args = [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-i",
+      fromBuffer ? "pipe:0" : source,
+      "-f",
+      "wav",
+      "-acodec",
+      "pcm_s16le",
+      "-ar",
+      "8000",
+      "-ac",
+      "1",
+      "pipe:1",
+    ];
+    // Concrete stdio tuples so @types/node resolves the non-null-stream overloads
+    // (stdin is piped only when transcoding from a buffer). The previous inline
+    // ternary widened the first element to a union that matches no tuple
+    // overload, so spawn fell back to the nullable base ChildProcess type and
+    // tsc --noEmit failed on every stream access here.
+    const child = fromBuffer
+      ? spawn("ffmpeg", args, { stdio: ["pipe", "pipe", "pipe"] })
+      : spawn("ffmpeg", args, { stdio: ["ignore", "pipe", "pipe"] });
     const chunks: Buffer[] = [];
     const err: Buffer[] = [];
     child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -210,8 +214,15 @@ function transcodeToPcmWav(source: string | Buffer): Promise<Buffer> {
       else reject(new Error(Buffer.concat(err).toString("utf8") || `ffmpeg exit ${code}`));
     });
     if (fromBuffer) {
-      child.stdin.on("error", () => undefined);
-      child.stdin.end(source);
+      const stdin = child.stdin;
+      // The tuple overload guarantees a stdin pipe in the buffer branch; fail
+      // loudly instead of hanging on an unwritten pipe if that ever changes.
+      if (!stdin) {
+        reject(new Error("ffmpeg did not provide a stdin pipe"));
+        return;
+      }
+      stdin.on("error", () => undefined);
+      stdin.end(source);
     }
   });
 }

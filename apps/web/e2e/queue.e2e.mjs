@@ -1,5 +1,5 @@
 /**
- * Queue end-to-end test against a running MunaSIP, with real browser softphones.
+ * Queue end-to-end test against a running MonoSIP, with real browser softphones.
  *
  * Creates (or updates) test extensions 291/292 (agents) and 293 (caller) and its
  * own ringall queue (QUEUE, default 791 — never a queue people use) with both

@@ -3,7 +3,7 @@ import { copyFile, mkdir, writeFile, unlink } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import { db } from "../db/client.js";
 import { recordings, settings } from "../db/schema.js";
 
@@ -33,7 +33,7 @@ export async function sftpPut(localFile: string, uri: string): Promise<void> {
   const parsed = parseSftpUri(uri);
   if (!parsed) throw new Error("Invalid SFTP URI");
   const remote = path.posix.join(parsed.remotePath.replace(/\/$/, "") || "/", path.basename(localFile));
-  const batch = path.join(os.tmpdir(), `munasip-sftp-${Date.now()}.txt`);
+  const batch = path.join(os.tmpdir(), `monosip-sftp-${Date.now()}.txt`);
   await writeFile(batch, `put ${localFile} ${remote}\nbye\n`);
   await new Promise<void>((resolve, reject) => {
     const args = ["-P", String(parsed.port), "-oBatchMode=no", "-b", batch, `${parsed.user}@${parsed.host}`];
@@ -69,9 +69,9 @@ export async function sftpPut(localFile: string, uri: string): Promise<void> {
 export async function testSftpUri(uri: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const parsed = parseSftpUri(uri);
   if (!parsed) return { ok: false, error: "Invalid SFTP URI" };
-  const tmp = path.join(os.tmpdir(), `munasip-sftp-probe-${Date.now()}.txt`);
+  const tmp = path.join(os.tmpdir(), `monosip-sftp-probe-${Date.now()}.txt`);
   try {
-    await writeFile(tmp, `munasip probe ${new Date().toISOString()}\n`);
+    await writeFile(tmp, `monosip probe ${new Date().toISOString()}\n`);
     await sftpPut(tmp, uri);
     return { ok: true };
   } catch (e) {
@@ -113,6 +113,11 @@ export async function runRecordingArchive(): Promise<number> {
 }
 
 export function startArchiveJob(intervalMs = 12 * 3600_000) {
-  void runRecordingArchive();
-  return setInterval(() => void runRecordingArchive(), intervalMs);
+  // A failed archive run must not become an unhandled rejection — that is fatal
+  // and would take the whole API down mid-shift.
+  void runRecordingArchive().catch((e) => console.warn("[archive]", (e as Error).message));
+  return setInterval(
+    () => void runRecordingArchive().catch((e) => console.warn("[archive]", (e as Error).message)),
+    intervalMs,
+  );
 }

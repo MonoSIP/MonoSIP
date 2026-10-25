@@ -1,4 +1,4 @@
-// MunaSIP site: panel tour tabs and reveal on scroll.
+// MonoSIP site: panel tour tabs and reveal on scroll.
 (() => {
   document.documentElement.classList.add("js");
 

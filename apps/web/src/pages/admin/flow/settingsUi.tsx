@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Label } from "radix-ui";
+import { Segmented } from "../../../components/ui";
 import { tr } from "../../../i18n";
 
 /** Grouped block inside a node settings popup. */
@@ -43,11 +45,11 @@ export function Field({
   className?: string;
 }) {
   return (
-    <label className={`block text-xs text-[var(--text-muted)] ${className ?? ""}`}>
+    <Label.Root className={`block text-xs text-[var(--text-muted)] ${className ?? ""}`}>
       <span className="font-medium text-[var(--text)]">{label}</span>
       {hint ? <span className="mt-0.5 block font-normal opacity-80">{hint}</span> : null}
       <div className="mt-1">{children}</div>
-    </label>
+    </Label.Root>
   );
 }
 
@@ -85,30 +87,12 @@ export function SegmentedSelect({
   "aria-label"?: string;
 }) {
   return (
-    <div
-      className="flex flex-wrap gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-1"
-      role="radiogroup"
+    <Segmented
+      className="segmented-compact"
       aria-label={ariaLabel}
-    >
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            className={`min-w-[3.25rem] flex-1 rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${
-              active
-                ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                : "text-[var(--text-muted)] hover:bg-[var(--bg-soft)] hover:text-[var(--text)]"
-            }`}
-            onClick={() => onChange(o.value)}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
+      value={value}
+      onValueChange={onChange}
+      options={options}
+    />
   );
 }

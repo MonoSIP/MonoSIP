@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { BookUser, ChevronDown, FileAudio, History, Languages, LogOut, Moon, Phone, Settings, Sun, Voicemail } from "lucide-react";
 import { api } from "../lib/api";
 import { useStore } from "../store";
-import i18n from "../i18n";
+import i18n, { toggleAppLocale } from "../i18n";
 import { usePortalLive } from "../hooks/usePortalLive";
-import { AppBrand } from "../components/AppBrand";
+import { AppBrand, ProductSiteLink } from "../components/AppBrand";
+import { Menu, MenuItem } from "../components/ui";
 import { PageVeil } from "../components/PageVeil";
 import { MiniPhone } from "../components/MiniPhone";
 import { PhoneProvider, usePhone } from "../lib/phone-context";
@@ -111,13 +112,15 @@ function PortalChrome() {
           onToggleTheme={toggleTheme}
           onLogout={() => void logout()}
         />
+        <ProductSiteLink className="mt-3 hidden text-center md:block" />
       </aside>
-      <main className="portal-main min-w-0 flex-1 p-4 pb-24 md:p-8">
+      <main className="portal-main min-w-0 flex-1 p-4 pb-28 md:p-8">
         {/* Remount pages on a language switch so tr() copy re-renders */}
         <PageVeil>
           <Outlet key={i18n.language} />
         </PageVeil>
       </main>
+      <ProductSiteLink className="portal-site-mobile md:hidden" />
       <nav className="portal-tabs md:hidden">
         {links.map((l) => (
           <NavLink
@@ -158,70 +161,46 @@ function UserCard({
   onLogout: () => void;
 }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
   const label = name || number || "—";
   const initial = label.slice(0, 1).toUpperCase();
 
-  useEffect(() => {
-    if (!open) return;
-    function onPointer(e: PointerEvent) {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("pointerdown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
   function toggleLanguage() {
-    const next = i18n.language === "en" ? "tr" : "en";
-    localStorage.setItem("munasip_locale", next);
-    void i18n.changeLanguage(next);
-    setOpen(false);
+    toggleAppLocale();
   }
 
   return (
-    <div className="portal-user" ref={root}>
-      <button
-        type="button"
-        className="portal-user-card"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="portal-user-mark" aria-hidden="true">{initial}</span>
-        <span className="min-w-0 flex-1">
-          <span className="portal-user-name">{label}</span>
-          {name && number ? <span className="portal-user-ext">{number}</span> : null}
-        </span>
-        <ChevronDown size={16} aria-hidden="true" />
-      </button>
-      {open ? (
-        <div className="portal-user-menu" role="menu">
-          <button type="button" role="menuitem" title={t("common.language")} onClick={toggleLanguage}>
-            <Languages size={16} />
-            <span className="flex-1">{t("common.language")}</span>
-            <span className="portal-user-meta">{i18n.language.slice(0, 2).toUpperCase()}</span>
-          </button>
-          <button type="button" role="menuitem" title={t("common.theme")} onClick={onToggleTheme}>
-            <span className="icon-swap" aria-hidden>
-              <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
-              <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
+    <div className="portal-user">
+      <Menu
+        side="top"
+        align="start"
+        trigger={
+          <button type="button" className="portal-user-card">
+            <span className="portal-user-mark" aria-hidden="true">{initial}</span>
+            <span className="min-w-0 flex-1">
+              <span className="portal-user-name">{label}</span>
+              {name && number ? <span className="portal-user-ext">{number}</span> : null}
             </span>
-            <span className="flex-1">{t("portal.darkMode")}</span>
+            <ChevronDown size={16} aria-hidden="true" />
           </button>
-          <button type="button" role="menuitem" title={t("common.logout")} onClick={onLogout}>
-            <LogOut size={16} />
-            <span className="flex-1">{t("common.logout")}</span>
-          </button>
-        </div>
-      ) : null}
+        }
+      >
+        <MenuItem onSelect={toggleLanguage}>
+          <Languages size={16} />
+          <span className="flex-1">{t("common.language")}</span>
+          <span className="portal-user-meta">{i18n.language.slice(0, 2).toUpperCase()}</span>
+        </MenuItem>
+        <MenuItem onSelect={onToggleTheme}>
+          <span className="icon-swap" aria-hidden>
+            <Moon size={16} className={theme === "dark" ? "is-on" : undefined} />
+            <Sun size={16} className={theme === "light" ? "is-on" : undefined} />
+          </span>
+          <span className="flex-1">{t("portal.darkMode")}</span>
+        </MenuItem>
+        <MenuItem onSelect={onLogout}>
+          <LogOut size={16} />
+          <span className="flex-1">{t("common.logout")}</span>
+        </MenuItem>
+      </Menu>
     </div>
   );
 }

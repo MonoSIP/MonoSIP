@@ -199,7 +199,7 @@ test("saved mouse preference leaves normal motion enabled before hydration", asy
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.addInitScript(() => localStorage.setItem("munasip-motion", "off"));
+  await page.addInitScript(() => localStorage.setItem("monosip-motion", "off"));
   await page.route("**/_next/static/**/*.js", (route) => route.abort());
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute(
@@ -305,7 +305,7 @@ test("core product content is available without JavaScript", async ({
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Your calls.",
   );
-  await page.getByRole("link", { name: "Get MunaSIP", exact: true }).click();
+  await page.getByRole("link", { name: "Get MonoSIP", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Pull the prebuilt image." }),
   ).toBeVisible();
@@ -443,18 +443,18 @@ test("copy buttons copy the exact install command and handle denied clipboard", 
 }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/download/");
-  await page.getByRole("button", { name: "Copy install MunaSIP" }).click();
+  await page.getByRole("button", { name: "Copy install MonoSIP" }).click();
   await expect(page.getByRole("status")).toContainText("Copied to clipboard");
   const clipboard = await page.evaluate(() => navigator.clipboard.readText());
-  expect(clipboard).toContain("ghcr.io/munasip/munasip:1.7.5");
-  expect(clipboard).toContain("-v munasip-data:/data");
+  expect(clipboard).toContain("ghcr.io/monosip/monosip:1.7.5");
+  expect(clipboard).toContain("-v monosip-data:/data");
   await page.evaluate(() => {
     Object.defineProperty(navigator.clipboard, "writeText", {
       configurable: true,
       value: () => Promise.reject(new Error("denied")),
     });
   });
-  await page.getByRole("button", { name: "Copy install MunaSIP" }).click();
+  await page.getByRole("button", { name: "Copy install MonoSIP" }).click();
   await expect(page.getByRole("status")).toContainText("Clipboard unavailable");
   expect(
     await page.evaluate(() => window.getSelection()?.toString()),
@@ -469,7 +469,7 @@ test("release notes connect the published image, source build and voicemail guid
     .getByRole("link", { name: "See what changed", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "MunaSIP 1.7.5", exact: true }),
+    page.getByRole("heading", { name: "MonoSIP 1.7.5", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".release-detail")).toContainText(
     "voicemail inbox",
@@ -478,7 +478,7 @@ test("release notes connect the published image, source build and voicemail guid
     "MAIN BRANCH / AFTER v1.7.5",
   );
   await page
-    .getByRole("link", { name: "Install MunaSIP 1.7.5", exact: true })
+    .getByRole("link", { name: "Install MonoSIP 1.7.5", exact: true })
     .click();
   await expect(page.locator(".download-summary")).toContainText(
     "Current release: v1.7.5",
@@ -502,7 +502,7 @@ test("release notes connect the published image, source build and voicemail guid
     page.getByRole("link", { name: /API reference Authentication/ }),
   ).toHaveAttribute(
     "href",
-    "https://github.com/MunaSIP/MunaSIP/blob/v1.7.5/docs/API.md",
+    "https://github.com/MonoSIP/MonoSIP/blob/v1.7.5/docs/API.md",
   );
 });
 

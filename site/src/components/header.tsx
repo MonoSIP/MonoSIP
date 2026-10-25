@@ -88,14 +88,14 @@ export function Header() {
       <div className="container header-inner">
         <Link href={href("/")} className="brand" aria-label={t.home}>
           <Image
-            src="/brand/munasip-mark.svg"
+            src="/brand/monosip-mark.svg"
             width={34}
             height={34}
             alt=""
             priority
           />
           <span>
-            Müna<span className="brand-sip">SIP</span>
+            Mono<span className="brand-sip">SIP</span>
             <span className="brand-period">.</span>
           </span>
         </Link>

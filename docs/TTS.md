@@ -1,6 +1,6 @@
 # TTS (embedded in the main image)
 
-MunaSIP generates IVR / prompt audio **inside the all-in-one container** — no sidecar and no
+MonoSIP generates IVR / prompt audio **inside the all-in-one container** — no sidecar and no
 extra network dependency. Engines: **Microsoft Edge Neural** (online) and **EMA Lightning**
 (Turkish offline). English has no offline engine: Kokoro-82M was removed because its model
 crowded a small PBX's memory and pushed EMA into swap. A stored `kokoro` voice plays as Edge.

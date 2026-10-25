@@ -41,7 +41,7 @@ function sipWsUrl(): string {
   return `${proto}://${window.location.host}/asterisk-ws`;
 }
 
-const AUDIO_DEVICES_KEY = "munasip.audioDevices";
+const AUDIO_DEVICES_KEY = "monosip.audioDevices";
 
 /**
  * Drop private host ICE candidates once a public one exists.
@@ -468,7 +468,7 @@ export class Softphone {
     if (turnUrl && !iceServers.some((s) => String(s.urls).includes("turn"))) {
       iceServers.push({
         urls: turnUrl,
-        username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) || "munasip",
+        username: (import.meta.env.VITE_TURN_USERNAME as string | undefined) || "monosip",
         credential: (import.meta.env.VITE_TURN_CREDENTIAL as string | undefined) || "turnpass",
       });
     }
@@ -898,9 +898,9 @@ export class Softphone {
       const from = remote?.uri?.user || remote?.displayName || "Unknown";
       const show = () => {
         if (document.visibilityState === "visible") return;
-        const n = new Notification("MunaSIP — Incoming call", {
+        const n = new Notification("MonoSIP — Incoming call", {
           body: `From ${from}`,
-          tag: "munasip-incoming",
+          tag: "monosip-incoming",
           requireInteraction: true,
         });
         n.onclick = () => {

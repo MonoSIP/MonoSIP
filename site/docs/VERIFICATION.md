@@ -12,7 +12,7 @@ The website now uses the official v1.7.5 release snapshot (`3f9deec1c3de77a5aeb4
 
 ## Earlier verification history
 
-21 October 2026. Local checkout recorded against website commit `9c670e33329dee6e628145525e2684fb0ed9a489`. The site now ships from `site/` in MunaSIP/MunaSIP to https://munasip.github.io/.
+21 October 2026. Local checkout recorded against website commit `9c670e33329dee6e628145525e2684fb0ed9a489`. The site now ships from `site/` in MonoSIP/MonoSIP to https://monosip.github.io/.
 
 ## Passed locally
 
@@ -39,7 +39,7 @@ Interaction coverage includes native radio focus and stored themes, OS theme cha
 
 ## Publication verification
 
-See DEPLOYMENT.md. Publishing runs from MunaSIP/MunaSIP via `.github/workflows/pages.yml` into MunaSIP/munasip.github.io.
+See DEPLOYMENT.md. Publishing runs from MonoSIP/MonoSIP via `.github/workflows/pages.yml` into MonoSIP/monosip.github.io.
 
 The PBX itself, SIP carrier, media paths and actual office deployment were not started or integration-tested by this website task. Website content is source-grounded, not a claim of a live telephony test.
 

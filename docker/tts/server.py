@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MunaSIP TTS HTTP API — Edge Neural (high quality TR/EN) with EMA Lightning (offline
+"""MonoSIP TTS HTTP API — Edge Neural (high quality TR/EN) with EMA Lightning (offline
 Turkish neural). Kokoro (offline English) was removed: its model filled the
 small PBX's memory and pushed EMA into swap."""
 

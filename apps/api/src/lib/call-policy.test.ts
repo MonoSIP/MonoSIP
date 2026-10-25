@@ -59,6 +59,18 @@ describe("matchDialPattern", () => {
     expect(matchDialPattern("212*", "212*")).toBe(true);
     expect(matchDialPattern("999", "212")).toBe(false);
   });
+
+  it("does not turn a digit-less plain pattern into a catch-all", () => {
+    // OutboundRouteSchema accepts any non-empty pattern; a plain prefix without
+    // digits ("#", "abc") used to match every number via startsWith("") and
+    // silently became the catch-all outbound route in resolveOutboundDial.
+    expect(matchDialPattern("05321112233", "#")).toBe(false);
+    expect(matchDialPattern("2125551234", "abc")).toBe(false);
+    expect(matchDialPattern("00441234567890", "XYZ")).toBe(false);
+    // Real prefixes and the intentional "*" catch-all keep working.
+    expect(matchDialPattern("05321112233", "0532")).toBe(true);
+    expect(matchDialPattern("05321112233", "*")).toBe(true);
+  });
 });
 
 describe("evaluateCountryPolicy", () => {

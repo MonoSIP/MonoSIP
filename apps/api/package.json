@@ -1,5 +1,5 @@
 {
-  "name": "@munasip/api",
+  "name": "@monosip/api",
   "version": "1.7.5",
   "license": "MIT",
   "private": true,
@@ -18,7 +18,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
-    "@munasip/shared": "workspace:*",
+    "@monosip/shared": "workspace:*",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/multipart": "^9.2.1",

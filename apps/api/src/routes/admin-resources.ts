@@ -15,7 +15,7 @@ import {
   FlowCreateSchema,
   FlowUpdateSchema,
   FlowJsonSchema,
-} from "@munasip/shared";
+} from "@monosip/shared";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import {
@@ -52,11 +52,13 @@ import { requireAdmin } from "../lib/auth.js";
 import { deskPhoneConfig } from "../lib/phone-provision.js";
 import { writeAudit } from "../lib/audit.js";
 import { decrypt, encrypt, hashToken, randomSecret } from "../lib/crypto.js";
+import { ensureProvisionSecret, verifyProvisionSecret } from "../lib/provisioning.js";
 import { tryReloadAsterisk } from "../asterisk/config-writer.js";
 import { validateFlow, simulateFlow } from "../asterisk/flow-engine.js";
 import { ari } from "../asterisk/ari.js";
 import { config } from "../config.js";
 import { dispatchWebhooks } from "../lib/webhooks.js";
+import { csvCell } from "../lib/csv.js";
 
 async function admin(req: Parameters<typeof requireAdmin>[0], reply: Parameters<typeof requireAdmin>[1]) {
   return requireAdmin(req, reply);
@@ -685,7 +687,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       .select()
       .from(flowVersions)
       .where(eq(flowVersions.id, body.versionId));
-    if (!ver) return reply.code(404).send({ error: "Not found" });
+    // The versions list is scoped to this flow; rollback must not reach into
+    // another flow's version chain (cross-flow draft/published contamination).
+    if (!ver || ver.flowId !== id) return reply.code(404).send({ error: "Not found" });
     await db
       .update(flows)
       .set({ draftJson: ver.json, publishedVersionId: ver.id, updatedAt: new Date() })
@@ -797,7 +801,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         language: z.enum(["en", "tr"]).default("en"),
         ttsText: z.string().optional(),
         filePath: z.string().optional(),
-        /** base64 audio (wav) — written under Asterisk sounds/munasip */
+        /** base64 audio (wav) — written under Asterisk sounds/monosip */
         audioBase64: z.string().optional(),
         /** Generate WAV via TTS from ttsText */
         synthesize: z.boolean().optional(),
@@ -1375,7 +1379,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
             from: s.emailFrom,
             to: s.smtpTo,
           },
-          `MunaSIP missed call from ${body.caller}`,
+          `MonoSIP missed call from ${body.caller}`,
           `Missed call\nCaller: ${body.caller}\nTarget: ${body.target}\nAt: ${new Date().toISOString()}`,
         );
       }
@@ -1453,7 +1457,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
               from: s.emailFrom,
               to: ext.email,
             },
-            `MunaSIP voicemail for ${ext.number}`,
+            `MonoSIP voicemail for ${ext.number}`,
             `New voicemail\nFrom: ${caller ?? "unknown"}\nExt: ${ext.number}\nAt: ${new Date().toISOString()}`,
             [{ filename: fname, contentType: "audio/wav", path: body.file }],
           );
@@ -1703,9 +1707,20 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const csv =
       header +
       rows
-        .map(
-          (r) =>
-            `${r.callId},${r.startedAt.toISOString()},${r.direction},${r.caller},${r.callee},${r.disposition},${r.duration},${r.billsec},${r.dndFlag ? 1 : 0}`,
+        .map((r) =>
+          [
+            r.callId,
+            r.startedAt.toISOString(),
+            r.direction,
+            r.caller,
+            r.callee,
+            r.disposition,
+            r.duration,
+            r.billsec,
+            r.dndFlag ? 1 : 0,
+          ]
+            .map(csvCell)
+            .join(","),
         )
         .join("\n");
     reply.header("content-type", "text/csv");
@@ -2172,7 +2187,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   app.post("/api/v1/admin/api-keys", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const body = z.object({ name: z.string(), permissions: z.array(z.string()).optional() }).parse(req.body);
-    const raw = `munasip_${randomSecret(32)}`;
+    const raw = `monosip_${randomSecret(32)}`;
     const [row] = await db
       .insert(apiKeys)
       .values({
@@ -2277,7 +2292,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     try {
       const { readFile } = await import("node:fs/promises");
       const conf = await readFile(
-        path.join(config.asterisk.configDir, "pjsip_munasip.conf"),
+        path.join(config.asterisk.configDir, "pjsip_monosip.conf"),
         "utf8",
       );
       confReadable = true;
@@ -2391,7 +2406,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const data = await buildBackup();
     reply.header("content-type", "application/json");
-    reply.header("content-disposition", `attachment; filename="munasip-backup-${Date.now()}.json"`);
+    reply.header("content-disposition", `attachment; filename="monosip-backup-${Date.now()}.json"`);
     return data;
   });
 
@@ -2399,7 +2414,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const data = await buildBackup();
     reply.header("content-type", "application/json");
-    reply.header("content-disposition", `attachment; filename="munasip-backup-${Date.now()}.json"`);
+    reply.header("content-disposition", `attachment; filename="monosip-backup-${Date.now()}.json"`);
     return data;
   });
 
@@ -2604,7 +2619,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   // Devices + softphone QR
   app.get("/api/v1/admin/devices", async (req, reply) => {
     if (!(await admin(req, reply))) return;
-    return db.select().from(devices);
+    const rows = await db.select().from(devices);
+    // The provisioning secret is a credential: it is only ever handed out in
+    // the provisioning URL from the QR route.
+    return rows.map((d) => ({ ...d, provisionSecretEnc: undefined }));
   });
 
   app.post("/api/v1/admin/devices", async (req, reply) => {
@@ -2646,13 +2664,23 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const QRCode = (await import("qrcode")).default;
     const qr = await QRCode.toDataURL(payload);
     const macNorm = (dev.mac ?? "").replace(/[^a-fA-F0-9]/g, "").toLowerCase();
+    // The provisioning URL carries the device secret: /cfg/:mac hands out the
+    // SIP password, so the MAC on its own must not be enough to fetch it.
     const provisionUrl = macNorm
-      ? `${config.publicUrl}/cfg/${macNorm}.cfg`
+      ? `${config.publicUrl}/cfg/${macNorm}.cfg?t=${await ensureProvisionSecret(dev.id)}`
       : null;
     return { qr, uri, user: ext.number, displayName: ext.name, provisionUrl };
   });
 
-  /** Public desk-phone autoprovision (Yealink/Fanvil/Grandstream-style). MAC from path. */
+  /**
+   * Desk-phone autoprovision (Yealink/Fanvil/Grandstream-style). MAC from path.
+   *
+   * The handset must present the provisioning token issued for this device:
+   * the MAC alone is not a secret (it leaks over LAN and is semi-guessable),
+   * and this endpoint returns the SIP password. A missing or wrong token is
+   * answered with 404, exactly like an unknown MAC, so the response does not
+   * reveal which MACs exist.
+   */
   app.get("/cfg/:mac", async (req, reply) => {
     const raw = (req.params as { mac: string }).mac.replace(/\.cfg$/i, "");
     const macNorm = raw.replace(/[^a-fA-F0-9]/g, "").toLowerCase();
@@ -2662,6 +2690,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       (d) => (d.mac ?? "").replace(/[^a-fA-F0-9]/g, "").toLowerCase() === macNorm,
     );
     if (!dev) return reply.code(404).send("not found");
+    const token = (req.query as { t?: unknown }).t;
+    if (!verifyProvisionSecret(dev.provisionSecretEnc, token)) {
+      return reply.code(404).send("not found");
+    }
     const [ext] = await db.select().from(extensions).where(eq(extensions.id, dev.extensionId));
     if (!ext) return reply.code(404).send("not found");
     let sipPass = "";
@@ -2803,7 +2835,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const [row] = await db.select().from(flows).where(eq(flows.id, id)).limit(1);
     if (!row) return reply.code(404).send({ error: "Not found" });
     return {
-      format: "munasip-flow-v1",
+      format: "monosip-flow-v1",
       exportedAt: new Date().toISOString(),
       name: row.name,
       extensionNumber: row.extensionNumber,
@@ -2850,8 +2882,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-munasip-signature": sig,
-          "x-munasip-event": "call.ringing",
+          "x-monosip-signature": sig,
+          "x-monosip-event": "call.ringing",
         },
         body,
         signal: AbortSignal.timeout(5000),

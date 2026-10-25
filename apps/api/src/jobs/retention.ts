@@ -1,6 +1,6 @@
 import { and, eq, lt } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
-import { SettingsSchema } from "@munasip/shared";
+import { SettingsSchema } from "@monosip/shared";
 import { db } from "../db/client.js";
 import { recordings, settings } from "../db/schema.js";
 
@@ -47,6 +47,11 @@ export async function runRecordingRetention(): Promise<number> {
 }
 
 export function startRetentionJob(intervalMs = 6 * 3600_000) {
-  void runRecordingRetention();
-  return setInterval(() => void runRecordingRetention(), intervalMs);
+  // Without a rejection handler a failed run (SettingsSchema.parse, a DB error)
+  // becomes an unhandled rejection, which is fatal and takes the API down.
+  void runRecordingRetention().catch((e) => console.warn("[retention]", (e as Error).message));
+  return setInterval(
+    () => void runRecordingRetention().catch((e) => console.warn("[retention]", (e as Error).message)),
+    intervalMs,
+  );
 }
