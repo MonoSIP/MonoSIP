@@ -844,6 +844,35 @@ textarea.input {
   flex-shrink: 0;
 }
 
+.asterisk-log-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.asterisk-log {
+  height: min(28rem, 55vh);
+  overflow: auto;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius);
+  background: #121a21;
+  color: #d7e4ea;
+  font: 500 0.78rem/1.45 var(--mono);
+}
+.asterisk-log-empty {
+  margin: 0;
+  color: #8aa0b0;
+}
+.asterisk-log-line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.asterisk-log-line.is-warn { color: #f0cf86; }
+.asterisk-log-line.is-err { color: #f0a0a8; }
+
 .page-header {
   position: relative;
   display: flex;

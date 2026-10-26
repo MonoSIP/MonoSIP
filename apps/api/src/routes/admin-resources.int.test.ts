@@ -120,6 +120,7 @@ const ADMIN_ROUTES: Array<[string, string]> = [
 ["GET", "/api/v1/admin/reports/queues"],
 ["GET", "/api/v1/admin/reports/extensions"],
 ["GET", "/api/v1/admin/reports/ivr"],
+["GET", "/api/v1/admin/reports/asterisk-log"],
 ["GET", "/api/v1/admin/settings"],
 ["PATCH", "/api/v1/admin/settings"],
 ["GET", "/api/v1/admin/secrets"],

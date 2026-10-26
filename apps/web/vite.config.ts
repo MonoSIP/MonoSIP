@@ -16,6 +16,8 @@ export default defineConfig({
         target: process.env.VITE_API_PROXY ?? "https://localhost",
         secure: false,
         changeOrigin: true,
+        timeout: 0,
+        proxyTimeout: 0,
       },
       "/ws": {
         target: process.env.VITE_WS_PROXY ?? "wss://localhost",

@@ -451,6 +451,7 @@ describe("ReportsPage", () => {
   it("renders the heading and the quality totals", async () => {
     renderPage(<ReportsPage />);
     expect(await screen.findByRole("heading", { name: "reports.title" })).toBeInTheDocument();
+    expect(screen.getByRole("log", { name: "Asterisk log" })).toBeInTheDocument();
     await waitFor(() => expect(apiGet).toHaveBeenCalled());
     expect(await screen.findByText("101")).toBeInTheDocument();
   });

@@ -49,6 +49,7 @@ import {
   secrets,
 } from "../db/schema.js";
 import { requireAdmin } from "../lib/auth.js";
+import { asteriskLogRoutes } from "./asterisk-log.js";
 import { deskPhoneConfig } from "../lib/phone-provision.js";
 import { writeAudit } from "../lib/audit.js";
 import { decrypt, encrypt, hashToken, randomSecret } from "../lib/crypto.js";
@@ -65,6 +66,7 @@ async function admin(req: Parameters<typeof requireAdmin>[0], reply: Parameters<
 }
 
 export async function adminResourceRoutes(app: FastifyInstance) {
+  asteriskLogRoutes(app);
   // Trunks
   app.get("/api/v1/admin/trunks", async (req, reply) => {
     if (!(await admin(req, reply))) return;

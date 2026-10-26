@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
@@ -9,9 +9,11 @@ import {
   ListOrdered,
   Phone,
   Radio,
+  ScrollText,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { PageHeader, SectionCard, TextField } from "../../components/ui";
+import { Button, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { LiveDot } from "../../components/motion";
 import { tr } from "../../i18n";
 
 export function ReportsPage() {
@@ -82,6 +84,7 @@ export function ReportsPage() {
         tone="cyan"
         description={tr("Volume, queues, IVR, quality")}
       />
+      <AsteriskLogCard />
       <SectionCard title={tr("Date range")} icon={CalendarRange} tone="cyan">
         <div className="toolbar">
           <TextField
@@ -243,5 +246,111 @@ export function ReportsPage() {
         </SectionCard>
       </div>
     </div>
+  );
+}
+
+const LOG_CAP = 800;
+
+type LogRow = { id: number; text: string };
+
+function lineClass(text: string): string {
+  if (/\bERROR\[/.test(text)) return "asterisk-log-line is-err";
+  if (/\bWARNING\[/.test(text)) return "asterisk-log-line is-warn";
+  return "asterisk-log-line";
+}
+
+function AsteriskLogCard() {
+  const [rows, setRows] = useState<LogRow[]>([]);
+  const [state, setState] = useState<"connecting" | "open" | "missing" | "offline">("connecting");
+  const [pinned, setPinned] = useState(true);
+  const box = useRef<HTMLDivElement>(null);
+  const pinnedRef = useRef(true);
+  const seq = useRef(0);
+
+  useEffect(() => {
+    if (typeof EventSource === "undefined") return;
+    const es = new EventSource("/api/v1/admin/reports/asterisk-log");
+    const meta = (ev: Event) => {
+      const data = JSON.parse((ev as MessageEvent).data) as { state?: string };
+      setState(data.state === "missing" ? "missing" : "open");
+      setRows([]);
+    };
+    const line = (ev: Event) => {
+      const text = String((ev as MessageEvent).data ?? "");
+      if (!text) return;
+      setState("open");
+      const id = ++seq.current;
+      setRows((prev) => {
+        const next = prev.length >= LOG_CAP ? prev.slice(prev.length - LOG_CAP + 1) : prev.slice();
+        next.push({ id, text });
+        return next;
+      });
+    };
+    es.addEventListener("meta", meta);
+    es.addEventListener("line", line);
+    es.onerror = () => {
+      if (es.readyState !== EventSource.OPEN) setState("offline");
+    };
+    return () => {
+      es.removeEventListener("meta", meta);
+      es.removeEventListener("line", line);
+      es.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = box.current;
+    if (pinnedRef.current && el) el.scrollTop = el.scrollHeight;
+  }, [rows]);
+
+  function onScroll() {
+    const el = box.current;
+    if (!el) return;
+    const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 32;
+    pinnedRef.current = atEnd;
+    setPinned(atEnd);
+  }
+
+  function jump() {
+    pinnedRef.current = true;
+    setPinned(true);
+    const el = box.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  const status =
+    state === "open" ? tr("Live") : state === "missing" || state === "offline" ? tr("Offline") : tr("Waiting for lines");
+
+  return (
+    <SectionCard
+      title={tr("Asterisk log")}
+      icon={ScrollText}
+      tone="cyan"
+      actions={
+        <span className="asterisk-log-status">
+          <LiveDot live={state === "open"} tone={state === "open" ? "ok" : "err"} />
+          {status}
+          {pinned ? null : (
+            <Button type="button" onClick={jump}>
+              {tr("Back to live")}
+            </Button>
+          )}
+        </span>
+      }
+    >
+      <div ref={box} className="asterisk-log" role="log" aria-label={tr("Asterisk log")} onScroll={onScroll}>
+        {rows.length === 0 ? (
+          <p className="asterisk-log-empty">
+            {state === "missing" ? tr("Asterisk log is not available yet") : tr("Waiting for lines")}
+          </p>
+        ) : (
+          rows.map((row) => (
+            <div key={row.id} className={lineClass(row.text)}>
+              {row.text}
+            </div>
+          ))
+        )}
+      </div>
+    </SectionCard>
   );
 }
