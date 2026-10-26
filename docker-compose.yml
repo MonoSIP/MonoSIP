@@ -94,6 +94,7 @@ services:
       - recordings:/data/recordings
       - uploads:/data/uploads
       - api_logs:/data/logs
+      - asterisk_logs:/var/log/asterisk:ro
       - ./docker/nginx/certs:/etc/nginx/certs
     depends_on:
       postgres:

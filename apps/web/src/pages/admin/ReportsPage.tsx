@@ -341,7 +341,11 @@ function AsteriskLogCard() {
       <div ref={box} className="asterisk-log" role="log" aria-label={tr("Asterisk log")} onScroll={onScroll}>
         {rows.length === 0 ? (
           <p className="asterisk-log-empty">
-            {state === "missing" ? tr("Asterisk log is not available yet") : tr("Waiting for lines")}
+            {state === "missing"
+              ? tr("Asterisk log is not available yet")
+              : state === "offline"
+                ? tr("Log stream is not connected")
+                : tr("Waiting for lines")}
           </p>
         ) : (
           rows.map((row) => (
