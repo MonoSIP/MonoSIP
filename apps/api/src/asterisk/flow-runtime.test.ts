@@ -875,10 +875,20 @@ describe("handleOutbound", () => {
   });
 
   it("redirects a short internal extension without resolving a route", async () => {
+    dbState.tables.extensions = [{ id: "ext-102", number: "102" }];
     await handleOutbound("ch-o", "102", "101");
     expect(cdrAnswered).toHaveBeenCalledWith("ch-o");
     expect(ari.redirect).toHaveBeenCalledWith("ch-o", "102", "from-internal");
     expect(resolveOutboundDial).not.toHaveBeenCalled();
+  });
+
+  it("hangs up an unknown short number instead of sending it back to the dialplan", async () => {
+    await handleOutbound("ch-o", "900", "130");
+    expect(ari.redirect).not.toHaveBeenCalled();
+    expect(cdrAnswered).not.toHaveBeenCalled();
+    expect(cdrEnd).toHaveBeenCalledWith("ch-o", "FAILED");
+    expect(ari.playAndWait).toHaveBeenCalledWith("ch-o", "sound:ss-noservice", 4000);
+    expect(ari.hangup).toHaveBeenCalledWith("ch-o");
   });
 
   it("fails the call when no route matches", async () => {

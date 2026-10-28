@@ -2,7 +2,7 @@ import { mkdtemp, writeFile, appendFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { consumeLines, followAppends, readTail, stripAnsi } from "./log-tail.js";
+import { consumeLines, followAppends, pickLogFile, readTail, stripAnsi } from "./log-tail.js";
 
 describe("consumeLines", () => {
   it("keeps an unfinished line and drops blanks", () => {
@@ -17,6 +17,19 @@ describe("consumeLines", () => {
   it("strips ANSI color codes", () => {
     expect(stripAnsi("\x1b[31mERROR\x1b[0m")).toBe("ERROR");
     expect(consumeLines("", "\x1b[33mwarn\x1b[0m\n").lines).toEqual(["warn"]);
+  });
+});
+
+describe("pickLogFile", () => {
+  it("ignores an empty file and uses the one written last", () => {
+    expect(
+      pickLogFile([
+        { file: "/var/log/asterisk/full", size: 0, mtimeMs: 30 },
+        { file: "/var/log/asterisk/messages", size: 10, mtimeMs: 10 },
+        { file: "/var/log/asterisk/console.log", size: 40, mtimeMs: 20 },
+      ]),
+    ).toBe("/var/log/asterisk/console.log");
+    expect(pickLogFile([{ file: "/var/log/asterisk/full", size: 0, mtimeMs: 1 }])).toBeNull();
   });
 });
 

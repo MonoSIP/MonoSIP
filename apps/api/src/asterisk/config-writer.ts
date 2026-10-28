@@ -1235,8 +1235,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   extensionsConf.push(
     "exten => _X.,1,NoOp(Outbound ${EXTEN})",
+    // A short number that is not an extension comes back here from Stasis.
+    // Without this, 900 → outbound → 900 loops and the caller hears nothing.
+    ` same => n,GotoIf($["\${MONOSIP_OUTBOUND_TRIED}" = "1"]?nostuck)`,
+    " same => n,Set(MONOSIP_OUTBOUND_TRIED=1)",
     " same => n,Gosub(monosip-blacklist,s,1)",
     " same => n,Stasis(monosip-outbound,${EXTEN})",
+    " same => n,Hangup()",
+    " same => n(nostuck),Playback(ss-noservice)",
     " same => n,Hangup()",
     "",
   );

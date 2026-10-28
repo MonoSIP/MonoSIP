@@ -10,7 +10,9 @@ import {
   lastDialAttempts,
   mohClasses,
   missedCalls,
+  queues,
   recordings,
+  ringGroups,
   settings,
 } from "../db/schema.js";
 import { dispatchWebhooks } from "../lib/webhooks.js";
@@ -905,6 +907,17 @@ export async function executeFlowLoop(
   return "left";
 }
 
+/** True when `number` has its own from-internal extension (not the _X. catch-all). */
+async function isInternalDestination(number: string): Promise<boolean> {
+  const [ext, queue, ring, flow] = await Promise.all([
+    db.select({ id: extensions.id }).from(extensions).where(eq(extensions.number, number)).limit(1),
+    db.select({ id: queues.id }).from(queues).where(eq(queues.number, number)).limit(1),
+    db.select({ id: ringGroups.id }).from(ringGroups).where(eq(ringGroups.number, number)).limit(1),
+    db.select({ id: flows.id }).from(flows).where(eq(flows.extensionNumber, number)).limit(1),
+  ]);
+  return ext.length + queue.length + ring.length + flow.length > 0;
+}
+
 /** Exported for unit testing: outbound policy check and route origination. */
 export async function handleOutbound(channelId: string, dialed: string, caller: string) {
   const { cdrStart, cdrEnd, cdrAnswered } = await import("../lib/cdr.js");
@@ -962,9 +975,18 @@ export async function handleOutbound(channelId: string, dialed: string, caller: 
   };
 
   if (/^\d{3,4}$/.test(dialed) && !isEmergencyNumber(dialed)) {
-    await cdrAnswered(channelId);
-    // Leave CDR open — ChannelDestroyed / dialplan curl finalizes billsec
-    await ari.redirect(channelId, dialed, "from-internal");
+    // Only a real extension, queue, ring group, or flow. Anything else matches
+    // the _X. catch-all, which enters this app again and never plays audio.
+    if (await isInternalDestination(dialed)) {
+      await cdrAnswered(channelId);
+      // Leave CDR open — ChannelDestroyed / dialplan curl finalizes billsec
+      await ari.redirect(channelId, dialed, "from-internal");
+      return;
+    }
+    console.log(`[flow] outbound ${caller} → ${dialed} (no such extension)`);
+    await cdrEnd(channelId, "FAILED");
+    await ari.playAndWait(channelId, "sound:ss-noservice", 4000).catch(() => undefined);
+    await ari.hangup(channelId);
     return;
   }
 

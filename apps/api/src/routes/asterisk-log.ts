@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { stat } from "node:fs/promises";
 import { requireAdmin } from "../lib/auth.js";
-import { consumeLines, followAppends, readTail } from "../lib/log-tail.js";
+import { consumeLines, followAppends, pickLogFile, readTail } from "../lib/log-tail.js";
 
 /** Logger files, richest first. `console.log` is the foreground log from the all-in-one script. */
 const LOG_FILES = process.env.ASTERISK_LOG_FILE
@@ -11,14 +11,17 @@ const TAIL_LINES = 200;
 const TAIL_BYTES = 64 * 1024;
 
 async function resolveLog(): Promise<string | null> {
+  const found: Array<{ file: string; size: number; mtimeMs: number }> = [];
   for (const file of LOG_FILES) {
     try {
-      if ((await stat(file)).isFile()) return file;
+      const st = await stat(file);
+      if (st.isFile()) found.push({ file, size: st.size, mtimeMs: st.mtimeMs });
     } catch {
       /* try the next file */
     }
   }
-  return null;
+  // `full` is touched empty at boot. Following it hides the foreground console log.
+  return pickLogFile(found);
 }
 
 /**

@@ -7,6 +7,15 @@ export function stripAnsi(text: string): string {
   return text.replace(ANSI, "");
 }
 
+/** Prefer the log that was written most recently. An empty touched file does not count. */
+export function pickLogFile(
+  files: Array<{ file: string; size: number; mtimeMs: number }>,
+): string | null {
+  const live = files.filter((f) => f.size > 0);
+  if (!live.length) return null;
+  return live.slice().sort((a, b) => b.mtimeMs - a.mtimeMs)[0].file;
+}
+
 /** Complete lines from a growing buffer. The unfinished tail stays in `pending`. */
 export function consumeLines(pending: string, chunk: string): { pending: string; lines: string[] } {
   const parts = stripAnsi(pending + chunk).split("\n");
