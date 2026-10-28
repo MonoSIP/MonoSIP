@@ -22,6 +22,21 @@ export function queueSoundLanguage(lang: "tr" | "en", voice: string | null | und
   return v && v.langs.includes(lang) ? `${lang}_${v.suffix}` : lang;
 }
 
+/**
+ * English say_number (Turkish falls back to it) speaks 1–20 as one `digits/N`
+ * file. 21 is `digits/20` plus `digits/1`, which would play two sentences.
+ */
+export const QUEUE_POSITION_SAY_LIMIT = 20;
+
+/**
+ * Channel language while a queue says the caller's place. `digits/1`–`digits/20`
+ * in this language are the full TTS sentence (`qpos/N`), not the bare number.
+ * Other clips (`qpos/`, `qhold/`) still resolve in the parent voice pack.
+ */
+export function queueAnnounceLanguage(lang: "tr" | "en", voice: string | null | undefined): string {
+  return `${queueSoundLanguage(lang, voice)}_ann`;
+}
+
 /** Languages a queue's voice pack is needed for (both when the queue follows the system). */
 export function queueVoiceLanguages(
   queueLang: string | null | undefined,

@@ -4,12 +4,12 @@
  * While announcing, Asterisk pauses MOH, then resumes.
  */
 import { existsSync, lstatSync, statSync } from "node:fs";
-import { mkdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, readlink, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
 import { queues } from "../db/schema.js";
-import { queueSoundLanguage, queueVoiceLanguages } from "../asterisk/queue-lang.js";
+import { QUEUE_POSITION_SAY_LIMIT, queueSoundLanguage, queueVoiceLanguages } from "../asterisk/queue-lang.js";
 import { synthesizeSpeech, type TtsLanguage } from "./tts.js";
 
 type Pack = {
@@ -187,13 +187,14 @@ export async function ensureQueueAnnounceSounds(): Promise<{ written: number; sk
 let building: Promise<unknown> = Promise.resolve();
 
 async function buildAllPacks(): Promise<{ written: number; skipped: number }> {
+  const root = soundsRoot();
   if (!config.ttsUrl) {
     console.warn("[queue-tts] TTS_URL unset — skip announce pack");
+    await wirePositionSentences(root);
     return { written: 0, skipped: 0 };
   }
   let written = 0;
   let skipped = 0;
-  const root = soundsRoot();
   const add = (r: { written: number; skipped: number }) => {
     written += r.written;
     skipped += r.skipped;
@@ -221,8 +222,51 @@ async function buildAllPacks(): Promise<{ written: number; skipped: number }> {
     }
   }
 
+  await wirePositionSentences(root);
   console.log(`[queue-tts] announce pack written=${written} skipped=${skipped}`);
   return { written, skipped };
+}
+
+/**
+ * Periodic position uses say_number, which asks for digits/N. For 1–20 that is
+ * one file, so digits/N in `<pack>_ann` is the same WAV as qpos/N — the full
+ * sentence, in the queue voice. Parent packs keep bare number words for everything else.
+ */
+async function wirePositionSentences(root: string): Promise<void> {
+  let names: string[] = [];
+  try {
+    const entries = await readdir(root, { withFileTypes: true });
+    names = entries
+      .filter((e) => (e.isDirectory() || e.isSymbolicLink()) && !e.name.endsWith("_ann"))
+      .map((e) => e.name);
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    if (!existsSync(path.join(root, name, "qpos", "1.wav"))) continue;
+    await linkPositionDigits(root, name);
+  }
+}
+
+async function linkPositionDigits(root: string, dirName: string): Promise<void> {
+  const annDigits = path.join(root, `${dirName}_ann`, "digits");
+  await mkdir(annDigits, { recursive: true });
+  for (let i = 1; i <= QUEUE_POSITION_SAY_LIMIT; i++) {
+    const link = path.join(annDigits, `${i}.wav`);
+    const target = path.join("..", "..", dirName, "qpos", `${i}.wav`);
+    try {
+      if ((await readlink(link)) === target) continue;
+      await unlink(link);
+    } catch {
+      /* missing, or not a symlink */
+    }
+    try {
+      await symlink(target, link);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+    }
+  }
+  await linkIntoAsteriskSounds(root, `${dirName}_ann`);
 }
 
 /**

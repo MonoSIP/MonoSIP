@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { queueLanguage, queueSoundLanguage, queueVoiceLanguages } from "./queue-lang.js";
+import {
+  QUEUE_POSITION_SAY_LIMIT,
+  queueAnnounceLanguage,
+  queueLanguage,
+  queueSoundLanguage,
+  queueVoiceLanguages,
+} from "./queue-lang.js";
 
 describe("queueLanguage", () => {
   it("uses the queue's language when set", () => {
@@ -25,6 +31,18 @@ describe("queueSoundLanguage", () => {
     expect(queueSoundLanguage("tr", "female")).toBe("tr");
     expect(queueSoundLanguage("en", "ema-lightning")).toBe("en");
     expect(queueSoundLanguage("tr", "kokoro")).toBe("tr");
+  });
+});
+
+describe("queueAnnounceLanguage", () => {
+  it("uses a queue-only language so say_number plays the position sentence", () => {
+    expect(queueAnnounceLanguage("tr", null)).toBe("tr_ann");
+    expect(queueAnnounceLanguage("tr", "female")).toBe("tr_ann");
+    expect(queueAnnounceLanguage("tr", "male")).toBe("tr_male_ann");
+    expect(queueAnnounceLanguage("tr", "ema-lightning")).toBe("tr_ema_ann");
+    expect(queueAnnounceLanguage("en", "male")).toBe("en_male_ann");
+    expect(queueAnnounceLanguage("en", "ema-lightning")).toBe("en_ann");
+    expect(QUEUE_POSITION_SAY_LIMIT).toBe(20);
   });
 });
 

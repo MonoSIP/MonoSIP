@@ -26,7 +26,7 @@ import { decrypt, deriveSipPassword, encrypt } from "../lib/crypto.js";
 import { EMERGENCY } from "../lib/call-policy.js";
 import { resolveExtensionNumber } from "./routing.js";
 import { listActiveWidgetSessions } from "../lib/widget-sessions.js";
-import { queueLanguage, queueSoundLanguage } from "./queue-lang.js";
+import { QUEUE_POSITION_SAY_LIMIT, queueAnnounceLanguage, queueLanguage, queueSoundLanguage } from "./queue-lang.js";
 import { voicemailDir, voicemailGreetingMediaId } from "../lib/voicemail-inbox.js";
 
 const execFileAsync = promisify(execFile);
@@ -720,11 +720,29 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "setqueueentryvar=yes",
       "setinterfacevar=yes",
       `musicclass=${mohClass}`,
-      // Periodic in-queue: Asterisk ducks MOH, plays position + holdtime, resumes MOH
-      // First announce is a single cached TTS sentence (Playback qpos/N) after MOH starts.
-      q.announcePosition ? "announce-position=yes" : "announce-position=no",
-      q.announceHoldtime ? "announce-holdtime=yes" : "announce-holdtime=no",
-      q.announcePosition || q.announceHoldtime ? "announce-frequency=30" : "announce-frequency=0",
+      // Periodic position: Asterisk say_number. Turkish has no number syntax, so it
+      // used the English system voice. Channel language <pack>_ann points
+      // digits/1–20 at the TTS sentence (qpos/N). Built-in hold time stays off
+      // in that mode — the same say_number would speak the place as minutes.
+      // Entry Playback(qhold) still runs when the queue asks for a wait estimate.
+      ...(q.announcePosition
+        ? [
+            "announce-position=more",
+            `announce-position-limit=${QUEUE_POSITION_SAY_LIMIT}`,
+            "announce-holdtime=no",
+            "announce-frequency=30",
+            "queue-youarenext=qpos/1",
+            "queue-thereare=monosip/queue-none",
+            "queue-callswaiting=monosip/queue-none",
+            "queue-thankyou=monosip/queue-none",
+            "queue-quantity1=monosip/queue-none",
+            "queue-quantity2=monosip/queue-none",
+          ]
+        : [
+            "announce-position=no",
+            q.announceHoldtime ? "announce-holdtime=yes" : "announce-holdtime=no",
+            q.announceHoldtime ? "announce-frequency=30" : "announce-frequency=0",
+          ]),
       "min-announce-frequency=15",
       // First join: MOH starts immediately; we play entry TTS ourselves (not Asterisk's first announce)
       "announce-to-first-user=no",
@@ -1121,8 +1139,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // Hangup handler `h` posts the CDR if the caller leaves before Queue() returns
       ` same => n,Set(MONOSIP_QUEUE=${q.number})`,
       ` same => n,Set(MONOSIP_QSTART=)`,
-      // tr_ema / en_male … = that voice's clips, falling back to tr / en
-      ` same => n,Set(CHANNEL(language)=${queueSoundLanguage(qLang, q.voice)})`,
+      // Position on: <pack>_ann so periodic say_number plays qpos/N.
+      // Otherwise the voice pack itself (tr_ema / en_male, falling back to tr / en).
+      ` same => n,Set(CHANNEL(language)=${q.announcePosition ? queueAnnounceLanguage(qLang, q.voice) : queueSoundLanguage(qLang, q.voice)})`,
       ` same => n,Set(CHANNEL(musicclass)=${mohName})`,
       ` same => n,PauseQueueMember(${q.number},PJSIP/\${CALLERID(num)})`,
       ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?qkvkk)`,
@@ -1158,6 +1177,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
       );
     }
     const queueTail = [
+      // Leave the position language before overflow (voicemail say_number).
+      ...(q.announcePosition ? [` same => n,Set(CHANNEL(language)=${qLang})`] : []),
       ` same => n,StopMixMonitor()`,
       ...qosPrepLines({ dialedTime: false }),
       ` same => n,${qRecRegister}`,
