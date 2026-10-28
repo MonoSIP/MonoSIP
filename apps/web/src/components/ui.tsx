@@ -581,6 +581,7 @@ export function Modal({
   headerAside,
   className,
   dismissable = true,
+  maxWidth = "36rem",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -592,13 +593,14 @@ export function Modal({
   headerAside?: ReactNode;
   className?: string;
   dismissable?: boolean;
+  maxWidth?: string;
 }) {
   return (
     <InTheme>
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
         className={className}
-        maxWidth="36rem"
+        maxWidth={maxWidth}
         onEscapeKeyDown={(event) => {
           if (!dismissable) event.preventDefault();
         }}

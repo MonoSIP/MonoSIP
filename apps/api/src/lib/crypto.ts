@@ -42,6 +42,14 @@ export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/** Compare a presented secret to a stored sha256 hex digest without a length leak. */
+export function verifyTokenHash(presented: string, storedHex: string): boolean {
+  if (!/^[0-9a-f]{64}$/i.test(storedHex)) return false;
+  const check = createHash("sha256").update(presented).digest();
+  const expected = Buffer.from(storedHex, "hex");
+  return timingSafeEqual(check, expected);
+}
+
 export function deriveSipPassword(): string {
   return randomBytes(24).toString("base64url");
 }

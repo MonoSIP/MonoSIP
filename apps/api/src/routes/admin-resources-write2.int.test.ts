@@ -609,19 +609,21 @@ describe("holidays", () => {
 // --------------------------------------------------------------- API keys
 
 describe("API keys", () => {
-  it("mints a key and returns the raw secret exactly once", async () => {
+  it("mints a key and a barrier, and returns the barrier exactly once", async () => {
     const res = await post("/api/v1/admin/api-keys", { name: "Integration" });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { id: string; key: string; keyPrefix: string; permissions: string[] };
+    const body = res.json() as { id: string; key: string; barrier: string; keyPrefix: string; permissions: string[] };
     created.apiKeyIds.push(body.id);
 
     expect(body.key.startsWith("monosip_")).toBe(true);
+    expect(body.barrier.length).toBeGreaterThan(16);
     expect(body.keyPrefix).toBe(body.key.slice(0, 12));
     expect(body.permissions).toEqual(["cdr", "originate"]);
 
-    // Only the hash is persisted, never the raw key.
     const [row] = await db.select().from(apiKeys).where(eq(apiKeys.id, body.id));
-    expect(row?.keyHash).toBeTruthy();
+    expect(row?.keyId).toBe(body.key);
+    expect(row?.barrierHash).toBeTruthy();
+    expect(row?.barrierHash).not.toBe(body.barrier);
     expect(row?.keyHash).not.toBe(body.key);
   });
 
@@ -642,9 +644,10 @@ describe("API keys", () => {
     const list = await app.inject({ method: "GET", url: "/api/v1/admin/api-keys", headers: H() });
     expect(list.statusCode).toBe(200);
     expect(list.body).not.toContain("keyHash");
-    // The raw key must never appear once minted.
-    const raw = (created0.json() as { key: string }).key;
-    expect(list.body).not.toContain(raw);
+    expect(list.body).not.toContain("barrierHash");
+    const issued = created0.json() as { key: string; barrier: string };
+    expect(list.body).toContain(issued.key);
+    expect(list.body).not.toContain(issued.barrier);
   });
 
   it("PATCH updates the name and permissions", async () => {

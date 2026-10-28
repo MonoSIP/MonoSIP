@@ -477,7 +477,7 @@ describe("IntegrationsPage", () => {
       await screen.findByRole("heading", { name: "nav.integrations" }),
     ).toBeInTheDocument();
     expect(await screen.findByText("https://x.test/hook")).toBeInTheDocument();
-    expect(await screen.findByText(/ci ·/)).toBeInTheDocument();
+    expect(await screen.findByText("ci")).toBeInTheDocument();
   });
 
   it("creates a webhook from the first create button", async () => {
@@ -506,7 +506,7 @@ describe("IntegrationsPage", () => {
     apiDelete.mockResolvedValue({});
     renderPage(<IntegrationsPage />);
 
-    const row = (await screen.findByText(/ci ·/)).closest("li") as HTMLElement;
+    const row = (await screen.findByText("ci")).closest("tr") as HTMLElement;
     await userEvent.click(within(row).getByRole("button", { name: "Revoke" }));
 
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/api-keys/k1"));
@@ -1039,9 +1039,11 @@ describe("IntegrationsPage API-key permissions", () => {
     apiPatch.mockResolvedValue({});
     renderPage(<IntegrationsPage />);
 
-    const keyItem = (await screen.findByText(/ci ·/)).closest("li") as HTMLElement;
-    const firstCheckbox = within(keyItem).getAllByRole("checkbox")[0]!;
-    await userEvent.click(firstCheckbox);
+    const row = (await screen.findByText("ci")).closest("tr") as HTMLElement;
+    await userEvent.click(within(row).getByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getAllByRole("checkbox")[0]!);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(apiPatch).toHaveBeenCalled());
     const [path, payload] = apiPatch.mock.calls[0] as unknown as [
@@ -1052,7 +1054,7 @@ describe("IntegrationsPage API-key permissions", () => {
     // Toggling adds a second permission to the seeded ["read"] set.
     expect(payload.permissions).toContain("read");
     expect(payload.permissions).toHaveLength(2);
-    expect(toastSuccess).toHaveBeenCalledWith("Permissions updated");
+    expect(toastSuccess).toHaveBeenCalledWith("Saved");
   });
 });
 

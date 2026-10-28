@@ -65,6 +65,50 @@ async function admin(req: Parameters<typeof requireAdmin>[0], reply: Parameters<
   return requireAdmin(req, reply);
 }
 
+function cleanList(values: string[] | undefined): string[] {
+  return (values ?? []).map((v) => v.trim()).filter(Boolean);
+}
+
+function publicApiKey(row: {
+  id: string;
+  name: string;
+  keyId: string | null;
+  keyPrefix: string;
+  permissions: unknown;
+  allowedIps: unknown;
+  prefixes: unknown;
+  callsPerMinute: number | null;
+  maxConcurrent: number | null;
+  expiresAt: Date | null;
+  lastUsedAt: Date | null;
+  createdAt: Date;
+}) {
+  return {
+    id: row.id,
+    name: row.name,
+    key: row.keyId,
+    keyPrefix: row.keyPrefix,
+    permissions: row.permissions,
+    allowedIps: row.allowedIps,
+    prefixes: row.prefixes,
+    callsPerMinute: row.callsPerMinute,
+    maxConcurrent: row.maxConcurrent,
+    expiresAt: row.expiresAt,
+    lastUsedAt: row.lastUsedAt,
+    createdAt: row.createdAt,
+  };
+}
+
+const apiKeyWrite = {
+  name: z.string().optional(),
+  permissions: z.array(z.string()).optional(),
+  allowedIps: z.array(z.string()).optional(),
+  prefixes: z.array(z.string()).optional(),
+  callsPerMinute: z.number().int().min(1).max(10000).nullable().optional(),
+  maxConcurrent: z.number().int().min(1).max(1000).nullable().optional(),
+  expiresAt: z.string().datetime({ offset: true }).nullable().optional(),
+};
+
 export async function adminResourceRoutes(app: FastifyInstance) {
   asteriskLogRoutes(app);
   // Trunks
@@ -2174,70 +2218,90 @@ export async function adminResourceRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/admin/api-keys", async (req, reply) => {
     if (!(await admin(req, reply))) return;
-    return db
+    const rows = await db
       .select({
         id: apiKeys.id,
         name: apiKeys.name,
+        keyId: apiKeys.keyId,
         keyPrefix: apiKeys.keyPrefix,
         permissions: apiKeys.permissions,
+        allowedIps: apiKeys.allowedIps,
+        prefixes: apiKeys.prefixes,
+        callsPerMinute: apiKeys.callsPerMinute,
+        maxConcurrent: apiKeys.maxConcurrent,
+        expiresAt: apiKeys.expiresAt,
         lastUsedAt: apiKeys.lastUsedAt,
         createdAt: apiKeys.createdAt,
       })
       .from(apiKeys);
+    return rows.map(publicApiKey);
   });
 
   app.post("/api/v1/admin/api-keys", async (req, reply) => {
     if (!(await admin(req, reply))) return;
-    const body = z.object({ name: z.string(), permissions: z.array(z.string()).optional() }).parse(req.body);
-    const raw = `monosip_${randomSecret(32)}`;
+    const body = z.object({ ...apiKeyWrite, name: z.string().min(1) }).parse(req.body);
+    const key = `monosip_${randomSecret(20)}`;
+    const barrier = randomSecret(32);
+    const barrierHash = hashToken(barrier);
     const [row] = await db
       .insert(apiKeys)
       .values({
         name: body.name,
-        keyHash: hashToken(raw),
-        keyPrefix: raw.slice(0, 12),
+        keyHash: barrierHash,
+        keyPrefix: key.slice(0, 12),
+        keyId: key,
+        barrierHash,
         permissions: body.permissions ?? ["cdr", "originate"],
+        allowedIps: cleanList(body.allowedIps),
+        prefixes: cleanList(body.prefixes),
+        callsPerMinute: body.callsPerMinute ?? null,
+        maxConcurrent: body.maxConcurrent ?? null,
+        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
       })
       .returning();
-    return { id: row.id, name: row.name, key: raw, keyPrefix: row.keyPrefix, permissions: row.permissions };
+    return { ...publicApiKey(row), key, barrier };
+  });
+
+  app.post("/api/v1/admin/api-keys/:id/barrier", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { id } = req.params as { id: string };
+    const [current] = await db.select().from(apiKeys).where(eq(apiKeys.id, id));
+    if (!current) return reply.code(404).send({ error: "Not found" });
+    const key = current.keyId ?? `monosip_${randomSecret(20)}`;
+    const barrier = randomSecret(32);
+    const barrierHash = hashToken(barrier);
+    const [row] = await db
+      .update(apiKeys)
+      .set({ keyId: key, keyPrefix: key.slice(0, 12), keyHash: barrierHash, barrierHash })
+      .where(eq(apiKeys.id, id))
+      .returning();
+    if (!row) return reply.code(404).send({ error: "Not found" });
+    return { ...publicApiKey(row), key, barrier };
   });
 
   app.patch("/api/v1/admin/api-keys/:id", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const { id } = req.params as { id: string };
-    const body = z
-      .object({
-        name: z.string().optional(),
-        permissions: z.array(z.string()).optional(),
-      })
-      .parse(req.body);
+    const body = z.object(apiKeyWrite).parse(req.body);
+    const patch = {
+      ...(body.name != null ? { name: body.name } : {}),
+      ...(body.permissions != null ? { permissions: body.permissions } : {}),
+      ...(body.allowedIps != null ? { allowedIps: cleanList(body.allowedIps) } : {}),
+      ...(body.prefixes != null ? { prefixes: cleanList(body.prefixes) } : {}),
+      ...(body.callsPerMinute !== undefined ? { callsPerMinute: body.callsPerMinute } : {}),
+      ...(body.maxConcurrent !== undefined ? { maxConcurrent: body.maxConcurrent } : {}),
+      ...(body.expiresAt !== undefined ? { expiresAt: body.expiresAt ? new Date(body.expiresAt) : null } : {}),
+    };
     // An empty body leaves nothing to set, and drizzle throws "No values to set"
     // on an empty .set().
-    if (body.name == null && body.permissions == null) {
+    if (Object.keys(patch).length === 0) {
       const [current] = await db.select().from(apiKeys).where(eq(apiKeys.id, id));
       if (!current) return reply.code(404).send({ error: "Not found" });
-      return {
-        id: current.id,
-        name: current.name,
-        keyPrefix: current.keyPrefix,
-        permissions: current.permissions,
-      };
+      return publicApiKey(current);
     }
-    const [row] = await db
-      .update(apiKeys)
-      .set({
-        ...(body.name != null ? { name: body.name } : {}),
-        ...(body.permissions != null ? { permissions: body.permissions } : {}),
-      })
-      .where(eq(apiKeys.id, id))
-      .returning();
+    const [row] = await db.update(apiKeys).set(patch).where(eq(apiKeys.id, id)).returning();
     if (!row) return reply.code(404).send({ error: "Not found" });
-    return {
-      id: row.id,
-      name: row.name,
-      keyPrefix: row.keyPrefix,
-      permissions: row.permissions,
-    };
+    return publicApiKey(row);
   });
 
   app.delete("/api/v1/admin/api-keys/:id", async (req, reply) => {

@@ -25,6 +25,7 @@ type AriEvent = {
   digit?: string;
   playback?: { id: string };
   args?: string[];
+  cause?: number;
 };
 
 class AriClient extends EventEmitter {
@@ -186,7 +187,7 @@ class AriClient extends EventEmitter {
       ev.channel?.id
     ) {
       if (ev.type === "ChannelDestroyed") {
-        this.emit("channelDestroyed", ev.channel.id);
+        this.emit("channelDestroyed", ev.channel.id, ev.cause);
       }
     }
   }
@@ -483,6 +484,22 @@ class AriClient extends EventEmitter {
     this.dtmfBuffers.delete(channelId);
   }
 
+  /** Digits already received and not yet consumed. `#` is a terminator, not a digit. */
+  takeDtmfBuffer(channelId: string): string {
+    const buf = this.dtmfBuffers.get(channelId) ?? [];
+    this.dtmfBuffers.delete(channelId);
+    let out = "";
+    for (const d of buf) {
+      if (d === "#") break;
+      if (d === "*") {
+        out = "";
+        continue;
+      }
+      if (/\d/.test(d)) out += d;
+    }
+    return out;
+  }
+
   async stopPlayback(playbackId: string) {
     try {
       await fetch(`${this.baseUrl()}/ari/playbacks/${playbackId}`, {
@@ -694,6 +711,34 @@ class AriClient extends EventEmitter {
       console.error("[ari] redirect error", e);
       await this.hangup(channelId);
     }
+  }
+
+  /** Dial an endpoint and drop the answered channel into a Stasis app. */
+  async originateApp(opts: {
+    endpoint: string;
+    app: string;
+    appArgs: string;
+    callerId?: string;
+    timeout?: number;
+    channelId?: string;
+  }): Promise<{ id?: string }> {
+    const params = new URLSearchParams({
+      endpoint: opts.endpoint,
+      app: opts.app,
+      appArgs: opts.appArgs,
+      timeout: String(opts.timeout ?? 45),
+      callerId: opts.callerId ?? "MonoSIP",
+    });
+    if (opts.channelId) params.set("channelId", opts.channelId);
+    const res = await fetch(`${this.baseUrl()}/ari/channels?${params}`, {
+      method: "POST",
+      headers: { Authorization: this.authHeader() },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Originate failed: ${text}`);
+    }
+    return (await res.json()) as { id?: string };
   }
 
   async originate(opts: {

@@ -856,6 +856,14 @@ export const docs: Record<
                   "POST /api/v1/ext/calls/originate",
                   "Click-to-call: ring an extension first, then dial the destination.",
                 ],
+                [
+                  "POST /api/v1/ext/calls/announce",
+                  "Dial a number, speak text, and POST the result to an https URL when one was sent.",
+                ],
+                [
+                  "GET /api/v1/ext/calls/:id",
+                  "Read that announcement's result, digits, and recording.",
+                ],
                 ["GET /api/v1/ext/cdr", "Read call detail records."],
                 [
                   "GET /api/v1/ext/recordings/:id/stream",
@@ -864,11 +872,207 @@ export const docs: Record<
               ]}
             />
             <p>
-              Create and manage API keys in Admin → Integrations. Follow the{" "}
-              <a href={sourceDoc("API")}>upstream API contract</a> and current
-              application schemas for authentication, permissions and request
-              bodies.
+              Each key has a name you choose, a key id, and a barrier. Send the
+              key as <code>X-Api-Key</code> and the barrier as{" "}
+              <code>X-Api-Barrier</code>. The barrier is shown once.
             </p>
+            <p>
+              Create keys in Admin → Integrations. The contract for those keys
+              is the next section.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "api",
+        title: "Call with a key and a barrier",
+        content: (
+          <>
+            <p>
+              You choose the name. MonoSIP creates the key and a barrier. The
+              key stays in the list. The barrier is shown once in that window;
+              copy it before you close. Only a hash of the barrier is stored.
+            </p>
+            <p>
+              Send the key in <code>X-Api-Key</code> or{" "}
+              <code>Authorization: Bearer</code>, and the barrier in{" "}
+              <code>X-Api-Barrier</code>. An unknown key and a wrong barrier
+              both return <code>401</code>.
+            </p>
+            <Table
+              headings={["Permission", "Allows"]}
+              rows={[
+                ["announce", "Dial a number and speak text."],
+                ["originate", "Ring an extension, then dial the number."],
+                ["cdr", "Read call detail records."],
+                ["recordings", "Stream a stored recording."],
+              ]}
+            />
+            <p>
+              A key can also limit source addresses, number prefixes, calls per
+              minute, concurrent calls and an expiry. Leave a field empty to
+              leave that rule open. Repeated failed attempts from one address
+              are refused for a short while.
+            </p>
+            <CodeBlock
+              title="announce"
+              language="http"
+              code={`POST /api/v1/ext/calls/announce
+X-Api-Key: your-key
+X-Api-Barrier: your-barrier
+Content-Type: application/json
+
+{
+  "number": "905551112233",
+  "text": "Your order is ready.",
+  "language": "en",
+  "voice": "female",
+  "mode": "played"
+}`}
+            />
+            <p>
+              <code>language</code> is <code>en</code> or <code>tr</code>.{" "}
+              <code>voice</code> is <code>female</code>, <code>male</code> or{" "}
+              <code>ema</code>. EMA speaks Turkish only. <code>mode</code>{" "}
+              decides success: <code>answered</code> when the line picks up,{" "}
+              <code>played</code> when the message finishes, <code>dtmf</code>{" "}
+              when the caller enters at least one digit. Digits stop at{" "}
+              <code>#</code> or a short pause, up to 16. No digit is a failure.
+            </p>
+            <p>
+              The response returns an id at once. Read the outcome with{" "}
+              <code>GET /api/v1/ext/calls/:id</code> using the same key and
+              barrier. The body includes <code>ok</code>, <code>reason</code>,{" "}
+              <code>digits</code> and <code>recordingId</code>.{" "}
+              <code>GET /api/v1/ext/calls/:id/recording</code> streams that
+              call’s audio.
+            </p>
+            <p>
+              An optional <code>webhookUrl</code> must be <code>https</code>.
+              When the call finishes, MonoSIP POSTs the result there with{" "}
+              <code>x-monosip-event: announce.done</code>. That delivery is
+              separate from the panel webhooks, which are HMAC-signed. Omit{" "}
+              <code>callerId</code> to use the trunk’s own number.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "scenarios",
+        title: "Example runs",
+        content: (
+          <>
+            <p>
+              Point these at your own PBX. <code>KEY</code> and{" "}
+              <code>BARRIER</code> are the pair from the key window. The first
+              answer is only the id; the outcome arrives when the call ends.
+            </p>
+            <CodeBlock
+              title="setup"
+              language="bash"
+              code={`export PBX=https://pbx.example.com
+export KEY=monosip_your_key
+export BARRIER=your_barrier`}
+            />
+            <p>
+              <strong>The message finishes.</strong> Mode{" "}
+              <code>played</code> succeeds only after the whole sentence is
+              spoken. Hang-up during playback is <code>ok: false</code> and{" "}
+              <code>reason: playback</code>.
+            </p>
+            <CodeBlock
+              title="order ready"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/announce" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"number":"905551112233","text":"Siparişiniz hazır.","language":"tr","voice":"female","mode":"played"}'
+# {"id":"…","status":"ringing"}
+
+curl -sS "$PBX/api/v1/ext/calls/CALL_ID" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER"
+# {"status":"done","ok":true,"reason":"played","digits":null}`}
+            />
+            <p>
+              <strong>The caller presses a key.</strong> Mode{" "}
+              <code>dtmf</code> asks for a digit and waits for <code>#</code>{" "}
+              or a short pause. One digit is success. Silence is{" "}
+              <code>reason: no-digit</code>. With <code>webhookUrl</code> set,
+              the same result is POSTed when the call ends.
+            </p>
+            <CodeBlock
+              title="confirm with 1"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/announce" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"number":"905551112233","text":"Onay için 1 ve kare tuşuna basın.","language":"tr","voice":"ema","mode":"dtmf","webhookUrl":"https://crm.example.com/hooks/announce"}'`}
+            />
+            <CodeBlock
+              title="announce.done"
+              language="json"
+              code={`{
+  "id": "…",
+  "number": "905551112233",
+  "mode": "dtmf",
+  "ok": true,
+  "reason": "dtmf",
+  "digits": "1",
+  "recordingId": "…"
+}`}
+            />
+            <p>
+              <strong>Answer is enough.</strong> Mode <code>answered</code>{" "}
+              succeeds as soon as the line picks up. The message may still be
+              playing. No answer is <code>reason: no-answer</code>; a busy line
+              is <code>reason: busy</code>.
+            </p>
+            <CodeBlock
+              title="pickup"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/announce" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"number":"905551112233","text":"Kargonuz yola çıktı.","language":"tr","voice":"male","mode":"answered"}'`}
+            />
+            <p>
+              When <code>recordingId</code> is set, the same key and barrier
+              stream that call:{" "}
+              <code>GET /api/v1/ext/calls/CALL_ID/recording</code>. A number
+              outside the key’s prefixes returns <code>403</code>{" "}
+              <code>Number prefix not allowed</code>. Too many calls return{" "}
+              <code>429</code> <code>Rate limit</code>. EMA with{" "}
+              <code>language: en</code> returns <code>400</code>.
+            </p>
+            <p>
+              <strong>The older integration calls use the same pair.</strong>{" "}
+              The key still needs the matching permission:{" "}
+              <code>originate</code>, <code>cdr</code>, or{" "}
+              <code>recordings</code>. A missing barrier is <code>401</code> on
+              these routes too.
+            </p>
+            <CodeBlock
+              title="originate, cdr, recording"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/originate" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"extension":"100","number":"905551112233"}'
+
+curl -sS "$PBX/api/v1/ext/cdr" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER"
+
+curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -o call.wav`}
+            />
           </>
         ),
       },

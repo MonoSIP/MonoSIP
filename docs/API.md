@@ -33,9 +33,13 @@ The backend exposes three surfaces: admin API, user portal API, and an integrati
 
 ## Integration API (`/api/v1/ext`, API key)
 
-- `POST /calls/originate`: click-to-call (rings extension first, then dials the number)
-- `GET /cdr`, `GET /recordings/:id/stream`
-- Webhook events: `call.ringing`, `call.answered`, `call.ended`, `call.missed`; HMAC-signed body, 3 retries
+- Auth: send the key in `X-Api-Key` or `Authorization: Bearer`, and the barrier in `X-Api-Barrier`. The name is a label. The key is listed; the barrier is shown once and stored only as a hash. A wrong key or barrier is the same 401. Expiry, the IP allowlist, and a per-address limit on failed attempts apply to every integration route. Empty IP list, prefixes, and call caps still mean unlimited.
+- `POST /calls/originate`, `GET /cdr` and `GET /recordings/:id/stream` use the same key and barrier. The key needs `originate`, `cdr`, or `recordings`.
+- `POST /calls/announce`: dial a number and speak text. Permission `announce`. Body: `number`, `text`, `language` (`en`|`tr`), `voice` (`female`|`male`|`ema`), `mode` (`answered`|`played`|`dtmf`), optional `callerId`, optional `https` `webhookUrl`. Returns `{ id }` immediately. EMA is Turkish only. Key IP list, number prefixes, calls-per-minute and concurrent cap are empty-means-unlimited.
+- `GET /calls/:id`: status of an announcement this key placed, including `ok`, `reason`, `digits`, `recordingId`
+- `GET /calls/:id/recording`: stream that announcement's recording
+- Panel webhook events: `call.ringing`, `call.answered`, `call.ended`, `call.missed`; HMAC-signed body, 3 retries
+- Announcement result is a separate POST to the request's `webhookUrl` (`x-monosip-event: announce.done`), not the panel subscription
 
 ## WebSocket (`/ws`)
 

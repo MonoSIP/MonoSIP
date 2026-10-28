@@ -12,6 +12,7 @@ import { config } from "./config.js";
 import { createTrustProxy } from "./lib/trust-proxy.js";
 import { ari } from "./asterisk/ari.js";
 import { attachFlowRuntime } from "./asterisk/flow-runtime.js";
+import { attachAnnounceRuntime } from "./lib/announce-call.js";
 import { authRoutes } from "./routes/auth.js";
 import { adminExtensionRoutes } from "./routes/admin-extensions.js";
 import { adminResourceRoutes } from "./routes/admin-resources.js";
@@ -91,6 +92,7 @@ async function main() {
   await asteriskWsProxyRoutes(app);
 
   attachFlowRuntime();
+  attachAnnounceRuntime();
   await ari.start();
 
   // Sync PJSIP secrets + dialplan on boot (seed may have raced empty conf / bad perms).

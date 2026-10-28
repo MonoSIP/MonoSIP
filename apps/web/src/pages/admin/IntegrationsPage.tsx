@@ -2,13 +2,239 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Copy, KeyRound, Trash2, Webhook, Globe } from "lucide-react";
+import { Copy, CircleHelp, KeyRound, Pencil, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
-import { tr } from "../../i18n";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
+import i18n, { tr } from "../../i18n";
 
-const ALL_PERMS = ["cdr", "originate", "recordings"] as const;
+function apiDocsHref(): string {
+  return i18n.language.startsWith("tr")
+    ? "https://www.monosip.com/tr/docs/integrations/#api"
+    : "https://www.monosip.com/docs/integrations/#api";
+}
+
+const ALL_PERMS = ["cdr", "originate", "recordings", "announce"] as const;
+
+type ApiKey = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  key?: string | null;
+  permissions: string[];
+  allowedIps?: string[];
+  prefixes?: string[];
+  callsPerMinute?: number | null;
+  maxConcurrent?: number | null;
+  expiresAt?: string | null;
+};
+
+type IssuedKey = { key: string; barrier: string };
+
+function listText(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function optionalLimit(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isInteger(n) && n > 0 ? n : Number.NaN;
+}
+
+function toLocalInput(iso?: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function KeyForm({
+  apiKey,
+  onClose,
+  onReveal,
+}: {
+  apiKey: ApiKey | null;
+  onClose: () => void;
+  onReveal: (issued: IssuedKey) => void;
+}) {
+  const qc = useQueryClient();
+  const [name, setName] = useState(apiKey?.name ?? "");
+  const [perms, setPerms] = useState<string[]>(apiKey?.permissions ?? ["cdr", "originate"]);
+  const [ips, setIps] = useState((apiKey?.allowedIps ?? []).join("\n"));
+  const [prefixes, setPrefixes] = useState((apiKey?.prefixes ?? []).join(", "));
+  const [perMinute, setPerMinute] = useState(apiKey?.callsPerMinute ? String(apiKey.callsPerMinute) : "");
+  const [concurrent, setConcurrent] = useState(apiKey?.maxConcurrent ? String(apiKey.maxConcurrent) : "");
+  const [expires, setExpires] = useState(toLocalInput(apiKey?.expiresAt));
+
+  function payload() {
+    const callsPerMinute = optionalLimit(perMinute);
+    const maxConcurrent = optionalLimit(concurrent);
+    if (Number.isNaN(callsPerMinute) || Number.isNaN(maxConcurrent)) {
+      throw new Error(tr("Enter a whole number, or leave the limit empty"));
+    }
+    if (expires.trim() && Number.isNaN(new Date(expires).getTime())) {
+      throw new Error(tr("Enter a date, or leave expiry empty"));
+    }
+    return {
+      name: name.trim(),
+      permissions: perms,
+      allowedIps: listText(ips),
+      prefixes: listText(prefixes),
+      callsPerMinute,
+      maxConcurrent,
+      expiresAt: expires.trim() ? new Date(expires).toISOString() : null,
+    };
+  }
+
+  const save = useMutation({
+    mutationFn: () => {
+      const body = payload();
+      return apiKey
+        ? api.patch(`/api/v1/admin/api-keys/${apiKey.id}`, body)
+        : api.post<IssuedKey>("/api/v1/admin/api-keys", body);
+    },
+    onSuccess: (row) => {
+      const issued = row as IssuedKey;
+      void qc.invalidateQueries({ queryKey: ["api-keys"] });
+      if (issued.barrier && issued.key) onReveal(issued);
+      else {
+        toast.success(tr("Saved"));
+        onClose();
+      }
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const rotate = useMutation({
+    mutationFn: () => api.post<IssuedKey>(`/api/v1/admin/api-keys/${apiKey?.id}/barrier`),
+    onSuccess: (row) => {
+      void qc.invalidateQueries({ queryKey: ["api-keys"] });
+      onReveal(row);
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <form
+      className="grid gap-2 sm:grid-cols-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save.mutate();
+      }}
+    >
+      <TextField
+        className="sm:col-span-2"
+        label={tr("Key name")}
+        icon={KeyRound}
+        hint={tr("The name is a label. The key and its barrier are created for you.")}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+      />
+      <div className="flex flex-wrap items-end gap-2 text-sm sm:col-span-2">
+        {ALL_PERMS.map((p) => (
+          <Checkbox
+            key={p}
+            className="rounded-lg border border-[var(--border)] px-2"
+            checked={perms.includes(p)}
+            onCheckedChange={() =>
+              setPerms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]))
+            }
+            label={p}
+          />
+        ))}
+      </div>
+      <TextAreaField
+        label={tr("Allowed IPs")}
+        hint={tr("One IP or CIDR per line. Empty = any address.")}
+        value={ips}
+        onChange={(e) => setIps(e.target.value)}
+      />
+      <TextField
+        label={tr("Number prefixes")}
+        hint={tr("Comma-separated. Empty = any number.")}
+        value={prefixes}
+        onChange={(e) => setPrefixes(e.target.value)}
+      />
+      <TextField
+        label={tr("Calls per minute")}
+        hint={tr("Empty = no cap.")}
+        inputMode="numeric"
+        value={perMinute}
+        onChange={(e) => setPerMinute(e.target.value)}
+      />
+      <TextField
+        label={tr("Concurrent calls")}
+        hint={tr("Empty = no cap.")}
+        inputMode="numeric"
+        value={concurrent}
+        onChange={(e) => setConcurrent(e.target.value)}
+      />
+      <TextField
+        className="sm:col-span-2"
+        label={tr("Expires")}
+        hint={tr("Empty = never.")}
+        type="datetime-local"
+        value={expires}
+        onChange={(e) => setExpires(e.target.value)}
+      />
+      <div className="flex flex-wrap gap-2 sm:col-span-2">
+        <Button variant="solid" type="submit" disabled={save.isPending}>
+          {tr("Save")}
+        </Button>
+        {apiKey ? (
+          <Button type="button" disabled={rotate.isPending} onClick={() => rotate.mutate()}>
+            {tr("New barrier")}
+          </Button>
+        ) : null}
+        <Button type="button" onClick={onClose}>
+          {tr("Cancel")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function IssuedSecrets({ issued, onClose }: { issued: IssuedKey; onClose: () => void }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[var(--text-muted)]">{tr("The barrier is shown only once. Copy it now.")}</p>
+      <SecretLine label={tr("Key")} value={issued.key} />
+      <SecretLine label={tr("Key barrier")} value={issued.barrier} />
+      <Button variant="solid" type="button" onClick={onClose}>
+        {tr("Done")}
+      </Button>
+    </div>
+  );
+}
+
+function SecretLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="mb-1 text-sm text-[var(--text-muted)]">{label}</div>
+      <div className="flex items-start gap-2">
+        <code className="block min-w-0 flex-1 break-all rounded-lg border border-[var(--border)] bg-[var(--bg)] p-2 font-mono text-xs">
+          {value}
+        </code>
+        <IconBtn
+          icon={Copy}
+          label={tr("Copy")}
+          onClick={() => {
+            void navigator.clipboard.writeText(value).then(
+              () => toast.success(tr("Copied")),
+              () => toast.error(tr("Copy failed")),
+            );
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 type Widget = {
   id: string;
@@ -29,8 +255,8 @@ export function IntegrationsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [url, setUrl] = useState("https://example.com/webhook");
-  const [keyName, setKeyName] = useState("CRM");
-  const [perms, setPerms] = useState<string[]>(["cdr", "originate"]);
+  const [editor, setEditor] = useState<ApiKey | "new" | null>(null);
+  const [reveal, setReveal] = useState<IssuedKey | null>(null);
   const [wName, setWName] = useState("Website");
   const [wNumber, setWNumber] = useState("7001");
   const [wDestType, setWDestType] = useState("queue");
@@ -46,9 +272,7 @@ export function IntegrationsPage() {
   const keys = useQuery({
     queryKey: ["api-keys"],
     queryFn: () =>
-      api.get<Array<{ id: string; name: string; keyPrefix: string; permissions: string[] }>>(
-        "/api/v1/admin/api-keys",
-      ),
+      api.get<ApiKey[]>("/api/v1/admin/api-keys"),
   });
   const widgets = useQuery({
     queryKey: ["widgets"],
@@ -90,25 +314,6 @@ export function IntegrationsPage() {
       }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["webhooks"] }),
   });
-
-  const addKey = useMutation({
-    mutationFn: () =>
-      api.post<{ key: string }>("/api/v1/admin/api-keys", { name: keyName, permissions: perms }),
-    onSuccess: (r) => {
-      toast.success(tr("API key: {{v0}}", { v0: r.key }));
-      void qc.invalidateQueries({ queryKey: ["api-keys"] });
-    },
-  });
-
-  function togglePerm(p: string) {
-    setPerms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
-  }
-
-  async function saveKeyPerms(id: string, permissions: string[]) {
-    await api.patch(`/api/v1/admin/api-keys/${id}`, { permissions });
-    toast.success(tr("Permissions updated"));
-    void qc.invalidateQueries({ queryKey: ["api-keys"] });
-  }
 
   return (
     <div className="space-y-6">
@@ -262,75 +467,120 @@ export function IntegrationsPage() {
           </Button>
         </form>
       </SectionCard>
-      <SectionCard title={tr("API keys")} icon={KeyRound} tone="blue">
-        <ul className="mb-4 space-y-3">
-          {keys.data?.map((k) => {
-            const kp = (k.permissions ?? []) as string[];
-            return (
-              <li key={k.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono">
-                    {k.name} · {k.keyPrefix}…
-                  </span>
-                  <IconBtn
-                    icon={Trash2}
-                    label={tr("Revoke")}
-                    danger
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/api-keys/${k.id}`).then(() =>
-                        qc.invalidateQueries({ queryKey: ["api-keys"] }),
-                      )
-                    }
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {ALL_PERMS.map((p) => (
-                    <Checkbox
-                      key={p}
-                      className="rounded-lg border border-[var(--border)] px-2"
-                      checked={kp.includes(p)}
-                      onCheckedChange={() => {
-                        const next = kp.includes(p) ? kp.filter((x) => x !== p) : [...kp, p];
-                        void saveKeyPerms(k.id, next);
-                      }}
-                      label={p}
-                    />
-                  ))}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <form
-          className="flex flex-wrap gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            addKey.mutate();
-          }}
-        >
-          <TextField
-            className="max-w-xs"
-            label={tr("Key name")}
-            icon={KeyRound}
-            value={keyName}
-            onChange={(e) => setKeyName(e.target.value)}
-          />
-          <div className="flex flex-wrap items-center gap-2 self-end text-sm">
-            {ALL_PERMS.map((p) => (
-              <Checkbox
-                key={p}
-                className="rounded-lg border border-[var(--border)] px-2"
-                checked={perms.includes(p)}
-                onCheckedChange={() => togglePerm(p)}
-                label={p}
-              />
-            ))}
-          </div>
-          <Button variant="solid" className="self-end" type="submit">
-            {t("common.create")}
+      <SectionCard
+        title={tr("API keys")}
+        icon={KeyRound}
+        tone="blue"
+        flush
+        actions={
+          <Button
+            type="button"
+            variant="solid"
+            onClick={() => {
+              setReveal(null);
+              setEditor("new");
+            }}
+          >
+            {tr("Add key")}
           </Button>
-        </form>
+        }
+      >
+        <p className="px-4 pb-3 text-sm text-[var(--text-muted)]">
+          {tr("Add as many keys as you need. Each one keeps its own permissions.")}
+        </p>
+        <div className="overflow-x-auto">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{tr("Name")}</th>
+              <th>{tr("Key")}</th>
+              <th className="col-grow">{tr("Permissions")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(keys.data ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={4} className="text-[var(--text-muted)]">
+                  {tr("No API keys yet.")}
+                </td>
+              </tr>
+            ) : (
+              keys.data?.map((k) => {
+                const kp = k.permissions ?? [];
+                return (
+                  <tr key={k.id}>
+                    <td>{k.name}</td>
+                    <td className="font-mono whitespace-nowrap">{k.key || k.keyPrefix}</td>
+                    <td className="text-[var(--text-muted)]">{kp.length ? kp.join(", ") : "—"}</td>
+                    <td className="col-actions">
+                      <span className="inline-flex items-center gap-3">
+                        <IconBtn
+                          icon={Pencil}
+                          label={tr("Edit")}
+                          onClick={() => {
+                            setReveal(null);
+                            setEditor(k);
+                          }}
+                        />
+                        <IconBtn
+                          icon={Trash2}
+                          label={tr("Revoke")}
+                          danger
+                          onClick={() => {
+                            if (editor !== "new" && editor?.id === k.id) setEditor(null);
+                            void api.delete(`/api/v1/admin/api-keys/${k.id}`).then(() =>
+                              qc.invalidateQueries({ queryKey: ["api-keys"] }),
+                            );
+                          }}
+                        />
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+        </div>
       </SectionCard>
+      <Modal
+        open={editor !== null || reveal !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditor(null);
+            setReveal(null);
+          }
+        }}
+        title={reveal ? tr("Key barrier") : editor === "new" ? tr("Add key") : tr("Edit")}
+        maxWidth="44rem"
+        dismissable={!reveal}
+        headerAside={
+          <a
+            href={apiDocsHref()}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={tr("API documentation")}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] no-underline hover:bg-[var(--bg-soft)] hover:text-[var(--text)]"
+          >
+            <CircleHelp size={18} strokeWidth={2.25} />
+          </a>
+        }
+      >
+        {reveal ? (
+          <IssuedSecrets issued={reveal} onClose={() => setReveal(null)} />
+        ) : editor ? (
+          <KeyForm
+            key={editor === "new" ? "new" : editor.id}
+            apiKey={editor === "new" ? null : editor}
+            onClose={() => setEditor(null)}
+            onReveal={(issued) => {
+              setEditor(null);
+              setReveal(issued);
+            }}
+          />
+        ) : null}
+      </Modal>
     </div>
   );
 }

@@ -861,6 +861,14 @@ export const docsTr = {
                   "POST /api/v1/ext/calls/originate",
                   "Tıkla-ara: önce bir dahiliyi çaldırın, sonra hedefi arayın.",
                 ],
+                [
+                  "POST /api/v1/ext/calls/announce",
+                  "Numarayı arar, metni okur ve istekte https adresi varsa sonucu oraya yazar.",
+                ],
+                [
+                  "GET /api/v1/ext/calls/:id",
+                  "Anonsun sonucunu, tuşlarını ve kaydını okuyun.",
+                ],
                 ["GET /api/v1/ext/cdr", "Arama ayrıntı kayıtlarını okuyun."],
                 [
                   "GET /api/v1/ext/recordings/:id/stream",
@@ -869,11 +877,205 @@ export const docsTr = {
               ]}
             />
             <p>
-              API anahtarlarını Yönetici → Entegrasyonlar’da oluşturup yönetin.
-              Kimlik doğrulama, izinler ve istek gövdeleri için{" "}
-              <a href={sourceDoc("API")}>API sözleşmesine</a> ve güncel uygulama
-              şemalarına bakın.
+              Her anahtarın sizin verdiğiniz bir adı, bir anahtar kimliği ve bir
+              bariyeri vardır. Anahtarı <code>X-Api-Key</code>, bariyeri{" "}
+              <code>X-Api-Barrier</code> ile gönderin. Bariyer yalnız bir kez
+              gösterilir.
             </p>
+            <p>
+              Anahtarları Yönetici → Entegrasyonlar’da oluşturun. Bu anahtarların
+              sözleşmesi bir sonraki bölümde.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "api",
+        title: "Anahtar ve bariyerle çağırın",
+        content: (
+          <>
+            <p>
+              Adı siz verirsiniz. MonoSIP anahtarı ve bariyeri üretir. Anahtar
+              listede kalır. Bariyer pencerede yalnız bir kez görünür; kapatmadan
+              kopyalayın. Saklanan şey bariyerin kendisi değil, özetidir.
+            </p>
+            <p>
+              Anahtarı <code>X-Api-Key</code> veya{" "}
+              <code>Authorization: Bearer</code> ile, bariyeri{" "}
+              <code>X-Api-Barrier</code> ile gönderin. Bilinmeyen anahtar da
+              yanlış bariyer de <code>401</code> döner.
+            </p>
+            <Table
+              headings={["İzin", "Ne açar"]}
+              rows={[
+                ["announce", "Bir numarayı arar ve metni okur."],
+                ["originate", "Önce bir dahiliyi çaldırır, sonra numarayı arar."],
+                ["cdr", "Arama ayrıntı kayıtlarını okur."],
+                ["recordings", "Kayıtlı bir konuşmayı akıtır."],
+              ]}
+            />
+            <p>
+              Anahtar ayrıca kaynak adres, numara öneki, dakikada arama, aynı
+              anda arama ve bitiş tarihi ile sınırlanabilir. Alan boşsa o kural
+              açıktır. Aynı adresten art arda başarısız deneme kısa süre
+              reddedilir.
+            </p>
+            <CodeBlock
+              title="anons"
+              language="http"
+              code={`POST /api/v1/ext/calls/announce
+X-Api-Key: anahtariniz
+X-Api-Barrier: bariyeriniz
+Content-Type: application/json
+
+{
+  "number": "905551112233",
+  "text": "Siparişiniz hazır.",
+  "language": "tr",
+  "voice": "female",
+  "mode": "played"
+}`}
+            />
+            <p>
+              <code>language</code> <code>en</code> veya <code>tr</code> olur.{" "}
+              <code>voice</code> <code>female</code>, <code>male</code> veya{" "}
+              <code>ema</code> olur. EMA yalnız Türkçe konuşur.{" "}
+              <code>mode</code> başarıyı seçer: <code>answered</code> hat
+              açılınca, <code>played</code> metin bitince, <code>dtmf</code>{" "}
+              arayan en az bir tuş basınca. Tuşlar <code>#</code> veya kısa bir
+              sessizlikte durur, en fazla 16 hane. Tuş yoksa başarısızdır.
+            </p>
+            <p>
+              Cevap hemen bir kimlik döner. Sonucu aynı anahtar ve bariyerle{" "}
+              <code>GET /api/v1/ext/calls/:id</code> adresinden okuyun. Gövde{" "}
+              <code>ok</code>, <code>reason</code>, <code>digits</code> ve{" "}
+              <code>recordingId</code> içerir.{" "}
+              <code>GET /api/v1/ext/calls/:id/recording</code> o aramanın sesini
+              akıtır.
+            </p>
+            <p>
+              İsteğe bağlı <code>webhookUrl</code> <code>https</code> olmalıdır.
+              Arama bitince MonoSIP sonucu oraya{" "}
+              <code>x-monosip-event: announce.done</code> başlığıyla yazar. Bu
+              teslim, HMAC imzalı panel webhook’larından ayrıdır.{" "}
+              <code>callerId</code> boşsa hattın kendi numarası kullanılır.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "scenarios",
+        title: "Örnek çalıştırma senaryoları",
+        content: (
+          <>
+            <p>
+              Adres kendi santralınız olsun. <code>KEY</code> ve{" "}
+              <code>BARRIER</code>, anahtar penceresindeki çifttir. İlk cevap
+              yalnız kimliktir; sonuç arama bitince gelir.
+            </p>
+            <CodeBlock
+              title="hazırlık"
+              language="bash"
+              code={`export PBX=https://pbx.example.com
+export KEY=monosip_anahtariniz
+export BARRIER=bariyeriniz`}
+            />
+            <p>
+              <strong>Metin bitince.</strong> <code>played</code> tüm cümle
+              okununca başarılıdır. Okuma sırasında kapanırsa{" "}
+              <code>ok: false</code> ve <code>reason: playback</code> olur.
+            </p>
+            <CodeBlock
+              title="sipariş hazır"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/announce" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"number":"905551112233","text":"Siparişiniz hazır.","language":"tr","voice":"female","mode":"played"}'
+# {"id":"…","status":"ringing"}
+
+curl -sS "$PBX/api/v1/ext/calls/CALL_ID" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER"
+# {"status":"done","ok":true,"reason":"played","digits":null}`}
+            />
+            <p>
+              <strong>Arayan tuşlar.</strong> <code>dtmf</code> bir tuş ister ve{" "}
+              <code>#</code> ya da kısa bir sessizlik bekler. Bir tuş başarıdır.
+              Sessizlik <code>reason: no-digit</code> olur.{" "}
+              <code>webhookUrl</code> verilmişse aynı sonuç arama bitince oraya
+              yazılır.
+            </p>
+            <CodeBlock
+              title="1 ile onay"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/announce" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"number":"905551112233","text":"Onay için 1 ve kare tuşuna basın.","language":"tr","voice":"ema","mode":"dtmf","webhookUrl":"https://crm.example.com/hooks/announce"}'`}
+            />
+            <CodeBlock
+              title="announce.done"
+              language="json"
+              code={`{
+  "id": "…",
+  "number": "905551112233",
+  "mode": "dtmf",
+  "ok": true,
+  "reason": "dtmf",
+  "digits": "1",
+  "recordingId": "…"
+}`}
+            />
+            <p>
+              <strong>Açılması yeter.</strong> <code>answered</code> hat açılır
+              açılmaz başarılıdır. Metin hâlâ okunuyor olabilir. Cevap yoksa{" "}
+              <code>reason: no-answer</code>, meşgulse <code>reason: busy</code>{" "}
+              olur.
+            </p>
+            <CodeBlock
+              title="hat açıldı"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/announce" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"number":"905551112233","text":"Kargonuz yola çıktı.","language":"tr","voice":"male","mode":"answered"}'`}
+            />
+            <p>
+              <code>recordingId</code> dolunca aynı anahtar ve bariyer o aramayı
+              akıtır: <code>GET /api/v1/ext/calls/CALL_ID/recording</code>.
+              Anahtarın önekine uymayan numara <code>403</code>{" "}
+              <code>Number prefix not allowed</code> döner. Çok sık arama{" "}
+              <code>429</code> <code>Rate limit</code> döner. EMA ile{" "}
+              <code>language: en</code> ise cevap <code>400</code> olur.
+            </p>
+            <p>
+              <strong>Eski entegrasyon çağrıları da aynı çifti kullanır.</strong>{" "}
+              Anahtarda ilgili izin olmalıdır: <code>originate</code>,{" "}
+              <code>cdr</code> veya <code>recordings</code>. Bariyer yoksa bu
+              uçlar da <code>401</code> döner.
+            </p>
+            <CodeBlock
+              title="originate, cdr, kayıt"
+              language="bash"
+              code={`curl -sS -X POST "$PBX/api/v1/ext/calls/originate" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -H "Content-Type: application/json" \\
+  -d '{"extension":"100","number":"905551112233"}'
+
+curl -sS "$PBX/api/v1/ext/cdr" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER"
+
+curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
+  -H "X-Api-Key: $KEY" \\
+  -H "X-Api-Barrier: $BARRIER" \\
+  -o call.wav`}
+            />
           </>
         ),
       },

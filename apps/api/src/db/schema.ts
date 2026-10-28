@@ -427,9 +427,45 @@ export const apiKeys = pgTable("api_keys", {
   name: varchar("name", { length: 100 }).notNull(),
   keyHash: text("key_hash").notNull(),
   keyPrefix: varchar("key_prefix", { length: 12 }).notNull(),
+  /** Public id sent as X-Api-Key. Null on keys created before the barrier. */
+  keyId: varchar("key_id", { length: 64 }),
+  /** sha256 of the barrier. The barrier itself is returned once, then discarded. */
+  barrierHash: text("barrier_hash"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
   permissions: jsonb("permissions").notNull().default(["cdr", "originate"]),
+  /** Empty = any address. Otherwise exact IPs or CIDRs. */
+  allowedIps: jsonb("allowed_ips").$type<string[]>().notNull().default([]),
+  /** Empty = any destination. Otherwise the dialed number must start with one. */
+  prefixes: jsonb("prefixes").$type<string[]>().notNull().default([]),
+  /** Null = no per-minute cap. */
+  callsPerMinute: integer("calls_per_minute"),
+  /** Null = no cap on calls still ringing or talking. */
+  maxConcurrent: integer("max_concurrent"),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** One outbound announcement placed by an API key. */
+export const announceCalls = pgTable("announce_calls", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  apiKeyId: uuid("api_key_id")
+    .notNull()
+    .references(() => apiKeys.id, { onDelete: "cascade" }),
+  number: varchar("number", { length: 32 }).notNull(),
+  text: text("text").notNull(),
+  language: varchar("language", { length: 8 }).notNull(),
+  voice: varchar("voice", { length: 16 }).notNull(),
+  resultMode: varchar("result_mode", { length: 16 }).notNull(),
+  callerId: varchar("caller_id", { length: 32 }),
+  webhookUrl: text("webhook_url"),
+  status: varchar("status", { length: 16 }).notNull().default("ringing"),
+  outcome: varchar("outcome", { length: 16 }).notNull().default("pending"),
+  reason: varchar("reason", { length: 32 }),
+  digits: varchar("digits", { length: 32 }),
+  channelId: varchar("channel_id", { length: 80 }),
+  recordingId: uuid("recording_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
 });
 
 export const auditLog = pgTable("audit_log", {

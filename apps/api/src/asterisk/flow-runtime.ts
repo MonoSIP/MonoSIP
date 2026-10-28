@@ -1042,6 +1042,12 @@ export function attachFlowRuntime(): void {
             return;
           }
 
+          if (ev.application === "monosip-flow" && args[0] === "announce" && args[1]) {
+            const { runAnnounceOnChannel } = await import("../lib/announce-call.js");
+            await runAnnounceOnChannel(channelId, args[1]);
+            return;
+          }
+
           if (ev.application === "monosip-flow" && args[0] === "snoop-wait") {
             // Snoop channel parked in Stasis until bridge attach from chanspy()
             console.log(`[flow] snoop channel ready ${channelId}`);
