@@ -123,7 +123,7 @@ const PACKS: Pack[] = [
 const POS_MAX = 30;
 const HOLD_MAX = 30;
 /** Bump when sentence/phrase templates change so WAVs regenerate. */
-const PACK_VERSION = "tr-bekleyenler-callback-v3";
+const PACK_VERSION = "tr-bekleyenler-callback-v4";
 
 function soundsRoot(): string {
   return path.join(config.asterisk.configDir, "sounds");
@@ -279,8 +279,14 @@ async function buildPack(
   for (const [n, text] of Object.entries(pack.digits)) {
     const fp = path.join(digitDir, `${n}.wav`);
     try {
-      // Digits rarely change — always cache unless missing
-      if (await writeClip(fp, text, pack.lang, false, voice)) written++;
+      if (forcePack && existsSync(fp)) {
+        try {
+          await unlink(fp);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (await writeClip(fp, text, pack.lang, forcePack, voice)) written++;
       else skipped++;
     } catch (e) {
       if (voice) throw e;

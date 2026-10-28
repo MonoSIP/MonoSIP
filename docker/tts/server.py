@@ -127,11 +127,13 @@ def length_to_edge_rate(length_scale: float) -> str:
     return f"{pct:+d}%"
 
 
-async def synthesize_edge_async(text: str, lang: str, length_scale: float) -> tuple[bytes, str]:
+async def synthesize_edge_async(
+    text: str, lang: str, length_scale: float, voice: str | None = None
+) -> tuple[bytes, str]:
     import edge_tts
 
     key = lang_key(lang)
-    voice = EDGE_VOICES.get(key) or EDGE_VOICES["tr" if key.startswith("tr") else "en"]
+    voice = voice or EDGE_VOICES.get(key) or EDGE_VOICES["tr" if key.startswith("tr") else "en"]
     rate = length_to_edge_rate(length_scale)
     communicate = edge_tts.Communicate(text, voice, rate=rate)
     buf = io.BytesIO()
@@ -144,8 +146,10 @@ async def synthesize_edge_async(text: str, lang: str, length_scale: float) -> tu
     return mp3_to_wav_8k(mp3), voice
 
 
-def synthesize_edge(text: str, lang: str, length_scale: float) -> tuple[bytes, str]:
-    return asyncio.run(synthesize_edge_async(text, lang, length_scale))
+def synthesize_edge(
+    text: str, lang: str, length_scale: float, voice: str | None = None
+) -> tuple[bytes, str]:
+    return asyncio.run(synthesize_edge_async(text, lang, length_scale, voice))
 
 
 def ema_available() -> bool:
@@ -183,12 +187,17 @@ def synthesize_ema(text: str, length_scale: float) -> tuple[bytes, str]:
 
 
 def synthesize_wav(
-    text: str, lang: str, length_scale: float = 1.05, engine: str = ""
+    text: str,
+    lang: str,
+    length_scale: float = 1.05,
+    engine: str = "",
+    voice: str | None = None,
 ) -> tuple[bytes, str, str]:
     """Returns (wav8k, engine_name, voice_id).
 
     `engine` (per request) overrides the server default: edge | ema.
     EMA is Turkish-only; English has no offline engine.
+    An explicit Edge voice (male/female) is never replaced with EMA.
     """
     text = text.strip()
     want = (engine or ENGINE or "auto").strip().lower()
@@ -201,19 +210,20 @@ def synthesize_wav(
     if want == "ema":
         if not is_tr:
             raise RuntimeError("EMA Lightning supports Turkish only")
-        wav, voice = synthesize_ema(text, length_scale)
-        return wav, "ema", voice
+        wav, used = synthesize_ema(text, length_scale)
+        return wav, "ema", used
     if want == "kokoro":
         # Removed engine: older flows/settings may still name it — serve Edge.
         want = "edge"
     if want == "edge":
-        wav, voice = synthesize_edge(text, lang, length_scale)
-        return wav, "edge", voice
+        wav, used = synthesize_edge(text, lang, length_scale, voice)
+        return wav, "edge", used
 
     # auto: Edge Neural (online) → EMA (TR) offline neural.
+    # A named Edge voice must not take this path; the caller set engine=edge.
     try:
-        wav, voice = synthesize_edge(text, lang, length_scale)
-        return wav, "edge", voice
+        wav, used = synthesize_edge(text, lang, length_scale, voice)
+        return wav, "edge", used
     except Exception as e:  # noqa: BLE001
         log.warning("edge-tts failed (%s); trying offline engines", e)
 
@@ -308,26 +318,28 @@ def synthesize():
         engine_req = "ema"
         voice_override = ""
     # "kokoro" (removed engine) still arrives from older flows: plain Edge voice.
-    if voice_override.lower() == "kokoro" or gender == "kokoro":
-        engine_req = "edge" if engine_req == "kokoro" else engine_req
+    elif voice_override.lower() == "kokoro" or gender == "kokoro":
+        engine_req = "edge"
         voice_override = ""
         gender = "female"
-    if not voice_override and gender in ("male", "erkek", "m"):
+    # Male/female are Edge Neural voices. Do not let a server default of EMA
+    # speak them, and do not rewrite the process-wide voice map.
+    elif gender in ("male", "erkek", "m", "female", "kadin", "kadın") or voice_override:
+        engine_req = "edge"
         key = lang_key(str(lang))
-        voice_override = EDGE_VOICES_MALE.get(key) or EDGE_VOICES_MALE.get(
-            key.split("-")[0], EDGE_VOICES_MALE["en"]
-        )
-    if voice_override and voice_override.startswith("tr-"):
-        EDGE_VOICES["tr"] = voice_override
-        EDGE_VOICES["tr-TR"] = voice_override
-        EDGE_VOICES["tr_tr"] = voice_override
-    if voice_override and voice_override.startswith("en-"):
-        EDGE_VOICES["en"] = voice_override
-        EDGE_VOICES["en-US"] = voice_override
-        EDGE_VOICES["en_us"] = voice_override
+        if gender in ("male", "erkek", "m") and not voice_override.lower().endswith("neural"):
+            voice_override = EDGE_VOICES_MALE.get(key) or EDGE_VOICES_MALE.get(
+                key.split("-")[0], EDGE_VOICES_MALE["en"]
+            )
+        elif not voice_override:
+            voice_override = EDGE_VOICES.get(key) or EDGE_VOICES["tr" if key.startswith("tr") else "en"]
     try:
         wav, engine, voice = synthesize_wav(
-            text, str(lang), length_scale=length_scale, engine=engine_req
+            text,
+            str(lang),
+            length_scale=length_scale,
+            engine=engine_req,
+            voice=voice_override or None,
         )
     except FileNotFoundError as e:
         return jsonify({"error": str(e)}), 503

@@ -90,24 +90,37 @@ export async function synthesizeSpeech(
   // inside the TTS service and then fall through to espeak.
   const lang: TtsLanguage = isEmaVoice(g) ? "tr" : language;
   let voice: string | undefined;
+  // Male and female are Edge voices. Sending the engine stops a TTS service
+  // whose default is EMA from speaking those requests with EMA.
+  let engine: "edge" | "ema" | undefined;
   if (isEmaVoice(g)) {
     voice = "ema-lightning";
+    engine = "ema";
   } else if (g === "male" || g === "erkek") {
     voice = lang === "tr" ? "tr-TR-AhmetNeural" : "en-US-GuyNeural";
+    engine = "edge";
   } else if (g === "female" || g === "kadin" || g === "kadın") {
     voice = lang === "tr" ? "tr-TR-EmelNeural" : "en-US-JennyNeural";
+    engine = "edge";
   } else if (genderOrVoice.includes("-")) {
     voice = genderOrVoice;
+    engine = isEmaVoice(genderOrVoice) ? "ema" : "edge";
   }
   if (config.ttsUrl) {
     try {
       const res = await fetch(`${config.ttsUrl}/synthesize`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, language: lang, lengthScale, voice, gender: g }),
+        body: JSON.stringify({ text, language: lang, lengthScale, voice, gender: g, engine }),
         signal: AbortSignal.timeout(60_000),
       });
-      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      if (res.ok) {
+        const used = (res.headers.get("x-tts-voice") || "").toLowerCase();
+        if (engine === "edge" && isEmaVoice(used)) {
+          throw new Error(`TTS returned ${used} for ${g}`);
+        }
+        return Buffer.from(await res.arrayBuffer());
+      }
       const err = (await res.json().catch(() => ({}))) as { error?: string };
       console.warn("[tts] remote failed:", err.error ?? res.status);
       if (isFailClosedVoice(g)) {
