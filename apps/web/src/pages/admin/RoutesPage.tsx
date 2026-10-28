@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Inbound = {
@@ -33,12 +33,14 @@ export function RoutesPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [editInboundId, setEditInboundId] = useState<string | null>(null);
+  const [inboundOpen, setInboundOpen] = useState(false);
   const [did, setDid] = useState("default");
   const [callerPattern, setCallerPattern] = useState("");
   const [destType, setDestType] = useState("flow");
   const [destId, setDestId] = useState("");
   const [priority, setPriority] = useState(100);
   const [editOutboundId, setEditOutboundId] = useState<string | null>(null);
+  const [outboundOpen, setOutboundOpen] = useState(false);
   const [obName, setObName] = useState("");
   const [obPattern, setObPattern] = useState("_X.");
   const [obTrunk, setObTrunk] = useState("");
@@ -65,6 +67,12 @@ export function RoutesPage() {
     setDestType("flow");
     setDestId("");
     setPriority(100);
+    setInboundOpen(false);
+  }
+
+  function openInbound() {
+    resetInbound();
+    setInboundOpen(true);
   }
 
   function resetOutbound() {
@@ -74,6 +82,12 @@ export function RoutesPage() {
     setObTrunk("");
     setObPerm("localFixed");
     setObEnabled(true);
+    setOutboundOpen(false);
+  }
+
+  function openOutbound() {
+    resetOutbound();
+    setOutboundOpen(true);
   }
 
   function loadInbound(r: Inbound) {
@@ -83,6 +97,7 @@ export function RoutesPage() {
     setDestType(r.destType);
     setDestId(r.destId ?? "");
     setPriority(r.priority);
+    setInboundOpen(true);
   }
 
   function loadOutbound(r: Outbound) {
@@ -92,6 +107,7 @@ export function RoutesPage() {
     setObTrunk(r.trunkIds[0] ?? "");
     setObPerm(r.requiredPermission);
     setObEnabled(r.enabled);
+    setOutboundOpen(true);
   }
 
   const saveInbound = useMutation({
@@ -143,7 +159,17 @@ export function RoutesPage() {
   return (
     <div className="space-y-8">
       <PageHeader icon={Route} title={t("routes.title")} tone="cyan" description={tr("Inbound DIDs, outbound patterns")} />
-      <SectionCard title={t("routes.inbound")} icon={Signpost} tone="cyan">
+      <SectionCard
+        title={t("routes.inbound")}
+        icon={Signpost}
+        tone="cyan"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={openInbound}>
+            {t("common.create")}
+          </Button>
+        }
+      >
         <table className="table">
           <thead>
             <tr>
@@ -182,8 +208,17 @@ export function RoutesPage() {
             ))}
           </tbody>
         </table>
+      </SectionCard>
+      <Modal
+        open={inboundOpen}
+        onOpenChange={(next) => {
+          if (!next) resetInbound();
+        }}
+        title={editInboundId ? t("common.edit", { defaultValue: "Edit" }) : t("routes.inbound")}
+        maxWidth="44rem"
+      >
         <form
-          className="mt-3 grid gap-2 sm:grid-cols-6 sm:items-end"
+          className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             saveInbound.mutate();
@@ -222,8 +257,18 @@ export function RoutesPage() {
             ) : null}
           </div>
         </form>
-      </SectionCard>
-      <SectionCard title={t("routes.outbound")} icon={Route} tone="blue">
+      </Modal>
+      <SectionCard
+        title={t("routes.outbound")}
+        icon={Route}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={openOutbound}>
+            {t("common.create")}
+          </Button>
+        }
+      >
         <table className="table">
           <thead>
             <tr>
@@ -268,8 +313,17 @@ export function RoutesPage() {
             )}
           </tbody>
         </table>
+      </SectionCard>
+      <Modal
+        open={outboundOpen}
+        onOpenChange={(next) => {
+          if (!next) resetOutbound();
+        }}
+        title={editOutboundId ? t("common.edit", { defaultValue: "Edit" }) : t("routes.outbound")}
+        maxWidth="44rem"
+      >
         <form
-          className="mt-3 grid gap-2 sm:grid-cols-6 sm:items-end"
+          className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             saveOutbound.mutate();
@@ -317,7 +371,7 @@ export function RoutesPage() {
             ) : null}
           </div>
         </form>
-      </SectionCard>
+      </Modal>
       <SectionCard title={t("routes.blacklist")} icon={Ban} tone="coral">
         <p className="mb-3 text-sm text-[var(--text-muted)]">{t("routes.blacklistMoved")}</p>
         <Button asChild variant="solid">

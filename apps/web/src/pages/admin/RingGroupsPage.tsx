@@ -1,10 +1,10 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { BellRing, Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
+import { Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -25,6 +25,7 @@ export function RingGroupsPage() {
   const [strategy, setStrategy] = useState("ringall");
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [editId, setEditId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ["ring-groups"],
@@ -61,9 +62,13 @@ export function RingGroupsPage() {
     setNumber("");
     setStrategy("ringall");
     setMemberIds([]);
+    setFormOpen(false);
   }
 
-  const formRef = useRef<HTMLDivElement>(null);
+  function openCreate() {
+    reset();
+    setFormOpen(true);
+  }
 
   function startEdit(g: Group) {
     setEditId(g.id);
@@ -71,7 +76,7 @@ export function RingGroupsPage() {
     setNumber(g.number);
     setStrategy(g.strategy);
     setMemberIds(g.memberIds ?? []);
-    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    setFormOpen(true);
   }
 
   function toggle(id: string) {
@@ -86,7 +91,17 @@ export function RingGroupsPage() {
         tone="cyan"
         description={tr("Ring together or in order")}
       />
-      <SectionCard title={tr("Ring groups")} icon={List} tone="blue" flush>
+      <SectionCard
+        title={tr("Ring groups")}
+        icon={List}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={openCreate}>
+            {t("common.create")}
+          </Button>
+        }
+      >
         <table className="table">
             <thead>
               <tr>
@@ -124,11 +139,12 @@ export function RingGroupsPage() {
             </tbody>
           </table>
       </SectionCard>
-      <div ref={formRef}>
-      <SectionCard
-        title={editId ? t("common.save") : t("common.create")}
-        icon={BellRing}
-        tone="cyan"
+      <Modal
+        open={formOpen}
+        onOpenChange={(next) => {
+          if (!next) reset();
+        }}
+        title={editId ? t("common.edit", { defaultValue: "Edit" }) : t("common.create")}
       >
         <form
           className="space-y-3"
@@ -190,8 +206,7 @@ export function RingGroupsPage() {
             )}
           </div>
         </form>
-      </SectionCard>
-      </div>
+      </Modal>
     </div>
   );
 }

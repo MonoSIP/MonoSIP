@@ -264,6 +264,9 @@ export function IntegrationsPage() {
   const [wOrigins, setWOrigins] = useState("");
   const [wCallback, setWCallback] = useState(false);
   const [wPrefixes, setWPrefixes] = useState("05");
+  const [hookOpen, setHookOpen] = useState(false);
+  const [widgetOpen, setWidgetOpen] = useState(false);
+  const [widgetView, setWidgetView] = useState<Widget | null>(null);
 
   const webhooks = useQuery({
     queryKey: ["webhooks"],
@@ -300,6 +303,7 @@ export function IntegrationsPage() {
       }),
     onSuccess: (row) => {
       toast.success(tr("Widget {{v0}} created", { v0: row.publicKey }));
+      setWidgetOpen(false);
       void qc.invalidateQueries({ queryKey: ["widgets"] });
     },
     onError: (e) => toast.error((e as Error).message),
@@ -312,7 +316,10 @@ export function IntegrationsPage() {
         events: ["call.ended", "call.missed"],
         active: true,
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["webhooks"] }),
+    onSuccess: () => {
+      setHookOpen(false);
+      void qc.invalidateQueries({ queryKey: ["webhooks"] });
+    },
   });
 
   return (
@@ -323,55 +330,73 @@ export function IntegrationsPage() {
         tone="blue"
         description={tr("Webhooks, API keys, widgets")}
       />
-      <SectionCard title={tr("Webhooks")} icon={Webhook} tone="coral">
-        <ul className="mb-4 space-y-2">
-          {webhooks.data?.map((w) => (
-            <li
-              key={w.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm"
-            >
-              <span className="truncate">{w.url}</span>
-              <span className="flex shrink-0 items-center gap-1">
-                <Button
-                  type="button"
-                  onClick={() =>
-                    void api
-                      .post<{ ok: boolean; status?: number; error?: string }>(
-                        `/api/v1/admin/webhooks/${w.id}/test`,
-                      )
-                      .then((r) =>
-                        toast[r.ok ? "success" : "error"](
-                          r.ok ? tr("Test OK ({{status}})", { status: r.status ?? "" }) : r.error ?? tr("Test failed"),
-                        ),
-                      )
-                  }
-                >
-                  {tr("Test")}
-                </Button>
-                <IconBtn
-                  icon={Trash2}
-                  label={t("common.delete")}
-                  danger
-                  onClick={() =>
-                    void api.delete(`/api/v1/admin/webhooks/${w.id}`).then(() => {
-                      toast.success(tr("Webhook deleted"));
-                      void qc.invalidateQueries({ queryKey: ["webhooks"] });
-                    })
-                  }
-                />
-              </span>
-            </li>
-          ))}
-        </ul>
+      <SectionCard
+        title={tr("Webhooks")}
+        icon={Webhook}
+        tone="coral"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setHookOpen(true)}>
+            {t("common.create")}
+          </Button>
+        }
+      >
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="col-grow">{tr("Webhook URL")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {webhooks.data?.map((w) => (
+              <tr key={w.id}>
+                <td className="col-grow truncate">{w.url}</td>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        void api
+                          .post<{ ok: boolean; status?: number; error?: string }>(
+                            `/api/v1/admin/webhooks/${w.id}/test`,
+                          )
+                          .then((r) =>
+                            toast[r.ok ? "success" : "error"](
+                              r.ok ? tr("Test OK ({{status}})", { status: r.status ?? "" }) : r.error ?? tr("Test failed"),
+                            ),
+                          )
+                      }
+                    >
+                      {tr("Test")}
+                    </Button>
+                    <IconBtn
+                      icon={Trash2}
+                      label={t("common.delete")}
+                      danger
+                      onClick={() =>
+                        void api.delete(`/api/v1/admin/webhooks/${w.id}`).then(() => {
+                          toast.success(tr("Webhook deleted"));
+                          void qc.invalidateQueries({ queryKey: ["webhooks"] });
+                        })
+                      }
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+      <Modal open={hookOpen} onOpenChange={setHookOpen} title={tr("Webhooks")}>
         <form
-          className="toolbar"
+          className="grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             addHook.mutate();
           }}
         >
           <TextField
-            className="min-w-[16rem] flex-1"
             label={tr("Webhook URL")}
             icon={Webhook}
             value={url}
@@ -381,50 +406,60 @@ export function IntegrationsPage() {
             {t("common.create")}
           </Button>
         </form>
-      </SectionCard>
-      <SectionCard title={tr("Website call widgets")} icon={Globe} tone="cyan">
-        <p className="text-sm text-[var(--text-muted)]">
+      </Modal>
+      <SectionCard
+        title={tr("Website call widgets")}
+        icon={Globe}
+        tone="cyan"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setWidgetOpen(true)}>
+            {tr("Create widget")}
+          </Button>
+        }
+      >
+        <p className="px-4 pb-3 text-sm text-[var(--text-muted)]">
           {tr("Embed a “Call us” button on any site. Visitors talk over WebRTC or leave a number for call-back.")}
         </p>
-        <ul className="mb-4 space-y-3">
-          {(widgets.data ?? []).map((w) => {
-            const embed = `<script src="${window.location.origin}/widget.js" data-widget="${w.publicKey}" async></script>`;
-            return (
-              <li key={w.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-soft)]/40 p-3 text-sm">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <span>
-                    <strong>{w.name}</strong> {tr("· DID")} {w.number} ·{" "}
-                    <span className="font-mono text-[var(--text-muted)]">{w.publicKey}</span>
-                    {!w.enabled ? " (disabled)" : ""}
-                  </span>
-                  <IconBtn
-                    icon={Trash2}
-                    label={tr("Delete")}
-                    danger
-                    onClick={() =>
-                      void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
-                        toast.message(tr("Widget deleted"));
-                        void qc.invalidateQueries({ queryKey: ["widgets"] });
-                      })
-                    }
-                  />
-                </div>
-                <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">{embed}</code>
-                <IconBtn
-                  className="mt-2"
-                  icon={Copy}
-                  label={tr("Copy embed")}
-                  onClick={() => {
-                    void navigator.clipboard.writeText(embed);
-                    toast.success(tr("Embed code copied"));
-                  }}
-                />
-              </li>
-            );
-          })}
-        </ul>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>{tr("Name")}</th>
+              <th>{tr("Virtual DID")}</th>
+              <th className="col-grow">{tr("Key")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(widgets.data ?? []).map((w) => (
+              <tr key={w.id}>
+                <td>{w.name}{!w.enabled ? " (disabled)" : ""}</td>
+                <td className="font-mono">{w.number}</td>
+                <td className="col-grow font-mono text-xs">{w.publicKey}</td>
+                <td className="col-actions">
+                  <div className="btn-icon-row">
+                    <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => setWidgetView(w)} />
+                    <IconBtn
+                      icon={Trash2}
+                      label={tr("Delete")}
+                      danger
+                      onClick={() =>
+                        void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
+                          toast.message(tr("Widget deleted"));
+                          void qc.invalidateQueries({ queryKey: ["widgets"] });
+                        })
+                      }
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+      <Modal open={widgetOpen} onOpenChange={setWidgetOpen} title={tr("Create widget")} maxWidth="44rem">
         <form
-          className="grid gap-2 sm:grid-cols-2"
+          className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             addWidget.mutate();
@@ -466,7 +501,28 @@ export function IntegrationsPage() {
             {tr("Create widget")}
           </Button>
         </form>
-      </SectionCard>
+      </Modal>
+      {widgetView ? (
+        <Modal open onOpenChange={(next) => { if (!next) setWidgetView(null); }} title={widgetView.name} maxWidth="44rem">
+          <p className="mb-2 text-sm text-[var(--text-muted)]">
+            {tr("· DID")} {widgetView.number}
+          </p>
+          <code className="block break-all rounded-lg bg-[var(--bg)] p-2 font-mono text-xs">
+            {`<script src="${window.location.origin}/widget.js" data-widget="${widgetView.publicKey}" async></script>`}
+          </code>
+          <IconBtn
+            className="mt-2"
+            icon={Copy}
+            label={tr("Copy embed")}
+            onClick={() => {
+              void navigator.clipboard.writeText(
+                `<script src="${window.location.origin}/widget.js" data-widget="${widgetView.publicKey}" async></script>`,
+              );
+              toast.success(tr("Embed code copied"));
+            }}
+          />
+        </Modal>
+      ) : null}
       <SectionCard
         title={tr("API keys")}
         icon={KeyRound}

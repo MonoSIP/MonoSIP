@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { CalendarClock, CalendarDays, Plus } from "lucide-react";
+import { CalendarClock, CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, ConfirmDialog, PageHeader, SectionCard, SelectInput, TextField } from "../../components/ui";
+import { Button, Checkbox, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, SelectInput, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Range = {
@@ -107,7 +107,9 @@ export function SchedulesPage() {
   const [holName, setHolName] = useState("");
   const [holHalf, setHolHalf] = useState(false);
   const [newName, setNewName] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ["schedules"],
@@ -118,7 +120,7 @@ export function SchedulesPage() {
     queryFn: () => api.get<Holiday[]>("/api/v1/admin/holidays"),
   });
 
-  const selected = list.data?.find((s) => s.id === selectedId) ?? list.data?.[0] ?? null;
+  const selected = list.data?.find((s) => s.id === selectedId) ?? null;
 
   useEffect(() => {
     if (!selected) return;
@@ -203,6 +205,7 @@ export function SchedulesPage() {
     onSuccess: (row) => {
       toast.success(t("common.created", { defaultValue: "Created" }));
       setNewName("");
+      setCreateOpen(false);
       setSelectedId(row.id);
       void qc.invalidateQueries({ queryKey: ["schedules"] });
     },
@@ -257,32 +260,56 @@ export function SchedulesPage() {
         description={tr("Hours, overrides, holidays")}
       />
 
-      {!list.data?.length ? (
-        <p className="text-[var(--text-muted)]">
-          {t("schedules.empty", { defaultValue: "No schedules yet — create one below to define open hours." })}
-        </p>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-[var(--text-muted)]">{tr("Schedules")}</span>
-          {list.data.map((s) => (
-            <Button
-              key={s.id}
-              type="button"
-              variant={selected?.id === s.id ? "solid" : "soft"}
-              onClick={() => setSelectedId(s.id)}
-            >
-              {s.name}
-            </Button>
-          ))}
-        </div>
-      )}
+      <SectionCard
+        title={tr("Schedules")}
+        icon={CalendarDays}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setCreateOpen(true)}>
+            {t("common.create")}
+          </Button>
+        }
+      >
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="col-grow">{t("schedules.name", { defaultValue: "Name" })}</th>
+              <th>{tr("Hours")}</th>
+              <th className="col-actions">{t("common.actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(list.data ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-[var(--text-muted)]">
+                  {t("schedules.empty", { defaultValue: "No schedules yet — create one below to define open hours." })}
+                </td>
+              </tr>
+            ) : (
+              list.data?.map((s) => (
+                <tr key={s.id}>
+                  <td className="col-grow">{s.name}</td>
+                  <td>{s.ranges?.length ?? 0}</td>
+                  <td className="col-actions">
+                    <div className="btn-icon-row">
+                      <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => setSelectedId(s.id)} />
+                      <IconBtn icon={Trash2} label={t("common.delete")} danger onClick={() => { setDeleteId(s.id); setDeleteOpen(true); }} />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </SectionCard>
 
-      <SectionCard title={tr("Create schedule")} icon={Plus} tone="cyan">
-        <p className="text-sm text-[var(--text-muted)]">
+      <Modal open={createOpen} onOpenChange={setCreateOpen} title={tr("Create schedule")}>
+        <p className="mb-3 text-sm text-[var(--text-muted)]">
           {tr("Name a schedule to get a weekday open-hours template. Pick it below to edit ranges, holidays, and destinations.")}
         </p>
         <form
-          className="toolbar toolbar-wrap"
+          className="grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
@@ -300,10 +327,18 @@ export function SchedulesPage() {
             {t("common.create")}
           </Button>
         </form>
-      </SectionCard>
+      </Modal>
 
       {selected && (
-        <SectionCard title={tr("Schedule details")} icon={CalendarDays} tone="blue" className="space-y-6">
+        <Modal
+          open
+          onOpenChange={(next) => {
+            if (!next) setSelectedId(null);
+          }}
+          title={tr("Schedule details")}
+          maxWidth="52rem"
+        >
+        <div className="space-y-6">
           <ScheduleNowStatus scheduleId={selected.id} />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -564,23 +599,27 @@ export function SchedulesPage() {
             <Button variant="solid" type="button" onClick={() => save.mutate()} disabled={save.isPending}>
               {t("common.save")}
             </Button>
-            <Button variant="solid" color="red" type="button" onClick={() => setDeleteOpen(true)}>
+            <Button variant="solid" color="red" type="button" onClick={() => { setDeleteId(selected.id); setDeleteOpen(true); }}>
               {t("common.delete")}
             </Button>
           </div>
-        </SectionCard>
+        </div>
+        </Modal>
       )}
-      {selected ? (
-        <ConfirmDialog
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          title={t("common.delete")}
-          description={t("schedules.confirmDelete", { defaultValue: "Delete this schedule?" })}
-          confirmLabel={t("common.delete")}
-          cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
-          onConfirm={() => remove.mutate(selected.id)}
-        />
-      ) : null}
+      <ConfirmDialog
+        open={deleteOpen && !!deleteId}
+        onOpenChange={(open) => {
+          setDeleteOpen(open);
+          if (!open) setDeleteId(null);
+        }}
+        title={t("common.delete")}
+        description={t("schedules.confirmDelete", { defaultValue: "Delete this schedule?" })}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
+        onConfirm={() => {
+          if (deleteId) remove.mutate(deleteId);
+        }}
+      />
     </div>
   );
 }

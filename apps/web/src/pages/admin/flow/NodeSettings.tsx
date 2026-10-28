@@ -383,11 +383,12 @@ function SpeechSettings({
             />
           </Field>
           <Field label={tr("Voice")} hint={tr("System default = Admin → Settings → IVR TTS")}>
-            <SegmentedSelect
+            <SelectInput
               aria-label={tr("Voice")}
+              className="w-full"
               value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
-              onChange={(v) => patch({ gender: v })}
+              onValueChange={(v) => patch({ gender: v })}
             />
           </Field>
         </div>
@@ -433,11 +434,12 @@ function MenuSettings({
             />
           </Field>
           <Field label={tr("Voice")} hint={tr("System default = Admin → Settings → IVR TTS")}>
-            <SegmentedSelect
+            <SelectInput
               aria-label={tr("Voice")}
+              className="w-full"
               value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
-              onChange={(v) => patch({ gender: v })}
+              onValueChange={(v) => patch({ gender: v })}
             />
           </Field>
         </div>
@@ -562,11 +564,12 @@ function GetKeySettings({
             />
           </Field>
           <Field label={tr("Voice")} hint={tr("System default = Admin → Settings → IVR TTS")}>
-            <SegmentedSelect
+            <SelectInput
               aria-label={tr("Voice")}
+              className="w-full"
               value={String(data.gender ?? data.voice ?? "default")}
               options={voiceOptions(String(data.language ?? "en"))}
-              onChange={(v) => patch({ gender: v })}
+              onValueChange={(v) => patch({ gender: v })}
             />
           </Field>
         </div>

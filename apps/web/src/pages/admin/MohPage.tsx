@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music, Pause, Play, Plus, Trash2, Upload } from "lucide-react";
+import { Music, Pause, Pencil, Play, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, ConfirmDialog, IconBtn, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { Button, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type MohClass = { id: string; name: string; files: unknown };
@@ -11,6 +11,8 @@ type MohClass = { id: string; name: string; files: unknown };
 export function MohPage() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [pendingClass, setPendingClass] = useState<MohClass | null>(null);
   const [playing, setPlaying] = useState<{ id: string; file: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,6 +30,7 @@ export function MohPage() {
     onSuccess: () => {
       toast.success(tr("MOH class created"));
       setName("");
+      setFormOpen(false);
       void qc.invalidateQueries({ queryKey: ["moh"] });
     },
     onError: (e) => toast.error((e as Error).message),
@@ -171,22 +174,68 @@ export function MohPage() {
         tone="blue"
         description={tr("Hold music files")}
       />
-      <div className="space-y-4">
-        {(list.data ?? []).length === 0 ? (
-          <SectionCard title={tr("Classes")} icon={Music} tone="blue">
-            <p className="text-[var(--text-muted)]">{tr("No MOH classes yet.")}</p>
-          </SectionCard>
-        ) : (
-          list.data?.map((m) => {
+      <SectionCard
+        title={tr("Classes")}
+        icon={Music}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setFormOpen(true)}>
+            {tr("New MOH class")}
+          </Button>
+        }
+      >
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="col-grow">{tr("Class name")}</th>
+              <th>{tr("File")}</th>
+              <th className="col-actions">{tr("Actions")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(list.data ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-[var(--text-muted)]">{tr("No MOH classes yet.")}</td>
+              </tr>
+            ) : (
+              list.data?.map((m) => {
+                const files = Array.isArray(m.files) ? (m.files as string[]) : [];
+                return (
+                  <tr key={m.id}>
+                    <td className="col-grow">{m.name}</td>
+                    <td>{files.length}</td>
+                    <td className="col-actions">
+                      <div className="btn-icon-row">
+                        <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => setOpenId(m.id)} />
+                        <IconBtn
+                          icon={Trash2}
+                          label={tr("Delete class")}
+                          danger
+                          disabled={removeClass.isPending}
+                          onClick={() => setPendingClass(m)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </SectionCard>
+      {list.data?.filter((m) => m.id === openId).map((m) => {
             const files = Array.isArray(m.files) ? (m.files as string[]) : [];
             return (
-              <SectionCard
+              <Modal
                 key={m.id}
+                open
+                onOpenChange={(next) => {
+                  if (!next) setOpenId(null);
+                }}
                 title={m.name}
-                icon={Music}
-                tone="blue"
-                flush
-                actions={
+                maxWidth="44rem"
+                headerAside={
                   <>
                     <IconBtn
                       icon={Trash2}
@@ -258,14 +307,12 @@ export function MohPage() {
                       </tbody>
                     </table>
                 )}
-              </SectionCard>
+              </Modal>
             );
-          })
-        )}
-      </div>
-      <SectionCard title={tr("New MOH class")} icon={Plus} tone="blue">
+          })}
+      <Modal open={formOpen} onOpenChange={setFormOpen} title={tr("New MOH class")}>
         <form
-          className="toolbar"
+          className="grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
@@ -289,7 +336,7 @@ export function MohPage() {
             </span>
           )}
         </form>
-      </SectionCard>
+      </Modal>
       <ConfirmDialog
         open={pendingClass != null}
         onOpenChange={(open) => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DIAL_COUNTRIES } from "../../lib/dialCountries";
-import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type DialSettings = {
@@ -145,12 +145,12 @@ export function TrunksPage() {
   const qc = useQueryClient();
   const [form, setForm] = useState<TrunkForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [allowedCountries, setAllowedCountries] = useState<string[]>(["TR"]);
   const [blockedCountries, setBlockedCountries] = useState<string[]>([]);
   const [allowExtra, setAllowExtra] = useState("");
   const [blockExtra, setBlockExtra] = useState("");
   const [allowAllIntl, setAllowAllIntl] = useState(false);
-  const formRef = useRef<HTMLDivElement>(null);
 
   const list = useQuery({
     queryKey: ["trunks"],
@@ -206,6 +206,7 @@ export function TrunksPage() {
       toast.success(editingId ? t("common.save") : t("trunks.add"));
       setForm(emptyForm());
       setEditingId(null);
+      setFormOpen(false);
       void qc.invalidateQueries({ queryKey: ["trunks"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -214,12 +215,19 @@ export function TrunksPage() {
   function startEdit(tr: Trunk) {
     setEditingId(tr.id);
     setForm(trunkToForm(tr));
-    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    setFormOpen(true);
+  }
+
+  function openCreate() {
+    setEditingId(null);
+    setForm(emptyForm());
+    setFormOpen(true);
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(emptyForm());
+    setFormOpen(false);
   }
 
   async function toggle(tr: Trunk) {
@@ -251,7 +259,17 @@ export function TrunksPage() {
         description={t("trunks.blurb")}
       />
 
-      <SectionCard title={tr("Trunk list")} icon={Cable} tone="blue" flush>
+      <SectionCard
+        title={tr("Trunk list")}
+        icon={Cable}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={openCreate}>
+            {t("trunks.addProvider")}
+          </Button>
+        }
+      >
         <table className="table">
           <thead>
             <tr>
@@ -315,18 +333,13 @@ export function TrunksPage() {
         </table>
       </SectionCard>
 
-      <div ref={formRef}>
-      <SectionCard
+      <Modal
+        open={formOpen}
+        onOpenChange={(next) => {
+          if (!next) cancelEdit();
+        }}
         title={editingId ? t("trunks.edit") : t("trunks.addProvider")}
-        icon={Plus}
-        tone="cyan"
-        actions={
-          editingId ? (
-            <Button type="button" onClick={cancelEdit}>
-              {t("common.cancel")}
-            </Button>
-          ) : null
-        }
+        maxWidth="52rem"
       >
         <form
           className="space-y-4"
@@ -477,8 +490,7 @@ export function TrunksPage() {
 </Button>
         </div>
         </form>
-      </SectionCard>
-      </div>
+      </Modal>
 
       {didsByNote.length ? (
         <p className="text-sm text-[var(--text-muted)]">

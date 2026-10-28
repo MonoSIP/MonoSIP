@@ -599,7 +599,7 @@ export function Modal({
     <InTheme>
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
-        className={className}
+        className={`max-h-[90vh] overflow-y-auto ${className ?? ""}`}
         maxWidth={maxWidth}
         onEscapeKeyDown={(event) => {
           if (!dismissable) event.preventDefault();

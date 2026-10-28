@@ -1,11 +1,11 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Headphones, ListOrdered, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 import { SPEECH_VOICES, voiceOptions } from "./flow/nodeMeta";
 
@@ -61,7 +61,7 @@ export function QueuesPage() {
   const [mohId, setMohId] = useState<string>("");
   const [members, setMembers] = useState<Member[]>([]);
   const [editId, setEditId] = useState<string | null>(null);
-  const formRef = useRef<HTMLDivElement>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ["queues"],
@@ -152,6 +152,12 @@ export function QueuesPage() {
     setJoinDestId(null);
     setMohId("");
     setMembers([]);
+    setFormOpen(false);
+  }
+
+  function openCreate() {
+    resetForm();
+    setFormOpen(true);
   }
 
   function toggleMember(id: string) {
@@ -208,7 +214,7 @@ export function QueuesPage() {
         paused: m.paused,
       })),
     );
-    formRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    setFormOpen(true);
   }
 
   async function pauseMember(queueId: string, extensionId: string, paused: boolean) {
@@ -224,7 +230,18 @@ export function QueuesPage() {
         tone="blue"
         description={tr("Queues, agents, overflow")}
       />
-      <SectionCard title={tr("Queue list")} icon={ListOrdered} tone="blue" flush className="mb-6">
+      <SectionCard
+        title={tr("Queue list")}
+        icon={ListOrdered}
+        tone="blue"
+        flush
+        className="mb-6"
+        actions={
+          <Button type="button" variant="solid" onClick={openCreate}>
+            {t("common.create")}
+          </Button>
+        }
+      >
         <table className="table">
           <thead>
             <tr>
@@ -264,25 +281,28 @@ export function QueuesPage() {
                 </td>
                 <td>{q.callbackEnabled ? "on" : "off"}</td>
                 <td className="col-actions">
-                  <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(q)} />
-                  <IconBtn
-                    icon={Trash2}
-                    label={t("common.delete")}
-                    danger
-                    onClick={() => remove.mutate(q.id)}
-                  />
+                  <span className="btn-icon-row">
+                    <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => startEdit(q)} />
+                    <IconBtn
+                      icon={Trash2}
+                      label={t("common.delete")}
+                      danger
+                      onClick={() => remove.mutate(q.id)}
+                    />
+                  </span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </SectionCard>
-      <div ref={formRef}>
-      <SectionCard
+      <Modal
+        open={formOpen}
+        onOpenChange={(next) => {
+          if (!next) resetForm();
+        }}
         title={editId ? t("common.edit", { defaultValue: "Edit" }) : t("common.create")}
-        icon={Plus}
-        tone="cyan"
-        className="mb-6"
+        maxWidth="52rem"
       >
         <form
           className="space-y-3"
@@ -480,8 +500,7 @@ export function QueuesPage() {
           )}
         </div>
         </form>
-      </SectionCard>
-      </div>
+      </Modal>
     </div>
   );
 }

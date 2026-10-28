@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Ban, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
-import { Button, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 
 type BlacklistRow = {
   id: string;
@@ -19,6 +19,7 @@ export function BlacklistPage() {
   const [pattern, setPattern] = useState("");
   const [direction, setDirection] = useState<"inbound" | "outbound" | "both">("both");
   const [note, setNote] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
 
   const list = useQuery({
     queryKey: ["blacklist"],
@@ -36,6 +37,7 @@ export function BlacklistPage() {
       setPattern("");
       setNote("");
       setDirection("both");
+      setFormOpen(false);
       toast.success(t("common.save"));
       void qc.invalidateQueries({ queryKey: ["blacklist"] });
     },
@@ -51,7 +53,17 @@ export function BlacklistPage() {
         description={t("blacklist.blurb")}
       />
 
-      <SectionCard title={t("blacklist.list")} icon={Ban} tone="blue" flush>
+      <SectionCard
+        title={t("blacklist.list")}
+        icon={Ban}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setFormOpen(true)}>
+            {t("blacklist.add")}
+          </Button>
+        }
+      >
         <table className="table">
           <thead>
             <tr>
@@ -94,8 +106,12 @@ export function BlacklistPage() {
         </table>
       </SectionCard>
 
-      <SectionCard title={t("blacklist.add")} icon={Plus} tone="coral" className="space-y-3">
-        <p className="text-sm text-[var(--text-muted)]">{t("blacklist.patternHint")}</p>
+      <Modal
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        title={t("blacklist.add")}
+      >
+        <p className="mb-3 text-sm text-[var(--text-muted)]">{t("blacklist.patternHint")}</p>
         <form
           className="toolbar toolbar-wrap"
           onSubmit={(e) => {
@@ -133,7 +149,7 @@ export function BlacklistPage() {
             {t("common.add")}
           </Button>
         </form>
-      </SectionCard>
+      </Modal>
     </div>
   );
 }

@@ -139,9 +139,11 @@ describe("QueuesPage", () => {
     renderPage(<QueuesPage />);
 
     await screen.findByText("Sales");
-    await userEvent.type(screen.getByPlaceholderText("extensions.number"), "801");
-    await userEvent.type(screen.getByPlaceholderText("extensions.name"), "Support");
-    await userEvent.click(screen.getAllByRole("button", { name: "common.create" })[0]!);
+    await userEvent.click(screen.getByRole("button", { name: "common.create" }));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.type(within(dialog).getByPlaceholderText("extensions.number"), "801");
+    await userEvent.type(within(dialog).getByPlaceholderText("extensions.name"), "Support");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.create" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     const [path, payload] = apiPost.mock.calls[0] as [string, Record<string, unknown>];
@@ -224,11 +226,10 @@ describe("SchedulesPage", () => {
     renderPage(<SchedulesPage />);
 
     await screen.findByText("Business hours");
-    await userEvent.type(
-      screen.getByPlaceholderText("schedules.newName"),
-      "Night shift",
-    );
     await userEvent.click(screen.getAllByRole("button", { name: "common.create" })[0]!);
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.type(within(dialog).getByPlaceholderText("schedules.newName"), "Night shift");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.create" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     const [path, payload] = apiPost.mock.calls[0] as [string, Record<string, unknown>];
@@ -246,6 +247,8 @@ describe("SchedulesPage", () => {
 
     await screen.findByText("Business hours");
     await userEvent.click(screen.getAllByRole("button", { name: "common.create" })[0]!);
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.create" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     expect((apiPost.mock.calls[0]![1] as Record<string, unknown>).name).toBe(
@@ -390,9 +393,9 @@ describe("TrunksPage", () => {
     renderPage(<TrunksPage />);
     expect(await screen.findByRole("heading", { name: "trunks.title" })).toBeInTheDocument();
     expect(await screen.findByText("main")).toBeInTheDocument();
-    const listTitle = screen.getByRole("heading", { name: "Trunk list" });
-    const formTitle = screen.getByRole("heading", { name: "trunks.addProvider" });
-    expect(listTitle.compareDocumentPosition(formTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "trunks.addProvider" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "trunks.addProvider" }));
+    expect(await screen.findByRole("heading", { name: "trunks.addProvider" })).toBeInTheDocument();
   });
 
   it("posts a new trunk from the add form", async () => {
@@ -400,20 +403,22 @@ describe("TrunksPage", () => {
     renderPage(<TrunksPage />);
 
     await screen.findByText("main");
-    fireEvent.change(screen.getByPlaceholderText("Netgsm / Turkcell / Custom"), {
+    await userEvent.click(screen.getByRole("button", { name: "trunks.addProvider" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByPlaceholderText("Netgsm / Turkcell / Custom"), {
       target: { value: "Carrier" },
     });
-    fireEvent.change(screen.getByPlaceholderText("sip.provider.example"), {
+    fireEvent.change(within(dialog).getByPlaceholderText("sip.provider.example"), {
       target: { value: "sip.example.net" },
     });
-    fireEvent.change(document.querySelector('input[type="password"]') as HTMLInputElement, {
+    fireEvent.change(dialog.querySelector('input[type="password"]') as HTMLInputElement, {
       target: { value: "secret" },
     });
-    fireEvent.change(screen.getByPlaceholderText("+442045773102"), {
+    fireEvent.change(within(dialog).getByPlaceholderText("+442045773102"), {
       target: { value: "+442045773102" },
     });
     fireEvent.submit(
-      screen.getByRole("button", { name: "trunks.add" }).closest("form") as HTMLFormElement,
+      within(dialog).getByRole("button", { name: "trunks.add" }).closest("form") as HTMLFormElement,
     );
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
@@ -485,8 +490,9 @@ describe("IntegrationsPage", () => {
     renderPage(<IntegrationsPage />);
 
     await screen.findByText("https://x.test/hook");
-    const create = screen.getAllByRole("button", { name: "common.create" })[0]!;
-    await userEvent.click(create);
+    await userEvent.click(screen.getAllByRole("button", { name: "common.create" })[0]!);
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.create" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     expect(apiPost.mock.calls[0]![0]).toBe("/api/v1/admin/webhooks");
@@ -496,7 +502,7 @@ describe("IntegrationsPage", () => {
     apiDelete.mockResolvedValue({});
     renderPage(<IntegrationsPage />);
 
-    const row = (await screen.findByText("https://x.test/hook")).closest("li") as HTMLElement;
+    const row = (await screen.findByText("https://x.test/hook")).closest("tr") as HTMLElement;
     await userEvent.click(within(row).getByRole("button", { name: "common.delete" }));
 
     await waitFor(() => expect(apiDelete).toHaveBeenCalledWith("/api/v1/admin/webhooks/w1"));
@@ -525,9 +531,11 @@ describe("RingGroupsPage", () => {
     renderPage(<RingGroupsPage />);
 
     await screen.findByText("Sales ring");
-    await userEvent.type(screen.getByPlaceholderText("extensions.number"), "701");
-    await userEvent.type(screen.getByPlaceholderText("extensions.name"), "Support ring");
     await userEvent.click(screen.getByRole("button", { name: "common.create" }));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.type(within(dialog).getByPlaceholderText("extensions.number"), "701");
+    await userEvent.type(within(dialog).getByPlaceholderText("extensions.name"), "Support ring");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.create" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     const [path, payload] = apiPost.mock.calls[0] as [string, Record<string, unknown>];
@@ -564,6 +572,8 @@ describe("RoutesPage", () => {
       expect(apiGet.mock.calls.some(([p]) => String(p).includes("/routes/inbound"))).toBe(true),
     );
     await userEvent.click(screen.getAllByRole("button", { name: "common.create" })[0]!);
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: "common.create" }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
     expect(apiPost.mock.calls[0]![0]).toBe("/api/v1/admin/routes/inbound");
@@ -638,8 +648,10 @@ describe("PromptsPage audio upload", () => {
     const fetchMock = stubUploadFetch({ id: "p9" });
     renderPage(<PromptsPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "common.create" }));
+    const dialog = await screen.findByRole("dialog");
     // The visible picker is the one without the "hidden" class.
-    const input = document.querySelector(
+    const input = dialog.querySelector(
       'input[type="file"]:not(.hidden)',
     ) as HTMLInputElement;
     await userEvent.upload(input, wavFile());
@@ -666,9 +678,11 @@ describe("PromptsPage audio upload", () => {
     apiPost.mockResolvedValue({ id: "p9" });
     renderPage(<PromptsPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "common.create" }));
+    const dialog = await screen.findByRole("dialog");
     // Required empty inputs block a click-submit, same as the Trunks form.
-    await userEvent.type(screen.getByPlaceholderText("prompts.name"), "Test prompt");
-    const form = document.querySelector("form") as HTMLFormElement;
+    await userEvent.type(within(dialog).getByPlaceholderText("prompts.name"), "Test prompt");
+    const form = dialog.querySelector("form") as HTMLFormElement;
     fireEvent.submit(form);
 
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
@@ -723,6 +737,7 @@ describe("MohPage upload", () => {
     const fetchMock = stubUploadFetch({ file: "tone.wav", converted: false });
     renderPage(<MohPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     // The visible Upload button drives the row's hidden file input.
     await userEvent.click(await screen.findByRole("button", { name: "Upload" }));
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -741,6 +756,7 @@ describe("MohPage upload", () => {
     stubUploadFetch({ error: "conversion failed" }, false);
     renderPage(<MohPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     await userEvent.click(await screen.findByRole("button", { name: "Upload" }));
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     await userEvent.upload(input, wavFile());
@@ -772,6 +788,7 @@ describe("MohPage file management", () => {
   it("renders each stored file with Play and Delete controls", async () => {
     renderPage(<MohPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     expect(await screen.findByText("tone.wav")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Play" })).toBeInTheDocument();
     const row = screen.getByText("tone.wav").closest("tr") as HTMLElement;
@@ -783,6 +800,7 @@ describe("MohPage file management", () => {
     vi.stubGlobal("fetch", fetchMock);
     renderPage(<MohPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     await userEvent.click(await screen.findByRole("button", { name: "Play" }));
 
     // playFile streams the stored file with credentials. Playback itself is
@@ -798,6 +816,7 @@ describe("MohPage file management", () => {
     apiDelete.mockResolvedValue({});
     renderPage(<MohPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     const row = (await screen.findByText("tone.wav")).closest("tr") as HTMLElement;
     await userEvent.click(within(row).getByRole("button", { name: "Delete" }));
 
@@ -976,7 +995,7 @@ describe("SchedulesPage overrides and delete", () => {
   it("marks the active override mode as primary", async () => {
     renderPage(<SchedulesPage />);
 
-    // The first schedule is auto-selected, and its current mode is highlighted.
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     const auto = await screen.findByRole("button", { name: "schedules.auto" });
     expect(auto).toHaveClass("rt-variant-solid");
     expect(screen.getByRole("button", { name: "schedules.closed" })).not.toHaveClass(
@@ -988,6 +1007,7 @@ describe("SchedulesPage overrides and delete", () => {
     apiPut.mockResolvedValue({});
     renderPage(<SchedulesPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     await userEvent.click(await screen.findByRole("button", { name: "schedules.closed" }));
 
     await waitFor(() =>
@@ -1002,6 +1022,7 @@ describe("SchedulesPage overrides and delete", () => {
     apiPut.mockResolvedValue({});
     renderPage(<SchedulesPage />);
 
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     await userEvent.click(await screen.findByRole("button", { name: "schedules.auto" }));
 
     await waitFor(() =>

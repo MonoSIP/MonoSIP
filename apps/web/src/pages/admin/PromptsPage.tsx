@@ -69,6 +69,7 @@ export function PromptsPage() {
   const [pendingDelete, setPendingDelete] = useState<PromptRow | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -164,6 +165,7 @@ export function PromptsPage() {
       setTtsText("");
       setAudioFile(null);
       if (fileRef.current) fileRef.current.value = "";
+      setFormOpen(false);
       void qc.invalidateQueries({ queryKey: ["prompts"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -246,7 +248,17 @@ export function PromptsPage() {
         }}
       />
 
-      <SectionCard title={tr("All prompts")} icon={List} tone="blue" flush>
+      <SectionCard
+        title={tr("All prompts")}
+        icon={List}
+        tone="blue"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setFormOpen(true)}>
+            {t("common.create", { defaultValue: "Create prompt" })}
+          </Button>
+        }
+      >
         <table className="table">
             <thead>
               <tr>
@@ -336,7 +348,12 @@ export function PromptsPage() {
           </table>
       </SectionCard>
 
-      <SectionCard title={t("common.create", { defaultValue: "Create prompt" })} icon={AudioLines} tone="coral">
+      <Modal
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        title={t("common.create", { defaultValue: "Create prompt" })}
+        maxWidth="44rem"
+      >
         <form
           className="grid gap-3"
           onSubmit={(e) => {
@@ -438,7 +455,7 @@ export function PromptsPage() {
             </Button>
           </div>
         </form>
-      </SectionCard>
+      </Modal>
 
       {pendingDelete ? (
         <Modal

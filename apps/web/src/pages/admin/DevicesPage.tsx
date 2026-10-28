@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, IconBtn, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -23,6 +23,7 @@ export function DevicesPage() {
   const [model, setModel] = useState("softphone");
   const [mac, setMac] = useState("");
   const [profile, setProfile] = useState("softphone");
+  const [formOpen, setFormOpen] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [provisionUrl, setProvisionUrl] = useState<string | null>(null);
 
@@ -46,6 +47,7 @@ export function DevicesPage() {
     onSuccess: () => {
       toast.success(tr("Device added"));
       setMac("");
+      setFormOpen(false);
       void qc.invalidateQueries({ queryKey: ["devices"] });
     },
   });
@@ -67,7 +69,17 @@ export function DevicesPage() {
         tone="blue"
         description={tr("Desk phones and SIP QR")}
       />
-      <SectionCard title={tr("Devices")} icon={List} tone="cyan" flush>
+      <SectionCard
+        title={tr("Devices")}
+        icon={List}
+        tone="cyan"
+        flush
+        actions={
+          <Button type="button" variant="solid" onClick={() => setFormOpen(true)}>
+            {tr("Add device")}
+          </Button>
+        }
+      >
         <table className="table">
             <thead>
               <tr>
@@ -117,7 +129,7 @@ export function DevicesPage() {
           </table>
       </SectionCard>
       {qr && (
-        <SectionCard title={tr("SIP QR")} icon={QrCode} tone="cyan">
+        <Modal open onOpenChange={(next) => { if (!next) { setQr(null); setProvisionUrl(null); } }} title={tr("SIP QR")}>
           <img src={qr} alt="SIP QR" className="h-48 w-48 rounded" />
           {provisionUrl && (
             <div className="mt-3">
@@ -136,9 +148,9 @@ export function DevicesPage() {
               />
             </div>
           )}
-        </SectionCard>
+        </Modal>
       )}
-      <SectionCard title={tr("Add device")} icon={Smartphone} tone="blue">
+      <Modal open={formOpen} onOpenChange={setFormOpen} title={tr("Add device")}>
         <form
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-end"
           onSubmit={(e) => {
@@ -182,7 +194,7 @@ export function DevicesPage() {
             {tr("Add device")}
           </Button>
         </form>
-      </SectionCard>
+      </Modal>
     </div>
   );
 }

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Download, KeyRound, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = {
@@ -52,6 +52,7 @@ export function ExtensionsPage() {
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
   const [edit, setEdit] = useState<Ext | null>(null);
   const [editPassword, setEditPassword] = useState("");
   const [editName, setEditName] = useState("");
@@ -99,6 +100,7 @@ export function ExtensionsPage() {
       setNumber("");
       setName("");
       setPassword("");
+      setAddOpen(false);
       void qc.invalidateQueries({ queryKey: ["extensions"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -150,12 +152,6 @@ export function ExtensionsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  const editRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (edit) editRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-  }, [edit]);
 
   async function openEdit(ext: Ext) {
     setEdit(ext);
@@ -309,7 +305,18 @@ export function ExtensionsPage() {
           </table>
         </SectionCard>
       )}
-      <SectionCard title={tr("Extensions")} icon={Users} tone="blue" flush className="mb-6">
+      <SectionCard
+        title={tr("Extensions")}
+        icon={Users}
+        tone="blue"
+        flush
+        className="mb-6"
+        actions={
+          <Button type="button" variant="solid" onClick={() => setAddOpen(true)}>
+            {tr("Add extension")}
+          </Button>
+        }
+      >
         <table className="table">
           <thead>
             <tr>
@@ -357,7 +364,11 @@ export function ExtensionsPage() {
         </table>
       </SectionCard>
 
-      <SectionCard title={tr("Add extension")} icon={UserPlus} tone="cyan" className="mb-6">
+      <Modal
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        title={tr("Add extension")}
+      >
         <form
           className="toolbar"
           onSubmit={(e) => {
@@ -394,11 +405,17 @@ export function ExtensionsPage() {
             {t("extensions.add")}
           </Button>
         </form>
-      </SectionCard>
+      </Modal>
 
       {edit && (
-        <div ref={editRef}>
-        <SectionCard title={tr("Edit extension {{v0}}", { v0: edit.number })} icon={Users} tone="coral" className="mb-6">
+        <Modal
+          open
+          onOpenChange={(next) => {
+            if (!next) setEdit(null);
+          }}
+          title={tr("Edit extension {{v0}}", { v0: edit.number })}
+          maxWidth="44rem"
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField label={tr("Name")} value={editName} onChange={(e) => setEditName(e.target.value)} />
             <SelectField
@@ -568,8 +585,7 @@ export function ExtensionsPage() {
               {t("common.cancel", { defaultValue: "Cancel" })}
             </Button>
           </div>
-        </SectionCard>
-        </div>
+        </Modal>
       )}
     </div>
   );
