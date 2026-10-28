@@ -27,6 +27,8 @@ describe("desk phone BLF provisioning", () => {
     expect(contentType).toContain("text/plain");
     expect(body).toContain("account.1.user_name = 100");
     expect(body).toContain("account.1.sip_server.1.port = 5061");
+    expect(body).toContain("static.security.trust_certificates = 0");
+    expect(body).toContain("static.security.cn_validation = 0");
     expect(body).toContain("linekey.1.type = 16");
     expect(body).toContain("linekey.1.value = 101");
     expect(body).toContain("linekey.1.extension = *8101");
@@ -49,6 +51,8 @@ describe("desk phone BLF provisioning", () => {
     expect(body.startsWith("<<VOIP CONFIG FILE>>")).toBe(true);
     expect(body).toContain("SIP1 Register Port :5061");
     expect(body).toContain("SIP1 Transport     :2");
+    expect(body).toContain("Permission Certificate :0");
+    expect(body).toContain("Common Name Validation :0");
     expect(body).toContain("Fkey1 Type         :1");
     expect(body).toContain("Fkey1 Value        :101@1/bd*8101");
     expect(body).toContain("Fkey1 Title        :Bea");

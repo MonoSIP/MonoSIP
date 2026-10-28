@@ -2732,8 +2732,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const macNorm = (dev.mac ?? "").replace(/[^a-fA-F0-9]/g, "").toLowerCase();
     // The provisioning URL carries the device secret: /cfg/:mac hands out the
     // SIP password, so the MAC on its own must not be enough to fetch it.
+    // Phones fetch this before they have a trust setting. HTTPS here is the
+    // certificate check that stops the download, so the URL stays on HTTP.
     const provisionUrl = macNorm
-      ? `${config.publicUrl}/cfg/${macNorm}.cfg?t=${await ensureProvisionSecret(dev.id)}`
+      ? `http://${host}/cfg/${macNorm}.cfg?t=${await ensureProvisionSecret(dev.id)}`
       : null;
     return { qr, uri, user: ext.number, displayName: ext.name, provisionUrl };
   });

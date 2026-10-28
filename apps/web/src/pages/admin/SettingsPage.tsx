@@ -463,10 +463,10 @@ export function SettingsPage() {
         <Checkbox
           checked={ttsVoiceApplyAll}
           onCheckedChange={setTtsVoiceApplyAll}
-          label={tr("Apply TTS model to all IVR prompts (ignore per-node voice)")}
+          label={tr("Use this model for greetings left on system default")}
         />
         <p className="text-xs text-[var(--text-muted)]">
-          {tr("When enabled, live IVR speech uses this model without editing flow nodes. EMA is Turkish-only.")}
+          {tr("A voice chosen on a greeting is what the caller hears. System default uses this model. EMA is Turkish-only.")}
         </p>
         <TextField
           label={tr("TTS cache retention (days)")}

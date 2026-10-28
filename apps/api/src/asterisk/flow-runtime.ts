@@ -136,16 +136,19 @@ export function resolveSpeechLang(
   return vars.language === "tr" ? "tr" : "en";
 }
 
-/** Resolve TTS voice from Settings + optional per-node override. */
+/**
+ * Voice chosen on the node wins. Settings → IVR TTS is only the fallback for
+ * "system default", and only while apply-all is on. An explicit male/EMA/female
+ * on a greeting must be heard even when the rest of the IVR shares one model.
+ */
 function resolveTtsVoice(
   data: Record<string, unknown> | undefined,
   vars: Record<string, string>,
 ): string {
-  const settingsVoice = (vars.__ttsVoice || "female").trim() || "female";
-  if (vars.__ttsApplyAll !== "0") return settingsVoice;
-  const raw = String(data?.gender ?? data?.voice ?? "default").trim();
-  if (!raw || raw === "default") return settingsVoice;
-  return raw;
+  const raw = String(data?.gender ?? data?.voice ?? "").trim();
+  if (raw && raw !== "default") return raw;
+  if (vars.__ttsApplyAll === "0") return "female";
+  return (vars.__ttsVoice || "female").trim() || "female";
 }
 
 /** Hold-music class for a transfer. Prefer uploaded audio over the generated default tone. */
@@ -238,7 +241,7 @@ export async function runFlowOnChannel(
     await playSilence(channelId, MEDIA_SETTLE_MS);
   }
 
-  // Load IVR TTS prefs once (Settings → ttsVoice); nodes may override unless apply-all.
+  // Settings voice fills greetings left on system default. A voice set on the node wins.
   try {
     const [row] = await db.select().from(settings).limit(1);
     const s = SettingsSchema.parse(row?.data ?? {});
@@ -708,7 +711,7 @@ export async function executeFlowLoop(
             ? "Aradığınız kişinin soyadını tuşlayın, sonra diyez basın."
             : "Enter the last name on your keypad, then press pound.",
           lang,
-          vars.__ttsVoice || "female",
+          resolveTtsVoice(data, vars),
         );
         ari.clearDtmfBuffer(channelId);
         const digits = await ari.waitDtmfDigits(channelId, {
@@ -728,7 +731,7 @@ export async function executeFlowLoop(
                 ? `${hit.name}, bağlanıyor.`
                 : `Connecting to ${hit.name}.`,
               lang,
-              vars.__ttsVoice || "female",
+              resolveTtsVoice(data, vars),
             );
             await ari.redirect(channelId, hit.number, "from-internal");
             return "left";
@@ -739,7 +742,7 @@ export async function executeFlowLoop(
           channelId,
           lang === "tr" ? "Eşleşme bulunamadı." : "No match found.",
           lang,
-          vars.__ttsVoice || "female",
+          resolveTtsVoice(data, vars),
         );
         break;
       }

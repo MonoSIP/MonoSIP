@@ -15,6 +15,7 @@ import {
 import { requireExtension } from "../lib/auth.js";
 import { decrypt, encrypt, scryptHash } from "../lib/crypto.js";
 import { config } from "../config.js";
+import { browserWebsocketUrl, clientIsHttps } from "../lib/public-identity.js";
 import { ari } from "../asterisk/ari.js";
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { unlink } from "node:fs/promises";
@@ -65,12 +66,11 @@ export async function portalRoutes(app: FastifyInstance) {
       config.sipDomain && config.sipDomain !== "localhost"
         ? config.sipDomain
         : host || config.sipDomain;
-    const websocketUrl =
-      config.sipWssUrl && !config.sipWssUrl.includes("localhost")
-        ? config.sipWssUrl
-        : host
-          ? `wss://${host}/asterisk-ws`
-          : config.sipWssUrl;
+    const websocketUrl = browserWebsocketUrl(
+      host || "",
+      clientIsHttps(req.headers, req.protocol),
+      config.sipWssUrl,
+    );
 
     return {
       extension: ext.number,

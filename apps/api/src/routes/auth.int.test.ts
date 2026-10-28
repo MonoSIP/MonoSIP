@@ -59,6 +59,13 @@ function sessionCookie(res: { headers: Record<string, unknown> }): string | unde
   return hit?.split(";")[0];
 }
 
+function sessionCookieFlags(res: { headers: Record<string, unknown> }): string[] {
+  const raw = res.headers["set-cookie"];
+  const list = Array.isArray(raw) ? raw.map(String) : raw ? [String(raw)] : [];
+  const hit = list.find((c) => c.startsWith("monosip_session=")) ?? "";
+  return hit.split(";").slice(1).map((part) => part.trim().toLowerCase());
+}
+
 describe("admin login", () => {
   it("accepts correct credentials and sets a session cookie", async () => {
     const res = await app.inject({
@@ -69,6 +76,18 @@ describe("admin login", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
     expect(sessionCookie(res)).toBeDefined();
+    expect(sessionCookieFlags(res)).not.toContain("secure");
+  });
+
+  it("marks the session cookie Secure only when the browser used HTTPS", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: ADMIN_LOGIN,
+      headers: { "x-forwarded-proto": "https" },
+      payload: { email: creds.adminEmail, password: creds.adminPassword },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(sessionCookieFlags(res)).toContain("secure");
   });
 
   it("rejects a wrong password with 401", async () => {

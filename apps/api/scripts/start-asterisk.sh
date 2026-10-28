@@ -33,7 +33,7 @@ mkdir -p "$AST_CFG" /var/lib/asterisk /var/spool/asterisk /etc/asterisk/keys \
   /var/lib/asterisk/monosip/voicemail \
   /var/lib/asterisk/moh/default \
   /var/lib/asterisk/sounds/en \
-  /var/log/asterisk
+  /var/log/asterisk /var/log/asterisk/cdr-csv
 
 # Persist generated dialplan/PJSIP on the NineDeploy volume.
 if [ -e /var/lib/asterisk/monosip ] && [ ! -L /var/lib/asterisk/monosip ]; then
@@ -66,7 +66,8 @@ if [ -e /var/spool/asterisk/recording ] && [ ! -L /var/spool/asterisk/recording 
 fi
 ln -sfn "${RECORDINGS_DIR:-$DATA_DIR/recordings}" /var/spool/asterisk/recording
 
-chmod 777 "${RECORDINGS_DIR:-$DATA_DIR/recordings}" /var/log/asterisk 2>/dev/null || true
+chmod 777 "${RECORDINGS_DIR:-$DATA_DIR/recordings}" \
+  /var/log/asterisk /var/log/asterisk/cdr-csv 2>/dev/null || true
 touch /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security 2>/dev/null || true
 
 ln -sfn /var/lib/asterisk/monosip/sounds/monosip /var/lib/asterisk/sounds/monosip
@@ -217,7 +218,17 @@ EOF
   # `module reload res_pjsip.so` during startup deadlocks the module loader
   # (SIP over WebSocket then never answers).
   LAST="$(cat /var/lib/asterisk/monosip/reload.flag 2>/dev/null || true)"
-  until asterisk -rx "core waitfullybooted" >/dev/null 2>&1; do sleep 2; done
+  # Wait for the CLI socket, then connect once. Polling `asterisk -rx` logs
+  # "Remote UNIX connection" / "disconnected" on every try.
+  i=0
+  while [ "$i" -lt 120 ]; do
+    if [ -S /var/run/asterisk/asterisk.ctl ] || [ -S /var/run/asterisk.ctl ]; then
+      asterisk -rx "core waitfullybooted" >/dev/null 2>&1 || true
+      break
+    fi
+    i=$((i + 1))
+    sleep 1
+  done
   while true; do
     if [ -f /var/lib/asterisk/monosip/reload.flag ]; then
       CUR="$(cat /var/lib/asterisk/monosip/reload.flag 2>/dev/null || true)"

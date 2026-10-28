@@ -16,6 +16,20 @@ import { db } from "../db/client.js";
 import { admins, sessions } from "../db/schema.js";
 import { generateTotpSecret, totpQrDataUrl, totpUri, verifyTotp } from "../lib/totp.js";
 import { writeAudit } from "../lib/audit.js";
+import { clientIsHttps } from "../lib/public-identity.js";
+
+function sessionCookie(req: {
+  protocol: string;
+  headers: { "x-forwarded-proto"?: string | string[] };
+}) {
+  return {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: clientIsHttps(req.headers, req.protocol),
+    maxAge: 7 * 86400,
+  };
+}
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/api/v1/admin/auth/login", async (req, reply) => {
@@ -62,13 +76,7 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send(result);
     }
     clearLoginFailures(ip);
-    reply.setCookie(COOKIE, result.token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      maxAge: 7 * 86400,
-    });
+    reply.setCookie(COOKIE, result.token, sessionCookie(req));
     return { ok: true };
   });
 
@@ -221,13 +229,7 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send(result);
     }
     clearLoginFailures(ip);
-    reply.setCookie(COOKIE, result.token, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      maxAge: 7 * 86400,
-    });
+    reply.setCookie(COOKIE, result.token, sessionCookie(req));
     return { ok: true };
   });
 
@@ -237,14 +239,17 @@ export async function authRoutes(app: FastifyInstance) {
     // A session cookie from before the rename must end too
     const legacy = req.cookies?.[LEGACY_COOKIE];
     if (legacy && legacy !== token) await destroySession(legacy);
-    // Must match setCookie attrs or browsers keep the Secure cookie
+    // Clear both flags: a Secure cookie and a plain-HTTP cookie are different
+    // to the browser, and a mismatch leaves the session in place.
     for (const name of [COOKIE, LEGACY_COOKIE]) {
-      reply.clearCookie(name, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: true,
-      });
+      for (const secure of [false, true]) {
+        reply.clearCookie(name, {
+          path: "/",
+          httpOnly: true,
+          sameSite: "lax",
+          secure,
+        });
+      }
     }
     return { ok: true };
   });

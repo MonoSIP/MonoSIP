@@ -13,8 +13,9 @@ mkdir -p /var/lib/asterisk/monosip /var/lib/asterisk/monosip/sounds/monosip \
   /var/lib/asterisk/moh/default \
   /var/lib/asterisk/sounds/en \
   /var/spool/asterisk/recording /var/lib/asterisk/sounds /etc/asterisk/keys \
-  /var/log/asterisk
-chmod 777 /var/spool/asterisk/recording /var/lib/asterisk/monosip/voicemail /var/log/asterisk 2>/dev/null || true
+  /var/log/asterisk /var/log/asterisk/cdr-csv
+chmod 777 /var/spool/asterisk/recording /var/lib/asterisk/monosip/voicemail \
+  /var/log/asterisk /var/log/asterisk/cdr-csv 2>/dev/null || true
 # Ensure log files exist for fail2ban before Asterisk starts
 touch /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security 2>/dev/null || true
 # Expose MonoSIP prompt WAVs as sound:monosip/<id>

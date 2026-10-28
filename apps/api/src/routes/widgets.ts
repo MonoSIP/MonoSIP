@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db } from "../db/client.js";
 import { webWidgets, widgetDailyStats, widgetSessions } from "../db/schema.js";
 import { config } from "../config.js";
+import { browserWebsocketUrl, clientIsHttps } from "../lib/public-identity.js";
 import { encrypt } from "../lib/crypto.js";
 import { originAllowed } from "../lib/origin-allow.js";
 import { buildIceServers } from "../lib/turn-credentials.js";
@@ -297,10 +298,11 @@ export async function widgetRoutes(app: FastifyInstance) {
     const ice = buildIceServers({ host, userId: sipUser });
     const domain =
       config.sipDomain && config.sipDomain !== "localhost" ? config.sipDomain : host;
-    const websocketUrl =
-      config.sipWssUrl && !config.sipWssUrl.includes("localhost")
-        ? config.sipWssUrl
-        : `wss://${host}/asterisk-ws`;
+    const websocketUrl = browserWebsocketUrl(
+      host,
+      clientIsHttps(req.headers, req.protocol),
+      config.sipWssUrl,
+    );
 
     return reply.header("Access-Control-Allow-Origin", origin || "*").send({
       extension: sipUser,

@@ -528,6 +528,35 @@ describe("executeFlowLoop — variable and branching nodes", () => {
 });
 
 describe("executeFlowLoop — terminal nodes", () => {
+  it("speaks a greeting's own voice even when settings apply one model to the rest", async () => {
+    const flow = flowOf([
+      node("a", "tts", {
+        text: "Sayın Ali, hoş geldiniz.",
+        language: "tr",
+        gender: "male",
+      }),
+    ]);
+    await runLoop(node("a", "tts", { text: "Sayın Ali, hoş geldiniz.", language: "tr", gender: "male" }), flow, {
+      __ttsVoice: "ema-lightning",
+      __ttsApplyAll: "1",
+    });
+    expect(ensureSpeechMedia).toHaveBeenCalledWith(
+      "Sayın Ali, hoş geldiniz.",
+      "tr",
+      1.05,
+      "male",
+    );
+  });
+
+  it("uses the settings model when the greeting is left on system default", async () => {
+    const flow = flowOf([node("a", "tts", { text: "Merhaba.", language: "tr", gender: "default" })]);
+    await runLoop(node("a", "tts", { text: "Merhaba.", language: "tr", gender: "default" }), flow, {
+      __ttsVoice: "ema-lightning",
+      __ttsApplyAll: "1",
+    });
+    expect(ensureSpeechMedia).toHaveBeenCalledWith("Merhaba.", "tr", 1.05, "ema-lightning");
+  });
+
   it("voicemail redirects to the extension's voicemail", async () => {
     const flow = flowOf([node("v", "voicemail", { extension: "101" })]);
     const { result } = await runLoop(node("v", "voicemail", { extension: "101" }), flow);

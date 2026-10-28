@@ -110,6 +110,32 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
 }
 
 /**
+ * Pause the caller in this queue only when PJSIP/<caller> is actually a member.
+ * PauseQueueMember on any other interface logs "not found" (app_queue.c pqm_exec).
+ * MONOSIP_QPAUSED lets the hangup path unpause the same member and nobody else.
+ */
+export function queueSelfPauseLines(queueNumber: string): string[] {
+  return [
+    ` same => n,Set(QMEM=,\${QUEUE_MEMBER_LIST(${queueNumber})},)`,
+    ` same => n,GotoIf($[\${REGEX("^[0-9]{2,20}$" \${CALLERID(num)})} != 1]?qself)`,
+    ` same => n,GotoIf($[\${REGEX(",PJSIP/\${CALLERID(num)}," \${QMEM})} != 1]?qself)`,
+    ` same => n,PauseQueueMember(${queueNumber},PJSIP/\${CALLERID(num)})`,
+    ` same => n,Set(MONOSIP_QPAUSED=1)`,
+    ` same => n(qself),NoOp(Queue self-pause)`,
+  ];
+}
+
+/** Unpause only if this call paused a member. A second pass is a no-op. */
+export function queueSelfUnpauseLines(queueRef: string, skipLabel: string): string[] {
+  return [
+    ` same => n,GotoIf($["\${MONOSIP_QPAUSED}" != "1"]?${skipLabel})`,
+    ` same => n,UnpauseQueueMember(${queueRef},PJSIP/\${CALLERID(num)})`,
+    ` same => n,Set(MONOSIP_QPAUSED=)`,
+    ` same => n(${skipLabel}),NoOp(Queue self-unpause)`,
+  ];
+}
+
+/**
  * queues.conf joinempty/leavewhenempty. With an "empty" destination configured the
  * caller must not wait when no agent can take the call: unregistered (unavailable),
  * paused or invalid members all count as empty. Asterisk's `no` only covers
@@ -307,12 +333,20 @@ function queueOutcomeLines(label: string): string[] {
 }
 
 function qosPrepLines(opts?: { dialedTime?: boolean; cdrDuration?: boolean }): string[] {
+  // PJSIP has no CHANNEL(rtpqos,...). That name is chan_sip, and every hangup
+  // logged "Unknown or unavailable item". rtcp,txmes is Asterisk's 0–100 media
+  // score (best around 85); /20 keeps the CDR column on a 1–5 MOS scale.
+  // rxjitter is seconds. rxploss is a packet count, stored as a percent of rxcount.
   const lines = [
     ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
     ` same => n,Set(MONOSIP_BILL=\${IF($["\${ANSWEREDTIME}"=""]?0:\${ANSWEREDTIME})})`,
-    ` same => n,Set(MONOSIP_MOS=\${CHANNEL(rtpqos,audio,local,mos)})`,
-    ` same => n,Set(MONOSIP_JIT=\${CHANNEL(rtpqos,audio,local,jitter)})`,
-    ` same => n,Set(MONOSIP_LOSS=\${CHANNEL(rtpqos,audio,local,lost)})`,
+    ` same => n,Set(MONOSIP_MES=\${CHANNEL(rtcp,txmes)})`,
+    ` same => n,Set(MONOSIP_MOS=\${IF($["\${MONOSIP_MES}"=""]?:$[\${MONOSIP_MES}/20])})`,
+    ` same => n,Set(MONOSIP_JITRAW=\${CHANNEL(rtcp,rxjitter)})`,
+    ` same => n,Set(MONOSIP_JIT=\${IF($["\${MONOSIP_JITRAW}"=""]?:$[\${MONOSIP_JITRAW}*1000])})`,
+    ` same => n,Set(MONOSIP_RXN=\${CHANNEL(rtcp,rxcount)})`,
+    ` same => n,Set(MONOSIP_RXLOSS=\${CHANNEL(rtcp,rxploss)})`,
+    ` same => n,Set(MONOSIP_LOSS=\${IF($["\${MONOSIP_RXN}"="" | "\${MONOSIP_RXN}"="0" | "\${MONOSIP_RXLOSS}"=""]?:$[100.0*\${MONOSIP_RXLOSS}/\${MONOSIP_RXN}])})`,
   ];
   if (opts?.dialedTime !== false) {
     lines.splice(
@@ -405,6 +439,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "cert_file=/etc/asterisk/keys/asterisk.pem",
     "priv_key_file=/etc/asterisk/keys/asterisk.pem",
     "method=tlsv1_2",
+    // Lab cert is self-signed (CN=asterisk). Checking it drops the registration.
+    "verify_client=no",
+    "verify_server=no",
   ];
   if (externalIp) {
     for (const block of [transportUdp, transportWs, transportWss, transportTls]) {
@@ -1002,7 +1039,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     " same => n,Goto(cdrdone)",
     // Caller left a queue (abandoned while waiting, or hung up on the agent)
     " same => n(hqueue),NoOp(Queue hangup CDR ${MONOSIP_QUEUE})",
-    " same => n,UnpauseQueueMember(${MONOSIP_QUEUE},PJSIP/${CALLERID(num)})",
+    ...queueSelfUnpauseLines("${MONOSIP_QUEUE}", "hunpaused"),
     ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
     ...queueOutcomeLines("hqout"),
     ` same => n,Set(MONOSIP_DISP=\${IF($["\${MONOSIP_AGENT}" = ""]?NOANSWER:ANSWER)})`,
@@ -1143,7 +1180,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // Otherwise the voice pack itself (tr_ema / en_male, falling back to tr / en).
       ` same => n,Set(CHANNEL(language)=${q.announcePosition ? queueAnnounceLanguage(qLang, q.voice) : queueSoundLanguage(qLang, q.voice)})`,
       ` same => n,Set(CHANNEL(musicclass)=${mohName})`,
-      ` same => n,PauseQueueMember(${q.number},PJSIP/\${CALLERID(num)})`,
+      ...queueSelfPauseLines(q.number),
       ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?qkvkk)`,
       ` same => n,Set(__KVKK_DONE=1)`,
       kvkkEnabled ? kvkkPlaybackLine(kvkkPromptId) : ` same => n,NoOp(KVKK off)`,
@@ -1182,7 +1219,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ` same => n,StopMixMonitor()`,
       ...qosPrepLines({ dialedTime: false }),
       ` same => n,${qRecRegister}`,
-      ` same => n,UnpauseQueueMember(${q.number},PJSIP/\${CALLERID(num)})`,
+      ...queueSelfUnpauseLines(q.number, "qunpaused"),
       ...queueCdrLines,
       ...afterQueue,
     ];
@@ -1206,7 +1243,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
         // Callback keeps the caller's place — not an abandoned call
         ` same => n,Set(MONOSIP_CDR_DONE=1)`,
         ` same => n,StopMixMonitor()`,
-        ` same => n,UnpauseQueueMember(${q.number},PJSIP/\${MONOSIP_CID})`,
+        ...queueSelfUnpauseLines(q.number, "qcbunpause"),
         ` same => n,Playback(queue-callback-confirm)`,
         ` same => n,Hangup()`,
         "",

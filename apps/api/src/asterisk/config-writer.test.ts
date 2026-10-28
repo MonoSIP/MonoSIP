@@ -44,7 +44,7 @@ vi.mock("../db/client.js", () => {
   };
 });
 
-import { writeAsteriskConfig } from "./config-writer.js";
+import { queueSelfPauseLines, queueSelfUnpauseLines, writeAsteriskConfig } from "./config-writer.js";
 
 // Must match the authoritative policy set in lib/call-policy.ts (EMERGENCY).
 // The generated [from-internal] emergency shortcuts exist so these numbers
@@ -84,5 +84,37 @@ describe("writeAsteriskConfig emergency dialplan", () => {
 
   it("keeps the catch-all for everything else (control)", () => {
     expect(dialplan).toContain("exten => _X.,1,NoOp(Outbound ${EXTEN})");
+  });
+
+  it("reads PJSIP RTCP stats, not the chan_sip rtpqos items", () => {
+    expect(dialplan).toContain("CHANNEL(rtcp,txmes)");
+    expect(dialplan).toContain("CHANNEL(rtcp,rxjitter)");
+    expect(dialplan).toContain("CHANNEL(rtcp,rxploss)");
+    expect(dialplan).not.toContain("rtpqos");
+  });
+
+  it("unpauses on hangup only when this call paused a member", () => {
+    const start = dialplan.indexOf("same => n(hqueue)");
+    const section = dialplan.slice(start, dialplan.indexOf("same => n(cdrdone)", start));
+    expect(section).toContain('GotoIf($["${MONOSIP_QPAUSED}" != "1"]?hunpaused)');
+    expect(section.indexOf("MONOSIP_QPAUSED")).toBeLessThan(section.indexOf("UnpauseQueueMember"));
+  });
+});
+
+describe("queue self pause", () => {
+  it("pauses PJSIP/<caller> only when that interface is in the member list", () => {
+    const lines = queueSelfPauseLines("300").join("\n");
+    expect(lines).toContain("QUEUE_MEMBER_LIST(300)");
+    expect(lines).toContain(',PJSIP/${CALLERID(num)},');
+    expect(lines.indexOf("GotoIf")).toBeLessThan(lines.indexOf("PauseQueueMember"));
+    expect(lines).toContain("Set(MONOSIP_QPAUSED=1)");
+  });
+
+  it("skips unpause unless the pause flag is set", () => {
+    const lines = queueSelfUnpauseLines("300", "qunpaused").join("\n");
+    expect(lines.indexOf('"${MONOSIP_QPAUSED}" != "1"')).toBeLessThan(
+      lines.indexOf("UnpauseQueueMember"),
+    );
+    expect(lines).toContain("same => n(qunpaused),NoOp(Queue self-unpause)");
   });
 });

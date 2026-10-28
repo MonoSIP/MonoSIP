@@ -23,6 +23,9 @@ function blfPeers(self: string, peers: ProvisionPeer[]): ProvisionPeer[] {
 function yealink(self: { number: string; name: string; password: string }, host: string, peers: ProvisionPeer[]): string {
   const lines = [
     "#!version:1.0.0.1",
+    // The PBX certificate is self-signed. Leave the check on and TLS registration fails.
+    "static.security.trust_certificates = 0",
+    "static.security.cn_validation = 0",
     "account.1.enable = 1",
     `account.1.label = ${oneLine(self.name)}`,
     `account.1.display_name = ${oneLine(self.name)}`,
@@ -79,7 +82,14 @@ function fanvil(self: { number: string; name: string; password: string }, host: 
       `Fkey${n} Title        :${oneLine(p.name) || p.number}`,
     );
   });
-  lines.push("", "<<END OF FILE>>");
+  lines.push(
+    "",
+    "<TRUSTED CERTIFICATES>",
+    "Permission Certificate :0",
+    "Common Name Validation :0",
+    "",
+    "<<END OF FILE>>",
+  );
   return lines.join("\n");
 }
 

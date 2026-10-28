@@ -199,10 +199,11 @@ export const SettingsSchema = z.object({
   kvkkPromptId: z.string().uuid().optional().nullable(),
   /**
    * Default TTS voice/model for live IVR speech: female | male | ema-lightning.
-   * Used when a node has no voice or voice is "default", and always when ttsVoiceApplyAll.
+   * Used when a node is left on system default and ttsVoiceApplyAll is on.
+   * A voice set on the node itself always wins.
    */
   ttsVoice: z.string().max(40).default("female"),
-  /** When true, all IVR live TTS uses ttsVoice (ignore per-node voice). */
+  /** When true, system-default greetings use ttsVoice. An explicit node voice still wins. */
   ttsVoiceApplyAll: z.boolean().default(true),
   /** How long dynamic IVR TTS WAV cache entries are kept (days). */
   ttsCacheRetentionDays: z.number().int().min(1).max(90).default(7),

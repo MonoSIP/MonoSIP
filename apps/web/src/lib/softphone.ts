@@ -447,6 +447,7 @@ export class Softphone {
     if (!uri) throw new Error("Invalid SIP URI");
 
     const wsServer =
+      window.location.protocol === "https:" &&
       opts.websocketUrl &&
       !opts.websocketUrl.includes("localhost") &&
       !opts.websocketUrl.includes("127.0.0.1")
