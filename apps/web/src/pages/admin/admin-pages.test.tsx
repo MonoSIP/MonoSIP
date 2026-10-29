@@ -74,7 +74,7 @@ import { RingGroupsPage } from "./RingGroupsPage";
 import { RoutesPage } from "./RoutesPage";
 import { PromptsPage } from "./PromptsPage";
 import { MohPage } from "./MohPage";
-import { FlowDesignerPage } from "./FlowDesignerPage";
+import { FlowDesignerPage, leftCornerFlowPosition } from "./FlowDesignerPage";
 import { LoginPage } from "../LoginPage";
 import { AdminLayout } from "../../layouts/AdminLayout";
 import { PortalLayout } from "../../layouts/PortalLayout";
@@ -854,6 +854,27 @@ describe("PromptsPage replace audio", () => {
     const [url] = fetchMock.mock.calls[0] as unknown as [string];
     expect(url).toBe("/api/v1/admin/prompts/p1/upload");
     expect(toastSuccess).toHaveBeenCalledWith("prompts.uploaded");
+  });
+});
+
+describe("leftCornerFlowPosition", () => {
+  it("puts a new node at the top-left of the current view", () => {
+    expect(leftCornerFlowPosition({ x: -400, y: -200, zoom: 1 }, [])).toEqual({ x: 432, y: 232 });
+  });
+
+  it("steps down the left edge when that corner is already taken", () => {
+    const first = leftCornerFlowPosition({ x: 0, y: 0, zoom: 1 }, []);
+    const second = leftCornerFlowPosition({ x: 0, y: 0, zoom: 1 }, [first]);
+    expect(first).toEqual({ x: 32, y: 32 });
+    expect(second.x).toBe(32);
+    expect(second.y).toBeGreaterThan(first.y);
+  });
+
+  it("ignores a node that sits far from the corner", () => {
+    expect(leftCornerFlowPosition({ x: 0, y: 0, zoom: 1 }, [{ x: 900, y: 700 }])).toEqual({
+      x: 32,
+      y: 32,
+    });
   });
 });
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ReactFlow,
@@ -11,6 +11,7 @@ import {
   type Connection,
   type Node,
   type Edge,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useQuery } from "@tanstack/react-query";
@@ -56,6 +57,29 @@ const palette = [
   "voicemail",
   "hangup",
 ] as const;
+
+/**
+ * Top-left of the canvas the user is looking at, in flow coordinates.
+ * Stepping uses the whole node list so a second add does not land on the first,
+ * while a node far across the map does not push the new one off the screen.
+ */
+export function leftCornerFlowPosition(
+  viewport: { x: number; y: number; zoom: number },
+  taken: Array<{ x: number; y: number }>,
+): { x: number; y: number } {
+  const zoom = viewport.zoom > 0 ? viewport.zoom : 1;
+  const step = 136 / zoom;
+  const x = (32 - viewport.x) / zoom;
+  const y0 = (32 - viewport.y) / zoom;
+  for (let i = 0; i < 12; i++) {
+    const y = y0 + i * step;
+    const occupied = taken.some(
+      (p) => Math.abs(p.x - x) < step * 0.45 && Math.abs(p.y - y) < step * 0.45,
+    );
+    if (!occupied) return { x, y };
+  }
+  return { x, y: y0 };
+}
 
 function toRfNodes(raw: Array<Record<string, unknown>>): Node<FlowNodeData>[] {
   return raw.map((n) => {
@@ -107,6 +131,7 @@ export function FlowDesignerPage() {
   const [extensionNumber, setExtensionNumber] = useState("");
   const [mobileView, setMobileView] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const flowRef = useRef<ReactFlowInstance<Node<FlowNodeData>, Edge> | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
@@ -322,20 +347,26 @@ export function FlowDesignerPage() {
 
   function addNode(type: string) {
     const nid = `${type}-${Date.now()}`;
-    setNodes((ns) => [
-      ...ns.map((n) => ({ ...n, selected: false })),
-      {
-        id: nid,
-        type,
-        position: { x: 160 + (ns.length % 5) * 48, y: 60 + ns.length * 28 },
-        selected: true,
-        data: {
-          flowType: type,
-          label: nodeTitle(type),
-          ...defaultDataForType(type),
+    setNodes((ns) => {
+      const position = leftCornerFlowPosition(
+        flowRef.current?.getViewport() ?? { x: 0, y: 0, zoom: 1 },
+        ns.map((n) => n.position),
+      );
+      return [
+        ...ns.map((n) => ({ ...n, selected: false })),
+        {
+          id: nid,
+          type,
+          position,
+          selected: true,
+          data: {
+            flowType: type,
+            label: nodeTitle(type),
+            ...defaultDataForType(type),
+          },
         },
-      },
-    ]);
+      ];
+    });
     setEditingId(nid);
   }
 
@@ -560,6 +591,9 @@ export function FlowDesignerPage() {
               edges={viewEdges}
               nodeTypes={flowNodeTypes}
               edgeTypes={flowEdgeTypes}
+              onInit={(instance) => {
+                flowRef.current = instance;
+              }}
               onNodesChange={mobileView ? undefined : onNodesChange}
               onEdgesChange={mobileView ? undefined : onEdgesChange}
               onConnect={mobileView ? undefined : onConnect}
