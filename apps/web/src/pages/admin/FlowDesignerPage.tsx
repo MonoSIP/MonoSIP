@@ -11,7 +11,6 @@ import {
   type Connection,
   type Node,
   type Edge,
-  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useQuery } from "@tanstack/react-query";
@@ -131,7 +130,7 @@ export function FlowDesignerPage() {
   const [extensionNumber, setExtensionNumber] = useState("");
   const [mobileView, setMobileView] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const flowRef = useRef<ReactFlowInstance<Node<FlowNodeData>, Edge> | null>(null);
+  const flowRef = useRef<{ getViewport: () => { x: number; y: number; zoom: number } } | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
