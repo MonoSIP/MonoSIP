@@ -16,11 +16,18 @@ export function pickLogFile(
   return live.slice().sort((a, b) => b.mtimeMs - a.mtimeMs)[0].file;
 }
 
+/** CLI connect/disconnect. Verbose level 3, same as dialplan steps, so it cannot be dropped by lowering verbosity. */
+export function isCliConnectNoise(line: string): boolean {
+  return line.includes("Remote UNIX connection");
+}
+
 /** Complete lines from a growing buffer. The unfinished tail stays in `pending`. */
 export function consumeLines(pending: string, chunk: string): { pending: string; lines: string[] } {
   const parts = stripAnsi(pending + chunk).split("\n");
   const rest = (parts.pop() ?? "").replace(/\r$/, "");
-  const lines = parts.map((line) => line.replace(/\r$/, "")).filter((line) => line.length > 0);
+  const lines = parts
+    .map((line) => line.replace(/\r$/, ""))
+    .filter((line) => line.length > 0 && !isCliConnectNoise(line));
   return { pending: rest, lines };
 }
 

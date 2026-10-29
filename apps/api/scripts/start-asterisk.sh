@@ -196,7 +196,10 @@ rotatestrategy = sequential
 ; security channel, which the API's SIP guard turns into bans.
 console => warning,error
 messages => notice,warning,error
-full => notice,warning,error,verbose
+; verbose stays off this file. `asterisk -rx` is verbose level 3 and would append
+; "Remote UNIX connection" / "disconnected" on every CLI socket. Dialplan steps
+; still reach console.log from the foreground process.
+full => notice,warning,error
 security => security
 EOF
 
@@ -283,7 +286,13 @@ sleep 1
 ) &
 
 echo "Starting embedded Asterisk…"
-asterisk -f -vvv >>/var/log/asterisk/console.log 2>&1 &
+# Drop only the CLI connect pair. A health check or reload that opens
+# `asterisk -rx` is verbose level 3, same as "Executing", so this is the
+# filter that keeps the call trace and stops the pair from being stored.
+rm -f /tmp/asterisk-console.fifo
+mkfifo /tmp/asterisk-console.fifo
+grep --line-buffered -v 'Remote UNIX connection' < /tmp/asterisk-console.fifo >>/var/log/asterisk/console.log &
+asterisk -f -vvv > /tmp/asterisk-console.fifo 2>&1 &
 echo $! >/tmp/asterisk.pid
 
 export ASTERISK_ARI_URL="${ASTERISK_ARI_URL:-http://127.0.0.1:8088}"

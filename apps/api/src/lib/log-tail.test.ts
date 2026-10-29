@@ -18,6 +18,15 @@ describe("consumeLines", () => {
     expect(stripAnsi("\x1b[31mERROR\x1b[0m")).toBe("ERROR");
     expect(consumeLines("", "\x1b[33mwarn\x1b[0m\n").lines).toEqual(["warn"]);
   });
+
+  it("drops CLI connect lines and keeps the dialplan step beside them", () => {
+    expect(
+      consumeLines(
+        "",
+        "    -- Executing [800@internal:1]\n    -- Remote UNIX connection\n    -- Remote UNIX connection disconnected\n",
+      ).lines,
+    ).toEqual(["    -- Executing [800@internal:1]"]);
+  });
 });
 
 describe("pickLogFile", () => {

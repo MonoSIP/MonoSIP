@@ -206,4 +206,9 @@ EOF
   done
 ) &
 
-exec asterisk -f -vvv
+# Same pair the all-in-one script drops. Asterisk stays pid 1; the filter
+# only reads its console stream.
+rm -f /tmp/asterisk-console.fifo
+mkfifo /tmp/asterisk-console.fifo
+grep --line-buffered -v 'Remote UNIX connection' < /tmp/asterisk-console.fifo &
+exec asterisk -f -vvv > /tmp/asterisk-console.fifo 2>&1
