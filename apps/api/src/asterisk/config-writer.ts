@@ -208,6 +208,19 @@ export function sipFromDomain(host: string): string {
   return ipv4.test(h) || hostname.test(h) ? h : "localhost";
 }
 
+/**
+ * Class Asterisk should play when an endpoint presses hold (`moh_suggest`).
+ * Unknown or unsafe names fall back to the built-in `default` tone.
+ */
+export function holdMusicSuggest(
+  raw: string | null | undefined,
+  classes: Array<{ name: string }>,
+): string {
+  const name = String(raw ?? "").trim();
+  if (name && !/[\r\n;]/.test(name) && classes.some((c) => c.name === name)) return name;
+  return "default";
+}
+
 /** Which generated config files changed in this write. */
 export type ConfigChanges = {
   pjsip: boolean;
@@ -394,11 +407,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   let kvkkPromptId: string | null = null;
   let kvkkEnabled = true;
+  let holdMusic = "default";
   try {
     const [srow] = await db.select().from(settings).limit(1);
     const s = SettingsSchema.parse(srow?.data ?? {});
     kvkkEnabled = s.kvkkAnnouncementEnabled !== false;
     kvkkPromptId = s.kvkkPromptId ?? null;
+    holdMusic = holdMusicSuggest(s.holdMusicClass, moh);
   } catch {
     /* defaults */
   }
@@ -548,6 +563,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `auth=${id}`,
       `aors=${id}`,
       "direct_media=no",
+      `moh_suggest=${holdMusic}`,
       "rtp_symmetric=yes",
       "force_rport=yes",
       `rewrite_contact=${rewriteContact}`,
@@ -673,6 +689,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `from_domain=${fromDomain}`,
       ...trunkCallerLines(trunk),
       "direct_media=no",
+      `moh_suggest=${holdMusic}`,
       `device_state_busy_at=${Math.max(1, trunk.maxChannels ?? 10)}`,
       "",
     );
@@ -876,14 +893,6 @@ async function writeAsteriskConfigNow(): Promise<void> {
       .filter((n) => /^\d+$/.test(n))
       .map((n) => `"\${CALLERID(num)}" = "${n}"`)
       .join(" | ");
-    const kvkkLines = kvkkEnabled
-      ? [
-          ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?kvkkdone)`,
-          ` same => n,Set(__KVKK_DONE=1)`,
-          kvkkPlaybackLine(kvkkPromptId),
-          ` same => n(kvkkdone),NoOp(KVKK)`,
-        ]
-      : [];
     const recLines = [
       ` same => n,Set(MONOSIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
       ` same => n,MixMonitor(${recFile})`,
@@ -898,14 +907,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ` same => n,GotoIf($["\${DB(DND/${ext.number})}" = "1"]?dndbusy)`,
     );
     if (calleeRec) {
-      extensionsConf.push(...kvkkLines, ...recLines);
+      extensionsConf.push(...recLines);
     } else if (callerRecCond) {
       // Callee is not recorded on its own. The calling extension still keeps the conversation.
       extensionsConf.push(
         ` same => n,GotoIf($[${callerRecCond}]?rec)`,
         ` same => n,Goto(norec)`,
         ` same => n(rec),NoOp(Record internal call to ${ext.number})`,
-        ...kvkkLines,
         ...recLines,
         ` same => n(norec),NoOp(Recording off)`,
       );
@@ -930,7 +938,15 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ` same => n,Set(PJSIP_HEADER(add,Alert-Info)=<http://127.0.0.1>\\;info=internal)`,
         ` same => n,Goto(dodial)`,
         ` same => n(alerte),Set(PJSIP_HEADER(add,Alert-Info)=<http://127.0.0.1>\\;info=external)`,
-        ` same => n(dodial),Dial(${dialTarget},${ringSec},tT)`,
+        // Notice, then the phone rings. A flow that already spoke it sets KVKK_DONE.
+        ...(kvkkEnabled
+          ? [
+              ` same => n(dodial),GotoIf($["\${KVKK_DONE}" = "1"]?extdial)`,
+              ` same => n,Set(__KVKK_DONE=1)`,
+              kvkkPlaybackLine(kvkkPromptId),
+              ` same => n(extdial),Dial(${dialTarget},${ringSec},tT)`,
+            ]
+          : [` same => n(dodial),Dial(${dialTarget},${ringSec},tT)`]),
         ...qosPrepLines(),
         // Ring time before answer (DIALEDTIME includes talk time)
         ` same => n,Set(MONOSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${MONOSIP_DUR} - \${MONOSIP_BILL}]:)})`,
@@ -1103,6 +1119,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
       const lines = [
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name} linear)`,
         " same => n,Gosub(monosip-blacklist,s,1)",
+        ...(kvkkEnabled
+          ? [
+              ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?rgdial)`,
+              ` same => n,Set(__KVKK_DONE=1)`,
+              kvkkPlaybackLine(kvkkPromptId),
+              ` same => n(rgdial),NoOp(KVKK)`,
+            ]
+          : []),
       ];
       for (const e of members) {
         lines.push(` same => n,Dial(PJSIP/${e!.number},${rg.ringSeconds},tT)`);
@@ -1115,6 +1139,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
       extensionsConf.push(
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name})`,
         " same => n,Gosub(monosip-blacklist,s,1)",
+        ...(kvkkEnabled
+          ? [
+              ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?rgdial)`,
+              ` same => n,Set(__KVKK_DONE=1)`,
+              kvkkPlaybackLine(kvkkPromptId),
+              ` same => n(rgdial),NoOp(KVKK)`,
+            ]
+          : []),
         ` same => n,Dial(${dial},${rg.ringSeconds},tT)`,
         ` same => n,Hangup()`,
         "",
@@ -1331,6 +1363,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
     // Flow transfer: Dial then re-enter Stasis with DIALSTATUS on failure
     "[monosip-flow-dial]",
     "exten => s,1,NoOp(Flow dial ${MONOSIP_DIAL_TARGET})",
+    ...(kvkkEnabled
+      ? [
+          ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?flowdial)`,
+          ` same => n,Set(__KVKK_DONE=1)`,
+          kvkkPlaybackLine(kvkkPromptId),
+          ` same => n(flowdial),NoOp(KVKK)`,
+        ]
+      : []),
     " same => n,Dial(PJSIP/${MONOSIP_DIAL_TARGET},${IF($[\"${MONOSIP_DIAL_TIMEOUT}\"=\"\"]?30:${MONOSIP_DIAL_TIMEOUT})},tTm(${IF($[\"${MONOSIP_DIAL_MOH}\"=\"\"]?default:${MONOSIP_DIAL_MOH})}))",
     " same => n,GotoIf($[\"${DIALSTATUS}\" = \"ANSWER\"]?done)",
     " same => n,Stasis(monosip-flow,dial-failed,${DIALSTATUS})",

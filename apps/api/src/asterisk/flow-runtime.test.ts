@@ -1095,8 +1095,9 @@ describe("stasisStart — monosip-inbound branches", () => {
 
 describe("runFlowOnChannel — KVKK announcement", () => {
   const FLOW = () => flowOf([node("s", "start"), node("h", "hangup")], [edge("s", "h")]);
+  const toExtension = { kind: "extension", number: "102" } as const;
 
-  it("plays the configured KVKK prompt when enabled", async () => {
+  it("stays silent through the menu and speaks just before a person is rung", async () => {
     dbState.tables["settings"] = [
       { data: { kvkkAnnouncementEnabled: true, kvkkPromptId: "11111111-1111-1111-1111-111111111111" } },
     ];
@@ -1104,40 +1105,51 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
+    const duringMenu = vi.mocked(ari.playAndWait).mock.calls.map((c) => String(c[1]));
+    expect(duringMenu.every((m) => m.startsWith("sound:monosip/silence-"))).toBe(true);
+
+    await applyResolved("ch-k", toExtension as never, { caller: "101" });
     expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:monosip/p1", 60_000);
+    expect(ari.redirect).toHaveBeenCalledWith("ch-k", "102", "from-internal");
   });
 
   it("plays nothing when the announcement is disabled", async () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: false } }];
-    const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
-    await running;
-    // only the silence that keeps RTP flowing — no announcement
+    await applyResolved("ch-k", toExtension as never, { caller: "101" });
     const media = vi.mocked(ari.playAndWait).mock.calls.map((c) => String(c[1]));
     expect(media.every((m) => m.startsWith("sound:monosip/silence-"))).toBe(true);
+    expect(ari.redirect).toHaveBeenCalledWith("ch-k", "102", "from-internal");
   });
 
   it("falls back to live TTS when no prompt is configured", async () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: true } }];
-    const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
-    await running;
-    expect(ensureSpeechMedia).toHaveBeenCalled();
+    await applyResolved("ch-k", toExtension as never, { caller: "101" });
+    expect(ensureSpeechMedia).toHaveBeenCalledWith(
+      "Aramanız kalite standartları gereği kayıt altına alınmaktadır.",
+      "tr",
+      1.05,
+      "female",
+    );
     expect(ari.playAndWait).toHaveBeenCalledWith("ch-k", "sound:monosip/cached", 60_000);
   });
 
   it("speaks the Turkish notice when the flow language is tr", async () => {
     dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: true } }];
-    const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101", language: "tr" });
-    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
-    await running;
-    // KVKK TTS uses Settings ttsVoice (default female).
+    await applyResolved("ch-k", toExtension as never, { caller: "101", language: "tr" });
     expect(ensureSpeechMedia).toHaveBeenCalledWith(
-      "Bu görüşme kaydedilebilir.",
+      "Aramanız kalite standartları gereği kayıt altına alınmaktadır.",
       "tr",
       1.05,
       "female",
     );
+    expect(ari.setChannelVar).toHaveBeenCalledWith("ch-k", "KVKK_DONE", "1");
+  });
+
+  it("does not repeat the notice for voicemail", async () => {
+    dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: true } }];
+    await applyResolved("ch-k", { kind: "voicemail", extension: "101" } as never, { caller: "101" });
+    expect(ensureSpeechMedia).not.toHaveBeenCalled();
+    expect(ari.redirect).toHaveBeenCalledWith("ch-k", "*101", "from-internal");
   });
 
   it("falls back to TTS when the configured prompt has no media", async () => {
@@ -1146,9 +1158,7 @@ describe("runFlowOnChannel — KVKK announcement", () => {
     ];
     dbState.tables["prompts"] = [{ id: "11111111-1111-1111-1111-111111111111", filePath: null }];
     vi.mocked(promptMediaUri).mockReturnValueOnce(null as never);
-    const running = runFlowOnChannel("ch-k", FLOW() as never, { caller: "101" });
-    await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
-    await running;
+    await applyResolved("ch-k", toExtension as never, { caller: "101" });
     expect(ensureSpeechMedia).toHaveBeenCalled();
   });
 });

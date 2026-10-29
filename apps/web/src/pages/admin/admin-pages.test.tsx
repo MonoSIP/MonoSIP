@@ -307,6 +307,7 @@ describe("SettingsPage", () => {
     // Seeded from the GET response, then round-tripped by the save.
     expect(payload.companyName).toBe("MonoSIP");
     expect(payload.defaultLocale).toBe("en");
+    expect(payload.holdMusicClass).toBeNull();
     expect(payload).toHaveProperty("recordingRetentionMonths");
     expect(toastSuccess).toHaveBeenCalledWith("Saved");
   });

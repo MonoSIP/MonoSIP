@@ -370,7 +370,7 @@ export function ExtensionsPage() {
         title={tr("Add extension")}
       >
         <form
-          className="toolbar"
+          className="modal-form"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
@@ -384,18 +384,16 @@ export function ExtensionsPage() {
           />
           <TextField
             label={t("extensions.name")}
-            className="min-w-[16rem]"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
           />
           <TextField
             label={tr("Password")}
-            className="min-w-[14rem]"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={tr("Empty = generate")}
-            hint={passwordProblem(password) ?? undefined}
+            hint={passwordProblem(password) ?? tr("Empty = generate")}
             autoComplete="new-password"
             spellCheck={false}
             aria-invalid={!!passwordProblem(password)}

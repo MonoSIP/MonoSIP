@@ -44,13 +44,27 @@ vi.mock("../db/client.js", () => {
   };
 });
 
-import { queueSelfPauseLines, queueSelfUnpauseLines, writeAsteriskConfig } from "./config-writer.js";
+import { holdMusicSuggest, queueSelfPauseLines, queueSelfUnpauseLines, writeAsteriskConfig } from "./config-writer.js";
 
 // Must match the authoritative policy set in lib/call-policy.ts (EMERGENCY).
 // The generated [from-internal] emergency shortcuts exist so these numbers
 // dial WITHOUT the monosip-blacklist Gosub that the _X. catch-all runs —
 // emergency access must never depend on the blacklist.
 const POLICY_EMERGENCY = ["112", "911", "155", "110", "119"];
+
+describe("holdMusicSuggest", () => {
+  const classes = [{ name: "lobby" }, { name: "default" }];
+
+  it("uses a class that exists on the hold-music page", () => {
+    expect(holdMusicSuggest("lobby", classes)).toBe("lobby");
+  });
+
+  it("falls back to the built-in tone when nothing is chosen", () => {
+    expect(holdMusicSuggest("", classes)).toBe("default");
+    expect(holdMusicSuggest(null, classes)).toBe("default");
+    expect(holdMusicSuggest("missing", classes)).toBe("default");
+  });
+});
 
 describe("writeAsteriskConfig emergency dialplan", () => {
   let dialplan: string;

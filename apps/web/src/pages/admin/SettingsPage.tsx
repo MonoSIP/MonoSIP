@@ -37,6 +37,7 @@ type Settings = {
   ttsVoice?: string;
   ttsVoiceApplyAll?: boolean;
   ttsCacheRetentionDays?: number;
+  holdMusicClass?: string | null;
   allowedCountries?: string[];
   blockedCountries?: string[];
   dailySpendLimitMinutes?: number;
@@ -96,6 +97,7 @@ export function SettingsPage() {
   const [ttsVoice, setTtsVoice] = useState("female");
   const [ttsVoiceApplyAll, setTtsVoiceApplyAll] = useState(true);
   const [ttsCacheRetentionDays, setTtsCacheRetentionDays] = useState(7);
+  const [holdMusicClass, setHoldMusicClass] = useState("");
   const [countries, setCountries] = useState("TR");
   const [blockedCountries, setBlockedCountries] = useState("");
   const [daily, setDaily] = useState(1000);
@@ -149,6 +151,10 @@ export function SettingsPage() {
     queryKey: ["totp-status"],
     queryFn: () => api.get<{ enabled: boolean }>("/api/v1/admin/auth/totp/status"),
   });
+  const moh = useQuery({
+    queryKey: ["moh"],
+    queryFn: () => api.get<Array<{ id: string; name: string }>>("/api/v1/admin/moh"),
+  });
   const prompts = useQuery({
     queryKey: ["prompts"],
     queryFn: () =>
@@ -183,6 +189,7 @@ export function SettingsPage() {
       setTtsVoice(settings.data.ttsVoice && settings.data.ttsVoice !== "kokoro" ? settings.data.ttsVoice : "female");
       setTtsVoiceApplyAll(settings.data.ttsVoiceApplyAll !== false);
       setTtsCacheRetentionDays(settings.data.ttsCacheRetentionDays ?? 7);
+      setHoldMusicClass(settings.data.holdMusicClass ?? "");
       setCountries((settings.data.allowedCountries ?? ["TR"]).join(","));
       setBlockedCountries((settings.data.blockedCountries ?? []).join(","));
       setDaily(settings.data.dailySpendLimitMinutes ?? 1000);
@@ -231,6 +238,7 @@ export function SettingsPage() {
         ttsVoice,
         ttsVoiceApplyAll,
         ttsCacheRetentionDays,
+        holdMusicClass: holdMusicClass || null,
         allowedCountries: countries.split(",").map((s) => s.trim()).filter(Boolean),
         blockedCountries: blockedCountries
           .split(",")
@@ -450,6 +458,23 @@ export function SettingsPage() {
             {tr("page; it then appears in this list.")}
           </p>
         )}
+        <SelectField
+          label={tr("Hold music")}
+          value={holdMusicClass}
+          onValueChange={setHoldMusicClass}
+          hint={tr("The other party hears this when a phone presses hold.")}
+          options={[
+            { value: "", label: tr("Built-in tone") },
+            ...(moh.data ?? []).map((m) => ({ value: m.name, label: m.name })),
+          ]}
+        />
+        <p className="text-xs text-[var(--text-muted)]">
+          {tr("Upload the file on the")}{" "}
+          <Link to="/moh" className="font-medium text-[var(--accent)] underline">
+            {tr("Hold music files")}
+          </Link>{" "}
+          {tr("page, then pick that class here.")}
+        </p>
         <SelectField
           label={tr("IVR TTS model")}
           icon={AudioLines}

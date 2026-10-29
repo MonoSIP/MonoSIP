@@ -205,6 +205,11 @@ export const SettingsSchema = z.object({
   ttsVoice: z.string().max(40).default("female"),
   /** When true, system-default greetings use ttsVoice. An explicit node voice still wins. */
   ttsVoiceApplyAll: z.boolean().default(true),
+  /**
+   * Music-on-hold class played when a phone presses hold.
+   * Empty uses the built-in tone. A name must match a class on the Hold music page.
+   */
+  holdMusicClass: z.string().max(64).optional().nullable(),
   /** How long dynamic IVR TTS WAV cache entries are kept (days). */
   ttsCacheRetentionDays: z.number().int().min(1).max(90).default(7),
   adminIpAllowlist: z.array(z.string()).default([]),

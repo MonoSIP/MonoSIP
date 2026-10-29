@@ -151,13 +151,18 @@ function resolveTtsVoice(
   return (vars.__ttsVoice || "female").trim() || "female";
 }
 
-/** Hold-music class for a transfer. Prefer uploaded audio over the generated default tone. */
+/** Hold-music class for a transfer. The class chosen in Settings wins when it has a file. */
 async function transferHoldClass(): Promise<string> {
   try {
     const rows = await db.select().from(mohClasses);
     const usable = rows.filter(
-      (r) => Array.isArray(r.files) && r.files.length > 0 && /^[\w.-]+$/.test(r.name),
+      (r) => Array.isArray(r.files) && r.files.length > 0 && !/[\r\n;]/.test(r.name),
     );
+    const [srow] = await db.select().from(settings).limit(1);
+    const chosen = String(
+      (srow?.data as { holdMusicClass?: string } | null | undefined)?.holdMusicClass ?? "",
+    ).trim();
+    if (chosen && usable.some((r) => r.name === chosen)) return chosen;
     return (usable.find((r) => r.name === "default") ?? usable[0])?.name ?? "default";
   } catch {
     return "default";
@@ -178,6 +183,61 @@ async function playSpeech(
   }
 }
 
+/**
+ * Recording notice immediately before a person is rung. The IVR itself stays
+ * quiet. Dialplan skips a second play when KVKK_DONE is already set.
+ */
+async function playKvkkBeforePerson(channelId: string, vars: Record<string, string>): Promise<void> {
+  if (vars.__kvkkPlayed === "1") return;
+  try {
+    const [row] = await db.select().from(settings).limit(1);
+    const s = SettingsSchema.parse(row?.data ?? {});
+    if (!s.kvkkAnnouncementEnabled) return;
+    console.log(`[flow] ${channelId} KVKK announcement`);
+    let played = false;
+    if (s.kvkkPromptId) {
+      try {
+        const { prompts: promptsTable } = await import("../db/schema.js");
+        const { promptMediaUri } = await import("../lib/tts.js");
+        const [pr] = await db
+          .select()
+          .from(promptsTable)
+          .where(eq(promptsTable.id, s.kvkkPromptId));
+        const media = promptMediaUri(pr?.filePath, s.kvkkPromptId);
+        if (media) {
+          await ari.playAndWait(channelId, media, 60_000);
+          played = true;
+        }
+      } catch (e) {
+        console.warn(`[flow] KVKK prompt failed`, (e as Error).message);
+      }
+    }
+    if (!played) {
+      try {
+        const { ensureSpeechMedia } = await import("../lib/tts.js");
+        const lang = vars.language === "en" ? "en" : "tr";
+        const text =
+          lang === "tr"
+            ? "Aramanız kalite standartları gereği kayıt altına alınmaktadır."
+            : "This call may be recorded.";
+        const { media, cached, ms } = await ensureSpeechMedia(text, lang, 1.05, "female");
+        console.log(`[flow] ${channelId} kvkk-tts ${cached ? "cache" : "synth"} ${ms}ms`);
+        await ari.playAndWait(channelId, media, 60_000);
+        played = true;
+      } catch (e) {
+        console.warn(`[flow] KVKK TTS failed`, (e as Error).message);
+      }
+    }
+    if (played) {
+      vars.__kvkkPlayed = "1";
+      await ari.setChannelVar(channelId, "KVKK_DONE", "1");
+      await ari.setChannelVar(channelId, "__KVKK_DONE", "1");
+    }
+  } catch (e) {
+    console.warn(`[flow] KVKK announcement failed`, (e as Error).message);
+  }
+}
+
 /** Exported for unit testing: maps a resolved destination onto ARI actions. */
 export async function applyResolved(
   channelId: string,
@@ -190,10 +250,9 @@ export async function applyResolved(
       await ari.hangup(channelId);
       return;
     case "extension":
-      await ari.redirect(channelId, resolved.number, "from-internal");
-      return;
     case "queue":
     case "ring_group":
+      await playKvkkBeforePerson(channelId, vars);
       await ari.redirect(channelId, resolved.number, "from-internal");
       return;
     case "voicemail":
@@ -247,50 +306,6 @@ export async function runFlowOnChannel(
     const s = SettingsSchema.parse(row?.data ?? {});
     vars.__ttsVoice = (s.ttsVoice || "female").trim() || "female";
     vars.__ttsApplyAll = s.ttsVoiceApplyAll === false ? "0" : "1";
-
-    // KVKK announcement — configured prompt, else short spoken notice (not a bare beep)
-    if (s.kvkkAnnouncementEnabled) {
-      console.log(`[flow] ${channelId} KVKK announcement`);
-      let played = false;
-      if (s.kvkkPromptId) {
-        try {
-          const { prompts: promptsTable } = await import("../db/schema.js");
-          const { promptMediaUri } = await import("../lib/tts.js");
-          const [pr] = await db
-            .select()
-            .from(promptsTable)
-            .where(eq(promptsTable.id, s.kvkkPromptId));
-          const media = promptMediaUri(pr?.filePath, s.kvkkPromptId);
-          if (media) {
-            await ari.playAndWait(channelId, media, 60_000);
-            played = true;
-          }
-        } catch (e) {
-          console.warn(`[flow] KVKK prompt failed`, (e as Error).message);
-        }
-      }
-      if (!played) {
-        try {
-          const { ensureSpeechMedia } = await import("../lib/tts.js");
-          const lang = vars.language === "tr" ? "tr" : "en";
-          const text =
-            lang === "tr"
-              ? "Bu görüşme kaydedilebilir."
-              : "This call may be recorded.";
-          const { media, cached, ms } = await ensureSpeechMedia(
-            text,
-            lang,
-            1.05,
-            vars.__ttsVoice,
-          );
-          console.log(`[flow] ${channelId} kvkk-tts ${cached ? "cache" : "synth"} ${ms}ms`);
-          await ari.playAndWait(channelId, media, 60_000);
-          played = true;
-        } catch (e) {
-          console.warn(`[flow] KVKK TTS failed`, (e as Error).message);
-        }
-      }
-    }
   } catch {
     vars.__ttsVoice = vars.__ttsVoice || "female";
     vars.__ttsApplyAll = vars.__ttsApplyAll || "1";
@@ -820,6 +835,7 @@ export async function executeFlowLoop(
           await ari.setChannelVar(channelId, "MONOSIP_DIAL_TARGET", dest);
           await ari.setChannelVar(channelId, "MONOSIP_DIAL_TIMEOUT", String(ringTimeout));
           await ari.setChannelVar(channelId, "MONOSIP_DIAL_MOH", await transferHoldClass());
+          await playKvkkBeforePerson(channelId, vars);
           await ari.redirect(channelId, "s", "monosip-flow-dial");
           return "left";
         }
