@@ -6,6 +6,9 @@ for (const [key, value] of Object.entries(process.env)) {
   if (process.env[renamed] === undefined) process.env[renamed] = value;
 }
 
+/** Install default. `db:reset-admin` always restores this and ignores `ADMIN_PASSWORD`. */
+export const DEFAULT_ADMIN_PASSWORD = "Admin123!";
+
 function required(name: string, fallback?: string): string {
   const v = process.env[name] ?? fallback;
   if (!v) throw new Error(`Missing env ${name}`);
@@ -60,7 +63,7 @@ export const config = {
   sipDomain: process.env.SIP_DOMAIN ?? "localhost",
   sipWssUrl: process.env.SIP_WSS_URL ?? "wss://localhost/asterisk-ws",
   adminEmail: process.env.ADMIN_EMAIL ?? "admin@example.com",
-  adminPassword: process.env.ADMIN_PASSWORD ?? "Admin123!",
+  adminPassword: process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
   asterisk: {
     // All-in-one / NineDeploy defaults to localhost; Compose sets http://asterisk:8088
     ariUrl: process.env.ASTERISK_ARI_URL ?? "http://127.0.0.1:8088",

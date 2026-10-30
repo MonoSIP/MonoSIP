@@ -37,7 +37,7 @@ Open **https://localhost** (self-signed cert — accept the browser warning).
 | Admin | `admin@example.com` | `Admin123!` |
 | Portal (ext 101) | `101` | `portal101` |
 
-Lab passwords only — change them for production.
+Lab passwords only — change them for production. Forgot the admin password later: `pnpm db:reset-admin` (inside the container: `docker compose exec api pnpm db:reset-admin` or `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`. See [INSTALL.md](docs/INSTALL.md).
 
 ## What you get
 

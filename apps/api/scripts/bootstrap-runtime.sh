@@ -301,6 +301,7 @@ su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 
 su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -tc \"SELECT 1 FROM pg_database WHERE datname='monosip'\"" | grep -q 1 \
   || su -s /bin/sh postgres -c "$PG_BIN/psql -h 127.0.0.1 -d postgres -c \"CREATE DATABASE monosip OWNER monosip;\""
 
+# Keep in sync with scripts/reset-admin-password.sh (docker exec does not see this export).
 export DATABASE_URL="postgresql://monosip:monosip@127.0.0.1:5432/monosip"
 # Marker proves /data survived at least one previous boot (helps spot volume wipes).
 if [ ! -f "$PERSIST_MARKER" ]; then

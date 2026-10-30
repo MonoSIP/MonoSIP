@@ -279,6 +279,39 @@ export const docsTr = {
         ),
       },
       {
+        id: "admin-password",
+        title: "Unutulan yönetici parolasını kurtarın",
+        content: (
+          <>
+            <p>
+              <code>pnpm db:reset-admin</code> her yönetici parolasını kurulum
+              varsayılanı <code>Admin123!</code> değerine döndürür. Giriş
+              e-postası değişmez; komut hangi adresle girileceğini yazar. İki
+              adımlı doğrulama açıksa durur. Açık yönetici oturumları kapanır
+              ve veritabanındaki yönetici giriş yasakları silinir.
+            </p>
+            <CodeBlock
+              code={`docker compose exec api pnpm db:reset-admin\ndocker exec monosip pnpm db:reset-admin`}
+              title="Kurulum varsayılanına dön"
+            />
+            <p>
+              Compose yığınında ilk komutu kullanın. Tek imajda{" "}
+              <code>docker exec</code> komutunu kendi konteyner adınızla
+              çalıştırın. Depoyu makinede çalıştırıyorsanız{" "}
+              <code>DATABASE_URL</code> Postgres’i gösterirken{" "}
+              <code>pnpm db:reset-admin</code> yeter.
+            </p>
+            <p>
+              Girişten sonra parolayı Ayarlar → Admin girişinden değiştirin.
+              Panel hâlâ çok fazla hatalı giriş diyorsa API’yi yeniden başlatın
+              (<code>docker compose restart api</code> veya{" "}
+              <code>docker restart monosip</code>); yasak sayacı çalışan
+              sürecin belleğindedir.
+            </p>
+          </>
+        ),
+      },
+      {
         id: "updates",
         title: "Durumu kaybetmeden güncelleyin",
         content: (
@@ -1199,6 +1232,15 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
               kısıtlayın ve operatörün giden ülke ile harcama limitlerini gözden
               geçirin. Bir dahili ele geçirilirse ücret dolandırıcılığı pratik
               bir risktir.
+            </p>
+            <p>
+              Yönetici parolası unutulursa <code>pnpm db:reset-admin</code>{" "}
+              kurulum varsayılanı <code>Admin123!</code> değerine döner.
+              Compose’ta{" "}
+              <code>docker compose exec api pnpm db:reset-admin</code>, tek
+              imajda <code>docker exec monosip pnpm db:reset-admin</code>{" "}
+              çalıştırın. Giriş e-postası ve iki adımlı doğrulama olduğu gibi
+              kalır. Girişten sonra parolayı değiştirin.
             </p>
             <Callout>
               <p>

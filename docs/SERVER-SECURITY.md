@@ -46,6 +46,17 @@ The largest financial risk is toll fraud from a compromised extension. Call rest
 - Trunk and API-node secrets encrypted at rest
 - Every admin change is written to the audit log
 
+### Forgotten admin password
+
+`pnpm db:reset-admin` restores every admin password to the install default `Admin123!`. The sign-in email and two-factor authentication stay as they are. Open admin sessions are signed out. Admin login-flood rows in `ip_bans` are cleared; the API’s in-memory counter drops on restart or when the ban window ends.
+
+```bash
+docker compose exec api pnpm db:reset-admin
+docker exec monosip pnpm db:reset-admin
+```
+
+Change the password after signing in (Settings → Admin sign-in). Full steps: [INSTALL.md](INSTALL.md#forgot-the-admin-password).
+
 ## KVKK (privacy)
 
 - Disclosure announcement on recorded inbound and outbound calls

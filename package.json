@@ -20,6 +20,7 @@
     "db:generate": "pnpm --filter @monosip/api run db:generate",
     "db:migrate": "pnpm --filter @monosip/api run db:migrate",
     "db:seed": "pnpm --filter @monosip/api run db:seed",
+    "db:reset-admin": "pnpm --filter @monosip/api run db:reset-admin",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm --filter @monosip/shared build && pnpm -r run typecheck",
     "test": "pnpm -r run test"

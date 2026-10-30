@@ -79,6 +79,7 @@ RUN mkdir -p /var/lib/asterisk/monosip \
   && cp /app/apps/api/docker-entrypoint.sh /entrypoint.sh \
   && chmod +x /entrypoint.sh \
        /app/apps/api/scripts/bootstrap-runtime.sh \
+       /app/apps/api/scripts/reset-admin-password.sh \
        /app/apps/api/scripts/start-asterisk.sh \
        /app/apps/api/scripts/start-tts.sh
 

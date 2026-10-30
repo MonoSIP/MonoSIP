@@ -282,6 +282,38 @@ export const docs: Record<
         ),
       },
       {
+        id: "admin-password",
+        title: "Recover a forgotten admin password",
+        content: (
+          <>
+            <p>
+              <code>pnpm db:reset-admin</code> sets every admin password back
+              to the install default <code>Admin123!</code>. The sign-in email
+              stays as it is; the command prints it. Two-factor authentication
+              stays on. Open admin sessions are signed out, and admin
+              login-flood bans stored in the database are cleared.
+            </p>
+            <CodeBlock
+              code={`docker compose exec api pnpm db:reset-admin\ndocker exec monosip pnpm db:reset-admin`}
+              title="Restore the install default"
+            />
+            <p>
+              Use the Compose command on a Compose stack. Use{" "}
+              <code>docker exec</code> with your container name on the single
+              image. On a host checkout, run <code>pnpm db:reset-admin</code>{" "}
+              with <code>DATABASE_URL</code> already pointing at Postgres.
+            </p>
+            <p>
+              Sign in, then change the password under Settings → Admin sign-in.
+              If the panel still says too many failed logins, restart the API
+              (<code>docker compose restart api</code> or{" "}
+              <code>docker restart monosip</code>) so its in-memory ban counter
+              drops.
+            </p>
+          </>
+        ),
+      },
+      {
         id: "updates",
         title: "Update without losing the state",
         content: (
@@ -1194,6 +1226,16 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
               Change all lab credentials, restrict administrative access and
               review the provider’s outbound country and spend limits. Toll
               fraud is a practical risk when an extension is compromised.
+            </p>
+            <p>
+              If the admin password is forgotten,{" "}
+              <code>pnpm db:reset-admin</code> restores the install default{" "}
+              <code>Admin123!</code>. Run{" "}
+              <code>docker compose exec api pnpm db:reset-admin</code> on
+              Compose, or <code>docker exec monosip pnpm db:reset-admin</code>{" "}
+              on the single image. The sign-in email and two-factor
+              authentication stay as they are. Change the password after you
+              sign in.
             </p>
             <Callout>
               <p>

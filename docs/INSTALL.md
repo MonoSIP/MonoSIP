@@ -45,6 +45,23 @@ docker compose down          # stop (keeps volumes)
 docker compose down -v       # stop AND delete DB/recordings volumes
 ```
 
+### Forgot the admin password
+
+`pnpm db:reset-admin` sets every admin password back to the install default `Admin123!`. The sign-in email is unchanged (the command prints it). Two-factor authentication stays on. Open admin sessions are signed out, and admin login-flood bans stored in the database are cleared.
+
+```bash
+# Docker Compose
+docker compose exec api pnpm db:reset-admin
+
+# Single image (the name from docker run --name)
+docker exec monosip pnpm db:reset-admin
+
+# API on the host (DATABASE_URL must already point at Postgres)
+pnpm db:reset-admin
+```
+
+Sign in, then change the password under Settings → Admin sign-in. If the panel still says too many failed logins, restart the API (`docker compose restart api` or `docker restart monosip`) so its in-memory ban counter drops.
+
 ## Deploy on any platform (single Docker image)
 
 The whole product ships as **one image** built from the root `Dockerfile` with the
@@ -113,7 +130,7 @@ No env is required for a first boot:
 - Demo SIP trunk is **not** auto-seeded (set `MONOSIP_LAB_SEED=1` for lab only)
 - With `PUBLIC_HOST` set (or `MONOSIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `MONOSIP_ALLOW_EPHEMERAL_DATA=1`
 
-Default admin (change it under Settings → Admin sign-in): `admin@example.com` / `Admin123!`
+Default admin (change it under Settings → Admin sign-in): `admin@example.com` / `Admin123!`. Forgot it later: [Forgot the admin password](#forgot-the-admin-password).
 
 **Vault (recommended for a public host such as `pbx.example.com`):**
 

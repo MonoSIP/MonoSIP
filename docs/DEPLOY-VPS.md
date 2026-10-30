@@ -148,5 +148,6 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 
 - **Registers but no audio:** `EXTERNAL_IP` wrong / RTP ports blocked / SIP ALG on.
 - **401 forever:** wrong SIP password; AOR name must equal extension number (API generates this).
+- **Admin password forgotten:** `docker compose exec api pnpm db:reset-admin` (single image: `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`. Email and 2FA stay as they are. See [INSTALL.md](INSTALL.md).
 - **WSS fails:** nginx cert / `SIP_WSS_URL` host mismatch / port 443 closed.
 - **WebRTC one-way audio off-site:** TURN `EXTERNAL_IP` and relay UDP range must be open.
