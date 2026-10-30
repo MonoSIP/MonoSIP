@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
-import { SettingsSchema } from "@monosip/shared";
+import { parseCallerId, SettingsSchema } from "@monosip/shared";
 import {
   extensions,
   trunks,
@@ -190,14 +190,31 @@ export function singleFlight(fn: () => Promise<void>): () => Promise<void> {
  * Unreachable, calls to the extension 404 and the IVR treats operators as offline.
  * It worked or broke per deploy depending on the random name.
  */
-/** From-header identity for a provider. A caller ID number replaces the SIP login. */
+const SAFE_SIP_USER = /^[A-Za-z0-9._+-]+$/;
+
+/** From-header identity for a provider. A number replaces the SIP login; a name is quoted. */
 export function trunkCallerLines(trunk: {
   username?: string | null;
   callerId?: string | null;
 }): string[] {
+  const username = trunk.username?.trim() ?? "";
+  const fallback = username ? [`from_user=${username}`] : [];
   const cli = trunk.callerId?.trim();
-  if (cli) return [`from_user=${cli}`, `callerid=${cli}`];
-  return trunk.username ? [`from_user=${trunk.username}`] : [];
+  if (!cli) return fallback;
+  const parsed = parseCallerId(cli);
+  if (!parsed || (!parsed.name && !parsed.number)) return fallback;
+  if (parsed.number) {
+    const lines = [`from_user=${parsed.number}`, `callerid=${parsed.number}`];
+    if (parsed.name) lines[1] = `callerid="${parsed.name}" <${parsed.number}>`;
+    return lines;
+  }
+  const lines = [...fallback];
+  lines.push(
+    username && SAFE_SIP_USER.test(username)
+      ? `callerid="${parsed.name}" <${username}>`
+      : `callerid="${parsed.name}"`,
+  );
+  return lines;
 }
 
 export function sipFromDomain(host: string): string {

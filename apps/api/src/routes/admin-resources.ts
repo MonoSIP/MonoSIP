@@ -1789,12 +1789,32 @@ export async function adminResourceRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/admin/recordings", async (req, reply) => {
     if (!(await admin(req, reply))) return;
-    return db
+    const rows = await db
       .select()
       .from(recordings)
       .where(gt(recordings.duration, 0))
       .orderBy(desc(recordings.createdAt))
       .limit(200);
+    if (!rows.length) return rows;
+    const parties = await db
+      .select({
+        callId: cdr.callId,
+        caller: cdr.caller,
+        callee: cdr.callee,
+      })
+      .from(cdr)
+      .where(inArray(cdr.callId, rows.map((r) => r.callId)))
+      .orderBy(desc(cdr.startedAt));
+    const byCall = new Map<string, { caller: string | null; callee: string | null }>();
+    for (const party of parties) {
+      if (!byCall.has(party.callId)) {
+        byCall.set(party.callId, { caller: party.caller, callee: party.callee });
+      }
+    }
+    return rows.map((r) => {
+      const party = byCall.get(r.callId);
+      return { ...r, caller: party?.caller ?? null, callee: party?.callee ?? null };
+    });
   });
 
   app.get("/api/v1/admin/recordings/:id/stream", async (req, reply) => {

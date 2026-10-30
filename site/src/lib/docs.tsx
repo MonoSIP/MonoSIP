@@ -963,6 +963,9 @@ Content-Type: application/json
 }`}
             />
             <p>
+              <code>number</code> is 2 to 20 digits. <code>101</code> is valid.
+              When that number is an extension, the phone is rung directly;
+              any other number goes out through a SIP provider.{" "}
               <code>language</code> is <code>en</code> or <code>tr</code>.{" "}
               <code>voice</code> is <code>female</code>, <code>male</code> or{" "}
               <code>ema</code>. EMA speaks Turkish only. <code>mode</code>{" "}

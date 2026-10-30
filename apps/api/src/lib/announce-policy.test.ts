@@ -1,11 +1,29 @@
 import { describe, expect, it } from "vitest";
 import {
   decideAnnounceResult,
+  dialNumberPattern,
   dialReasonFromCause,
+  extensionAnnounceEndpoint,
   prefixAllowed,
   rateBlock,
   webhookUrlOk,
 } from "./announce-policy.js";
+
+describe("dial numbers", () => {
+  it("accepts a 3-digit extension and a full number", () => {
+    expect(dialNumberPattern.test("101")).toBe(true);
+    expect(dialNumberPattern.test("12")).toBe(true);
+    expect(dialNumberPattern.test("+905551112233")).toBe(true);
+    expect(dialNumberPattern.test("1")).toBe(false);
+    expect(dialNumberPattern.test("123456789012345678901")).toBe(false);
+  });
+
+  it("rings an extension directly and leaves other numbers to a trunk", () => {
+    expect(extensionAnnounceEndpoint("101")).toBe("PJSIP/101");
+    expect(extensionAnnounceEndpoint(null)).toBeNull();
+    expect(extensionAnnounceEndpoint("905551112233")).toBeNull();
+  });
+});
 
 describe("prefixAllowed", () => {
   it("allows every number when the list is empty", () => {

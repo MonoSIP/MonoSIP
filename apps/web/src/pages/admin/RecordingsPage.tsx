@@ -12,11 +12,18 @@ import { tr } from "../../i18n";
 type Rec = {
   id: string;
   callId: string;
+  caller: string | null;
+  callee: string | null;
   duration: number;
   createdAt: string;
   archived?: boolean;
   filePath?: string;
 };
+
+function parties(r: Rec): string {
+  if (!r.caller && !r.callee) return "—";
+  return `${r.caller || "—"} → ${r.callee || "—"}`;
+}
 
 export function RecordingsPage() {
   const { t } = useTranslation();
@@ -143,7 +150,7 @@ export function RecordingsPage() {
               ) : (
                 list.data?.map((r) => (
                   <tr key={r.id}>
-                    <td className="font-mono text-sm">{r.callId}</td>
+                    <td className="font-mono text-sm">{parties(r)}</td>
                     <td>{r.duration}s</td>
                     <td>{new Date(r.createdAt).toLocaleString()}</td>
                     <td className="col-actions">

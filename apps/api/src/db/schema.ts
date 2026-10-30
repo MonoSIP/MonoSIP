@@ -194,8 +194,8 @@ export const trunks = pgTable("trunks", {
   authType: varchar("auth_type", { length: 16 }).notNull().default("userpass"),
   username: varchar("username", { length: 128 }),
   secretEnc: text("secret_enc"),
-  /** Number the operator presents on outbound calls. Registration still uses username. */
-  callerId: varchar("caller_id", { length: 32 }),
+  /** Number, display name, or Name <number>. Registration still uses username. */
+  callerId: varchar("caller_id", { length: 80 }),
   fromDomain: varchar("from_domain", { length: 255 }),
   outboundProxy: varchar("outbound_proxy", { length: 255 }),
   register: boolean("register").notNull().default(true),

@@ -68,6 +68,30 @@ describe("trunkCallerLines", () => {
     expect(trunkCallerLines({ username: "936494", callerId: "  " })).toEqual(["from_user=936494"]);
     expect(trunkCallerLines({ username: null, callerId: null })).toEqual([]);
   });
+
+  it("quotes a display name and keeps the number in From", () => {
+    expect(trunkCallerLines({ username: "936494", callerId: "Acme <+442045773102>" })).toEqual([
+      "from_user=+442045773102",
+      'callerid="Acme" <+442045773102>',
+    ]);
+    expect(trunkCallerLines({ username: "936494", callerId: '"Acme Ltd" <+442045773102>' })).toEqual([
+      "from_user=+442045773102",
+      'callerid="Acme Ltd" <+442045773102>',
+    ]);
+  });
+
+  it("uses a name alone as the display name and the SIP username as the number", () => {
+    expect(trunkCallerLines({ username: "936494", callerId: "Acme Ltd" })).toEqual([
+      "from_user=936494",
+      'callerid="Acme Ltd" <936494>',
+    ]);
+  });
+
+  it("drops a caller ID that would break the config line", () => {
+    expect(trunkCallerLines({ username: "936494", callerId: "Acme;injection" })).toEqual([
+      "from_user=936494",
+    ]);
+  });
 });
 
 describe("sipFromDomain", () => {

@@ -2,13 +2,14 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { announceCalls, apiKeys, recordings, trunks } from "../db/schema.js";
+import { announceCalls, apiKeys, extensions, recordings, trunks } from "../db/schema.js";
 import { ari } from "../asterisk/ari.js";
 import { config } from "../config.js";
 import { resolveOutboundDial } from "./call-policy.js";
 import {
   decideAnnounceResult,
   dialReasonFromCause,
+  extensionAnnounceEndpoint,
   prefixAllowed,
   rateBlock,
   webhookUrlOk,
@@ -282,8 +283,16 @@ export async function placeAnnounceCall(key: KeyRow, body: AnnounceRequest): Pro
   if (body.voice === "ema" && body.language !== "tr") {
     return { ok: false, status: 400, error: "EMA voice is Turkish only" };
   }
+  const digits = body.number.replace(/\D/g, "");
+  const [extension] = /^\d{2,6}$/.test(digits)
+    ? await db
+        .select({ number: extensions.number })
+        .from(extensions)
+        .where(eq(extensions.number, digits))
+        .limit(1)
+    : [];
   const prefixes = (key.prefixes as string[]) ?? [];
-  if (!prefixAllowed(body.number, prefixes)) {
+  if (!extension && !prefixAllowed(body.number, prefixes)) {
     return { ok: false, status: 403, error: "Number prefix not allowed" };
   }
   const counts = await callCounts(key.id);
@@ -309,25 +318,31 @@ export async function placeAnnounceCall(key: KeyRow, body: AnnounceRequest): Pro
     })
     .returning();
 
-  const route = await resolveOutboundDial(body.number);
-  if (!route) {
+  const internal = extensionAnnounceEndpoint(extension?.number ?? null);
+  const route = internal ? null : await resolveOutboundDial(body.number);
+  if (!internal && !route) {
     await finishAnnounce(job.id, { ok: false, reason: "failed", digits: null });
     return { ok: true, status: 201, body: { id: job.id, status: "done", ok: false, reason: "failed" } };
   }
 
-  const endpoints = [route.trunkEndpoint, ...route.fallbackEndpoints];
+  const targets = internal
+    ? [internal]
+    : [route!.trunkEndpoint, ...route!.fallbackEndpoints].map(
+        (endpoint) => `PJSIP/${route!.dialNumber}@${endpoint}`,
+      );
   const channelId = `announce-${job.id}`;
   channelJobs.set(channelId, job.id);
   let dialed: { id?: string } | null = null;
-  let usedEndpoint = endpoints[0];
-  for (const endpoint of endpoints) {
-    const cli = body.callerId?.replace(/\D/g, "") || (await trunkCallerId(endpoint));
+  let usedEndpoint = targets[0];
+  for (const endpoint of targets) {
+    const trunk = endpoint.includes("@") ? endpoint.slice(endpoint.lastIndexOf("@") + 1) : "";
+    const cli = body.callerId?.replace(/\D/g, "") || (trunk ? await trunkCallerId(trunk) : "");
     try {
       dialed = await ari.originateApp({
-        endpoint: `PJSIP/${route.dialNumber}@${endpoint}`,
+        endpoint,
         app: "monosip-flow",
         appArgs: `announce,${job.id}`,
-        callerId: callerIdHeader(cli),
+        callerId: callerIdHeader(cli || null),
         timeout: 45,
         channelId,
       });
@@ -365,7 +380,7 @@ export async function placeAnnounceCall(key: KeyRow, body: AnnounceRequest): Pro
     .update(announceCalls)
     .set({ channelId: actualId })
     .where(eq(announceCalls.id, job.id));
-  console.log(`[announce] ${job.id} → ${route.dialNumber}@${usedEndpoint}`);
+  console.log(`[announce] ${job.id} → ${usedEndpoint}`);
   return { ok: true, status: 201, body: { id: job.id, status: "ringing" } };
 }
 

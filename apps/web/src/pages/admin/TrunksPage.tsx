@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from "lucide-react";
+import { formatCallerId, parseCallerId } from "@monosip/shared";
 import { api } from "../../lib/api";
 import { DIAL_COUNTRIES } from "../../lib/dialCountries";
 import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
@@ -126,7 +127,12 @@ function formPayload(form: TrunkForm, forCreate: boolean) {
     transport: form.transport,
     authType: form.authType,
     username: form.authType === "userpass" ? form.username.trim() || null : null,
-    callerId: form.callerId.trim() || null,
+    callerId: (() => {
+      const raw = form.callerId.trim();
+      if (!raw) return null;
+      const parsed = parseCallerId(raw);
+      return parsed ? formatCallerId(parsed) || null : raw;
+    })(),
     fromDomain: form.fromDomain.trim() || null,
     outboundProxy: form.outboundProxy.trim() || null,
     register: form.authType === "userpass" ? form.register : false,
@@ -345,6 +351,7 @@ export function TrunksPage() {
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (form.callerId.trim() && !parseCallerId(form.callerId)) return;
             save.mutate();
           }}
         >
@@ -433,14 +440,18 @@ export function TrunksPage() {
         <div className="grid gap-3 md:grid-cols-2">
           <TextField
             label={t("trunks.callerId")}
-            hint={t("trunks.callerIdHint")}
+            hint={
+              form.callerId.trim() && !parseCallerId(form.callerId)
+                ? t("trunks.callerIdInvalid")
+                : t("trunks.callerIdHint")
+            }
             className="font-mono md:col-span-2"
             value={form.callerId}
             onChange={(e) => set("callerId", e.target.value)}
-            placeholder="+442045773102"
-            inputMode="tel"
+            placeholder="Acme <+442045773102>"
             autoComplete="off"
             spellCheck={false}
+            aria-invalid={!!(form.callerId.trim() && !parseCallerId(form.callerId))}
           />
           <TextField
             label={t("trunks.fromDomain")}
@@ -478,7 +489,11 @@ export function TrunksPage() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="solid" type="submit" disabled={save.isPending}>
+          <Button
+            variant="solid"
+            type="submit"
+            disabled={save.isPending || !!(form.callerId.trim() && !parseCallerId(form.callerId))}
+          >
             <Plus size={16} />
             {editingId ? t("common.save") : t("trunks.add")}
           </Button>

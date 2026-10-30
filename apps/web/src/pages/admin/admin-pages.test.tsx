@@ -415,8 +415,8 @@ describe("TrunksPage", () => {
     fireEvent.change(dialog.querySelector('input[type="password"]') as HTMLInputElement, {
       target: { value: "secret" },
     });
-    fireEvent.change(within(dialog).getByPlaceholderText("+442045773102"), {
-      target: { value: "+442045773102" },
+    fireEvent.change(within(dialog).getByPlaceholderText("Acme <+442045773102>"), {
+      target: { value: "Acme <+442045773102>" },
     });
     fireEvent.submit(
       within(dialog).getByRole("button", { name: "trunks.add" }).closest("form") as HTMLFormElement,
@@ -429,8 +429,24 @@ describe("TrunksPage", () => {
       enabled: true,
       name: "Carrier",
       host: "sip.example.net",
-      callerId: "+442045773102",
+      callerId: "Acme <+442045773102>",
     });
+  });
+
+  it("does not save a caller ID that breaks the name rules", async () => {
+    apiPost.mockResolvedValue({ id: "t2" });
+    renderPage(<TrunksPage />);
+    await screen.findByText("main");
+    await userEvent.click(screen.getByRole("button", { name: "trunks.addProvider" }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByPlaceholderText("Acme <+442045773102>"), {
+      target: { value: "Acme;injection" },
+    });
+    expect(within(dialog).getByRole("button", { name: "trunks.add" })).toBeDisabled();
+    fireEvent.submit(
+      within(dialog).getByRole("button", { name: "trunks.add" }).closest("form") as HTMLFormElement,
+    );
+    expect(apiPost).not.toHaveBeenCalled();
   });
 
   it("deletes a trunk from its row", async () => {

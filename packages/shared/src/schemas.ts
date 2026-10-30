@@ -41,6 +41,60 @@ export const ExtensionUpdateSchema = ExtensionCreateSchema.partial().omit({
   number: true,
 });
 
+const CALLER_NUMBER = /^\+?[0-9]{6,20}$/;
+/**
+ * Display name safe to place inside callerid="…" in pjsip.conf.
+ * Letters (including Turkish), digits, spaces, and . ' - & ,
+ * Semicolons, quotes, slashes and angle brackets would break the config line.
+ */
+const CALLER_NAME = /^(?=.*\p{L})[\p{L}\p{N} .'\-&,]{1,40}$/u;
+
+export type ParsedCallerId = { name: string | null; number: string | null };
+
+function cleanCallerName(raw: string): string | null {
+  let name = raw.trim();
+  if (name.length >= 2 && name.startsWith('"') && name.endsWith('"')) {
+    name = name.slice(1, -1).trim();
+  }
+  name = name.replace(/\s+/g, " ");
+  if (!CALLER_NAME.test(name)) return null;
+  return name;
+}
+
+/** Number, display name, or `Name <number>`. Empty is valid and means “unset”. */
+export function parseCallerId(raw: string): ParsedCallerId | null {
+  const value = raw.trim();
+  if (!value) return { name: null, number: null };
+  if (CALLER_NUMBER.test(value)) return { name: null, number: value };
+  const wrapped = value.match(/^(.*?)\s*<(\+?[0-9]{6,20})>$/);
+  if (wrapped) {
+    const name = cleanCallerName(wrapped[1] ?? "");
+    if (!name) return null;
+    return { name, number: wrapped[2] ?? null };
+  }
+  const name = cleanCallerName(value);
+  if (!name) return null;
+  return { name, number: null };
+}
+
+export function formatCallerId(parsed: ParsedCallerId): string {
+  if (parsed.name && parsed.number) return `${parsed.name} <${parsed.number}>`;
+  return parsed.number ?? parsed.name ?? "";
+}
+
+const callerIdMessage =
+  "Use a number, a name (letters, digits, spaces, and . ' - & ,), or Name <number>";
+
+export const CallerIdSchema = z
+  .string()
+  .max(80)
+  .superRefine((value, ctx) => {
+    if (parseCallerId(value) === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: callerIdMessage });
+    }
+  })
+  .transform((value) => formatCallerId(parseCallerId(value) ?? { name: null, number: null }));
+
 /** Matches dialplan conditions in config-writer (always / noanswer / busy / chanunavail). */
 export const ForwardingRuleSchema = z.object({
   condition: z.enum(["always", "noanswer", "busy", "chanunavail"]),
@@ -57,13 +111,8 @@ export const TrunkCreateSchema = z.object({
   authType: z.enum(["userpass", "ip"]).default("userpass"),
   username: z.string().optional().nullable(),
   secret: z.string().optional().nullable(),
-  /** Operator caller ID (E.164). Empty keeps the SIP username in the From header. */
-  callerId: z
-    .string()
-    .max(32)
-    .regex(/^$|^\+?[0-9]{6,20}$/)
-    .optional()
-    .nullable(),
+  /** Number, display name, or Name <number>. Empty keeps the SIP username in From. */
+  callerId: CallerIdSchema.optional().nullable(),
   /** SIP From domain / realm (defaults to host when empty). */
   fromDomain: z.string().max(255).optional().nullable(),
   /** Optional outbound proxy host[:port]. */

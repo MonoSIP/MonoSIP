@@ -8,6 +8,7 @@ import { ari } from "../asterisk/ari.js";
 import { createReadStream, existsSync } from "node:fs";
 import { ipAllowed } from "../lib/ip-allowlist.js";
 import { announcePublic, openRecording, placeAnnounceCall } from "../lib/announce-call.js";
+import { dialNumberPattern } from "../lib/announce-policy.js";
 import { authBlocked, clearAuthFailure, keyExpired, noteAuthFailure, verifyBarrier } from "../lib/api-key-auth.js";
 
 type ApiKeyRow = typeof apiKeys.$inferSelect;
@@ -84,7 +85,7 @@ export async function integrationRoutes(app: FastifyInstance) {
     const body = z
       .object({
         extension: z.string(),
-        number: z.string(),
+        number: z.string().regex(dialNumberPattern),
         callerId: z.string().optional(),
       })
       .parse(req.body);
@@ -144,7 +145,7 @@ export async function integrationRoutes(app: FastifyInstance) {
     const key = authn.key;
     const body = z
       .object({
-        number: z.string().regex(/^\+?[0-9]{6,20}$/),
+        number: z.string().regex(dialNumberPattern),
         text: z.string().trim().min(1).max(1000),
         language: z.enum(["en", "tr"]),
         voice: z.enum(["female", "male", "ema"]),

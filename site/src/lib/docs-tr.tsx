@@ -970,6 +970,9 @@ Content-Type: application/json
 }`}
             />
             <p>
+              <code>number</code> 2 ile 20 hane arasındadır. <code>101</code>{" "}
+              geçerlidir. Numara bir dahiliyse telefon doğrudan çalar; diğer
+              numaralar bir SIP operatöründen çıkar.{" "}
               <code>language</code> <code>en</code> veya <code>tr</code> olur.{" "}
               <code>voice</code> <code>female</code>, <code>male</code> veya{" "}
               <code>ema</code> olur. EMA yalnız Türkçe konuşur.{" "}
