@@ -74,6 +74,7 @@ import { RingGroupsPage } from "./RingGroupsPage";
 import { RoutesPage } from "./RoutesPage";
 import { PromptsPage } from "./PromptsPage";
 import { MohPage } from "./MohPage";
+import { RecordingsPage } from "./RecordingsPage";
 import { FlowDesignerPage, leftCornerFlowPosition } from "./FlowDesignerPage";
 import { LoginPage } from "../LoginPage";
 import { AdminLayout } from "../../layouts/AdminLayout";
@@ -1323,5 +1324,47 @@ describe("PortalLayout", () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/login", { replace: true }));
     // Navigation itself is asserted through the mocked useNavigate — the stub
     // records the call without changing the router location.
+  });
+});
+
+describe("RecordingsPage", () => {
+  it("opens the access log in a dialog", async () => {
+    apiGet.mockImplementation(async (path: string) => {
+      if (path === "/api/v1/admin/recordings") {
+        return [
+          {
+            id: "r1",
+            callId: "c1",
+            caller: "100",
+            callee: "101",
+            duration: 12,
+            createdAt: "2026-01-01T10:00:00Z",
+          },
+        ];
+      }
+      if (path === "/api/v1/admin/recordings/r1/access-log") {
+        return [
+          {
+            id: "a1",
+            action: "stream",
+            at: "2026-01-02T08:00:00Z",
+            actorType: "admin",
+          },
+        ];
+      }
+      return [];
+    });
+
+    renderPage(<RecordingsPage />);
+
+    expect(await screen.findByText("100 → 101")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Access log" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: "Access log" })).toBeInTheDocument();
+    expect(within(dialog).getByText("100 → 101")).toBeInTheDocument();
+    expect(await within(dialog).findByText(/admin · stream/)).toBeInTheDocument();
+    expect(apiGet).toHaveBeenCalledWith("/api/v1/admin/recordings/r1/access-log");
   });
 });

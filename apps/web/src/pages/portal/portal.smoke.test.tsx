@@ -181,8 +181,22 @@ describe("portal smoke tests", () => {
 
   it("MyRecordingsPage renders recordings with a play control each", async () => {
     get.mockResolvedValue([
-      { id: "r1", callId: "c1", duration: 12, createdAt: "2026-01-01T10:00:00Z" },
-      { id: "r2", callId: "c2", duration: 30, createdAt: "2026-01-01T11:00:00Z" },
+      {
+        id: "r1",
+        callId: "c1",
+        caller: "100",
+        callee: "101",
+        duration: 12,
+        createdAt: "2026-01-01T10:00:00Z",
+      },
+      {
+        id: "r2",
+        callId: "c2",
+        caller: "05321112233",
+        callee: "100",
+        duration: 30,
+        createdAt: "2026-01-01T11:00:00Z",
+      },
     ]);
 
     renderPage(<MyRecordingsPage />);
@@ -190,6 +204,8 @@ describe("portal smoke tests", () => {
     expect(
       await screen.findByRole("heading", { name: "nav.myRecordings" }),
     ).toBeInTheDocument();
+    expect(await screen.findByText("100 → 101")).toBeInTheDocument();
+    expect(screen.getByText("05321112233 → 100")).toBeInTheDocument();
     await waitFor(() => expect(screen.getAllByRole("button")).toHaveLength(2));
   });
 

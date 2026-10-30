@@ -3,10 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
-import { ClipboardList, Disc, Download, FileAudio, Pause, Play, X } from "lucide-react";
+import { ClipboardList, Disc, Download, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, IconLink, PageHeader, SectionCard } from "../../components/ui";
+import { IconBtn, IconLink, Modal, PageHeader, SectionCard } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Rec = {
@@ -33,13 +33,15 @@ export function RecordingsPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [canPlay, setCanPlay] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const waveRef = useRef<HTMLDivElement>(null);
+  const [waveNode, setWaveNode] = useState<HTMLDivElement | null>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
 
   const list = useQuery({
     queryKey: ["recordings"],
     queryFn: () => api.get<Rec[]>("/api/v1/admin/recordings"),
   });
+  const playing = (list.data ?? []).find((r) => r.id === playingId) ?? null;
+  const accessRec = (list.data ?? []).find((r) => r.id === accessId) ?? null;
 
   const access = useQuery({
     queryKey: ["rec-access", accessId],
@@ -51,13 +53,13 @@ export function RecordingsPage() {
   });
 
   useEffect(() => {
-    if (!playingId || !waveRef.current) return;
+    if (!playingId || !waveNode) return;
     setLoadError(null);
     setCanPlay(false);
     setIsPlaying(false);
     wsRef.current?.destroy();
     const ws = WaveSurfer.create({
-      container: waveRef.current,
+      container: waveNode,
       waveColor: "var(--border)",
       progressColor: "var(--accent)",
       height: 64,
@@ -86,7 +88,7 @@ export function RecordingsPage() {
       ws.destroy();
       wsRef.current = null;
     };
-  }, [playingId]);
+  }, [playingId, waveNode]);
 
   return (
     <div className="space-y-6">
@@ -96,42 +98,63 @@ export function RecordingsPage() {
         tone="coral"
         description={tr("Listen, download, access log")}
       />
-      {playingId && (
-        <SectionCard title={tr("Player")} icon={FileAudio} tone="coral">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm text-[var(--text-muted)]">
-                {loadError
-                  ? loadError
-                  : isPlaying
-                    ? `Playing ${playingId.slice(0, 8)}…`
-                    : `Loaded ${playingId.slice(0, 8)}`}
-              </span>
-              <div className="btn-icon-row">
-                <IconBtn
-                  icon={isPlaying ? Pause : Play}
-                  label={isPlaying ? "Pause" : "Play"}
-                  primary
-                  disabled={!canPlay || !!loadError}
-                  onClick={() => {
-                    const ws = wsRef.current;
-                    if (!ws) return;
-                    if (ws.isPlaying()) {
-                      ws.pause();
-                      return;
-                    }
-                    void ws.play().catch(() => {
-                      toast.error(tr("Playback failed — check browser audio permission"));
-                    });
-                  }}
-                />
-                <IconBtn icon={X} label={tr("Close")} onClick={() => setPlayingId(null)} />
-              </div>
-            </div>
-            <div ref={waveRef} />
-          </div>
-        </SectionCard>
-      )}
+      <Modal
+        open={!!playingId}
+        onOpenChange={(next) => {
+          if (!next) setPlayingId(null);
+        }}
+        title={playing ? parties(playing) : tr("Player")}
+        description={
+          loadError ??
+          (playing
+            ? `${new Date(playing.createdAt).toLocaleString()} · ${playing.duration}s`
+            : undefined)
+        }
+        maxWidth="40rem"
+        footer={
+          <IconBtn
+            icon={isPlaying ? Pause : Play}
+            label={isPlaying ? tr("Pause") : tr("Play")}
+            primary
+            disabled={!canPlay || !!loadError}
+            onClick={() => {
+              const ws = wsRef.current;
+              if (!ws) return;
+              if (ws.isPlaying()) {
+                ws.pause();
+                return;
+              }
+              void ws.play().catch(() => {
+                toast.error(tr("Playback failed — check browser audio permission"));
+              });
+            }}
+          />
+        }
+      >
+        <div ref={setWaveNode} className="min-h-16 w-full" />
+      </Modal>
+      <Modal
+        open={!!accessId}
+        onOpenChange={(next) => {
+          if (!next) setAccessId(null);
+        }}
+        title={tr("Access log")}
+        description={accessRec ? parties(accessRec) : undefined}
+      >
+        {access.isError ? (
+          <p className="text-sm text-[var(--text-muted)]">{tr("Could not load the access log")}</p>
+        ) : !access.isFetched ? null : (access.data ?? []).length === 0 ? (
+          <p className="text-sm text-[var(--text-muted)]">{tr("No one has opened this recording yet.")}</p>
+        ) : (
+          <ul className="space-y-1 text-sm">
+            {access.data?.map((a) => (
+              <li key={a.id}>
+                {new Date(a.at).toLocaleString()} · {a.actorType} · {a.action}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
       <SectionCard title={tr("Recordings")} icon={Disc} tone="blue" flush>
         <table className="table">
             <thead>
@@ -174,26 +197,6 @@ export function RecordingsPage() {
             </tbody>
           </table>
       </SectionCard>
-      {accessId && (
-        <SectionCard
-          title={tr("Access log")}
-          icon={ClipboardList}
-          tone="coral"
-          actions={<IconBtn icon={X} label={tr("Close")} onClick={() => setAccessId(null)} />}
-        >
-          <ul className="space-y-1 text-sm">
-            {(access.data ?? []).length === 0 ? (
-              <li className="text-[var(--text-muted)]">—</li>
-            ) : (
-              access.data?.map((a) => (
-                <li key={a.id}>
-                  {new Date(a.at).toLocaleString()} · {a.actorType} · {a.action}
-                </li>
-              ))
-            )}
-          </ul>
-        </SectionCard>
-      )}
     </div>
   );
 }

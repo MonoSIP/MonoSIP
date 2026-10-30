@@ -3,33 +3,42 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
 import { toast } from "sonner";
-import { Disc, FileAudio } from "lucide-react";
+import { FileAudio, Pause, Play } from "lucide-react";
 import { api } from "../../lib/api";
-import { Button, PageHeader, SectionCard } from "../../components/ui";
+import { tr } from "../../i18n";
+import { Button, IconBtn, Modal, PageHeader, SectionCard } from "../../components/ui";
 
 export function MyRecordingsPage() {
   const { t } = useTranslation();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const waveRef = useRef<HTMLDivElement>(null);
+  const [waveNode, setWaveNode] = useState<HTMLDivElement | null>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
 
   const list = useQuery({
     queryKey: ["my-recordings"],
     queryFn: () =>
-      api.get<Array<{ id: string; callId: string; duration: number; createdAt: string }>>(
-        "/api/v1/me/recordings",
-      ),
+      api.get<
+        Array<{
+          id: string;
+          callId: string;
+          caller: string | null;
+          callee: string | null;
+          duration: number;
+          createdAt: string;
+        }>
+      >("/api/v1/me/recordings"),
   });
+  const playing = (list.data ?? []).find((r) => r.id === playingId) ?? null;
 
   useEffect(() => {
-    if (!playingId || !waveRef.current) return;
+    if (!playingId || !waveNode) return;
     setLoadError(null);
     setIsPlaying(false);
     wsRef.current?.destroy();
     const ws = WaveSurfer.create({
-      container: waveRef.current,
+      container: waveNode,
       waveColor: "var(--border)",
       progressColor: "var(--accent)",
       height: 56,
@@ -58,39 +67,47 @@ export function MyRecordingsPage() {
       ws.destroy();
       wsRef.current = null;
     };
-  }, [playingId]);
+  }, [playingId, waveNode]);
 
   return (
     <div className="space-y-4">
       <PageHeader icon={FileAudio} title={t("nav.myRecordings")} tone="coral" />
-      {playingId && (
-        <SectionCard title="Playback" icon={Disc} tone="coral">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm text-[var(--text-muted)]">
-              {loadError ?? (isPlaying ? "Playing…" : "Ready")}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="solid"
-                type="button"
-                disabled={!!loadError}
-                onClick={() => {
-                  const ws = wsRef.current;
-                  if (!ws) return;
-                  if (ws.isPlaying()) ws.pause();
-                  else void ws.play();
-                }}
-              >
-                {isPlaying ? "Pause" : "Play"}
-              </Button>
-              <Button type="button" onClick={() => setPlayingId(null)}>
-                Close
-              </Button>
-            </div>
-          </div>
-          <div ref={waveRef} />
-        </SectionCard>
-      )}
+      <Modal
+        open={!!playingId}
+        onOpenChange={(next) => {
+          if (!next) setPlayingId(null);
+        }}
+        title={
+          playing
+            ? playing.caller || playing.callee
+              ? `${playing.caller || "—"} → ${playing.callee || "—"}`
+              : tr("Player")
+            : tr("Player")
+        }
+        description={
+          loadError ??
+          (playing
+            ? `${new Date(playing.createdAt).toLocaleString()} · ${playing.duration}s`
+            : undefined)
+        }
+        maxWidth="40rem"
+        footer={
+          <IconBtn
+            icon={isPlaying ? Pause : Play}
+            label={isPlaying ? tr("Pause") : tr("Play")}
+            primary
+            disabled={!!loadError}
+            onClick={() => {
+              const ws = wsRef.current;
+              if (!ws) return;
+              if (ws.isPlaying()) ws.pause();
+              else void ws.play();
+            }}
+          />
+        }
+      >
+        <div ref={setWaveNode} className="min-h-16 w-full" />
+      </Modal>
       {list.isFetched && (list.data ?? []).length === 0 ? (
         <div className="vm-empty" role="status">
           <span className="vm-empty-mark" aria-hidden="true">
@@ -112,7 +129,9 @@ export function MyRecordingsPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--border)] p-3"
               >
                 <div>
-                  <div className="font-mono text-sm">{r.callId}</div>
+                  <div className="font-mono text-sm">
+                    {r.caller || r.callee ? `${r.caller || "—"} → ${r.callee || "—"}` : "—"}
+                  </div>
                   <div className="text-xs text-[var(--text-muted)]">
                     {new Date(r.createdAt).toLocaleString()} · {r.duration}s
                   </div>

@@ -138,10 +138,21 @@ export async function portalRoutes(app: FastifyInstance) {
       .where(
         or(eq(cdr.extensionNumber, a.number), eq(cdr.caller, a.number), eq(cdr.callee, a.number)),
       )
+      .orderBy(desc(cdr.startedAt))
       .limit(200);
-    const callIds = new Set(myCalls.map((c) => c.callId));
+    const parties = new Map<string, { caller: string | null; callee: string | null }>();
+    for (const call of myCalls) {
+      if (!parties.has(call.callId)) {
+        parties.set(call.callId, { caller: call.caller, callee: call.callee });
+      }
+    }
     const all = await db.select().from(recordings).orderBy(desc(recordings.createdAt)).limit(200);
-    return all.filter((r) => callIds.has(r.callId) && (r.duration ?? 0) > 0);
+    return all
+      .filter((r) => parties.has(r.callId) && (r.duration ?? 0) > 0)
+      .map((r) => {
+        const party = parties.get(r.callId);
+        return { ...r, caller: party?.caller ?? null, callee: party?.callee ?? null };
+      });
   });
 
   app.get("/api/v1/me/recordings/:id/stream", async (req, reply) => {
