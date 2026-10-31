@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Ban, Pencil, Plus, Route, Signpost, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Inbound = {
@@ -32,6 +32,7 @@ type Outbound = {
 export function RoutesPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [editInboundId, setEditInboundId] = useState<string | null>(null);
   const [inboundOpen, setInboundOpen] = useState(false);
   const [did, setDid] = useState("default");
@@ -196,10 +197,16 @@ export function RoutesPage() {
                       icon={Trash2}
                       label={t("common.delete")}
                       danger
+                      pending={actions.isPending(`in:${r.id}`)}
                       onClick={() =>
-                        void api.delete(`/api/v1/admin/routes/inbound/${r.id}`).then(() =>
-                          qc.invalidateQueries({ queryKey: ["inbound"] }),
-                        )
+                        void actions.run(`in:${r.id}`, async () => {
+                          try {
+                            await api.delete(`/api/v1/admin/routes/inbound/${r.id}`);
+                            void qc.invalidateQueries({ queryKey: ["inbound"] });
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
+                        })
                       }
                     />
                   </div>
@@ -221,6 +228,7 @@ export function RoutesPage() {
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
+            if (saveInbound.isPending) return;
             saveInbound.mutate();
           }}
         >
@@ -246,7 +254,7 @@ export function RoutesPage() {
             onChange={(e) => setPriority(Number(e.target.value))}
           />
           <div className="flex gap-2 pb-[0.85rem]">
-            <Button variant="solid" type="submit">
+            <Button variant="solid" type="submit" pending={saveInbound.isPending}>
               <Plus size={16} />
               {editInboundId ? t("common.save") : t("common.create")}
             </Button>
@@ -300,10 +308,16 @@ export function RoutesPage() {
                         icon={Trash2}
                         label={t("common.delete")}
                         danger
+                        pending={actions.isPending(`out:${r.id}`)}
                         onClick={() =>
-                          void api.delete(`/api/v1/admin/routes/outbound/${r.id}`).then(() =>
-                            qc.invalidateQueries({ queryKey: ["outbound"] }),
-                          )
+                          void actions.run(`out:${r.id}`, async () => {
+                            try {
+                              await api.delete(`/api/v1/admin/routes/outbound/${r.id}`);
+                              void qc.invalidateQueries({ queryKey: ["outbound"] });
+                            } catch (e) {
+                              toast.error(String(e));
+                            }
+                          })
                         }
                       />
                     </div>
@@ -326,6 +340,7 @@ export function RoutesPage() {
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
+            if (saveOutbound.isPending) return;
             saveOutbound.mutate();
           }}
         >
@@ -360,7 +375,7 @@ export function RoutesPage() {
           />
           <Checkbox checked={obEnabled} onCheckedChange={setObEnabled} label={t("common.enabled")} />
           <div className="flex gap-2 pb-[0.85rem]">
-            <Button variant="solid" type="submit">
+            <Button variant="solid" type="submit" pending={saveOutbound.isPending}>
               <Plus size={16} />
               {editOutboundId ? t("common.save") : t("common.create")}
             </Button>

@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { usePhoneOptional } from "../../lib/phone-context";
 import { useStore } from "../../store";
 import { setAppLocale } from "../../i18n";
-import { Button, PageHeader, SectionCard, Segmented, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, PageHeader, SectionCard, Segmented, SelectField, TextAreaField, TextField, usePendingAction } from "../../components/ui";
 
 type Fwd = {
   id?: string;
@@ -28,6 +28,7 @@ export function MySettingsPage() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const phoneState = usePhoneOptional();
+  const actions = usePendingAction();
   const qc = useQueryClient();
   const [lang, setLangState] = useState(() => (i18n?.language || "en").slice(0, 2));
   const [password, setPassword] = useState("");
@@ -231,7 +232,12 @@ export function MySettingsPage() {
         </Button>
       </SectionCard>
       <SectionCard title={t("common.logout")} icon={LogOut} tone="cyan">
-        <Button type="button" variant="solid" onClick={() => void signOut(navigate, setActor)}>
+        <Button
+          type="button"
+          variant="solid"
+          pending={actions.isPending("logout")}
+          onClick={() => void actions.run("logout", () => signOut(navigate, setActor))}
+        >
           <LogOut size={16} aria-hidden />
           {t("common.logout")}
         </Button>
@@ -249,8 +255,12 @@ export function MySettingsPage() {
           <Button
             variant="solid"
             type="button"
-            onClick={() => savePass.mutate()}
+            pending={savePass.isPending}
             disabled={password.length < 8}
+            onClick={() => {
+              if (savePass.isPending || password.length < 8) return;
+              savePass.mutate();
+            }}
           >
             {t("common.save")}
           </Button>
@@ -303,7 +313,14 @@ export function MySettingsPage() {
           </div>
         ))}
         <div className="settings-save">
-          <Button variant="solid" type="button" onClick={() => saveFwd.mutate()}>
+          <Button
+            variant="solid"
+            type="button"
+            pending={saveFwd.isPending}
+            onClick={() => {
+              if (!saveFwd.isPending) saveFwd.mutate();
+            }}
+          >
             Save forwarding
           </Button>
         </div>
@@ -348,8 +365,10 @@ export function MySettingsPage() {
           <Button
             variant="solid"
             type="button"
-            onClick={() => saveGreet.mutate()}
-            disabled={saveGreet.isPending}
+            pending={saveGreet.isPending}
+            onClick={() => {
+              if (!saveGreet.isPending) saveGreet.mutate();
+            }}
           >
             {t("common.save")}
           </Button>

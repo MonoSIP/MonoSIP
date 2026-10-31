@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -23,9 +23,12 @@ export function LoginPage() {
   const [totpCode, setTotpCode] = useState("");
   const [needTotp, setNeedTotp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const submitting = useRef(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setLoading(true);
     try {
       if (mode === "admin") {
@@ -53,6 +56,7 @@ export function LoginPage() {
     } catch (err) {
       toast.error((err as Error).message || t("auth.invalid"));
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   }
@@ -147,7 +151,7 @@ export function LoginPage() {
             placeholder="000000"
           />
         )}
-        <Button variant="solid" className="mt-2 w-full justify-center" disabled={loading}>
+        <Button variant="solid" className="mt-2 w-full justify-center" pending={loading}>
           {loading ? t("common.loading") : t("auth.signIn")}
         </Button>
       </form>

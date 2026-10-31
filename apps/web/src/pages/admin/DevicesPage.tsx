@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Cpu, List, Network, QrCode, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -19,6 +19,7 @@ const PROFILES = ["softphone", "yealink", "fanvil", "grandstream", "generic"] as
 
 export function DevicesPage() {
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [extensionId, setExtensionId] = useState("");
   const [model, setModel] = useState("softphone");
   const [mac, setMac] = useState("");
@@ -108,15 +109,28 @@ export function DevicesPage() {
                       <td>{d.provisioningProfile ?? "—"}</td>
                       <td className="col-actions">
                         <div className="btn-icon-row">
-                          <IconBtn icon={QrCode} label={tr("QR")} onClick={() => void showQr(d.id)} />
+                          <IconBtn
+                            icon={QrCode}
+                            label={tr("QR")}
+                            pending={actions.isPending(`qr:${d.id}`)}
+                            onClick={() =>
+                              void actions.run(`qr:${d.id}`, () => showQr(d.id).catch((e) => toast.error(String(e))))
+                            }
+                          />
                           <IconBtn
                             icon={Trash2}
                             label={tr("Delete")}
                             danger
+                            pending={actions.isPending(`delete:${d.id}`)}
                             onClick={() =>
-                              void api.delete(`/api/v1/admin/devices/${d.id}`).then(() =>
-                                qc.invalidateQueries({ queryKey: ["devices"] }),
-                              )
+                              void actions.run(`delete:${d.id}`, async () => {
+                                try {
+                                  await api.delete(`/api/v1/admin/devices/${d.id}`);
+                                  void qc.invalidateQueries({ queryKey: ["devices"] });
+                                } catch (e) {
+                                  toast.error(String(e));
+                                }
+                              })
                             }
                           />
                         </div>
@@ -155,6 +169,7 @@ export function DevicesPage() {
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-end"
           onSubmit={(e) => {
             e.preventDefault();
+            if (create.isPending) return;
             create.mutate();
           }}
         >
@@ -190,7 +205,7 @@ export function DevicesPage() {
             onValueChange={setProfile}
             options={PROFILES.map((p) => ({ value: p, label: p }))}
           />
-          <Button variant="solid" className="w-fit" type="submit">
+          <Button variant="solid" className="w-fit" type="submit" pending={create.isPending}>
             {tr("Add device")}
           </Button>
         </form>

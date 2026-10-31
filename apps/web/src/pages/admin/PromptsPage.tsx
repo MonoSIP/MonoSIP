@@ -244,8 +244,11 @@ export function PromptsPage() {
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
+          e.target.value = "";
+          if (replaceAudio.isPending) return;
           if (f && replaceId) replaceAudio.mutate({ id: replaceId, file: f });
         }}
+        disabled={replaceAudio.isPending}
       />
 
       <SectionCard
@@ -318,7 +321,9 @@ export function PromptsPage() {
                             <IconBtn
                               icon={Upload}
                               label={t("prompts.uploadReplace", { defaultValue: "Upload audio" })}
+                              pending={replaceAudio.isPending && replaceAudio.variables?.id === p.id}
                               onClick={() => {
+                                if (replaceAudio.isPending && replaceAudio.variables?.id === p.id) return;
                                 setReplaceId(p.id);
                                 replaceRef.current?.click();
                               }}
@@ -326,8 +331,12 @@ export function PromptsPage() {
                             <IconBtn
                               icon={Wand2}
                               label={t("prompts.generate", { defaultValue: "Generate TTS" })}
-                              disabled={!p.ttsText || synthesize.isPending}
-                              onClick={() => synthesize.mutate(p.id)}
+                              disabled={!p.ttsText}
+                              pending={synthesize.isPending && synthesize.variables === p.id}
+                              onClick={() => {
+                                if (synthesize.isPending && synthesize.variables === p.id) return;
+                                synthesize.mutate(p.id);
+                              }}
                             />
                           </>
                         )}
@@ -335,8 +344,11 @@ export function PromptsPage() {
                           icon={Trash2}
                           label={t("common.delete", { defaultValue: "Delete" })}
                           danger
-                          disabled={remove.isPending}
-                          onClick={() => setPendingDelete(p)}
+                          pending={remove.isPending && remove.variables === p.id}
+                          onClick={() => {
+                            if (remove.isPending && remove.variables === p.id) return;
+                            setPendingDelete(p);
+                          }}
                         />
                       </div>
                     </td>
@@ -362,6 +374,7 @@ export function PromptsPage() {
               toast.error(t("prompts.nameRequired", { defaultValue: "Name is required" }));
               return;
             }
+            if (create.isPending) return;
             create.mutate();
           }}
         >
@@ -446,7 +459,7 @@ export function PromptsPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="solid" className="w-fit" type="submit" disabled={create.isPending}>
+            <Button variant="solid" className="w-fit" type="submit" pending={create.isPending}>
               {audioFile
                 ? t("prompts.createWithUpload", { defaultValue: "Create with audio file" })
                 : ttsText.trim()
@@ -476,14 +489,16 @@ export function PromptsPage() {
           })}
           footer={
             <>
-              <Button type="button" disabled={remove.isPending} onClick={() => setPendingDelete(null)}>
+              <Button type="button" pending={remove.isPending} onClick={() => setPendingDelete(null)}>
                 {t("common.cancel", { defaultValue: "Cancel" })}
               </Button>
               <Button
                 variant="solid" color="red"
                 type="button"
-                disabled={remove.isPending}
-                onClick={() => remove.mutate(pendingDelete.id)}
+                pending={remove.isPending}
+                onClick={() => {
+                  if (!remove.isPending) remove.mutate(pendingDelete.id);
+                }}
               >
                 {remove.isPending
                   ? t("common.deleting", { defaultValue: "Deleting…" })

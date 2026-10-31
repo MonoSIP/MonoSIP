@@ -89,7 +89,11 @@ export function MissedPage() {
                       {m.status !== "returned" && (
                         <Button
                           type="button"
-                          onClick={() => mark.mutate({ id: m.id, status: "returned" })}
+                          pending={mark.isPending && mark.variables?.id === m.id}
+                          onClick={() => {
+                            if (mark.isPending && mark.variables?.id === m.id) return;
+                            mark.mutate({ id: m.id, status: "returned" });
+                          }}
                         >
                           {t("missed.markReturned")}
                         </Button>
@@ -97,7 +101,11 @@ export function MissedPage() {
                       {m.status === "pending" && (
                         <Button
                           type="button"
-                          onClick={() => mark.mutate({ id: m.id, status: "ignored" })}
+                          pending={mark.isPending && mark.variables?.id === m.id}
+                          onClick={() => {
+                            if (mark.isPending && mark.variables?.id === m.id) return;
+                            mark.mutate({ id: m.id, status: "ignored" });
+                          }}
                         >
                           {t("missed.ignore")}
                         </Button>

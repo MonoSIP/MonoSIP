@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { Button, PageHeader, SectionCard, SelectInput, StatTile } from "../../components/ui";
+import { Button, PageHeader, SectionCard, SelectInput, StatTile, usePendingAction } from "../../components/ui";
 import { LiveDot } from "../../components/motion";
 import { tr } from "../../i18n";
 
@@ -30,6 +30,7 @@ const PRESENCE_LABEL: Record<string, string> = {
 export function DashboardPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [tv, setTv] = useState(false);
   const [wsNote, setWsNote] = useState("…");
   const [listenerExt, setListenerExt] = useState("100");
@@ -161,7 +162,11 @@ export function DashboardPage() {
                 }
               />
             </label>
-            <Button type="button" onClick={() => void cleanupSnoops()}>
+            <Button
+              type="button"
+              pending={actions.isPending("cleanup")}
+              onClick={() => void actions.run("cleanup", () => cleanupSnoops())}
+            >
               <Trash2 size={16} />
               {tr("Clear stuck spy")}
             </Button>
@@ -235,24 +240,41 @@ export function DashboardPage() {
                       </td>
                       <td className="col-actions">
                         <div className="call-actions">
-                          <Button type="button" onClick={() => void spy(c.id, "listen")}>
+                          <Button
+                            type="button"
+                            pending={actions.isPending(`spy:${c.id}:listen`)}
+                            onClick={() => void actions.run(`spy:${c.id}:listen`, () => spy(c.id, "listen"))}
+                          >
                             {tr("Spy")}
                           </Button>
-                          <Button type="button" onClick={() => void spy(c.id, "whisper")}>
+                          <Button
+                            type="button"
+                            pending={actions.isPending(`spy:${c.id}:whisper`)}
+                            onClick={() => void actions.run(`spy:${c.id}:whisper`, () => spy(c.id, "whisper"))}
+                          >
                             {tr("Whisper")}
                           </Button>
-                          <Button type="button" onClick={() => void spy(c.id, "barge")}>
+                          <Button
+                            type="button"
+                            pending={actions.isPending(`spy:${c.id}:barge`)}
+                            onClick={() => void actions.run(`spy:${c.id}:barge`, () => spy(c.id, "barge"))}
+                          >
                             {tr("Barge")}
                           </Button>
                           <Button
                             variant="solid"
                             color="red"
                             type="button"
+                            pending={actions.isPending(`hangup:${c.id}`)}
                             onClick={() =>
-                              void api
-                                .post(`/api/v1/admin/live/calls/${c.id}/hangup`)
-                                .then(() => qc.invalidateQueries({ queryKey: ["live"] }))
-                                .catch((e: Error) => toast.error(e.message))
+                              void actions.run(`hangup:${c.id}`, async () => {
+                                try {
+                                  await api.post(`/api/v1/admin/live/calls/${c.id}/hangup`);
+                                  void qc.invalidateQueries({ queryKey: ["live"] });
+                                } catch (e) {
+                                  toast.error((e as Error).message);
+                                }
+                              })
                             }
                           >
                             {tr("Hangup")}

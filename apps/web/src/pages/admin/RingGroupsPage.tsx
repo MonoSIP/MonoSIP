@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Hash, List, Pencil, Tag, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = { id: string; number: string; name: string };
@@ -20,6 +20,7 @@ type Group = {
 export function RingGroupsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [strategy, setStrategy] = useState("ringall");
@@ -126,10 +127,16 @@ export function RingGroupsPage() {
                         icon={Trash2}
                         label={t("common.delete")}
                         danger
+                        pending={actions.isPending(`delete:${g.id}`)}
                         onClick={() =>
-                          void api.delete(`/api/v1/admin/ring-groups/${g.id}`).then(() =>
-                            qc.invalidateQueries({ queryKey: ["ring-groups"] }),
-                          )
+                          void actions.run(`delete:${g.id}`, async () => {
+                            try {
+                              await api.delete(`/api/v1/admin/ring-groups/${g.id}`);
+                              void qc.invalidateQueries({ queryKey: ["ring-groups"] });
+                            } catch (e) {
+                              toast.error(String(e));
+                            }
+                          })
                         }
                       />
                     </div>
@@ -150,6 +157,7 @@ export function RingGroupsPage() {
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
+            if (editId ? save.isPending : create.isPending) return;
             if (editId) save.mutate();
             else create.mutate();
           }}
@@ -196,7 +204,7 @@ export function RingGroupsPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <Button variant="solid" type="submit">
+            <Button variant="solid" type="submit" pending={editId ? save.isPending : create.isPending}>
               {editId ? t("common.save") : t("common.create")}
             </Button>
             {editId && (

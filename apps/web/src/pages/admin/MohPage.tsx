@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music, Pause, Pencil, Play, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, TextField } from "../../components/ui";
+import { Button, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type MohClass = { id: string; name: string; files: unknown };
 
 export function MohPage() {
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [name, setName] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -149,7 +150,7 @@ export function MohPage() {
 
   function removeFile(id: string, file: string, active: boolean) {
     if (active) stopPlay();
-    void api
+    return api
       .delete(`/api/v1/admin/moh/${id}/files/${encodeURIComponent(file)}`)
       .then(() => {
         toast.success(tr("Removed"));
@@ -212,8 +213,10 @@ export function MohPage() {
                           icon={Trash2}
                           label={tr("Delete class")}
                           danger
-                          disabled={removeClass.isPending}
-                          onClick={() => setPendingClass(m)}
+                          pending={removeClass.isPending}
+                          onClick={() => {
+                            if (!removeClass.isPending) setPendingClass(m);
+                          }}
                         />
                       </div>
                     </td>
@@ -241,8 +244,10 @@ export function MohPage() {
                       icon={Trash2}
                       label={tr("Delete class")}
                       danger
-                      disabled={removeClass.isPending}
-                      onClick={() => setPendingClass(m)}
+                      pending={removeClass.isPending}
+                      onClick={() => {
+                        if (!removeClass.isPending) setPendingClass(m);
+                      }}
                     />
                     <input
                       ref={(el) => {
@@ -254,13 +259,20 @@ export function MohPage() {
                       onChange={(e) => {
                         const f = e.target.files?.[0];
                         e.target.value = "";
-                        if (f) void upload(m.id, f).catch((err) => toast.error((err as Error).message));
+                        if (f) {
+                          void actions.run(`upload:${m.id}`, () =>
+                            upload(m.id, f).catch((err) => toast.error((err as Error).message)),
+                          );
+                        }
                       }}
                     />
                     <Button
                       variant="solid"
                       type="button"
-                      onClick={() => fileInputRefs.current[m.id]?.click()}
+                      pending={actions.isPending(`upload:${m.id}`)}
+                      onClick={() => {
+                        if (!actions.isPending(`upload:${m.id}`)) fileInputRefs.current[m.id]?.click();
+                      }}
                     >
                       <Upload size={16} />
                       {tr("Upload")}
@@ -297,7 +309,8 @@ export function MohPage() {
                                     icon={Trash2}
                                     label={tr("Delete")}
                                     danger
-                                    onClick={() => removeFile(m.id, f, active)}
+                                    pending={actions.isPending(`file:${m.id}:${f}`)}
+                                    onClick={() => void actions.run(`file:${m.id}:${f}`, () => removeFile(m.id, f, active))}
                                   />
                                 </div>
                               </td>
@@ -315,6 +328,7 @@ export function MohPage() {
           className="grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
+            if (create.isPending || !nameKey || nameTaken) return;
             create.mutate();
           }}
         >
@@ -327,7 +341,7 @@ export function MohPage() {
             placeholder={tr("Class name")}
             required
           />
-          <Button variant="solid" type="submit" disabled={!nameKey || nameTaken || create.isPending}>
+          <Button variant="solid" type="submit" disabled={!nameKey || nameTaken} pending={create.isPending}>
             {tr("Create class")}
           </Button>
           {nameKey && nameTaken && (

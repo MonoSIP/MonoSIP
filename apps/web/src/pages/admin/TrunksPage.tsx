@@ -7,7 +7,7 @@ import { Cable, Link2, Pencil, Plus, Power, RefreshCw, ShieldBan, Trash2 } from 
 import { formatCallerId, parseCallerId } from "@monosip/shared";
 import { api } from "../../lib/api";
 import { DIAL_COUNTRIES } from "../../lib/dialCountries";
-import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type DialSettings = {
@@ -149,6 +149,7 @@ function formPayload(form: TrunkForm, forCreate: boolean) {
 export function TrunksPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [form, setForm] = useState<TrunkForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -316,18 +317,34 @@ export function TrunksPage() {
                     <IconBtn
                       icon={Power}
                       label={trow.enabled ? t("trunks.disable") : t("trunks.enable")}
-                      onClick={() => void toggle(trow)}
+                      pending={actions.isPending(`toggle:${trow.id}`)}
+                      onClick={() =>
+                        void actions.run(`toggle:${trow.id}`, () =>
+                          toggle(trow).catch((e) => toast.error(String(e))),
+                        )
+                      }
                     />
-                    <IconBtn icon={RefreshCw} label={t("trunks.status")} onClick={() => void refreshStatus(trow.id)} />
+                    <IconBtn
+                      icon={RefreshCw}
+                      label={t("trunks.status")}
+                      pending={actions.isPending(`status:${trow.id}`)}
+                      onClick={() => void actions.run(`status:${trow.id}`, () => refreshStatus(trow.id))}
+                    />
                     <IconBtn
                       icon={Trash2}
                       label={t("common.delete")}
                       danger
+                      pending={actions.isPending(`delete:${trow.id}`)}
                       onClick={() =>
-                        void api.delete(`/api/v1/admin/trunks/${trow.id}`).then(() => {
-                          toast.success(t("common.delete"));
-                          if (editingId === trow.id) cancelEdit();
-                          void qc.invalidateQueries({ queryKey: ["trunks"] });
+                        void actions.run(`delete:${trow.id}`, async () => {
+                          try {
+                            await api.delete(`/api/v1/admin/trunks/${trow.id}`);
+                            toast.success(t("common.delete"));
+                            if (editingId === trow.id) cancelEdit();
+                            void qc.invalidateQueries({ queryKey: ["trunks"] });
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
                         })
                       }
                     />
@@ -351,6 +368,7 @@ export function TrunksPage() {
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (save.isPending) return;
             if (form.callerId.trim() && !parseCallerId(form.callerId)) return;
             save.mutate();
           }}
@@ -492,7 +510,8 @@ export function TrunksPage() {
           <Button
             variant="solid"
             type="submit"
-            disabled={save.isPending || !!(form.callerId.trim() && !parseCallerId(form.callerId))}
+            disabled={!!(form.callerId.trim() && !parseCallerId(form.callerId))}
+            pending={save.isPending}
           >
             <Plus size={16} />
             {editingId ? t("common.save") : t("trunks.add")}
@@ -620,8 +639,10 @@ export function TrunksPage() {
         <Button
           variant="solid"
           type="button"
-          disabled={saveDialPolicy.isPending}
-          onClick={() => saveDialPolicy.mutate()}
+          pending={saveDialPolicy.isPending}
+          onClick={() => {
+            if (!saveDialPolicy.isPending) saveDialPolicy.mutate();
+          }}
         >
           {t("trunks.saveDialPolicy")}
         </Button>

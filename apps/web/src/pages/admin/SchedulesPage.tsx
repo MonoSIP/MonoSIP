@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { CalendarClock, CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, SelectInput, TextField } from "../../components/ui";
+import { Button, Checkbox, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, SelectInput, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Range = {
@@ -89,6 +89,7 @@ function DestFields({
 export function SchedulesPage() {
   const { t, i18n } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const lang = i18n.language?.startsWith("tr") ? "tr" : "en";
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -312,6 +313,7 @@ export function SchedulesPage() {
           className="grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
+            if (create.isPending) return;
             create.mutate();
           }}
         >
@@ -322,7 +324,7 @@ export function SchedulesPage() {
             onChange={(e) => setNewName(e.target.value)}
             className="min-w-[16rem]"
           />
-          <Button variant="solid" type="submit" disabled={create.isPending}>
+          <Button variant="solid" type="submit" pending={create.isPending}>
             <Plus size={16} />
             {t("common.create")}
           </Button>
@@ -361,7 +363,9 @@ export function SchedulesPage() {
                     key={mode}
                     type="button"
                     variant={selected.overrideMode === mode ? "solid" : "soft"}
-                    onClick={() =>
+                    pending={setOverride.isPending}
+                    onClick={() => {
+                      if (setOverride.isPending) return;
                       setOverride.mutate({
                         id: selected.id,
                         mode,
@@ -371,8 +375,8 @@ export function SchedulesPage() {
                             : overrideUntilLocal
                               ? new Date(overrideUntilLocal).toISOString()
                               : null,
-                      })
-                    }
+                      });
+                    }}
                   >
                     {t(`schedules.${mode === "auto" ? "auto" : mode}`)}
                   </Button>
@@ -514,6 +518,7 @@ export function SchedulesPage() {
               className="toolbar"
               onSubmit={(e) => {
                 e.preventDefault();
+                if (addHoliday.isPending) return;
                 if (!holDate || !holName) return;
                 addHoliday.mutate();
               }}
@@ -543,7 +548,7 @@ export function SchedulesPage() {
                 onCheckedChange={setHolHalf}
                 label={t("schedules.halfDay", { defaultValue: "Half day (open until noon)" })}
               />
-              <Button variant="solid" type="submit">
+              <Button variant="solid" type="submit" pending={addHoliday.isPending}>
                 {t("common.create")}
               </Button>
               <Button
@@ -581,10 +586,16 @@ export function SchedulesPage() {
                     <Button
                       variant="solid" color="red"
                       type="button"
+                      pending={actions.isPending(`holiday:${h.id}`)}
                       onClick={() =>
-                        void api.delete(`/api/v1/admin/holidays/${h.id}`).then(() =>
-                          qc.invalidateQueries({ queryKey: ["holidays"] }),
-                        )
+                        void actions.run(`holiday:${h.id}`, async () => {
+                          try {
+                            await api.delete(`/api/v1/admin/holidays/${h.id}`);
+                            void qc.invalidateQueries({ queryKey: ["holidays"] });
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
+                        })
                       }
                     >
                       {t("common.delete")}
@@ -596,7 +607,14 @@ export function SchedulesPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 border-t border-[var(--border)] pt-4">
-            <Button variant="solid" type="button" onClick={() => save.mutate()} disabled={save.isPending}>
+            <Button
+              variant="solid"
+              type="button"
+              pending={save.isPending}
+              onClick={() => {
+                if (!save.isPending) save.mutate();
+              }}
+            >
               {t("common.save")}
             </Button>
             <Button variant="solid" color="red" type="button" onClick={() => { setDeleteId(selected.id); setDeleteOpen(true); }}>
@@ -616,7 +634,9 @@ export function SchedulesPage() {
         description={t("schedules.confirmDelete", { defaultValue: "Delete this schedule?" })}
         confirmLabel={t("common.delete")}
         cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
+        pending={remove.isPending}
         onConfirm={() => {
+          if (remove.isPending) return;
           if (deleteId) remove.mutate(deleteId);
         }}
       />

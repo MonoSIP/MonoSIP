@@ -94,7 +94,11 @@ export function FlowsPage() {
                       icon={Trash2}
                       label={t("common.delete")}
                       danger
-                      onClick={() => remove.mutate(f.id)}
+                      pending={remove.isPending && remove.variables === f.id}
+                      onClick={() => {
+                        if (remove.isPending && remove.variables === f.id) return;
+                        remove.mutate(f.id);
+                      }}
                     />
                   </div>
                 </td>
@@ -108,6 +112,7 @@ export function FlowsPage() {
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
+            if (create.isPending) return;
             create.mutate();
           }}
         >
@@ -129,7 +134,7 @@ export function FlowsPage() {
             placeholder={tr("Ext (900)")}
             title={tr("Optional dialable extension for softphone testing")}
           />
-          <Button variant="solid" type="submit">
+          <Button variant="solid" type="submit" pending={create.isPending}>
             {t("common.create")}
           </Button>
         </form>

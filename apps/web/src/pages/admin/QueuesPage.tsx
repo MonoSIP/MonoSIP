@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Headphones, ListOrdered, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 import { SPEECH_VOICES, voiceOptions } from "./flow/nodeMeta";
 
@@ -40,6 +40,7 @@ const STRATEGIES = ["ringall", "leastrecent", "fewestcalls", "random", "rrmemory
 export function QueuesPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [strategy, setStrategy] = useState("rrmemory");
@@ -268,7 +269,12 @@ export function QueuesPage() {
                           key={m.extensionId}
                           type="button"
                           className="text-xs"
-                          onClick={() => void pauseMember(q.id, m.extensionId, !m.paused)}
+                          pending={actions.isPending(`pause:${q.id}:${m.extensionId}`)}
+                          onClick={() =>
+                            void actions.run(`pause:${q.id}:${m.extensionId}`, () =>
+                              pauseMember(q.id, m.extensionId, !m.paused).catch((e) => toast.error(String(e))),
+                            )
+                          }
                           title={`penalty ${m.penalty ?? 0}`}
                         >
                           {ext?.number ?? "?"}
@@ -287,7 +293,11 @@ export function QueuesPage() {
                       icon={Trash2}
                       label={t("common.delete")}
                       danger
-                      onClick={() => remove.mutate(q.id)}
+                      pending={remove.isPending && remove.variables === q.id}
+                      onClick={() => {
+                        if (remove.isPending && remove.variables === q.id) return;
+                        remove.mutate(q.id);
+                      }}
                     />
                   </span>
                 </td>
@@ -308,6 +318,7 @@ export function QueuesPage() {
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
+            if (editId ? saveEdit.isPending : create.isPending) return;
             if (editId) saveEdit.mutate();
             else create.mutate();
           }}
@@ -489,7 +500,7 @@ export function QueuesPage() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="solid" type="submit">
+          <Button variant="solid" type="submit" pending={editId ? saveEdit.isPending : create.isPending}>
             <Plus size={16} />
             {editId ? t("common.save") : t("common.create")}
           </Button>

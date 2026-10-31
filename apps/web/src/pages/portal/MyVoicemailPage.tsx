@@ -5,7 +5,7 @@ import WaveSurfer from "wavesurfer.js";
 import { toast } from "sonner";
 import { Pause, Play, Trash2, Voicemail } from "lucide-react";
 import { api } from "../../lib/api";
-import { IconBtn, PageHeader } from "../../components/ui";
+import { IconBtn, PageHeader, usePendingAction } from "../../components/ui";
 
 type VoicemailRow = {
   id: string;
@@ -17,6 +17,7 @@ type VoicemailRow = {
 export function MyVoicemailPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const players = useRef(new Set<WaveSurfer>());
 
@@ -80,9 +81,10 @@ export function MyVoicemailPage() {
               row={v}
               players={players}
               confirming={confirmId === v.id}
+              deleting={actions.isPending(v.id)}
               onPlay={() => markRead(v.id)}
               onAskDelete={() => setConfirmId(v.id)}
-              onDelete={() => void remove(v.id)}
+              onDelete={() => void actions.run(v.id, () => remove(v.id))}
             />
           ))}
         </ul>
@@ -95,6 +97,7 @@ function MessageRow({
   row,
   players,
   confirming,
+  deleting,
   onPlay,
   onAskDelete,
   onDelete,
@@ -102,6 +105,7 @@ function MessageRow({
   row: VoicemailRow;
   players: React.RefObject<Set<WaveSurfer>>;
   confirming: boolean;
+  deleting: boolean;
   onPlay: () => void;
   onAskDelete: () => void;
   onDelete: () => void;
@@ -214,7 +218,12 @@ function MessageRow({
           icon={Trash2}
           label={confirming ? t("portal.confirmDelete") : t("portal.delete")}
           danger={confirming}
-          onClick={confirming ? onDelete : onAskDelete}
+          pending={deleting}
+          onClick={() => {
+            if (deleting) return;
+            if (confirming) onDelete();
+            else onAskDelete();
+          }}
         />
       </div>
     </li>

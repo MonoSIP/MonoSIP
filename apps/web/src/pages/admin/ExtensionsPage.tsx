@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Download, KeyRound, Pencil, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, SelectField, SelectInput, TextField, Switch, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
 
 type Ext = {
@@ -49,6 +49,7 @@ function generatePassword(): string {
 export function ExtensionsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [number, setNumber] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -255,11 +256,15 @@ export function ExtensionsPage() {
         description={tr("Phones and portal accounts")}
         actions={
           <div className="flex gap-2">
-            <Button type="button" onClick={() => void exportCsv()}>
+            <Button
+              type="button"
+              pending={actions.isPending("export")}
+              onClick={() => void actions.run("export", () => exportCsv().catch((e) => toast.error(String(e))))}
+            >
               <Download size={16} />
               {tr("Export CSV")}
             </Button>
-            <Button asChild>
+            <Button asChild pending={actions.isPending("import")}>
               <label>
               <Upload size={16} />
               {tr("Import CSV")}
@@ -267,9 +272,13 @@ export function ExtensionsPage() {
                 type="file"
                 accept=".csv,text/csv"
                 className="hidden"
+                disabled={actions.isPending("import")}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) void importCsv(f);
+                  e.target.value = "";
+                  if (f) {
+                    void actions.run("import", () => importCsv(f).catch((err) => toast.error(String(err))));
+                  }
                 }}
               />
               </label>
@@ -355,7 +364,16 @@ export function ExtensionsPage() {
                 <td className="col-actions">
                   <div className="btn-icon-row">
                     <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => void openEdit(e)} />
-                    <IconBtn icon={Trash2} label={t("common.delete")} danger onClick={() => remove.mutate(e.id)} />
+                    <IconBtn
+                      icon={Trash2}
+                      label={t("common.delete")}
+                      danger
+                      pending={remove.isPending && remove.variables === e.id}
+                      onClick={() => {
+                        if (remove.isPending && remove.variables === e.id) return;
+                        remove.mutate(e.id);
+                      }}
+                    />
                   </div>
                 </td>
               </tr>
@@ -373,6 +391,7 @@ export function ExtensionsPage() {
           className="modal-form"
           onSubmit={(e) => {
             e.preventDefault();
+            if (create.isPending) return;
             create.mutate();
           }}
         >
@@ -398,7 +417,13 @@ export function ExtensionsPage() {
             spellCheck={false}
             aria-invalid={!!passwordProblem(password)}
           />
-          <Button variant="solid" className="justify-center" type="submit" disabled={!!passwordProblem(password)}>
+          <Button
+            variant="solid"
+            className="justify-center"
+            type="submit"
+            disabled={!!passwordProblem(password)}
+            pending={create.isPending}
+          >
             <UserPlus size={16} />
             {t("extensions.add")}
           </Button>
@@ -563,18 +588,33 @@ export function ExtensionsPage() {
             <Checkbox checked={listenRec} onCheckedChange={setListenRec} label={tr("Listen recordings")} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button disabled={!!passwordProblem(editPassword)} variant="solid" type="button" onClick={() => saveEdit.mutate()}>
+            <Button
+              disabled={!!passwordProblem(editPassword)}
+              pending={saveEdit.isPending}
+              variant="solid"
+              type="button"
+              onClick={() => {
+                if (!saveEdit.isPending) saveEdit.mutate();
+              }}
+            >
               {t("common.save")}
             </Button>
             <Button
               type="button"
+              pending={actions.isPending("reset-password")}
               onClick={() =>
-                void api
-                  .post<{ portalPassword: string }>(`/api/v1/admin/extensions/${edit.id}/reset-password`)
-                  .then((r) =>
-                    toast.success(tr("New password (portal + SIP): {{v0}}", { v0: r.portalPassword }), { duration: 15000 }),
-                  )
-                  .catch((e) => toast.error(String(e)))
+                void actions.run("reset-password", async () => {
+                  try {
+                    const r = await api.post<{ portalPassword: string }>(
+                      `/api/v1/admin/extensions/${edit.id}/reset-password`,
+                    );
+                    toast.success(tr("New password (portal + SIP): {{v0}}", { v0: r.portalPassword }), {
+                      duration: 15000,
+                    });
+                  } catch (e) {
+                    toast.error(String(e));
+                  }
+                })
               }
             >
               {tr("Generate new password now")}

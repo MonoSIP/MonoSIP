@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Ban, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
-import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextField, usePendingAction } from "../../components/ui";
 
 type BlacklistRow = {
   id: string;
@@ -16,6 +16,7 @@ type BlacklistRow = {
 export function BlacklistPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [pattern, setPattern] = useState("");
   const [direction, setDirection] = useState<"inbound" | "outbound" | "both">("both");
   const [note, setNote] = useState("");
@@ -91,10 +92,16 @@ export function BlacklistPage() {
                       icon={Trash2}
                       label={t("common.delete")}
                       danger
+                      pending={actions.isPending(b.id)}
                       onClick={() =>
-                        void api.delete(`/api/v1/admin/blacklist/${b.id}`).then(() => {
-                          toast.success(t("common.delete"));
-                          void qc.invalidateQueries({ queryKey: ["blacklist"] });
+                        void actions.run(b.id, async () => {
+                          try {
+                            await api.delete(`/api/v1/admin/blacklist/${b.id}`);
+                            toast.success(t("common.delete"));
+                            void qc.invalidateQueries({ queryKey: ["blacklist"] });
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
                         })
                       }
                     />
@@ -116,6 +123,7 @@ export function BlacklistPage() {
           className="toolbar toolbar-wrap"
           onSubmit={(e) => {
             e.preventDefault();
+            if (add.isPending) return;
             if (!pattern.trim()) return;
             add.mutate();
           }}
@@ -144,7 +152,7 @@ export function BlacklistPage() {
             onChange={(e) => setNote(e.target.value)}
             placeholder={t("blacklist.notePlaceholder")}
           />
-          <Button variant="solid" type="submit" disabled={add.isPending}>
+          <Button variant="solid" type="submit" pending={add.isPending}>
             <Plus size={16} />
             {t("common.add")}
           </Button>

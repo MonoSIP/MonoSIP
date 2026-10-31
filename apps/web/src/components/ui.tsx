@@ -20,7 +20,10 @@ import {
 } from "@radix-ui/themes";
 import { type LucideIcon } from "lucide-react";
 import {
+  useCallback,
   useId,
+  useRef,
+  useState,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
   type ComponentProps,
@@ -60,13 +63,45 @@ function InTheme({ children }: { children: ReactNode }) {
   );
 }
 
+type ButtonProps = ThemesButtonProps & {
+  /** Disable the control until the server answers. */
+  pending?: boolean;
+};
+
 /** Radix Themes button. Secondary actions stay soft; pass variant="solid" for the main action. */
-export function Button({ variant = "soft", ...props }: ThemesButtonProps) {
+export function Button({ variant = "soft", pending, disabled, ...props }: ButtonProps) {
   return (
     <InTheme>
-      <ThemesButton variant={variant} {...props} />
+      <ThemesButton
+        variant={variant}
+        disabled={disabled || pending}
+        aria-busy={pending || undefined}
+        {...props}
+      />
     </InTheme>
   );
+}
+
+/**
+ * One in-flight server call per key. A second click on the same key is ignored
+ * until the first promise settles, including the render before `pending` flips.
+ */
+export function usePendingAction() {
+  const locks = useRef(new Set<string>());
+  const [pending, setPending] = useState<ReadonlySet<string>>(() => new Set());
+  const run = useCallback(async (key: string, fn: () => Promise<unknown>) => {
+    if (locks.current.has(key)) return;
+    locks.current.add(key);
+    setPending(new Set(locks.current));
+    try {
+      await fn();
+    } finally {
+      locks.current.delete(key);
+      setPending(new Set(locks.current));
+    }
+  }, []);
+  const isPending = useCallback((key: string) => pending.has(key), [pending]);
+  return { run, isPending };
 }
 
 export function TooltipProvider({ children }: { children: ReactNode }) {
@@ -386,12 +421,15 @@ export function IconBtn({
   primary,
   className,
   type,
+  pending,
+  disabled,
   ...props
 }: {
   icon: LucideIcon;
   label: string;
   danger?: boolean;
   primary?: boolean;
+  pending?: boolean;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color">) {
   return (
     <InTheme>
@@ -401,7 +439,9 @@ export function IconBtn({
         variant={primary || danger ? "solid" : "soft"}
         color={danger ? "red" : undefined}
         aria-label={label}
+        aria-busy={pending || undefined}
         className={className}
+        disabled={disabled || pending}
         {...props}
       >
         <Icon size={16} strokeWidth={2.25} />
@@ -663,12 +703,12 @@ export function ConfirmDialog({
         <AlertDialog.Description>{description}</AlertDialog.Description>
         <Flex justify="end" gap="2" mt="4">
           <AlertDialog.Cancel>
-            <Button type="button" disabled={pending}>
+            <Button type="button" pending={pending}>
               {cancelLabel}
             </Button>
           </AlertDialog.Cancel>
           <AlertDialog.Action>
-            <Button type="button" variant="solid" color="red" disabled={pending} onClick={onConfirm}>
+            <Button type="button" variant="solid" color="red" pending={pending} onClick={onConfirm}>
               {confirmLabel}
             </Button>
           </AlertDialog.Action>

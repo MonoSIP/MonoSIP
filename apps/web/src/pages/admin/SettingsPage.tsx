@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { api } from "../../lib/api";
-import { Button, Checkbox, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, PageHeader, SectionCard, SelectField, TextAreaField, TextField, usePendingAction } from "../../components/ui";
 import { SPEECH_VOICES } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
 import { Link } from "react-router-dom";
@@ -89,6 +89,7 @@ type BanRow = {
 export function SettingsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [companyName, setCompanyName] = useState("MonoSIP");
   const [defaultLocale, setDefaultLocale] = useState<"en" | "tr">("en");
   const [retention, setRetention] = useState(12);
@@ -403,16 +404,22 @@ export function SettingsPage() {
             type="button"
             className="ssl-renew"
             disabled={!autoSsl || !hostname.trim()}
+            pending={actions.isPending("ssl")}
             onClick={() => {
-              void api
-                .post<{ ok: boolean; error?: string; expiresAt?: string }>("/api/v1/admin/ssl/renew", {})
-                .then((r) => {
+              void actions.run("ssl", async () => {
+                try {
+                  const r = await api.post<{ ok: boolean; error?: string; expiresAt?: string }>(
+                    "/api/v1/admin/ssl/renew",
+                    {},
+                  );
                   if (r.ok) toast.success(t("settings.sslRenewOk"));
                   else toast.error(r.error ?? tr("SSL failed"));
                   void qc.invalidateQueries({ queryKey: ["ssl-status"] });
                   void qc.invalidateQueries({ queryKey: ["settings"] });
-                })
-                .catch((e) => toast.error((e as Error).message));
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              });
             }}
           >
             {t("settings.sslRenewNow")}
@@ -553,16 +560,28 @@ export function SettingsPage() {
           placeholder="sftp://user:pass@host:22/recordings"
         />
         <div className="flex flex-wrap gap-2">
-          <Button variant="solid" type="button" onClick={() => save.mutate()}>
+          <Button
+            variant="solid"
+            type="button"
+            pending={save.isPending}
+            onClick={() => {
+              if (!save.isPending) save.mutate();
+            }}
+          >
             {t("common.save")}
           </Button>
           <Button
             type="button"
+            pending={actions.isPending("archive")}
             onClick={() => {
-              void api
-                .post<{ ok: boolean; archived: number }>("/api/v1/admin/archive/run", {})
-                .then((r) => toast.success(tr("Archived {{v0}} recording(s)", { v0: r.archived })))
-                .catch((e) => toast.error((e as Error).message));
+              void actions.run("archive", async () => {
+                try {
+                  const r = await api.post<{ ok: boolean; archived: number }>("/api/v1/admin/archive/run", {});
+                  toast.success(tr("Archived {{v0}} recording(s)", { v0: r.archived }));
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              });
             }}
           >
             {tr("Run archive now")}
@@ -570,15 +589,19 @@ export function SettingsPage() {
           <Button
             type="button"
             disabled={!archiveSftp}
+            pending={actions.isPending("sftp")}
             onClick={() => {
-              void api
-                .post<{ ok: boolean; error?: string }>("/api/v1/admin/archive/test-sftp", {
-                  uri: archiveSftp || undefined,
-                })
-                .then((r) =>
-                  r.ok ? toast.success(tr("SFTP OK")) : toast.error(r.error ?? tr("SFTP failed")),
-                )
-                .catch((e) => toast.error((e as Error).message));
+              void actions.run("sftp", async () => {
+                try {
+                  const r = await api.post<{ ok: boolean; error?: string }>("/api/v1/admin/archive/test-sftp", {
+                    uri: archiveSftp || undefined,
+                  });
+                  if (r.ok) toast.success(tr("SFTP OK"));
+                  else toast.error(r.error ?? tr("SFTP failed"));
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              });
             }}
           >
             {tr("Test SFTP")}
@@ -641,7 +664,14 @@ export function SettingsPage() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="solid" type="button" onClick={() => save.mutate()}>
+          <Button
+            variant="solid"
+            type="button"
+            pending={save.isPending}
+            onClick={() => {
+              if (!save.isPending) save.mutate();
+            }}
+          >
             {tr("Save security settings")}
           </Button>
           <Button
@@ -778,7 +808,14 @@ export function SettingsPage() {
           <TextField label={tr("smtpTo")} value={smtpTo} onChange={(e) => setSmtpTo(e.target.value)} />
           <TextField label={tr("emailFrom")} value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
         </div>
-        <Button variant="solid" type="button" onClick={() => save.mutate()}>
+        <Button
+          variant="solid"
+          type="button"
+          pending={save.isPending}
+          onClick={() => {
+            if (!save.isPending) save.mutate();
+          }}
+        >
           {t("common.save")}
         </Button>
       </SectionCard>
@@ -819,14 +856,15 @@ export function SettingsPage() {
         <Button
           variant="solid"
           type="button"
+          pending={changePassword.isPending}
           disabled={
-            changePassword.isPending ||
             !currentPassword ||
             !emailOk ||
             (!emailChanged && !newPassword) ||
             (!!newPassword && (newPassword.length < 8 || !confirmPassword))
           }
           onClick={() => {
+            if (changePassword.isPending) return;
             if (newPassword !== confirmPassword) {
               toast.error(t("settings.passwordMismatch"));
               return;
@@ -853,7 +891,14 @@ export function SettingsPage() {
 
         {!qr && (
           <div className="flex flex-wrap gap-2">
-            <Button variant="solid" type="button" onClick={() => void setupTotp()}>
+            <Button
+              variant="solid"
+              type="button"
+              pending={actions.isPending("totp-setup")}
+              onClick={() =>
+                void actions.run("totp-setup", () => setupTotp().catch((e) => toast.error(String(e))))
+              }
+            >
               {totpStatus.data?.enabled ? t("settings.totpRotate") : t("settings.totpSetup")}
             </Button>
           </div>
@@ -912,7 +957,10 @@ export function SettingsPage() {
                   variant="solid"
                   type="button"
                   disabled={totpCode.trim().length < 6}
-                  onClick={() => void enableTotp().catch((e) => toast.error(String(e)))}
+                  pending={actions.isPending("totp-enable")}
+                  onClick={() =>
+                    void actions.run("totp-enable", () => enableTotp().catch((e) => toast.error(String(e))))
+                  }
                 >
                   {t("settings.totpEnable")}
                 </Button>
@@ -947,7 +995,10 @@ export function SettingsPage() {
             <Button
               variant="solid" color="red"
               type="button"
-              onClick={() => void disableTotp().catch((e) => toast.error(String(e)))}
+              pending={actions.isPending("totp-disable")}
+              onClick={() =>
+                void actions.run("totp-disable", () => disableTotp().catch((e) => toast.error(String(e))))
+              }
             >
               {t("settings.totpDisable")}
             </Button>
@@ -956,23 +1007,41 @@ export function SettingsPage() {
       </SectionCard>
 
       <div className="flex flex-wrap gap-3">
-        <Button type="button" onClick={() => reload.mutate()}>
+        <Button
+          type="button"
+          pending={reload.isPending}
+          onClick={() => {
+            if (!reload.isPending) reload.mutate();
+          }}
+        >
           <RefreshCw size={16} />
           {t("settings.reload")}
         </Button>
-        <Button type="button" onClick={() => void downloadBackup()}>
+        <Button
+          type="button"
+          pending={actions.isPending("backup")}
+          onClick={() =>
+            void actions.run("backup", () => downloadBackup().catch((e) => toast.error(String(e))))
+          }
+        >
           {t("settings.backup")}
         </Button>
-        <Button asChild>
+        <Button asChild pending={actions.isPending("restore")}>
           <label>
           {tr("Restore backup")}
           <input
             type="file"
             accept="application/json,.json"
             className="hidden"
+            disabled={actions.isPending("restore")}
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) void restoreBackup(f).catch((err) => toast.error((err as Error).message));
+              e.target.value = "";
+              if (f) {
+                void actions.run("restore", () =>
+                  restoreBackup(f).catch((err) => toast.error((err as Error).message)),
+                );
+              }
             }}
           />
           </label>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "../../../lib/api";
@@ -145,6 +145,7 @@ export function ApiNodeSettings({
   }, [data.mappings]);
 
   const [testing, setTesting] = useState(false);
+  const testingLock = useRef(false);
   const [testStatus, setTestStatus] = useState<number | null>(null);
   const [testBody, setTestBody] = useState("");
   const [mappedPreview, setMappedPreview] = useState<Record<string, string> | null>(null);
@@ -158,11 +159,13 @@ export function ApiNodeSettings({
   }
 
   async function runTest() {
+    if (testingLock.current) return;
     const url = String(data.url ?? "").trim();
     if (!url) {
       toast.error(tr("URL required"));
       return;
     }
+    testingLock.current = true;
     setTesting(true);
     setMappedPreview(null);
     try {
@@ -202,6 +205,7 @@ export function ApiNodeSettings({
       setTestBody((e as Error).message);
       toast.error((e as Error).message);
     } finally {
+      testingLock.current = false;
       setTesting(false);
     }
   }
@@ -441,7 +445,7 @@ export function ApiNodeSettings({
         <Button
           variant="solid" className="w-full text-sm"
           type="button"
-          disabled={testing}
+          pending={testing}
           onClick={() => void runTest()}
         >
           {testing ? "Sending…" : `Send ${method} request`}

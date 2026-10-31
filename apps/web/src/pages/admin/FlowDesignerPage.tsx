@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { Button, Modal, SelectInput } from "../../components/ui";
+import { Button, Modal, SelectInput, usePendingAction } from "../../components/ui";
 import {
   FlowCanvasActionsProvider,
   flowEdgeTypes,
@@ -130,6 +130,8 @@ export function FlowDesignerPage() {
   const [extensionNumber, setExtensionNumber] = useState("");
   const [mobileView, setMobileView] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const server = usePendingAction();
+  const flowBusy = server.isPending("flow");
   const flowRef = useRef<{ getViewport: () => { x: number; y: number; zoom: number } } | null>(null);
 
   useEffect(() => {
@@ -470,68 +472,93 @@ export function FlowDesignerPage() {
         )}
         {!mobileView && (
           <>
-        <Button type="button" onClick={() => void save().catch((e) => toast.error(String(e)))}>
+        <Button
+          type="button"
+          pending={flowBusy}
+          onClick={() => void server.run("flow", () => save().catch((e) => toast.error(String(e))))}
+        >
           {t("common.save")}
         </Button>
-        <Button type="button" onClick={() => void validate()}>
+        <Button
+          type="button"
+          pending={flowBusy}
+          onClick={() => void server.run("flow", () => validate().catch((e) => toast.error(String(e))))}
+        >
           {t("flows.validate")}
         </Button>
-        <Button variant="solid" type="button" onClick={() => void publish()}>
+        <Button
+          variant="solid"
+          type="button"
+          pending={flowBusy}
+          onClick={() => void server.run("flow", () => publish().catch((e) => toast.error(String(e))))}
+        >
           {t("flows.publish")}
         </Button>
           </>
         )}
-        <Button type="button" onClick={() => void simulate()}>
+        <Button
+          type="button"
+          pending={flowBusy}
+          onClick={() => void server.run("flow", () => simulate().catch((e) => toast.error(String(e))))}
+        >
           {t("flows.simulate")}
         </Button>
         <Button
           type="button"
-          onClick={() => {
-            void (async () => {
+          pending={flowBusy}
+          onClick={() =>
+            void server.run("flow", async () => {
               if (!id) return;
-              const data = await api.get<{
-                name: string;
-                draftJson: unknown;
-              }>(`/api/v1/admin/flows/${id}/export`);
-              const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-              const a = document.createElement("a");
-              a.href = URL.createObjectURL(blob);
-              a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.monosip-flow.json`;
-              a.click();
-              URL.revokeObjectURL(a.href);
-              toast.success(tr("Exported"));
-            })().catch((e) => toast.error(String(e)));
-          }}
+              try {
+                const data = await api.get<{
+                  name: string;
+                  draftJson: unknown;
+                }>(`/api/v1/admin/flows/${id}/export`);
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `${(data.name || "flow").replace(/\W+/g, "-")}.monosip-flow.json`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+                toast.success(tr("Exported"));
+              } catch (e) {
+                toast.error(String(e));
+              }
+            })
+          }
         >
           {tr("Export")}
         </Button>
-        <Button asChild>
+        <Button asChild pending={flowBusy}>
           <label>
           {tr("Import")}
           <input
             type="file"
             accept="application/json,.json"
             className="hidden"
+            disabled={flowBusy}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
               if (!file || !id) return;
-              void file
-                .text()
-                .then(async (text) => {
-                  const parsed = JSON.parse(text) as {
-                    draftJson?: unknown;
-                    name?: string;
-                  };
-                  const draftJson = parsed.draftJson ?? parsed;
-                  await api.post(`/api/v1/admin/flows/${id}/import`, {
-                    draftJson,
-                    name: parsed.name,
-                  });
-                  toast.success(tr("Imported — reload draft"));
-                  window.location.reload();
-                })
-                .catch((err) => toast.error((err as Error).message));
+              void server.run("flow", () =>
+                file
+                  .text()
+                  .then(async (text) => {
+                    const parsed = JSON.parse(text) as {
+                      draftJson?: unknown;
+                      name?: string;
+                    };
+                    const draftJson = parsed.draftJson ?? parsed;
+                    await api.post(`/api/v1/admin/flows/${id}/import`, {
+                      draftJson,
+                      name: parsed.name,
+                    });
+                    toast.success(tr("Imported — reload draft"));
+                    window.location.reload();
+                  })
+                  .catch((err) => toast.error((err as Error).message)),
+              );
             }}
           />
           </label>
@@ -542,8 +569,13 @@ export function FlowDesignerPage() {
             aria-label={tr("Rollback…")}
             placeholder={tr("Rollback…")}
             value=""
+            disabled={flowBusy}
             onValueChange={(vid) => {
-              if (vid) void rollback(vid).catch((err) => toast.error((err as Error).message));
+              if (vid) {
+                void server.run("flow", () =>
+                  rollback(vid).catch((err) => toast.error((err as Error).message)),
+                );
+              }
             }}
             options={versions.map((v) => ({ value: v.id, label: `v${v.version}` }))}
           />
@@ -642,7 +674,12 @@ export function FlowDesignerPage() {
                 onChange={(e) => setSimMockApi(e.target.value)}
               />
             </label>
-            <Button className="w-full text-sm" type="button" onClick={() => void simulate()}>
+            <Button
+              className="w-full text-sm"
+              type="button"
+              pending={flowBusy}
+              onClick={() => void server.run("flow", () => simulate().catch((e) => toast.error(String(e))))}
+            >
               {tr("Run simulation")}
             </Button>
             {simSteps.length > 0 && (

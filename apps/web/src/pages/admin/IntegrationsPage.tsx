@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Copy, CircleHelp, KeyRound, Pencil, Trash2, Webhook, Globe } from "lucide-react";
 import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
-import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, TextAreaField, TextField } from "../../components/ui";
+import { Button, Checkbox, IconBtn, Modal, PageHeader, SectionCard, TextAreaField, TextField, usePendingAction } from "../../components/ui";
 import i18n, { tr } from "../../i18n";
 
 function apiDocsHref(): string {
@@ -184,11 +184,17 @@ function KeyForm({
         onChange={(e) => setExpires(e.target.value)}
       />
       <div className="flex flex-wrap gap-2 sm:col-span-2">
-        <Button variant="solid" type="submit" disabled={save.isPending}>
+        <Button variant="solid" type="submit" pending={save.isPending}>
           {tr("Save")}
         </Button>
         {apiKey ? (
-          <Button type="button" disabled={rotate.isPending} onClick={() => rotate.mutate()}>
+          <Button
+            type="button"
+            pending={rotate.isPending}
+            onClick={() => {
+              if (!rotate.isPending) rotate.mutate();
+            }}
+          >
             {tr("New barrier")}
           </Button>
         ) : null}
@@ -254,6 +260,7 @@ type Widget = {
 export function IntegrationsPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const actions = usePendingAction();
   const [url, setUrl] = useState("https://example.com/webhook");
   const [editor, setEditor] = useState<ApiKey | "new" | null>(null);
   const [reveal, setReveal] = useState<IssuedKey | null>(null);
@@ -356,16 +363,20 @@ export function IntegrationsPage() {
                   <div className="btn-icon-row">
                     <Button
                       type="button"
+                      pending={actions.isPending(`hook-test:${w.id}`)}
                       onClick={() =>
-                        void api
-                          .post<{ ok: boolean; status?: number; error?: string }>(
-                            `/api/v1/admin/webhooks/${w.id}/test`,
-                          )
-                          .then((r) =>
+                        void actions.run(`hook-test:${w.id}`, async () => {
+                          try {
+                            const r = await api.post<{ ok: boolean; status?: number; error?: string }>(
+                              `/api/v1/admin/webhooks/${w.id}/test`,
+                            );
                             toast[r.ok ? "success" : "error"](
                               r.ok ? tr("Test OK ({{status}})", { status: r.status ?? "" }) : r.error ?? tr("Test failed"),
-                            ),
-                          )
+                            );
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
+                        })
                       }
                     >
                       {tr("Test")}
@@ -374,10 +385,16 @@ export function IntegrationsPage() {
                       icon={Trash2}
                       label={t("common.delete")}
                       danger
+                      pending={actions.isPending(`hook:${w.id}`)}
                       onClick={() =>
-                        void api.delete(`/api/v1/admin/webhooks/${w.id}`).then(() => {
-                          toast.success(tr("Webhook deleted"));
-                          void qc.invalidateQueries({ queryKey: ["webhooks"] });
+                        void actions.run(`hook:${w.id}`, async () => {
+                          try {
+                            await api.delete(`/api/v1/admin/webhooks/${w.id}`);
+                            toast.success(tr("Webhook deleted"));
+                            void qc.invalidateQueries({ queryKey: ["webhooks"] });
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
                         })
                       }
                     />
@@ -393,6 +410,7 @@ export function IntegrationsPage() {
           className="grid gap-3"
           onSubmit={(e) => {
             e.preventDefault();
+            if (addHook.isPending) return;
             addHook.mutate();
           }}
         >
@@ -402,7 +420,7 @@ export function IntegrationsPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <Button variant="solid" type="submit">
+          <Button variant="solid" type="submit" pending={addHook.isPending}>
             {t("common.create")}
           </Button>
         </form>
@@ -443,10 +461,16 @@ export function IntegrationsPage() {
                       icon={Trash2}
                       label={tr("Delete")}
                       danger
+                      pending={actions.isPending(`widget:${w.id}`)}
                       onClick={() =>
-                        void api.delete(`/api/v1/admin/widgets/${w.id}`).then(() => {
-                          toast.message(tr("Widget deleted"));
-                          void qc.invalidateQueries({ queryKey: ["widgets"] });
+                        void actions.run(`widget:${w.id}`, async () => {
+                          try {
+                            await api.delete(`/api/v1/admin/widgets/${w.id}`);
+                            toast.message(tr("Widget deleted"));
+                            void qc.invalidateQueries({ queryKey: ["widgets"] });
+                          } catch (e) {
+                            toast.error(String(e));
+                          }
                         })
                       }
                     />
@@ -462,6 +486,7 @@ export function IntegrationsPage() {
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
+            if (addWidget.isPending) return;
             addWidget.mutate();
           }}
         >
@@ -497,7 +522,7 @@ export function IntegrationsPage() {
             disabled={!wCallback}
             hint="e.g. 05,90"
           />
-          <Button variant="solid" className="sm:col-span-2" type="submit" disabled={addWidget.isPending}>
+          <Button variant="solid" className="sm:col-span-2" type="submit" pending={addWidget.isPending}>
             {tr("Create widget")}
           </Button>
         </form>
@@ -583,11 +608,18 @@ export function IntegrationsPage() {
                           icon={Trash2}
                           label={tr("Revoke")}
                           danger
+                          pending={actions.isPending(`key:${k.id}`)}
                           onClick={() => {
+                            if (actions.isPending(`key:${k.id}`)) return;
                             if (editor !== "new" && editor?.id === k.id) setEditor(null);
-                            void api.delete(`/api/v1/admin/api-keys/${k.id}`).then(() =>
-                              qc.invalidateQueries({ queryKey: ["api-keys"] }),
-                            );
+                            void actions.run(`key:${k.id}`, async () => {
+                              try {
+                                await api.delete(`/api/v1/admin/api-keys/${k.id}`);
+                                void qc.invalidateQueries({ queryKey: ["api-keys"] });
+                              } catch (e) {
+                                toast.error(String(e));
+                              }
+                            });
                           }}
                         />
                       </span>
