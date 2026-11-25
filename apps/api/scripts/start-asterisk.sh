@@ -152,6 +152,12 @@ sed -i "s|__ARI_USER__|${ARI_USER}|g" /etc/asterisk/ari.conf /etc/asterisk/http.
 sed -i "s|__ARI_PASS__|${ARI_PASS}|g" /etc/asterisk/ari.conf 2>/dev/null || true
 sed -i "s|__AMI_USER__|${AMI_USER}|g" /etc/asterisk/manager.conf 2>/dev/null || true
 sed -i "s|__AMI_PASS__|${AMI_PASS}|g" /etc/asterisk/manager.conf 2>/dev/null || true
+# Quiet AMI login spam from trunk-monitor / admin polls (every connect was a console line).
+if grep -q '^displayconnects' /etc/asterisk/manager.conf 2>/dev/null; then
+  sed -i 's/^displayconnects.*/displayconnects = no/' /etc/asterisk/manager.conf 2>/dev/null || true
+elif grep -q '^\[general\]' /etc/asterisk/manager.conf 2>/dev/null; then
+  sed -i '/^\[general\]/a displayconnects = no' /etc/asterisk/manager.conf 2>/dev/null || true
+fi
 
 # All-in-one: never publish Asterisk HTTP/AMI on 0.0.0.0 — PaaS may route
 # public HTTPS to EXPOSE 8088 and steal traffic from the Node API on :3000.
