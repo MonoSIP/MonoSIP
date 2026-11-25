@@ -2450,6 +2450,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         http: await cli("http show status"),
         transports: await cli("pjsip show transports"),
         contacts: await cli("pjsip show contacts", /Contact:|Objects found/),
+        registrations: await cli("pjsip show registrations"),
+        auths: await cli("pjsip show auths", /Auth:|trunk_|Objects found/),
         // Columns: Processed / In Queue / Max Depth / Low water / High water
         taskprocessors: await cli("core show taskprocessors", /pjsip|stasis\/m|sorcery/i),
         websocketModule: await cli("module show like websocket"),
@@ -2463,7 +2465,11 @@ export async function adminResourceRoutes(app: FastifyInstance) {
           return txt
             .replace(/\x1b\[[0-9;]*m/g, "")
             .split("\n")
-            .filter((l) => /WARNING|ERROR|reload|deadlock|Interrupted|declined|Unable/i.test(l))
+            .filter((l) =>
+              /WARNING|ERROR|reload|deadlock|Interrupted|declined|Unable|Auth object|REGISTER|registration/i.test(
+                l,
+              ),
+            )
             .filter((l) => !/rtpqos|cdr_csv|AstDB key/.test(l))
             .slice(-80)
             .join("\n");

@@ -102,6 +102,21 @@ export function normalizeTrunkStatus(raw: string): string {
 export async function fetchTrunkEndpointStatus(
   endpointId: string,
 ): Promise<{ status: string; latencyMs: number | null }> {
+  // Prefer outbound REGISTER state when the trunk registers to the provider.
+  try {
+    const regs = await amiAction({ Action: "PJSIPShowRegistrationsOutbound" });
+    const reg = regs.find(
+      (e) =>
+        (e.Event === "OutboundRegistrationDetail" || e.ObjectType === "registration") &&
+        (e.ObjectName === endpointId || e.OutboundAuth === `${endpointId}_auth`),
+    );
+    if (reg?.Status || reg?.RegistrationStatus) {
+      const state = String(reg.Status ?? reg.RegistrationStatus);
+      return { status: normalizeTrunkStatus(state), latencyMs: null };
+    }
+  } catch {
+    /* fall through to endpoint/contact */
+  }
   try {
     const events = await amiAction({ Action: "PJSIPShowEndpoint", Endpoint: endpointId });
     const contact = events.find((e) => e.Event === "ContactStatusDetail" || e.ObjectType === "endpoint");

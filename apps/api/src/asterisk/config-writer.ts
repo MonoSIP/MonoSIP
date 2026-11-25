@@ -214,6 +214,14 @@ export function singleFlight(fn: () => Promise<void>): () => Promise<void> {
  */
 const SAFE_SIP_USER = /^[A-Za-z0-9._+-]+$/;
 
+/** Quote a pjsip.conf value when it would break line parsing (; # space =). */
+export function pjsipConfValue(raw: string): string {
+  if (/[\s;#="\\]/.test(raw)) {
+    return `"${raw.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  }
+  return raw;
+}
+
 /** From-header identity for a provider. A number replaces the SIP login; a name is quoted. */
 export function trunkCallerLines(trunk: {
   username?: string | null;
@@ -751,7 +759,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const contactUri = proxy
       ? `sip:${proxy.includes(":") ? proxy : `${proxy}:${trunk.port}`}`
       : `sip:${trunk.host}:${trunk.port}`;
-    const doRegister = userpass && trunk.register !== false && Boolean(trunk.username);
+    const authId = `${id}_auth`;
+    const doRegister =
+      userpass && trunk.register !== false && Boolean(trunk.username) && Boolean(secret);
+    if (userpass && trunk.register !== false && trunk.username && !secret) {
+      console.warn(
+        `[config] trunk ${trunk.name}: SIP password missing/undecryptable — outbound REGISTER skipped`,
+      );
+    }
 
     pjsip.push(
       `[${id}]`,
@@ -759,7 +774,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "context=from-trunk",
       "disallow=all",
       `allow=${codecs.join(",") || "ulaw,alaw"}`,
-      ...(userpass ? [`outbound_auth=${id}`] : []),
+      ...(userpass && secret ? [`outbound_auth=${authId}`] : []),
       `aors=${id}`,
       `transport=${tport}`,
       `from_domain=${fromDomain}`,
@@ -770,13 +785,15 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `device_state_busy_at=${Math.max(1, trunk.maxChannels ?? 10)}`,
       "",
     );
-    if (userpass) {
+    if (userpass && secret) {
+      // Separate auth id: sharing the endpoint id with type=registration mid-reload
+      // can leave outbound REGISTER without an auth object (401 → "Auth object could not be found").
       pjsip.push(
-        `[${id}]`,
+        `[${authId}]`,
         "type=auth",
         "auth_type=userpass",
         `username=${trunk.username ?? ""}`,
-        `password=${secret}`,
+        `password=${pjsipConfValue(secret)}`,
         "",
       );
     }
@@ -796,10 +813,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
       pjsip.push(
         `[${id}]`,
         "type=registration",
-        `outbound_auth=${id}`,
+        `outbound_auth=${authId}`,
         `server_uri=sip:${trunk.host}:${trunk.port}`,
         `client_uri=sip:${trunk.username}@${fromDomain}`,
         `retry_interval=60`,
+        "expiration=300",
         "",
       );
     }
