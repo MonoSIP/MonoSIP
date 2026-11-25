@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SessionState } from "sip.js";
-import { Softphone, sdpWithoutPrivateHostCandidates } from "./softphone.js";
+import { isBrowserGeneratedSdp, Softphone, sdpWithoutPrivateHostCandidates } from "./softphone.js";
 
 /** Minimal AudioContext double — jsdom has no Web Audio. */
 class FakeAudioContext {
@@ -520,6 +520,7 @@ describe("loadPreferredDevices", () => {
 describe("sdpWithoutPrivateHostCandidates", () => {
   const sdp = [
     "v=0",
+    "o=- 4611731400430051336 2 IN IP4 127.0.0.1",
     "c=IN IP4 192.168.1.20",
     "a=candidate:1 1 UDP 1 192.168.1.20 40000 typ host",
     "a=candidate:2 1 UDP 2 203.0.113.8 40000 typ srflx raddr 192.168.1.20 rport 40000",
@@ -534,7 +535,21 @@ describe("sdpWithoutPrivateHostCandidates", () => {
   });
 
   it("keeps host candidates when they are the only path", () => {
-    const lan = "a=candidate:1 1 UDP 1 192.168.1.20 40000 typ host";
+    const lan = "o=- 1 2 IN IP4 127.0.0.1\r\na=candidate:1 1 UDP 1 192.168.1.20 40000 typ host";
     expect(sdpWithoutPrivateHostCandidates(lan)).toBe(lan);
+  });
+
+  it("never strips the PBX's candidates from a remote description", () => {
+    const pbx = [
+      "v=0",
+      "o=- 1795633000 1795633002 IN IP4 10.6.6.9",
+      "s=Asterisk",
+      "c=IN IP4 10.6.6.9",
+      "a=candidate:Ha060609 1 UDP 2130706431 10.6.6.9 10006 typ host",
+      "a=candidate:S5f82a816 1 UDP 1694498815 95.130.168.22 10006 typ srflx raddr 10.6.6.9 rport 10006",
+    ].join("\r\n");
+    expect(isBrowserGeneratedSdp(pbx)).toBe(false);
+    expect(sdpWithoutPrivateHostCandidates(pbx)).toBe(pbx);
+    expect(isBrowserGeneratedSdp(sdp)).toBe(true);
   });
 });

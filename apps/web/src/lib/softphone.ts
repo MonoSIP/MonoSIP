@@ -43,12 +43,21 @@ function sipWsUrl(): string {
 
 const AUDIO_DEVICES_KEY = "monosip.audioDevices";
 
+/** Browsers put 127.0.0.1 / 0.0.0.0 in o=; Asterisk puts its own address there. */
+export function isBrowserGeneratedSdp(sdp: string): boolean {
+  return /^o=\S+ \S+ \S+ IN IP4 (127\.0\.0\.1|0\.0\.0\.0)\s*$/m.test(sdp);
+}
+
 /**
  * Drop private host ICE candidates once a public one exists.
  * Asterisk otherwise sends RTP to the browser's LAN address: the far end
  * hears this phone, and this phone receives nothing.
  */
 export function sdpWithoutPrivateHostCandidates(sdp: string): string {
+  // SIP.js runs SDP modifiers on the remote description too. Stripping the PBX's
+  // host candidate (e.g. 10.6.6.9 on a VPN) left only its unreachable WAN address,
+  // so ICE never completed on calls the PBX sent to this browser: no audio.
+  if (!isBrowserGeneratedSdp(sdp)) return sdp;
   const lines = sdp.split(/\r?\n/);
   const hasPublic = lines.some(
     (l) => l.startsWith("a=candidate:") && / typ (srflx|relay)( |$)/.test(l),
