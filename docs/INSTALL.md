@@ -16,7 +16,7 @@ MonoSIP runs as a **Docker Compose** stack. Supported production path: Linux VM 
 ```bash
 git clone https://github.com/MonoSIP/MonoSIP.git
 cd MonoSIP
-git checkout v1.8.8   # or main
+git checkout v1.8.9   # or main
 
 cp .env.example .env
 chmod +x scripts/gen-certs.sh
