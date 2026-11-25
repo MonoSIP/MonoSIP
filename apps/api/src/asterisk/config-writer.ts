@@ -874,6 +874,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
         // trunk without relying only on identify DNS (Verimor / multi-IP ITSPs).
         "line=yes",
         `endpoint=${id}`,
+        // REGISTER must leave from the same transport, or its Contact carries
+        // EXTERNAL_IP:5060 again and NAT drops inbound INVITEs.
+        `transport=${tport}`,
         `retry_interval=60`,
         "expiration=300",
         "",
