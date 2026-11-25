@@ -54,43 +54,44 @@ describe("singleFlight (config write + Asterisk reload)", () => {
   });
 });
 
-import { sipFromDomain, trunkCallerLines } from "./config-writer.js";
+import { sipFromDomain, trunkCallerLines, trunkCliNameLines } from "./config-writer.js";
 
 describe("trunkCallerLines", () => {
   it("sends the operator number instead of the SIP login", () => {
     expect(trunkCallerLines({ username: "936494", callerId: "+442045773102" })).toEqual([
       "from_user=+442045773102",
-      "callerid=+442045773102",
     ]);
-  });
-
-  it("keeps the SIP username when no caller ID is set", () => {
-    expect(trunkCallerLines({ username: "936494", callerId: "  " })).toEqual(["from_user=936494"]);
-    expect(trunkCallerLines({ username: null, callerId: null })).toEqual([]);
-  });
-
-  it("quotes a display name and keeps the number in From", () => {
     expect(trunkCallerLines({ username: "936494", callerId: "Acme <+442045773102>" })).toEqual([
       "from_user=+442045773102",
-      'callerid="Acme" <+442045773102>',
-    ]);
-    expect(trunkCallerLines({ username: "936494", callerId: '"Acme Ltd" <+442045773102>' })).toEqual([
-      "from_user=+442045773102",
-      'callerid="Acme Ltd" <+442045773102>',
     ]);
   });
 
-  it("uses a name alone as the display name and the SIP username as the number", () => {
-    expect(trunkCallerLines({ username: "936494", callerId: "Acme Ltd" })).toEqual([
-      "from_user=936494",
-      'callerid="Acme Ltd" <936494>',
-    ]);
-  });
-
-  it("drops a caller ID that would break the config line", () => {
+  it("keeps the SIP username when no caller ID number is set", () => {
+    expect(trunkCallerLines({ username: "936494", callerId: "  " })).toEqual(["from_user=936494"]);
+    expect(trunkCallerLines({ username: null, callerId: null })).toEqual([]);
+    expect(trunkCallerLines({ username: "936494", callerId: "Acme Ltd" })).toEqual(["from_user=936494"]);
     expect(trunkCallerLines({ username: "936494", callerId: "Acme;injection" })).toEqual([
       "from_user=936494",
     ]);
+  });
+
+  it("never sets endpoint callerid, which would mask the inbound caller", () => {
+    for (const callerId of ["+442045773102", "Acme <+442045773102>", "Acme Ltd"]) {
+      expect(trunkCallerLines({ username: "936494", callerId }).some((l) => l.startsWith("callerid="))).toBe(
+        false,
+      );
+    }
+  });
+});
+
+describe("trunkCliNameLines", () => {
+  it("sets the display name in dialplan for outbound calls only", () => {
+    expect(trunkCliNameLines("trunk_abcd1234", "Acme, Ltd <+442045773102>")).toEqual([
+      "exten => trunk_abcd1234,1,Set(CALLERID(name)=Acme\\, Ltd)",
+      " same => n,Return()",
+    ]);
+    expect(trunkCliNameLines("trunk_abcd1234", "+442045773102")).toEqual([]);
+    expect(trunkCliNameLines("trunk_abcd1234", null)).toEqual([]);
   });
 });
 

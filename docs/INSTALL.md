@@ -109,6 +109,7 @@ What every platform needs:
 - **Persistent volume** mounted at `/data` (DB, Asterisk config, recordings, secrets)
 - **Port 3000** published for HTTPS/API/web/softphone signalling (`/asterisk-ws`)
 - **UDP 10000-10100** published + `EXTERNAL_IP` set for softphone audio (RTP); or run coturn and enable TURNS on 443 for strict edges
+- **SIP providers (UDP)** register from their own transport on port `5070` with a private Contact, so the provider sends inbound calls back to the NAT-observed address and port. No port forward is needed for a registering trunk, even when the router rewrites the source port.
 - Optional `DATABASE_URL` for managed Postgres (otherwise embedded Postgres runs under `/data/postgres`)
 - **`LOCAL_NETS`** defaults to `172.16.0.0/12,127.0.0.0/8` in the image, `.ninedeploy`, and Compose. Boot also strips any listed net that contains `EXTERNAL_IP` (so an old vault with `10.0.0.0/8` cannot leave Via on `172.x` / Yealink·Fanvil Unavail). You normally do **not** set this by hand.
 

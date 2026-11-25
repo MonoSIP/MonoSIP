@@ -210,29 +210,34 @@ export function pjsipConfValue(raw: string): string {
   return raw;
 }
 
-/** From-header identity for a provider. A number replaces the SIP login; a name is quoted. */
+/** UDP port of transport-trunk, the provider-facing SIP transport. */
+export const TRUNK_SIP_PORT = 5070;
+
+/**
+ * From-header identity for a provider: a CLI number replaces the SIP login.
+ * Never an endpoint callerid= — Asterisk applies that to calls *from* the endpoint,
+ * so every inbound call showed the trunk's own number instead of the real caller.
+ * A display name goes out through trunkCliNameLines (dialplan) instead.
+ */
 export function trunkCallerLines(trunk: {
   username?: string | null;
   callerId?: string | null;
 }): string[] {
   const username = trunk.username?.trim() ?? "";
   const fallback = username ? [`from_user=${username}`] : [];
-  const cli = trunk.callerId?.trim();
-  if (!cli) return fallback;
-  const parsed = parseCallerId(cli);
-  if (!parsed || (!parsed.name && !parsed.number)) return fallback;
-  if (parsed.number) {
-    const lines = [`from_user=${parsed.number}`, `callerid=${parsed.number}`];
-    if (parsed.name) lines[1] = `callerid="${parsed.name}" <${parsed.number}>`;
-    return lines;
-  }
-  const lines = [...fallback];
-  lines.push(
-    username && SAFE_SIP_USER.test(username)
-      ? `callerid="${parsed.name}" <${username}>`
-      : `callerid="${parsed.name}"`,
-  );
-  return lines;
+  const parsed = trunk.callerId?.trim() ? parseCallerId(trunk.callerId.trim()) : null;
+  if (parsed?.number) return [`from_user=${parsed.number}`];
+  return fallback;
+}
+
+/** [monosip-trunk-cli] entry that sets the provider display name on outbound calls. */
+export function trunkCliNameLines(endpointId: string, callerId?: string | null): string[] {
+  const parsed = callerId?.trim() ? parseCallerId(callerId.trim()) : null;
+  if (!parsed?.name) return [];
+  return [
+    `exten => ${endpointId},1,Set(CALLERID(name)=${parsed.name.replace(/,/g, "\\,")})`,
+    " same => n,Return()",
+  ];
 }
 
 export function sipFromDomain(host: string): string {
@@ -566,6 +571,15 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "",
     ...transportTls,
     "",
+    // UDP providers register from their own port without external_signaling_address.
+    // Behind NAT the router may remap 5060 (seen: 5060 → 63166), so a Contact of
+    // EXTERNAL_IP:5060 sends inbound INVITEs to a dead port. A private Contact lets
+    // the provider answer to the observed source (received/rport), like 3CX does.
+    "[transport-trunk]",
+    "type=transport",
+    "protocol=udp",
+    `bind=0.0.0.0:${TRUNK_SIP_PORT}`,
+    "",
   ];
 
   for (const ext of exts) {
@@ -746,7 +760,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ? "transport-tls"
         : trunk.transport === "tcp"
           ? "transport-udp"
-          : "transport-udp";
+          : "transport-trunk";
     const userpass = trunk.authType !== "ip";
     const fromDomain = (trunk.fromDomain?.trim() || trunk.host).replace(/^sip:/i, "");
     const proxy = trunk.outboundProxy?.trim() || "";
@@ -853,6 +867,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
         `outbound_auth=${authId}`,
         `server_uri=sip:${trunk.host}:${trunk.port}`,
         `client_uri=sip:${trunk.username}@${fromDomain}`,
+        // Without it the Contact user is "s" and inbound INVITEs arrive as sip:s@…,
+        // which the DID pattern in from-trunk does not match (404).
+        ...(SAFE_SIP_USER.test(trunk.username ?? "") ? [`contact_user=${trunk.username}`] : []),
         // line= + endpoint=: inbound INVITEs that echo Contact;line= match this
         // trunk without relying only on identify DNS (Verimor / multi-IP ITSPs).
         "line=yes",
@@ -1492,6 +1509,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "exten => _X.,1,NoOp(Inbound DID ${EXTEN})",
     " same => n,Stasis(monosip-inbound,${EXTEN},${CALLERID(num)})",
     " same => n,Hangup()",
+    // Request-URI user "s" (registration without a DID in Contact): take the DID from To.
+    "exten => s,1,Set(MONOSIP_TO_DID=${CUT(CUT(PJSIP_HEADER(read,To),@,1),:,2)})",
+    ' same => n,GotoIf($["${MONOSIP_TO_DID}" = "" | "${MONOSIP_TO_DID}" = "s"]?nodid)',
+    " same => n,Goto(from-trunk,${MONOSIP_TO_DID},1)",
+    " same => n(nodid),Hangup()",
     "",
     "[stasis-flow]",
     "exten => _X.,1,Stasis(monosip-flow,${EXTEN})",
@@ -1529,7 +1551,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "exten => _tru[n]k_.,1,NoOp(Trunk dial ${EXTEN})",
     " same => n,Set(TRUNK=${EXTEN:0:14})",
     " same => n,Set(NUM=${EXTEN:15})",
-    " same => n(dial),Dial(PJSIP/${NUM}@${TRUNK},120)",
+    " same => n(dial),GosubIf($[${DIALPLAN_EXISTS(monosip-trunk-cli,${TRUNK},1)}]?monosip-trunk-cli,${TRUNK},1)",
+    " same => n,Dial(PJSIP/${NUM}@${TRUNK},120)",
     // Provider failover: next trunk from MONOSIP_TRUNK_FALLBACK (set by ARI, '&'-separated)
     ' same => n,GotoIf($[("${DIALSTATUS}" = "CHANUNAVAIL" | "${DIALSTATUS}" = "CONGESTION") & "${MONOSIP_TRUNK_FALLBACK}" != ""]?next)',
     // Finalize CDR with real talk time (Stasis left via continue — no ARI hangup event)
@@ -1543,6 +1566,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
     " same => n,Set(MONOSIP_TRUNK_FALLBACK=${CUT(MONOSIP_TRUNK_FALLBACK,&,2-)})",
     " same => n,NoOp(Trunk failover ${DIALSTATUS} → ${TRUNK})",
     " same => n,Goto(dial)",
+    "",
+    "[monosip-trunk-cli]",
+    ...trks.flatMap((t) => trunkCliNameLines(`trunk_${t.id.slice(0, 8)}`, t.callerId)),
     "",
   );
 
