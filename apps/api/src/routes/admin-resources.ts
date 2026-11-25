@@ -1995,7 +1995,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     try {
       await ari.chanspy({
         spyChannelId: id,
-        listenerEndpoint: `PJSIP/${body.listenerExtension}`,
+        listenerEndpoint: await ari.originateEndpointForExtension(body.listenerExtension),
         mode,
       });
     } catch (e) {

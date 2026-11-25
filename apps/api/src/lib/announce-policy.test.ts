@@ -4,6 +4,7 @@ import {
   dialNumberPattern,
   dialReasonFromCause,
   extensionAnnounceEndpoint,
+  extensionAnnounceWebRtcEndpoint,
   prefixAllowed,
   rateBlock,
   webhookUrlOk,
@@ -20,6 +21,7 @@ describe("dial numbers", () => {
 
   it("rings an extension directly and leaves other numbers to a trunk", () => {
     expect(extensionAnnounceEndpoint("101")).toBe("PJSIP/101");
+    expect(extensionAnnounceWebRtcEndpoint("101")).toBe("PJSIP/101w");
     expect(extensionAnnounceEndpoint(null)).toBeNull();
     expect(extensionAnnounceEndpoint("905551112233")).toBeNull();
   });

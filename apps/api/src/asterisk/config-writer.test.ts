@@ -116,12 +116,14 @@ describe("writeAsteriskConfig emergency dialplan", () => {
 });
 
 describe("queue self pause", () => {
-  it("pauses PJSIP/<caller> only when that interface is in the member list", () => {
+  it("pauses desk or softphone member when that interface is in the list", () => {
     const lines = queueSelfPauseLines("300").join("\n");
     expect(lines).toContain("QUEUE_MEMBER_LIST(300)");
     expect(lines).toContain(',PJSIP/${CALLERID(num)},');
+    expect(lines).toContain(',PJSIP/${CALLERID(num)}w,');
     expect(lines.indexOf("GotoIf")).toBeLessThan(lines.indexOf("PauseQueueMember"));
     expect(lines).toContain("Set(MONOSIP_QPAUSED=1)");
+    expect(lines).toContain("MONOSIP_QPAUSED_IFACE");
   });
 
   it("skips unpause unless the pause flag is set", () => {
@@ -129,6 +131,7 @@ describe("queue self pause", () => {
     expect(lines.indexOf('"${MONOSIP_QPAUSED}" != "1"')).toBeLessThan(
       lines.indexOf("UnpauseQueueMember"),
     );
+    expect(lines).toContain("${MONOSIP_QPAUSED_IFACE}");
     expect(lines).toContain("same => n(qunpaused),NoOp(Queue self-unpause)");
   });
 });

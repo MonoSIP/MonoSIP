@@ -10,6 +10,7 @@ import {
   decideAnnounceResult,
   dialReasonFromCause,
   extensionAnnounceEndpoint,
+  extensionAnnounceWebRtcEndpoint,
   prefixAllowed,
   rateBlock,
   webhookUrlOk,
@@ -326,7 +327,9 @@ export async function placeAnnounceCall(key: KeyRow, body: AnnounceRequest): Pro
   }
 
   const targets = internal
-    ? [internal]
+    ? [internal, extensionAnnounceWebRtcEndpoint(extension?.number ?? null)].filter(
+        (t): t is string => Boolean(t),
+      )
     : [route!.trunkEndpoint, ...route!.fallbackEndpoints].map(
         (endpoint) => `PJSIP/${route!.dialNumber}@${endpoint}`,
       );

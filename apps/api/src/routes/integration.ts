@@ -116,7 +116,7 @@ export async function integrationRoutes(app: FastifyInstance) {
       if (ext?.outboundCli) callerId = `${ext.name || ext.number} <${ext.outboundCli}>`;
     }
     const result = await ari.originate({
-      endpoint: `PJSIP/${body.extension}`,
+      endpoint: await ari.originateEndpointForExtension(body.extension),
       extension: body.number,
       callerId,
     });

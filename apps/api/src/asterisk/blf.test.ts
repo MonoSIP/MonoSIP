@@ -15,13 +15,13 @@ describe("BLF dialplan", () => {
     expect(lines).toContain("pickup_group=1");
   });
 
-  it("hints the PJSIP endpoint in the subscribe context", () => {
-    expect(extensionHintLine("101")).toBe("exten => 101,hint,PJSIP/101");
+  it("hints desk and softphone endpoints in the subscribe context", () => {
+    expect(extensionHintLine("101")).toBe("exten => 101,hint,PJSIP/101&PJSIP/101w");
   });
 
-  it("picks up *8101 by the ringing channel name", () => {
+  it("picks up *8101 by the ringing desk or softphone channel name", () => {
     const lines = directedPickupLines().join("\n");
     expect(lines).toContain("exten => _*8.,1,NoOp(Directed pickup ${EXTEN:2})");
-    expect(lines).toContain("PickupChan(PJSIP/${EXTEN:2}-)");
+    expect(lines).toContain("PickupChan(PJSIP/${EXTEN:2}-&PJSIP/${EXTEN:2}w-)");
   });
 });

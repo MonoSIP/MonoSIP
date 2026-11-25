@@ -46,15 +46,28 @@ export function blfEndpointLines(): string[] {
   ];
 }
 
-export function extensionHintLine(number: string): string {
-  return `exten => ${number},hint,PJSIP/${number}`;
+/** WebRTC softphone sibling of a desk/classic SIP endpoint (same secret, different SDP). */
+export function webrtcEndpointId(number: string): string {
+  return `${number}w`;
 }
 
-/** *8101 picks up a ringing PJSIP/101 channel (Dial or queue). Bare *8 stays Pickup(). */
+/**
+ * Ring desk + browser softphone. WebRTC and classic SIP cannot share one PJSIP
+ * endpoint (DTLS/AVPF vs plain RTP) — Joshua Colp / Asterisk docs.
+ */
+export function dialExtensionTargets(number: string): string {
+  return `PJSIP/${number}&PJSIP/${webrtcEndpointId(number)}`;
+}
+
+export function extensionHintLine(number: string): string {
+  return `exten => ${number},hint,${dialExtensionTargets(number)}`;
+}
+
+/** *8101 picks up a ringing PJSIP/101 or PJSIP/101w channel. Bare *8 stays Pickup(). */
 export function directedPickupLines(): string[] {
   return [
     "exten => _*8.,1,NoOp(Directed pickup ${EXTEN:2})",
-    " same => n,PickupChan(PJSIP/${EXTEN:2}-)",
+    " same => n,PickupChan(PJSIP/${EXTEN:2}-&PJSIP/${EXTEN:2}w-)",
     " same => n,Hangup()",
   ];
 }
@@ -115,11 +128,19 @@ async function ensureAsteriskCanReadConfig(dir: string): Promise<void> {
  * MONOSIP_QPAUSED lets the hangup path unpause the same member and nobody else.
  */
 export function queueSelfPauseLines(queueNumber: string): string[] {
+  // Desk = PJSIP/<num>, softphone = PJSIP/<num>w — pause whichever is a member.
   return [
     ` same => n,Set(QMEM=,\${QUEUE_MEMBER_LIST(${queueNumber})},)`,
     ` same => n,GotoIf($[\${REGEX("^[0-9]{2,20}$" \${CALLERID(num)})} != 1]?qself)`,
-    ` same => n,GotoIf($[\${REGEX(",PJSIP/\${CALLERID(num)}," \${QMEM})} != 1]?qself)`,
-    ` same => n,PauseQueueMember(${queueNumber},PJSIP/\${CALLERID(num)})`,
+    ` same => n,GotoIf($[\${REGEX(",PJSIP/\${CALLERID(num)}," \${QMEM})} = 1]?qpdesk)`,
+    ` same => n,GotoIf($[\${REGEX(",PJSIP/\${CALLERID(num)}w," \${QMEM})} = 1]?qpweb)`,
+    ` same => n,Goto(qself)`,
+    ` same => n(qpdesk),PauseQueueMember(${queueNumber},PJSIP/\${CALLERID(num)})`,
+    ` same => n,Set(MONOSIP_QPAUSED_IFACE=PJSIP/\${CALLERID(num)})`,
+    ` same => n,Set(MONOSIP_QPAUSED=1)`,
+    ` same => n,Goto(qself)`,
+    ` same => n(qpweb),PauseQueueMember(${queueNumber},PJSIP/\${CALLERID(num)}w)`,
+    ` same => n,Set(MONOSIP_QPAUSED_IFACE=PJSIP/\${CALLERID(num)}w)`,
     ` same => n,Set(MONOSIP_QPAUSED=1)`,
     ` same => n(qself),NoOp(Queue self-pause)`,
   ];
@@ -129,8 +150,9 @@ export function queueSelfPauseLines(queueNumber: string): string[] {
 export function queueSelfUnpauseLines(queueRef: string, skipLabel: string): string[] {
   return [
     ` same => n,GotoIf($["\${MONOSIP_QPAUSED}" != "1"]?${skipLabel})`,
-    ` same => n,UnpauseQueueMember(${queueRef},PJSIP/\${CALLERID(num)})`,
+    ` same => n,UnpauseQueueMember(${queueRef},\${MONOSIP_QPAUSED_IFACE})`,
     ` same => n,Set(MONOSIP_QPAUSED=)`,
+    ` same => n,Set(MONOSIP_QPAUSED_IFACE=)`,
     ` same => n(${skipLabel}),NoOp(Queue self-unpause)`,
   ];
 }
@@ -353,7 +375,8 @@ export function internalPost(apiPath: string, jsonBody: string): string {
  */
 function queueOutcomeLines(label: string): string[] {
   return [
-    ` same => n,Set(MONOSIP_AGENT=\${CUT(MEMBERINTERFACE,/,2)})`,
+    // PJSIP/101 or PJSIP/101w → agent extension 101
+    ` same => n,Set(MONOSIP_AGENT=\${FILTER(0-9,\${CUT(MEMBERINTERFACE,/,2)})})`,
     ` same => n,Set(MONOSIP_QWAIT=)`,
     ` same => n,GotoIf($["\${MONOSIP_AGENT}" = "" | "\${MONOSIP_QSTART}" = ""]?${label})`,
     ` same => n,Set(MONOSIP_QWAIT=\${QEHOLDTIME})`,
@@ -567,36 +590,40 @@ async function writeAsteriskConfigNow(): Promise<void> {
         secret = "changeme";
       }
     }
-    // Object names MUST match the SIP user (extension number) so REGISTER finds the AOR
+    // Desk phone registers as <number> (classic RTP). Softphone registers as <number>w (WebRTC).
+    // One endpoint cannot do both — webrtc=yes forces DTLS/AVPF and silent Linksys/PAP2 media.
     const id = ext.number;
-    pjsip.push(
-      `[${id}]`,
-      "type=endpoint",
+    const idW = webrtcEndpointId(id);
+    const display = (ext.name || id).replace(/"/g, "");
+    const aclLine = sipAclName ? [`acl=${sipAclName}`] : [];
+    const sharedMedia = [
       `from_domain=${sipFromDomain(config.publicHost)}`,
       "context=from-internal",
       "disallow=all",
       // Prefer PCM/G.722 — image has no codec_opus.so, so Opus breaks file playback (IVR/TTS)
       "allow=ulaw,alaw,g722",
-      `auth=${id}`,
-      `aors=${id}`,
       "direct_media=no",
       `moh_suggest=${holdMusic}`,
       "rtp_symmetric=yes",
       "force_rport=yes",
       `rewrite_contact=${rewriteContact}`,
       "dtmf_mode=auto",
-      // Softphone is WebRTC (DTLS-SRTP). Do NOT set media_encryption=sdes here —
-      // that overrides webrtc=yes and browsers stay silent (no DTLS media).
-      "webrtc=yes",
-      "dtls_auto_generate_cert=yes",
-      "media_encryption=dtls",
-      "media_use_received_transport=yes",
+      `callerid="${display}" <${id}>`,
       "rtp_timeout=60",
       "rtp_timeout_hold=300",
       ...blfEndpointLines(),
-      // Do not set transport= here: PJSIP accepts a single transport name only.
-      // Omitting it lets each contact use the transport it registered on (UDP / WS / TLS).
-      ...(sipAclName ? [`acl=${sipAclName}`] : []),
+      ...aclLine,
+    ];
+    pjsip.push(
+      // --- Classic SIP / desk phone (UDP/TLS) ---
+      `[${id}]`,
+      "type=endpoint",
+      ...sharedMedia,
+      `auth=${id}`,
+      `aors=${id}`,
+      // SDES when the phone supports it; plain RTP otherwise (PAP2, etc.)
+      "media_encryption=sdes",
+      "media_encryption_optimistic=yes",
       "",
       `[${id}]`,
       "type=auth",
@@ -606,14 +633,37 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "",
       `[${id}]`,
       "type=aor",
-      // Desk phone + softphone both register (do not kick prior contacts)
       "max_contacts=3",
       "remove_existing=no",
-      // Cap binding lifetime so dead test UAs age out without waiting hours.
       "default_expiration=300",
       "maximum_expiration=300",
-      // Qualify marks ghosts Unavail (Dial skips them); remove_unavailable only
-      // frees AOR slots when a new REGISTER would exceed max_contacts.
+      "qualify_frequency=30",
+      "qualify_timeout=3.0",
+      "remove_unavailable=yes",
+      "",
+      // --- Browser softphone (WSS + DTLS-SRTP) ---
+      `[${idW}]`,
+      "type=endpoint",
+      ...sharedMedia,
+      `auth=${idW}`,
+      `aors=${idW}`,
+      "webrtc=yes",
+      "dtls_auto_generate_cert=yes",
+      "media_encryption=dtls",
+      "media_use_received_transport=yes",
+      "",
+      `[${idW}]`,
+      "type=auth",
+      "auth_type=userpass",
+      `username=${idW}`,
+      `password=${secret}`,
+      "",
+      `[${idW}]`,
+      "type=aor",
+      "max_contacts=2",
+      "remove_existing=no",
+      "default_expiration=300",
+      "maximum_expiration=300",
       "qualify_frequency=30",
       "qualify_timeout=3.0",
       "remove_unavailable=yes",
@@ -825,6 +875,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       const ext = exts.find((e) => e.id === m.extensionId);
       if (!ext || ext.dnd) continue;
       queuesConf.push(`member => PJSIP/${ext.number},${m.penalty}`);
+      queuesConf.push(`member => PJSIP/${webrtcEndpointId(ext.number)},${m.penalty}`);
     }
     queuesConf.push("");
   }
@@ -872,14 +923,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const alwaysFwd = fwdRules.find(
       (f) => f.extensionId === ext.id && f.condition === "always",
     );
-    let dialTarget = `PJSIP/${ext.number}`;
+    let dialTarget = dialExtensionTargets(ext.number);
     let ringSec = 20;
     let alwaysExternal: string | null = null;
     if (secs[0]) {
-      dialTarget = `PJSIP/${secs[0].number}`;
+      dialTarget = dialExtensionTargets(secs[0].number);
     } else if (alwaysFwd?.destType === "extension" && alwaysFwd.destId) {
       const fwdNum = resolveExtensionNumber(alwaysFwd.destId, exts) ?? alwaysFwd.destId;
-      dialTarget = `PJSIP/${fwdNum}`;
+      dialTarget = dialExtensionTargets(fwdNum);
       ringSec = alwaysFwd.ringSeconds;
     } else if (
       alwaysFwd?.destType === "external" &&
@@ -1146,13 +1197,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
           : []),
       ];
       for (const e of members) {
-        lines.push(` same => n,Dial(PJSIP/${e!.number},${rg.ringSeconds},tT)`);
+        lines.push(` same => n,Dial(${dialExtensionTargets(e!.number)},${rg.ringSeconds},tT)`);
         lines.push(` same => n,GotoIf($["\${DIALSTATUS}" = "ANSWER"]?rgdone)`);
       }
       lines.push(` same => n(rgdone),Hangup()`, "");
       extensionsConf.push(...lines);
     } else {
-      const dial = members.map((e) => `PJSIP/${e!.number}`).join("&");
+      const dial = members.map((e) => dialExtensionTargets(e!.number)).join("&");
       extensionsConf.push(
         `exten => ${rg.number},1,NoOp(Ring group ${rg.name})`,
         " same => n,Gosub(monosip-blacklist,s,1)",
@@ -1388,7 +1439,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
           ` same => n(flowdial),NoOp(KVKK)`,
         ]
       : []),
-    " same => n,Dial(PJSIP/${MONOSIP_DIAL_TARGET},${IF($[\"${MONOSIP_DIAL_TIMEOUT}\"=\"\"]?30:${MONOSIP_DIAL_TIMEOUT})},tTm(${IF($[\"${MONOSIP_DIAL_MOH}\"=\"\"]?default:${MONOSIP_DIAL_MOH})}))",
+    " same => n,Dial(PJSIP/${MONOSIP_DIAL_TARGET}&PJSIP/${MONOSIP_DIAL_TARGET}w,${IF($[\"${MONOSIP_DIAL_TIMEOUT}\"=\"\"]?30:${MONOSIP_DIAL_TIMEOUT})},tTm(${IF($[\"${MONOSIP_DIAL_MOH}\"=\"\"]?default:${MONOSIP_DIAL_MOH})}))",
     " same => n,GotoIf($[\"${DIALSTATUS}\" = \"ANSWER\"]?done)",
     " same => n,Stasis(monosip-flow,dial-failed,${DIALSTATUS})",
     " same => n,Hangup()",

@@ -669,20 +669,35 @@ class AriClient extends EventEmitter {
     return (await this.endpointState(extension)).online;
   }
 
-  /** Registration plus in-call state: `busy` = the endpoint already has a live channel. */
-  async endpointState(extension: string): Promise<{ online: boolean; busy: boolean }> {
+  /** One PJSIP endpoint's ARI state (desk `101` or softphone `101w`). */
+  private async oneEndpointState(
+    endpointId: string,
+  ): Promise<{ online: boolean; busy: boolean }> {
     try {
-      const res = await fetch(`${this.baseUrl()}/ari/endpoints/PJSIP/${extension}`, {
+      const res = await fetch(`${this.baseUrl()}/ari/endpoints/PJSIP/${endpointId}`, {
         headers: { Authorization: this.authHeader() },
         signal: AbortSignal.timeout(2500),
       });
       if (!res.ok) return { online: false, busy: false };
       const body = (await res.json()) as { state?: string; channel_ids?: string[] };
-      // online | offline | unknown
       return { online: body.state === "online", busy: (body.channel_ids ?? []).length > 0 };
     } catch {
       return { online: false, busy: false };
     }
+  }
+
+  /** Desk and/or softphone (`<ext>w`) registered; busy if either has a live channel. */
+  async endpointState(extension: string): Promise<{ online: boolean; busy: boolean }> {
+    const desk = await this.oneEndpointState(extension);
+    const web = await this.oneEndpointState(`${extension}w`);
+    return { online: desk.online || web.online, busy: desk.busy || web.busy };
+  }
+
+  /** ARI originate channel: prefer desk, else softphone sibling. */
+  async originateEndpointForExtension(extension: string): Promise<string> {
+    const desk = await this.oneEndpointState(extension);
+    if (desk.online) return `PJSIP/${extension}`;
+    return `PJSIP/${extension}w`;
   }
 
   async redirect(channelId: string, extension: string, context = "from-internal") {

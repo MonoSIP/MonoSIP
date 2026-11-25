@@ -13,10 +13,17 @@ export type AnnounceReason =
 /** Dialed number on the call APIs. Extensions are 2–6 digits; external numbers run up to 20. */
 export const dialNumberPattern = /^\+?[0-9]{2,20}$/;
 
-/** PJSIP endpoint when this number is an extension. Null means use a trunk. */
+/** PJSIP desk endpoint when this number is an extension. Null means use a trunk. */
 export function extensionAnnounceEndpoint(extensionNumber: string | null): string | null {
   if (!extensionNumber || !/^\d{2,6}$/.test(extensionNumber)) return null;
+  // Prefer classic SIP first; announce-call falls through if originate fails.
   return `PJSIP/${extensionNumber}`;
+}
+
+/** Softphone WebRTC sibling — tried after the desk endpoint on announce. */
+export function extensionAnnounceWebRtcEndpoint(extensionNumber: string | null): string | null {
+  if (!extensionNumber || !/^\d{2,6}$/.test(extensionNumber)) return null;
+  return `PJSIP/${extensionNumber}w`;
 }
 
 /** Empty list allows every number. A filled list matches the start of the digits. */

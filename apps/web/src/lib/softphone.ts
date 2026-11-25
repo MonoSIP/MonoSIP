@@ -443,7 +443,9 @@ export class Softphone {
         ? window.location.hostname
         : opts.domain;
 
-    const uri = UserAgent.makeURI(`sip:${opts.extension}@${domain}`);
+    // Desk phones use PJSIP/<ext>; softphone uses sibling <ext>w (WebRTC/DTLS).
+    const sipUser = `${opts.extension}w`;
+    const uri = UserAgent.makeURI(`sip:${sipUser}@${domain}`);
     if (!uri) throw new Error("Invalid SIP URI");
 
     const wsServer =
@@ -476,7 +478,7 @@ export class Softphone {
 
     this.ua = new UserAgent({
       uri,
-      authorizationUsername: opts.extension,
+      authorizationUsername: sipUser,
       authorizationPassword: opts.password,
       displayName: opts.displayName,
       transportOptions: {
