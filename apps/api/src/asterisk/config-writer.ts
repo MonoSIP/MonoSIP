@@ -657,9 +657,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "remove_existing=yes",
       "default_expiration=300",
       "maximum_expiration=300",
-      "qualify_frequency=30",
-      "qualify_timeout=3.0",
-      "remove_unavailable=yes",
+      // Some Fanvil builds advertise Contact :5416 and ignore OPTIONS there
+      // (UI still shows Registered). Qualifying that port marks Unavail and
+      // blocks INVITE; skip qualify so dialing still uses the REGISTER Contact.
+      "qualify_frequency=0",
       "",
       // --- Browser softphone (WSS + DTLS-SRTP) ---
       `[${idW}]`,
