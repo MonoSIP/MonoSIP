@@ -151,7 +151,7 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
         </div>
         <a
           className="text-link"
-          href={`${site.repo}/compare/v1.8.4...v${site.version}`}
+          href={`${site.repo}/commits/v${site.version}`}
         >
           {L("Follow the source changes", "Kaynak değişikliklerini izleyin")}{" "}
           <Icon name="external" />
