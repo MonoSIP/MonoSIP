@@ -210,6 +210,19 @@ export function pjsipConfValue(raw: string): string {
   return raw;
 }
 
+/**
+ * Emergency numbers that get their own always-dial exten. One the office already
+ * uses internally (e.g. extension 119) is left out: Asterisk cannot load both
+ * and logged "Unable to register extension '119'" on every reload.
+ */
+export function emergencyDialplanNumbers(
+  emergency: Iterable<string>,
+  internal: Iterable<string | null | undefined>,
+): string[] {
+  const taken = new Set([...internal].map((n) => String(n ?? "").trim()).filter(Boolean));
+  return [...emergency].filter((n) => !taken.has(n));
+}
+
 /** UDP port of transport-trunk, the provider-facing SIP transport. */
 export const TRUNK_SIP_PORT = 5070;
 
@@ -1457,7 +1470,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   // Emergency numbers — always dial (skip the blacklist Gosub the _X. catch-all runs).
   // Sources from the policy engine's single EMERGENCY set (lib/call-policy.ts).
-  for (const em of EMERGENCY) {
+  const internalNumbers = [
+    ...exts.map((e) => e.number),
+    ...qs.map((q) => q.number),
+    ...rgs.map((r) => r.number),
+    ...flowRows.map((f) => f.extensionNumber ?? ""),
+  ];
+  for (const em of emergencyDialplanNumbers(EMERGENCY, internalNumbers)) {
     extensionsConf.push(
       `exten => ${em},1,NoOp(Emergency ${em})`,
       ` same => n,Stasis(monosip-outbound,${em})`,

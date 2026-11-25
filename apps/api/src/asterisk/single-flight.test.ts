@@ -152,3 +152,12 @@ describe("reloadScript", () => {
     expect(sh).toContain("rl 'module reload app_queue.so'");
   });
 });
+
+import { emergencyDialplanNumbers } from "./config-writer.js";
+
+describe("emergencyDialplanNumbers", () => {
+  it("leaves out an emergency number that an extension already uses", () => {
+    expect(emergencyDialplanNumbers(["112", "155", "119"], ["118", "119", null, ""])).toEqual(["112", "155"]);
+    expect(emergencyDialplanNumbers(["112", "119"], [])).toEqual(["112", "119"]);
+  });
+});
