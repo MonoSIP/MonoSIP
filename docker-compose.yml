@@ -70,6 +70,9 @@ services:
       SIP_WSS_URL: ${SIP_WSS_URL:-wss://localhost/asterisk-ws}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      # 1 = also seed a disabled example SIP trunk. Demo users (100–103) seed once on empty DB either way.
+      # Set 0 in production to skip demo users on a fresh volume.
+      MONOSIP_LAB_SEED: ${MONOSIP_LAB_SEED:-1}
       ASTERISK_ARI_URL: http://asterisk:8088
       ASTERISK_ARI_USER: ${ASTERISK_ARI_USER:-monosip}
       ASTERISK_ARI_PASSWORD: ${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}

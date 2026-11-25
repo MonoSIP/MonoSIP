@@ -19,53 +19,24 @@ import {
 import { deriveSipPassword, encrypt, scryptHash } from "../lib/crypto.js";
 import { writeAsteriskConfig } from "../asterisk/config-writer.js";
 
-async function seed() {
-  console.log("Seeding database...");
+type SettingsData = Record<string, unknown>;
 
-  const [existingAdmin] = await db
-    .select()
-    .from(admins)
-    .where(eq(admins.email, config.adminEmail))
-    .limit(1);
+async function readSettings(): Promise<{ id: number; data: SettingsData } | undefined> {
+  const [row] = await db.select().from(settings).limit(1);
+  if (!row?.data || typeof row.data !== "object") return undefined;
+  return { id: row.id, data: row.data as SettingsData };
+}
 
-  if (!existingAdmin) {
-    await db.insert(admins).values({
-      email: config.adminEmail,
-      passwordHash: scryptHash(config.adminPassword),
-      totpEnabled: false,
-    });
-    console.log(`Admin: ${config.adminEmail} / ${config.adminPassword}`);
-  }
+async function patchSettings(patch: SettingsData) {
+  const cur = await readSettings();
+  if (!cur) return;
+  await db
+    .update(settings)
+    .set({ data: { ...cur.data, ...patch } })
+    .where(eq(settings.id, cur.id));
+}
 
-  const defaultSettings = {
-    companyName: "MonoSIP",
-    defaultLocale: config.defaultLocale,
-    recordingRetentionMonths: 12,
-    kvkkAnnouncementEnabled: false,
-    adminIpAllowlist: [] as string[],
-    portalIpAllowlist: [] as string[],
-    sipIpAllowlist: [] as string[],
-    sipIpDenylist: [] as string[],
-    securityLoginMaxRetry: 8,
-    securityLoginBanMinutes: 15,
-    allowedCountries: ["TR"],
-    blockedCountries: [] as string[],
-    dailySpendLimitMinutes: 1000,
-    monthlySpendLimitMinutes: 20000,
-  };
-  await db.insert(settings).values({ id: 1, data: defaultSettings }).onConflictDoNothing();
-  // Lab: turn off bare KVKK beep that softphone users hear as a thin tone then silence
-  const [existingSettings] = await db.select().from(settings).limit(1);
-  if (existingSettings?.data && typeof existingSettings.data === "object") {
-    const cur = existingSettings.data as Record<string, unknown>;
-    if (cur.kvkkAnnouncementEnabled === true && !cur.kvkkPromptId) {
-      await db
-        .update(settings)
-        .set({ data: { ...cur, kvkkAnnouncementEnabled: false } })
-        .where(eq(settings.id, existingSettings.id));
-    }
-  }
-
+async function seedLabDemo() {
   const sampleExts = [
     { number: "100", name: "Reception", password: "portal100" },
     { number: "101", name: "Alice", password: "portal101" },
@@ -189,7 +160,6 @@ async function seed() {
       { id: "e3", source: "menu1", target: "xfer1", sourceHandle: "1", label: "1" },
       { id: "e4", source: "menu1", target: "xfer2", sourceHandle: "2", label: "2" },
       { id: "e5", source: "menu1", target: "hangup1", sourceHandle: "timeout", label: "timeout" },
-      // Transfer failure exits (required to publish)
       { id: "e6", source: "xfer1", target: "hangup1", sourceHandle: "noanswer" },
       { id: "e7", source: "xfer1", target: "hangup1", sourceHandle: "busy" },
       { id: "e8", source: "xfer1", target: "hangup1", sourceHandle: "chanunavail" },
@@ -213,7 +183,6 @@ async function seed() {
       .where(eq(flows.id, f.id));
     console.log("Main IVR published as v1 on 900");
   } else {
-    // Ensure Main IVR has a dialable test number + destinations that aren't the softphone (101)
     const [main] = await db.select().from(flows).where(eq(flows.name, "Main IVR")).limit(1);
     if (main) {
       flowId = main.id;
@@ -233,7 +202,6 @@ async function seed() {
             changed = true;
           }
           if (n.id === "xfer2" && n.data?.destId === "102") {
-            // keep 102 only if xfer1 wasn't already 102; prefer 103 for option 2
             n.data = { ...n.data, destId: "103", label: "Support 103" };
             changed = true;
           }
@@ -251,7 +219,6 @@ async function seed() {
           .update(flows)
           .set({ draftJson: draft, updatedAt: new Date() })
           .where(eq(flows.id, main.id));
-        // Republish so softphone dials the fixed destinations
         const { flowVersions } = await import("./schema.js");
         const versions = await db
           .select()
@@ -271,11 +238,92 @@ async function seed() {
     }
   }
 
-  // Demo trunk only when explicitly requested — never re-create after a volume wipe
-  // in a way that looks like "we replaced your SIP provider".
-  const labSeed = process.env.MONOSIP_LAB_SEED === "1" || process.env.MONOSIP_LAB_SEED === "true";
+  const existingInbound = await db.select().from(inboundRoutes).limit(1);
+  if (!existingInbound.length && flowId) {
+    await db.insert(inboundRoutes).values({
+      did: "default",
+      priority: 100,
+      destType: scheduleId ? "schedule" : "flow",
+      destId: scheduleId ?? flowId,
+    });
+  }
+}
+
+async function seed() {
+  console.log("Seeding database...");
+
+  const [existingAdmin] = await db
+    .select()
+    .from(admins)
+    .where(eq(admins.email, config.adminEmail))
+    .limit(1);
+
+  if (!existingAdmin) {
+    await db.insert(admins).values({
+      email: config.adminEmail,
+      passwordHash: scryptHash(config.adminPassword),
+      totpEnabled: false,
+    });
+    console.log(`Admin: ${config.adminEmail} / ${config.adminPassword}`);
+  }
+
+  const defaultSettings = {
+    companyName: "MonoSIP",
+    defaultLocale: config.defaultLocale,
+    recordingRetentionMonths: 12,
+    kvkkAnnouncementEnabled: false,
+    adminIpAllowlist: [] as string[],
+    portalIpAllowlist: [] as string[],
+    sipIpAllowlist: [] as string[],
+    sipIpDenylist: [] as string[],
+    securityLoginMaxRetry: 8,
+    securityLoginBanMinutes: 15,
+    allowedCountries: ["TR"],
+    blockedCountries: [] as string[],
+    dailySpendLimitMinutes: 1000,
+    monthlySpendLimitMinutes: 20000,
+  };
+  await db.insert(settings).values({ id: 1, data: defaultSettings }).onConflictDoNothing();
+
+  const existingSettings = await readSettings();
+  if (existingSettings) {
+    const cur = existingSettings.data;
+    if (cur.kvkkAnnouncementEnabled === true && !cur.kvkkPromptId) {
+      await patchSettings({ kvkkAnnouncementEnabled: false });
+    }
+  }
+
+  // Demo extensions / IVR: once on an empty DB, then never again.
+  // Previously every boot re-inserted 100–103 if those numbers were missing, so
+  // deleting lab users + docker rebuild brought them back.
+  // Opt out: MONOSIP_LAB_SEED=0. Demo SIP trunk still requires MONOSIP_LAB_SEED=1.
+  const labSeedOff =
+    process.env.MONOSIP_LAB_SEED === "0" || process.env.MONOSIP_LAB_SEED === "false";
+  const labSeedTrunk =
+    process.env.MONOSIP_LAB_SEED === "1" || process.env.MONOSIP_LAB_SEED === "true";
+  const settingsNow = await readSettings();
+  const labDemoDone = settingsNow?.data.labDemoSeeded === true;
+
+  if (labSeedOff) {
+    console.log("Skipping lab demo users (MONOSIP_LAB_SEED=0)");
+  } else if (labDemoDone) {
+    console.log("Lab demo already applied (labDemoSeeded) — not re-adding deleted sample users");
+  } else {
+    // Only create samples on a truly empty extension table. If the DB already
+    // has extensions (upgrade / admin already customized), just mark done so
+    // missing 100–103 are never re-created after a delete + rebuild.
+    const [anyExt] = await db.select().from(extensions).limit(1);
+    if (!anyExt) {
+      console.log("Seeding lab demo extensions once (empty DB)");
+      await seedLabDemo();
+    } else {
+      console.log("Lab demo marker set (extensions already present; not re-adding samples)");
+    }
+    await patchSettings({ labDemoSeeded: true });
+  }
+
   const existingTrunk = await db.select().from(trunks).limit(1);
-  if (labSeed && !existingTrunk.length) {
+  if (labSeedTrunk && !existingTrunk.length) {
     await db.insert(trunks).values({
       name: "Example SIP Provider (disabled)",
       host: "sip.example.com",
@@ -290,16 +338,6 @@ async function seed() {
     console.log("Lab seed: example SIP trunk inserted (MONOSIP_LAB_SEED=1)");
   } else if (!existingTrunk.length) {
     console.log("No SIP trunks yet — add one in Admin → SIP providers (demo trunk not auto-seeded)");
-  }
-
-  const existingInbound = await db.select().from(inboundRoutes).limit(1);
-  if (!existingInbound.length && flowId) {
-    await db.insert(inboundRoutes).values({
-      did: "default",
-      priority: 100,
-      destType: scheduleId ? "schedule" : "flow",
-      destId: scheduleId ?? flowId,
-    });
   }
 
   try {

@@ -127,7 +127,7 @@ No env is required for a first boot:
 - Mount a persistent volume at `/data` (4 GB RAM recommended). Check deploy logs for `secrets=1 pg_cluster=1` (both 0 every deploy ⇒ volume not sticking)
 - **NineDeploy:** set Service → Volume mount path to `/data` in the UI (the `.ninedeploy` `volume.mount` entry only configures backups — it does **not** attach the disk). Without this, every Deploy recreates an empty `/data` on the overlay and all settings/trunks vanish
 - Boot **never wipes** an existing Postgres cluster on start failure (set `MONOSIP_PG_WIPE_ON_FAIL=1` only after a backup if you intentionally reset)
-- Demo SIP trunk is **not** auto-seeded (set `MONOSIP_LAB_SEED=1` for lab only)
+- Demo extensions (100–103) + sample IVR are seeded **once** on an empty DB, then marked done — deleting them and rebuilding will **not** bring them back. Set `MONOSIP_LAB_SEED=0` to skip demo users on a fresh volume. Demo SIP trunk still requires `MONOSIP_LAB_SEED=1` (Compose default for local labs).
 - With `PUBLIC_HOST` set (or `MONOSIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `MONOSIP_ALLOW_EPHEMERAL_DATA=1`
 
 Default admin (change it under Settings → Admin sign-in): `admin@example.com` / `Admin123!`. Forgot it later: [Forgot the admin password](#forgot-the-admin-password).
