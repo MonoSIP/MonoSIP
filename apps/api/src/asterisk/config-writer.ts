@@ -610,6 +610,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `moh_suggest=${holdMusic}`,
       "rtp_symmetric=yes",
       "force_rport=yes",
+      // VPN/NAT softphones put an unreachable IP in SDP; send media to the
+      // address we actually received SIP/RTP from (same idea as WebRTC).
+      "media_use_received_transport=yes",
       `rewrite_contact=${rewriteContact}`,
       ...mediaAddress,
       "dtmf_mode=auto",
