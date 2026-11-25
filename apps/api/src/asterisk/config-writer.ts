@@ -596,6 +596,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const idW = webrtcEndpointId(id);
     const display = (ext.name || id).replace(/"/g, "");
     const aclLine = sipAclName ? [`acl=${sipAclName}`] : [];
+    // Docker/NineDeploy: Asterisk's NIC is 172.x. With RFC1918 in local_net it
+    // advertises that bridge IP in SDP — phones on 10.x/192.168 never get RTP.
+    // media_address forces EXTERNAL_IP into every offer/answer.
+    const mediaAddress = externalIp ? [`media_address=${externalIp}`] : [];
     const sharedMedia = [
       `from_domain=${sipFromDomain(config.publicHost)}`,
       "context=from-internal",
@@ -607,6 +611,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "rtp_symmetric=yes",
       "force_rport=yes",
       `rewrite_contact=${rewriteContact}`,
+      ...mediaAddress,
       "dtmf_mode=auto",
       `callerid="${display}" <${id}>`,
       "rtp_timeout=60",
@@ -690,6 +695,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
         "rtp_symmetric=yes",
         "force_rport=yes",
         `rewrite_contact=${rewriteContact}`,
+        ...(externalIp ? [`media_address=${externalIp}`] : []),
         "dtmf_mode=rfc4733",
         "webrtc=yes",
         "dtls_auto_generate_cert=yes",
@@ -757,6 +763,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ...trunkCallerLines(trunk),
       "direct_media=no",
       `moh_suggest=${holdMusic}`,
+      ...(externalIp ? [`media_address=${externalIp}`] : []),
       `device_state_busy_at=${Math.max(1, trunk.maxChannels ?? 10)}`,
       "",
     );
