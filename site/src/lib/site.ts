@@ -1,4 +1,4 @@
-const version = "1.8.2";
+const version = "1.8.3";
 const repo = "https://github.com/MonoSIP/MonoSIP";
 
 export const site = {
