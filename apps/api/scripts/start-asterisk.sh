@@ -172,6 +172,17 @@ fi
 EXTERNAL_IP="${EXTERNAL_IP:-}"
 if [ -n "$EXTERNAL_IP" ]; then
   sed -i "s|;externaddr=__EXTERNAL_IP__|externaddr=${EXTERNAL_IP}|g" /etc/asterisk/rtp.conf
+  # ICE host candidates are the container NIC (172.x), which no browser can reach.
+  # Advertise EXTERNAL_IP instead, so softphones that reach it (LAN/VPN) get media.
+  if ! grep -q '^\[ice_host_candidates\]' /etc/asterisk/rtp.conf; then
+    printf '\n[ice_host_candidates]\n' >> /etc/asterisk/rtp.conf
+    for ip in $(hostname -I 2>/dev/null); do
+      case "$ip" in
+        *:*|127.*|"$EXTERNAL_IP") ;;
+        *) echo "${ip} => ${EXTERNAL_IP}" >> /etc/asterisk/rtp.conf ;;
+      esac
+    done
+  fi
 else
   sed -i "s|;externaddr=__EXTERNAL_IP__||g" /etc/asterisk/rtp.conf
 fi
