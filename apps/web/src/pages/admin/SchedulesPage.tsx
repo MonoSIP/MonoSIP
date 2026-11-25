@@ -249,8 +249,13 @@ export function SchedulesPage() {
     setRanges(preset);
   }
 
-  const scheduleHolidays =
-    holidaysQ.data?.filter((h) => !h.scheduleId || h.scheduleId === selected?.id) ?? [];
+  // Sorted by date: the TR pack inserts fixed days first and bayrams last, so the
+  // list looked like it stopped at the Kurban Bayramı days in May.
+  const scheduleHolidays = (
+    holidaysQ.data?.filter((h) => !h.scheduleId || h.scheduleId === selected?.id) ?? []
+  )
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="space-y-6">
@@ -554,17 +559,23 @@ export function SchedulesPage() {
               <Button
                 type="button"
                 onClick={() => {
-                  void api
-                    .post<{ inserted: number; year: number }>("/api/v1/admin/holidays/tr-pack", {
-                      scheduleId: selected?.id ?? null,
-                      year: new Date().getFullYear(),
-                      locale: lang,
-                    })
-                    .then((r) => {
-                      toast.success(t("schedules.trPackDone", { year: r.year, count: r.inserted }));
+                  // This year and next: late in the year most of the current list is past.
+                  const thisYear = new Date().getFullYear();
+                  void (async () => {
+                    try {
+                      for (const year of [thisYear, thisYear + 1]) {
+                        const r = await api.post<{ inserted: number; year: number }>(
+                          "/api/v1/admin/holidays/tr-pack",
+                          { scheduleId: selected?.id ?? null, year, locale: lang },
+                        );
+                        toast.success(t("schedules.trPackDone", { year: r.year, count: r.inserted }));
+                      }
+                    } catch (e) {
+                      toast.error((e as Error).message);
+                    } finally {
                       void qc.invalidateQueries({ queryKey: ["holidays"] });
-                    })
-                    .catch((e: Error) => toast.error(e.message));
+                    }
+                  })();
                 }}
               >
                 {t("schedules.trPack")}
