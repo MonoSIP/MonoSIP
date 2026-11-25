@@ -25,9 +25,16 @@ docker/tts/voices/*.onnx
 docker/tts/voices/*.onnx.json
 !docker/tts/voices/.gitkeep
 
-# AI / agent tooling (prompts, memories, session dumps)
+# AI / agent tooling (prompts, memories, instructions, session dumps)
 .wrongstack/
 .cursor/
+.claude/
+.agents/
+skills-lock.json
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.github/copilot-instructions.md
 
 # Local IDE / OS
 *.swp
@@ -37,6 +44,3 @@ packages/shared/tsconfig.tsbuildinfo
 
 __pycache__/
 *.pyc
-!/.wrongstack/
-/.wrongstack/*
-!/.wrongstack/project.json
