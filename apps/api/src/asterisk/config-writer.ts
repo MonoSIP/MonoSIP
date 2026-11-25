@@ -809,6 +809,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
         identifyHosts.add(h);
       }
     }
+    // Asterisk identify match= must be IP or CIDR. Hostnames that fail DNS inside
+    // the container (common on NineDeploy) log warnings and are skipped — but we
+    // never write hostnames so apply always keeps the resolved IP list.
     const identifyMatches = new Set<string>();
     for (const h of identifyHosts) {
       if (!h) continue;
@@ -816,13 +819,20 @@ async function writeAsteriskConfigNow(): Promise<void> {
         identifyMatches.add(h);
         continue;
       }
-      identifyMatches.add(h);
       try {
-        const r = await dnsLookup(h, { family: 4 });
-        if (r.address) identifyMatches.add(r.address);
+        const r = await dnsLookup(h, { family: 4, all: true });
+        const addrs = Array.isArray(r) ? r : [r];
+        for (const a of addrs) {
+          if (a.address) identifyMatches.add(a.address);
+        }
       } catch {
-        /* hostname kept; IP may still be listed explicitly */
+        /* use hardcoded / notes IPs only */
       }
+    }
+    if (!identifyMatches.size) {
+      console.warn(
+        `[config] trunk ${id}: no identify IPs resolved for ${[...identifyHosts].join(",")}`,
+      );
     }
     pjsip.push(
       `[${id}]`,
@@ -843,6 +853,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
         `outbound_auth=${authId}`,
         `server_uri=sip:${trunk.host}:${trunk.port}`,
         `client_uri=sip:${trunk.username}@${fromDomain}`,
+        // line= + endpoint=: inbound INVITEs that echo Contact;line= match this
+        // trunk without relying only on identify DNS (Verimor / multi-IP ITSPs).
+        "line=yes",
+        `endpoint=${id}`,
         `retry_interval=60`,
         "expiration=300",
         "",
