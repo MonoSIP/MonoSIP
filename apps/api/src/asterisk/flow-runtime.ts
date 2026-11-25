@@ -558,35 +558,11 @@ export async function executeFlowLoop(
         break;
       }
       case "api": {
-        const url = expandTemplate(String(data.url ?? ""), vars);
-        const method = String(data.method ?? "GET").toUpperCase();
-        const timeoutMs = Number(data.timeoutMs ?? 3000);
-        const retries = Math.min(1, Math.max(0, Number(data.retry ?? 0) || 0));
-        let headers: Record<string, string> = {};
-        for (const [k, v] of Object.entries((data.headers as Record<string, string>) ?? {})) {
-          headers[k] = expandTemplate(String(v), vars);
-        }
-        // Inject auth from encrypted secrets table (never store tokens in flow JSON)
-        const authType = String(data.authType ?? "none");
-        const secretId = String(data.secretId ?? "");
-        if (secretId && authType !== "none") {
-          try {
-            const { secrets } = await import("../db/schema.js");
-            const { decrypt } = await import("../lib/crypto.js");
-            const [sec] = await db.select().from(secrets).where(eq(secrets.id, secretId)).limit(1);
-            if (sec) {
-              const token = decrypt(sec.valueEnc);
-              if (authType === "bearer") headers = { ...headers, Authorization: `Bearer ${token}` };
-              else if (authType === "basic") headers = { ...headers, Authorization: `Basic ${token}` };
-              else if (authType === "header") {
-                const hdr = String(data.authHeader ?? "X-Api-Key");
-                headers = { ...headers, [hdr]: token };
-              }
-            }
-          } catch (e) {
-            console.warn(`[flow] secret inject failed`, (e as Error).message);
-          }
-        }
+        const { buildFlowApiRequest } = await import("./flow-http.js");
+        const { url, method, headers, body: bodyTpl, timeoutMs, retries } = await buildFlowApiRequest(
+          data,
+          vars,
+        );
         // Optional wait announce / MOH while request runs
         let waitPlayback: string | null = null;
         const waitPromptId = String(data.waitPromptId ?? "");
@@ -616,10 +592,6 @@ export async function executeFlowLoop(
             /* ignore */
           }
         }
-        const bodyTpl =
-          method !== "GET" && method !== "HEAD" && data.body
-            ? expandTemplate(String(data.body), vars)
-            : undefined;
         const doFetch = async () =>
           fetch(url, {
             method,

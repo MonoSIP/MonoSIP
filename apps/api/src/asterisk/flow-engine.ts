@@ -291,10 +291,13 @@ export async function simulateFlow(
           message = `API mock success ${url}`;
         } else {
           try {
-            const method = String(data.method ?? "GET");
-            const res = await fetch(url, {
-              method,
-              signal: AbortSignal.timeout(Number(data.timeoutMs ?? 3000)),
+            const { buildFlowApiRequest } = await import("./flow-http.js");
+            const req = await buildFlowApiRequest(data, vars);
+            const res = await fetch(req.url, {
+              method: req.method,
+              headers: req.headers,
+              body: req.body,
+              signal: AbortSignal.timeout(req.timeoutMs),
             });
             vars.http_status = res.status;
             if (res.ok) {
