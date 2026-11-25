@@ -193,8 +193,13 @@ export const docsTr = {
                 ],
                 [
                   "5060/UDP veya TCP",
-                  "Masa telefonu / operatör SIP",
+                  "Masa telefonu SIP",
                   "Hızlı komut bunu yayınlamaz; gerektiğinde ekleyin ve kaynakları kısıtlayın.",
+                ],
+                [
+                  "5070/UDP",
+                  "SIP operatörü (trunk)",
+                  "Yalnızca dışarı doğru kayıt. Operatör NAT’ın gördüğü adrese yanıt verir; içeri kural ya da port yönlendirme gerekmez.",
                 ],
                 [
                   "TURN / TURNS",
@@ -209,6 +214,16 @@ export const docsTr = {
               <code>MONOSIP_RTP_PUBLISHED=1</code> değerini, bilinçli yalnızca
               STUN kurulumu için <code>MONOSIP_TURNS_ON_443=0</code> değerini
               belgeler. İkisini de uygulamadan önce ağınızı gözden geçirin.
+            </p>
+            <p>
+              <code>EXTERNAL_IP</code>, telefonlarınızın ve tarayıcılarınızın
+              santrale ulaştığı adrestir. NAT arkasında bu, sunucunun yerel ağ
+              ya da VPN adresi olabilir: masa telefonları ve portal yazılımsal
+              telefonu bu adresi alır; SIP operatörleri ve web sitesi widget
+              ziyaretçileri STUN ile bulunan genel IP’yi alır.{" "}
+              <code>PUBLIC_HOST</code> değerini kullanıcıların açtığı alan adına
+              her zaman ayarlayın; yazılımsal telefon böylece hiçbir zaman bir
+              konteyner adresine bağlanmaz.
             </p>
           </>
         ),
@@ -377,7 +392,10 @@ export const docsTr = {
               </li>
               <li>
                 Gelen rotalar bir hedef seçer: dahili, zil grubu, kuyruk, IVR,
-                takvim veya desteklenen başka bir hedef.
+                takvim veya desteklenen başka bir hedef. Bir rotayı takvime
+                bağlayarak mesai, öğle arası, mesai dışı ve tatil günlerini
+                farklı IVR’lara gönderin (Türkiye resmî tatilleri tek tıkla
+                yüklenir; yarım günlük arifeler öğlene kadar açık sayılır).
               </li>
               <li>
                 API’nin ARI akış motoru yayımlanmış IVR grafiğini çalıştırır.
@@ -635,7 +653,9 @@ export const docsTr = {
               <li>
                 Arayan, DID, tarih/saat ve tuş takımı girişlerini simüle edin.
                 Değişkenleri ve ziyaret edilen adımları inceleyin. Sahte API
-                JSON’u veya gerçek bir test ucunu bilinçli kullanın.
+                JSON’u veya gerçek bir test ucunu bilinçli kullanın. Gerçek
+                istek, canlı bir aramayla aynı URL, başlıklar, gövde ve Ayarlar
+                → Gizli değerler kimlik doğrulamasıyla gider.
               </li>
               <li>
                 Gözden geçirilmiş taslağı yayınlayın. Süren aramalar

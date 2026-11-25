@@ -49,19 +49,19 @@ const referenceTr = [
 
 export const highlightsTr = [
   {
+    icon: "network" as const,
+    title: "SIP operatörleri NAT arkasında çalışır.",
+    text: "Operatörler kendi portlarından kayıt olur ve gelen aramayı gördükleri adrese gönderir; aramalar port yönlendirme olmadan gelir. Arayanın numarası doğru görünür.",
+  },
+  {
     icon: "phone" as const,
-    title: "Ürünün adı MonoSIP.",
-    text: "Konsol, açık site ve Docker imajı MonoSIP adını paylaşır. ghcr.io/monosip/monosip imajını çekin.",
+    title: "Her yazılımsal telefon aramasında ses.",
+    text: "Santralin tarayıcıya gönderdiği aramalarda (IVR, kuyruk, zil grubu) ses bağlanır. Özel ağdaki masa telefonlarına ulaşabildikleri adres verilir.",
   },
   {
-    icon: "sound" as const,
-    title: "Göz önünde kalan bir sesli mesaj kutusu.",
-    text: "Dalga biçimleri, kayıtlı karşılamalar ve duyulmamış sayılar sesli mesaj kutusunda durur.",
-  },
-  {
-    icon: "shield" as const,
-    title: "Giriş seçimleri sizinle kalır.",
-    text: "Giriş ekranında seçilen dil ve koyu mod, yönetici ve portal içinde de aynı seçimdir.",
+    icon: "clock" as const,
+    title: "Türkiye tatilleriyle mesai dışı yönlendirme.",
+    text: "Bu yılın ve gelecek yılın tatilleri tek tıkla, tarihe göre sıralı; yarım günlük arifeler öğlene kadar açık. Robotik yedek ses artık önbelleğe alınmaz.",
   },
 ];
 

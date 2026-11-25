@@ -60,7 +60,8 @@ Open only what you need:
 | --- | --- | --- |
 | 443 | TCP | Everyone (panel + WSS softphone) |
 | 80 | TCP | ACME / redirect (optional) |
-| 5060 | UDP/TCP | Desk phones / softphones **or** SIP trunk provider only |
+| 5060 | UDP/TCP | Desk phones / classic softphones |
+| 5070 | UDP | SIP providers. Outbound only: a registering trunk needs **no** inbound rule or port forward |
 | 10000–10100 | UDP | RTP (same peers as SIP) |
 | 3478 | UDP/TCP | TURN (off-site WebRTC) |
 | 49152–49200 | UDP | TURN relay |
@@ -94,6 +95,27 @@ docker compose restart api asterisk
 ```
 
 Desk phones that stay **Registered** in the phone UI but **Unavail** in MonoSIP usually mean Asterisk is advertising the Docker bridge address (`172.x`) in Via/Contact. That happens when `LOCAL_NETS` includes the phone LAN (e.g. `10.0.0.0/8`) while phones dial `EXTERNAL_IP` through Docker NAT. Current defaults and boot-time normalization prevent this; remove any vault override that still lists the phone LAN.
+
+## 4b. Behind NAT, VPN or a private `EXTERNAL_IP`
+
+`EXTERNAL_IP` is the address **your phones and browsers** use to reach the PBX. It may be private, for example the host's address on the office LAN or VPN (`10.6.6.9`). MonoSIP then uses two addresses:
+
+| Who | Address in SIP/SDP | Why |
+| --- | --- | --- |
+| Desk phones, classic softphones, portal softphone | `EXTERNAL_IP` | They reach it directly. Sending them the router's WAN IP hairpins RTP through the router and calls answered from a queue or IVR have no audio |
+| SIP providers, website widget guests | Public IP found via STUN (**Settings → STUN**) | They are on the internet |
+
+- **SIP providers** register from their own UDP transport on port `5070` with a private Contact and `contact_user` set to the SIP login. The provider sends inbound calls back to the address and port it saw, so routers that rewrite the source port (5060 → 63166) no longer drop them. No port forward is needed, the same way 3CX works behind NAT.
+- **WebRTC:** Docker gives Asterisk a `172.x` NIC that no browser can reach. Boot maps it to `EXTERNAL_IP` in `rtp.conf` (`[ice_host_candidates]`), so a browser that reaches `EXTERNAL_IP` (LAN/VPN) connects media directly.
+- **Set `PUBLIC_HOST`.** Without it the API adopts the Host of the first request. Container, LAN, loopback and single-label hosts are ignored, but an explicit value is the only reliable one.
+- Off-site browsers that cannot reach `EXTERNAL_IP` need RTP published on the WAN address or TURN (see [INSTALL.md](INSTALL.md#production-vps)).
+
+Check the provider registration:
+
+```bash
+asterisk -rx 'pjsip show registrations'   # Registered
+asterisk -rx 'pjsip show transports'      # transport-trunk on 0.0.0.0:5070
+```
 
 ## 5. Connect phones
 
@@ -156,3 +178,9 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 - **Admin password forgotten:** `docker compose exec api pnpm db:reset-admin` (single image: `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`. Email and 2FA stay as they are. See [INSTALL.md](INSTALL.md).
 - **WSS fails:** nginx cert / `SIP_WSS_URL` host mismatch / port 443 closed.
 - **WebRTC one-way audio off-site:** TURN `EXTERNAL_IP` and relay UDP range must be open.
+- **Provider registered, inbound calls never arrive:** `pjsip set logger on` and call the DID. No INVITE at all means the provider cannot reach the Contact: check that the registration leaves from `transport-trunk` (5070). An INVITE answered with `404` means the Request-URI user is not a DID; MonoSIP sets `contact_user` and also maps `s` to the DID in the To header.
+- **Inbound caller shows the trunk's own number:** fixed in 1.8.5 (trunks no longer set endpoint `callerid=`). Redeploy so the config is rewritten.
+- **Queue or IVR call to a desk phone has no audio:** `EXTERNAL_IP` must be the address the phones reach (LAN/VPN), not the router's WAN IP. See [4b](#4b-behind-nat-vpn-or-a-private-external_ip).
+- **Softphone shows "This browser is not receiving the call" on calls the PBX sends it (IVR, queue):** fixed in 1.8.9. Hard-refresh the portal (Ctrl+F5) so the browser loads the new softphone code.
+- **Softphone connects to `172.x` or the wrong host:** set `PUBLIC_HOST` and redeploy (1.8.7 and later never adopt a container address).
+- **One IVR sentence sounds robotic:** that sentence fell back to espeak when the neural voice failed. Since 1.9.0 the fallback is not cached; on older versions delete the sentence under **Prompts** (TTS cache) so it is synthesized again.

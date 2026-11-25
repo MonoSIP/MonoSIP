@@ -472,7 +472,7 @@ test("release notes connect the published image, source build and voicemail guid
     page.getByRole("heading", { name: "MonoSIP 1.9.0", exact: true }),
   ).toBeVisible();
   await expect(page.locator(".release-detail")).toContainText(
-    "voicemail inbox",
+    "SIP providers work behind NAT.",
   );
   await expect(page.locator(".development-note")).toContainText(
     "MAIN BRANCH / AFTER v1.9.0",

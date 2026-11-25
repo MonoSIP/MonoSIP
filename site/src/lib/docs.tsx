@@ -198,8 +198,13 @@ export const docs: Record<
                 ],
                 [
                   "5060/UDP or TCP",
-                  "Desk-phone / provider SIP",
+                  "Desk-phone SIP",
                   "Not published by the quick command; add it when required and restrict sources.",
+                ],
+                [
+                  "5070/UDP",
+                  "SIP provider (trunk)",
+                  "Outbound registration only. The provider answers to the NAT-observed address, so no inbound rule or port forward is needed.",
                 ],
                 [
                   "TURN / TURNS",
@@ -214,6 +219,15 @@ export const docs: Record<
               actually published, and <code>MONOSIP_TURNS_ON_443=0</code> for a
               deliberate STUN-only deployment. Review your network before
               applying either option.
+            </p>
+            <p>
+              <code>EXTERNAL_IP</code> is the address your phones and browsers
+              reach. Behind NAT it may be the host&apos;s LAN or VPN address:
+              desk phones and the portal softphone are given that address,
+              while SIP providers and website widget guests get the public IP
+              found through STUN. Always set <code>PUBLIC_HOST</code> to the
+              hostname people open, so the softphone never connects to a
+              container address.
             </p>
           </>
         ),
@@ -380,7 +394,10 @@ export const docs: Record<
               </li>
               <li>
                 Inbound routes select a destination: extension, ring group,
-                queue, IVR, schedule or another supported target.
+                queue, IVR, schedule or another supported target. Point a route
+                at a schedule to send open hours, lunch, after hours and
+                holidays (Turkey&apos;s public holidays load in one click, with
+                half-day eves open until noon) to different IVRs.
               </li>
               <li>
                 The API’s ARI flow engine runs the published IVR graph. Nodes
@@ -624,7 +641,8 @@ export const docs: Record<
               <li>
                 Simulate caller, DID, date/time and keypad inputs. Inspect
                 variables and visited steps. Use mock API JSON or a real test
-                endpoint deliberately.
+                endpoint deliberately. A real request sends the same URL,
+                headers, body and Settings → Secrets auth as a live call.
               </li>
               <li>
                 Publish the reviewed draft. Existing calls finish on the version

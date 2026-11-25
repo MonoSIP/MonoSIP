@@ -109,6 +109,8 @@ What every platform needs:
 - **Persistent volume** mounted at `/data` (DB, Asterisk config, recordings, secrets)
 - **Port 3000** published for HTTPS/API/web/softphone signalling (`/asterisk-ws`)
 - **UDP 10000-10100** published + `EXTERNAL_IP` set for softphone audio (RTP); or run coturn and enable TURNS on 443 for strict edges
+- **`EXTERNAL_IP`** is the address phones and browsers reach. Behind NAT it may be the host's LAN/VPN IP: phones and the portal softphone get that address, SIP providers and widget guests get the public IP found via STUN. See [DEPLOY-VPS.md](DEPLOY-VPS.md#4b-behind-nat-vpn-or-a-private-external_ip)
+- **`PUBLIC_HOST`** set to the hostname users open. Without it the first request's Host is adopted, which after a redeploy can be a healthcheck on the container IP
 - **SIP providers (UDP)** register from their own transport on port `5070` with a private Contact, so the provider sends inbound calls back to the NAT-observed address and port. No port forward is needed for a registering trunk, even when the router rewrites the source port.
 - Optional `DATABASE_URL` for managed Postgres (otherwise embedded Postgres runs under `/data/postgres`)
 - **`LOCAL_NETS`** defaults to `172.16.0.0/12,127.0.0.0/8` in the image, `.ninedeploy`, and Compose. Boot also strips any listed net that contains `EXTERNAL_IP` (so an old vault with `10.0.0.0/8` cannot leave Via on `172.x` / Yealink·Fanvil Unavail). You normally do **not** set this by hand.
@@ -141,7 +143,7 @@ PUBLIC_HOST=pbx.example.com
 PUBLIC_URL=https://pbx.example.com
 SIP_DOMAIN=pbx.example.com
 SIP_WSS_URL=wss://pbx.example.com/asterisk-ws
-EXTERNAL_IP=<public IPv4 of the host>
+EXTERNAL_IP=<IPv4 phones reach: public IP, or the LAN/VPN IP behind NAT>
 ADMIN_PASSWORD=<strong password>
 # LOCAL_NETS is set automatically (Docker bridge + loopback). Override only if
 # Asterisk shares a true L2 LAN with phones and you are not using Docker NAT.
@@ -182,7 +184,7 @@ ASTERISK_AMI_PASSWORD=…
 3. **TLS:** Admin → **Settings → Hostname & SSL** — set the public hostname, enable **Automatic SSL** (Let's Encrypt). Port `80` must reach the server.  
    Offline lab only: `./scripts/gen-certs.sh`
 
-4. Open firewall: `443/tcp`, `80/tcp`; lock `5060` + RTP to office/VPN/trunk. Details: [DEPLOY-VPS.md](DEPLOY-VPS.md).
+4. Open firewall: `443/tcp`, `80/tcp`; lock `5060` + RTP to office/VPN. SIP providers register outbound from UDP `5070` and need no inbound rule. Details: [DEPLOY-VPS.md](DEPLOY-VPS.md).
 
 5. Point desk phones at `EXTERNAL_IP:5060` using the SIP password from the portal.
 

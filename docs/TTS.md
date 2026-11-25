@@ -44,6 +44,7 @@ docker exec <container> curl -fsS http://127.0.0.1:5500/health
 
 - Offline Turkish (EMA) works with no outbound network after the image is built; English needs Edge.
 - IVR speech is split into sentences and synthesized while the previous sentence plays; results are cached on disk.
+- If the neural voice fails for a sentence, it is retried once. A robotic espeak fallback still plays for that call but is not cached, so the next call asks the neural voice again (older versions cached it: delete that sentence under **Prompts** to re-synthesize).
 - Neural synthesis runs on the PBX CPU: plan 2 vCPU / 4 GB RAM. Under memory pressure the model is swapped out and fresh sentences become slow.
 - Edge needs outbound HTTPS when selected (or when `auto` reaches Microsoft).
 - Output is always 8 kHz mono WAV for Asterisk.

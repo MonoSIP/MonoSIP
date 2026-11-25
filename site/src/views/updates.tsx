@@ -45,8 +45,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
             <h2 id="stable-release">MonoSIP {site.version}</h2>
             <p>
               {L(
-                "Released 25 October 2026 · Linux / AMD64 · MIT",
-                "25 Ekim 2026’da yayımlandı · Linux / AMD64 · MIT",
+                "Released 25 November 2026 · Linux / AMD64 · MIT",
+                "25 Kasım 2026’da yayımlandı · Linux / AMD64 · MIT",
               )}
             </p>
           </div>
@@ -97,12 +97,12 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
         <p>
           {tr ? (
             <>
-              {site.reviewed.replace("October", "Ekim")} tarihinde{" "}
+              {site.reviewed.replace("November", "Kasım")} tarihinde{" "}
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              kaydına göre incelendi. Sesli mesaj, portal ve yazılımsal telefon
-              işi v{site.version} sürümündedir.
+              kaydına göre incelendi. Ana daldaki her şey v{site.version}
+              sürümündedir. 1.8.4’ten bu yana gelen düzeltmeler:
             </>
           ) : (
             <>
@@ -110,48 +110,48 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              on {site.reviewed}. The mailbox, portal and softphone work is in
-              the v{site.version} release.
+              on {site.reviewed}. Everything on the main branch is in the
+              v{site.version} release. Fixes since 1.8.4:
             </>
           )}
         </p>
         <div className="development-grid">
           <article>
-            <h3>{L("A more useful mailbox.", "Daha işe yarar bir kutu.")}</h3>
+            <h3>{L("The real caller ID.", "Gerçek arayan numarası.")}</h3>
             <p>
               {L(
-                "Inline message waveforms, unheard counts and saved greetings before the voicemail beep.",
-                "Satır içi mesaj dalga biçimleri, duyulmamış sayılar ve sesli mesaj sinyalinden önce kayıtlı karşılama anonsları.",
+                "Inbound calls from a provider show the caller’s own number instead of the trunk’s, and a provider login without a DID no longer returns 404.",
+                "Operatörden gelen aramalarda trunk numarası yerine arayanın kendi numarası görünür; DID içermeyen operatör kaydı artık 404 vermez.",
               )}
             </p>
           </article>
           <article>
-            <h3>{L("A clearer portal.", "Daha net bir portal.")}</h3>
+            <h3>{L("Softphone on the right host.", "Doğru adreste yazılımsal telefon.")}</h3>
             <p>
               {L(
-                "Missed-call counts clear when the list opens, with updated layouts and immediately applied settings.",
-                "Liste açılınca kaçan arama sayıları temizlenir; yerleşimler güncellenir ve ayarlar hemen uygulanır.",
+                "A redeploy can no longer point softphones at the container address. Set PUBLIC_HOST and the browser always connects to your hostname.",
+                "Yeniden dağıtım, yazılımsal telefonları artık konteyner adresine yönlendiremez. PUBLIC_HOST ayarlayın; tarayıcı her zaman alan adınıza bağlanır.",
               )}
             </p>
           </article>
           <article>
             <h3>
               {L(
-                "Connection status you can trust.",
-                "Güvenebileceğiniz bağlantı durumu.",
+                "Flow tests that match live calls.",
+                "Canlı aramayla aynı akış testi.",
               )}
             </h3>
             <p>
               {L(
-                "The softphone marks a dropped PBX connection as disconnected and keeps trying to register again.",
-                "Yazılımsal telefon düşen santral bağlantısını kopuk işaretler ve kaydı yeniden denemeye devam eder.",
+                "The flow simulation sends the API node’s secret, headers and body, so a key that works on a call no longer fails with 401 in the test.",
+                "Akış simülasyonu API düğümünün gizli değerini, başlıklarını ve gövdesini gönderir; aramada çalışan bir anahtar testte artık 401 vermez.",
               )}
             </p>
           </article>
         </div>
         <a
           className="text-link"
-          href={`${site.repo}/compare/v1.7.5...v${site.version}`}
+          href={`${site.repo}/compare/v1.8.4...v${site.version}`}
         >
           {L("Follow the source changes", "Kaynak değişikliklerini izleyin")}{" "}
           <Icon name="external" />

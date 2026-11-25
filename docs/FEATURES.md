@@ -15,7 +15,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Call pickup; extensions ringing together
 - Attended and blind transfer, hold
 - BLF busy lamps; distinctive ring for internal vs external
-- Emergency `112` always allowed (ignores permission / spend limits)
+- Emergency numbers (`112`, `155`, `110`, `119`, `911`) always allowed (ignore permission / spend limits). A number the office already uses internally, e.g. extension `119`, stays that extension
 - IP phone auto-provisioning (Yealink, Fanvil, Grandstream; by MAC) and QR softphone setup
 
 ## Groups and queues
@@ -32,10 +32,12 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 ## Schedules
 
 - Weekly plan: multiple ranges per day; lunch as a separate status
-- Holidays: fixed holidays auto, religious holidays yearly list, half-day eves; company-specific days
+- Holidays: one button loads Turkey's public holidays for this year and next (fixed days plus Ramazan / Kurban Bayramı dates, 2025–2027); company-specific days; list sorted by date
+- Half-day eves (Cumhuriyet Bayramı and bayram arifeleri): open until 12:00, holiday status after that
 - Priority: custom day > holiday > weekly plan
 - Manual override: Auto / Open now / Closed now, optional end time
-- Separate destination or menu per status (open, lunch, after hours, holiday)
+- Separate destination or menu per status (open, lunch, after hours, holiday). Lunch and holiday fall back to the after-hours destination when empty
+- Takes effect only when an inbound route (or a schedule node in a flow) points to the schedule
 - Timezone: Europe/Istanbul
 
 ## IVR and speech

@@ -73,7 +73,8 @@ The short names `il`, `rakam`, `tamsayi` and `tl` are accepted as aliases.
 
 - Runs the flow step by step with a caller number, date/time and DTMF inputs
 - Visited nodes and edges highlight on the canvas; variables are visible at each step
-- API nodes hit the real endpoint or use the mock response
+- API nodes hit the real endpoint or use the mock response. The real request is the same one a live call sends: templated URL, headers, body and the **Settings → Secrets** auth (Bearer, Basic or custom header)
+- An API node runs again every time the flow reaches it; results are not cached. Mapped variables stay set for the rest of the call
 
 ## Versioning and validation
 

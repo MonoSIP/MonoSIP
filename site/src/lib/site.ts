@@ -10,9 +10,9 @@ export const site = {
   release: `${repo}/releases/tag/v${version}`,
   sourceZip: `${repo}/archive/refs/tags/v${version}.zip`,
   image: `ghcr.io/monosip/monosip:${version}`,
-  sourceRevision: "37b50285f620153230041c1f105b00599372951b",
-  developmentRevision: "37b5028",
-  reviewed: "25 October 2026",
+  sourceRevision: "a88108a03650c4ef350725e5dd362c6dea2a2988",
+  developmentRevision: "a88108a",
+  reviewed: "25 November 2026",
   description:
     "A self-hosted Asterisk PBX for small offices. Connect SIP providers, route calls with visual IVR, and give your team a browser softphone and voicemail inbox. Run it with Docker on your Linux server.",
 };
@@ -25,22 +25,21 @@ export const sourceDoc = (file: string) =>
 
 export const releaseHighlights = [
   {
+    icon: "network",
+    title: "SIP providers work behind NAT.",
+    text: "Providers register from their own port and send inbound calls back to the address they see, so calls arrive without a port forward. Callers keep their own number.",
+  },
+  {
     icon: "phone",
-    title: "The product is MonoSIP.",
-    text: "The console, the public site and the Docker image share the MonoSIP name. Pull ghcr.io/monosip/monosip.",
+    title: "Audio on every softphone call.",
+    text: "Calls the PBX sends to the browser, from an IVR, queue or ring group, now connect media. Desk phones on a private network are given the address they can reach.",
   },
   {
-    icon: "sound",
-    title: "A voicemail inbox that stays in view.",
-    text: "Waveforms, saved greetings and unheard counts stay with the voicemail inbox.",
-  },
-  {
-    icon: "shield",
-    title: "Sign-in choices stay with you.",
-    text: "Language and dark mode chosen on the sign-in screen are the same choices inside the admin and the portal.",
+    icon: "clock",
+    title: "After-hours routing with Turkey's holidays.",
+    text: "This year's and next year's holidays in one click, sorted by date, with half-day eves open until noon. A robotic fallback voice is no longer cached.",
   },
 ];
-
 export const referenceDocs = [
   [
     "FEATURES",
