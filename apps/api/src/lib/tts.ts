@@ -83,6 +83,16 @@ export async function synthesizeSpeech(
   lengthScale = 1.05,
   genderOrVoice: string = "female",
 ): Promise<Buffer> {
+  return (await synthesizeSpeechDetailed(text, language, lengthScale, genderOrVoice)).wav;
+}
+
+/** Like synthesizeSpeech, but says whether the robotic espeak fallback produced the audio. */
+export async function synthesizeSpeechDetailed(
+  text: string,
+  language: TtsLanguage = "en",
+  lengthScale = 1.05,
+  genderOrVoice: string = "female",
+): Promise<{ wav: Buffer; fallback: boolean }> {
   // "kokoro" (English offline model, removed) may still be stored on old flows,
   // prompts or settings: it plays as the default female Edge voice.
   const g = genderOrVoice.toLowerCase() === "kokoro" ? "female" : genderOrVoice.toLowerCase();
@@ -107,6 +117,9 @@ export async function synthesizeSpeech(
     engine = isEmaVoice(genderOrVoice) ? "ema" : "edge";
   }
   if (config.ttsUrl) {
+    // Edge sometimes answers one request with NoAudioReceived; a second try usually
+    // speaks. Without it that sentence went to espeak (robotic) for good.
+    for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const res = await fetch(`${config.ttsUrl}/synthesize`, {
         method: "POST",
@@ -119,21 +132,23 @@ export async function synthesizeSpeech(
         if (engine === "edge" && isEmaVoice(used)) {
           throw new Error(`TTS returned ${used} for ${g}`);
         }
-        return Buffer.from(await res.arrayBuffer());
+        return { wav: Buffer.from(await res.arrayBuffer()), fallback: false };
       }
       const err = (await res.json().catch(() => ({}))) as { error?: string };
-      console.warn("[tts] remote failed:", err.error ?? res.status);
+      console.warn(`[tts] remote failed (try ${attempt}):`, err.error ?? res.status);
       if (isFailClosedVoice(g)) {
         throw new Error(err.error ?? `TTS failed (${res.status})`);
       }
     } catch (e) {
       if (isFailClosedVoice(g)) throw e;
-      console.warn("[tts] remote unreachable:", (e as Error).message);
+      console.warn(`[tts] remote unreachable (try ${attempt}):`, (e as Error).message);
+    }
+    if (attempt === 1) await new Promise((r) => setTimeout(r, 400));
     }
   } else if (isFailClosedVoice(g)) {
     throw new Error("EMA TTS unavailable: TTS_URL unset");
   }
-  return synthesizeWithEspeak(text, lang);
+  return { wav: await synthesizeWithEspeak(text, lang), fallback: true };
 }
 
 /** Content-addressed cache id for live IVR speech (stable across calls/retries). */
@@ -239,7 +254,14 @@ export async function ensureSpeechMedia(
     /* miss */
   }
 
-  const wav = await synthesizeSpeech(trimmed, language, lengthScale, genderOrVoice);
+  const { wav, fallback } = await synthesizeSpeechDetailed(trimmed, language, lengthScale, genderOrVoice);
+  if (fallback) {
+    // Play the robotic fallback this once, but never cache it under the real key:
+    // the next call asks the neural voice again instead of keeping espeak forever.
+    const once = await writePromptWav(`${cacheKey}-fallback`, wav);
+    console.warn(`[tts] espeak fallback not cached: ${trimmed.slice(0, 60)}`);
+    return { media: once.media, cached: false, ms: Date.now() - t0 };
+  }
   const written = await writePromptWav(cacheKey, wav);
   await upsertTtsCacheRow({
     cacheKey,
