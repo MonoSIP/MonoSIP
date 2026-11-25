@@ -110,9 +110,10 @@ What every platform needs:
 - **Port 3000** published for HTTPS/API/web/softphone signalling (`/asterisk-ws`)
 - **UDP 10000-10100** published + `EXTERNAL_IP` set for softphone audio (RTP); or run coturn and enable TURNS on 443 for strict edges
 - Optional `DATABASE_URL` for managed Postgres (otherwise embedded Postgres runs under `/data/postgres`)
+- **`LOCAL_NETS`** defaults to `172.16.0.0/12,127.0.0.0/8` in the image, `.ninedeploy`, and Compose. Boot also strips any listed net that contains `EXTERNAL_IP` (so an old vault with `10.0.0.0/8` cannot leave Via on `172.x` / Yealink·Fanvil Unavail). You normally do **not** set this by hand.
 
-`.ninedeploy` is an optional convenience manifest for NineDeploy (volume, ports, RAM
-hints); it is **not** required to build or run anywhere else.
+`.ninedeploy` is an optional convenience manifest for NineDeploy (volume, ports, RAM,
+`LOCAL_NETS`); it is **not** required to build or run anywhere else.
 
 ### One-click image deploy
 
@@ -141,6 +142,8 @@ SIP_DOMAIN=pbx.example.com
 SIP_WSS_URL=wss://pbx.example.com/asterisk-ws
 EXTERNAL_IP=<public IPv4 of the host>
 ADMIN_PASSWORD=<strong password>
+# LOCAL_NETS is set automatically (Docker bridge + loopback). Override only if
+# Asterisk shares a true L2 LAN with phones and you are not using Docker NAT.
 ```
 
 **Softphone audio (WebRTC):** SIP over WSS works through HTTPS. Media is UDP RTP to Asterisk, and when behind corporate firewalls the softphone also uses **TURNS on port 443**.

@@ -157,6 +157,19 @@ if [ -z "${EXTERNAL_IP:-}" ] && [ -n "${PUBLIC_HOST:-}" ]; then
   fi
 fi
 
+# Asterisk local_net: Docker bridge + loopback only by default. Phone LAN must
+# NOT be listed when phones reach EXTERNAL_IP via Docker NAT (else Via stays on
+# 172.x → Yealink/Fanvil Unavail). API also strips nets that contain EXTERNAL_IP.
+export LOCAL_NETS="${LOCAL_NETS:-172.16.0.0/12,127.0.0.0/8}"
+# Old vault typo 127.0.0.1/3 marks most of the public internet as "local".
+case ",${LOCAL_NETS}," in
+  *,127.0.0.1/3,*|*,127.0.0.1/32,*)
+    LOCAL_NETS="$(printf '%s' "$LOCAL_NETS" | sed -e 's|127\.0\.0\.1/3|127.0.0.0/8|g' -e 's|127\.0\.0\.1/32|127.0.0.0/8|g')"
+    export LOCAL_NETS
+    echo "LOCAL_NETS normalized → $LOCAL_NETS"
+    ;;
+esac
+
 # Softphone audio = host UDP RTP. Users often skip this; shout early in deploy logs.
 if [ -n "${PUBLIC_HOST:-}" ] && [ "$PUBLIC_HOST" != "localhost" ] && [ "$PUBLIC_HOST" != "127.0.0.1" ]; then
   if [ "${MONOSIP_RTP_PUBLISHED:-}" != "1" ] && [ "${MONOSIP_RTP_PUBLISHED:-}" != "true" ]; then

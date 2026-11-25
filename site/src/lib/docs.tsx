@@ -153,7 +153,9 @@ export const docs: Record<
               <code>EXTERNAL_IP</code>, <code>PUBLIC_HOST</code>,{" "}
               <code>PUBLIC_URL</code>, <code>SIP_DOMAIN</code>,{" "}
               <code>SIP_WSS_URL</code>, database credentials, session/encryption
-              keys and the admin password. Follow the{" "}
+              keys and the admin password. <code>LOCAL_NETS</code> defaults to
+              the Docker bridge and loopback (safe for NAT desk phones); you
+              usually leave it alone. Follow the{" "}
               <a href={sourceDoc("DEPLOY-VPS")}>upstream VPS guide</a> for the
               complete configuration.
             </p>

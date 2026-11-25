@@ -604,9 +604,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const idW = webrtcEndpointId(id);
     const display = (ext.name || id).replace(/"/g, "");
     const aclLine = sipAclName ? [`acl=${sipAclName}`] : [];
-    // Docker/NineDeploy: Asterisk's NIC is 172.x. With RFC1918 in local_net it
-    // advertises that bridge IP in SDP — phones on 10.x/192.168 never get RTP.
-    // media_address forces EXTERNAL_IP into every offer/answer.
+    // Docker/NineDeploy: Asterisk's NIC is 172.x. Keep phone LANs out of
+    // LOCAL_NETS when phones reach EXTERNAL_IP via Docker NAT — otherwise Via
+    // and Contact stay on 172.x (strict phones reply there → Unavail).
+    // media_address still forces EXTERNAL_IP into every SDP offer/answer.
     const mediaAddress = externalIp ? [`media_address=${externalIp}`] : [];
     const sharedMedia = [
       `from_domain=${sipFromDomain(config.publicHost)}`,
@@ -657,10 +658,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "remove_existing=yes",
       "default_expiration=300",
       "maximum_expiration=300",
-      // Some Fanvil builds advertise Contact :5416 and ignore OPTIONS there
-      // (UI still shows Registered). Qualifying that port marks Unavail and
-      // blocks INVITE; skip qualify so dialing still uses the REGISTER Contact.
-      "qualify_frequency=0",
+      "qualify_frequency=30",
+      "qualify_timeout=3.0",
+      "remove_unavailable=yes",
       "",
       // --- Browser softphone (WSS + DTLS-SRTP) ---
       `[${idW}]`,

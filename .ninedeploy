@@ -40,6 +40,9 @@ resources:
   cpuShares: 1024
 
 env:
+  # Docker NAT: do not list the phone LAN here. Overridden vault values that
+  # still include 10.0.0.0/8 (and EXTERNAL_IP on that LAN) are stripped at boot.
+  LOCAL_NETS: "172.16.0.0/12,127.0.0.0/8"
   aliases:
     POSTGRES_URL: DATABASE_URL
     POSTGRES_PRIVATE_URL: DATABASE_URL

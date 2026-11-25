@@ -621,7 +621,7 @@ export function SettingsPage() {
           rows={2}
           value={ipAllow}
           onChange={(e) => setIpAllow(e.target.value)}
-          placeholder="10.0.0.0/8,192.168.1.10"
+          placeholder="203.0.113.0/24,192.168.1.10"
         />
         <TextAreaField
           label={tr("Portal IP allowlist (empty=open for remote softphones)")}

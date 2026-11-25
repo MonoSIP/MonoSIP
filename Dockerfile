@@ -90,7 +90,8 @@ ENV WEB_DIST=/app/apps/web/dist \
     ASTERISK_CONFIG_DIR=/data/asterisk \
     RECORDINGS_DIR=/data/recordings \
     UPLOADS_DIR=/data/uploads \
-    MONOSIP_DATA_DIR=/data
+    MONOSIP_DATA_DIR=/data \
+    LOCAL_NETS=172.16.0.0/12,127.0.0.0/8
 
 # NineDeploy publishes the first/configured HTTP port — only expose the API.
 # Asterisk ARI/WSS stay on 127.0.0.1:8088 inside the container (see start-asterisk.sh).

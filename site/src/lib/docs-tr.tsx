@@ -148,8 +148,10 @@ export const docsTr = {
               düzenleyin. <code>EXTERNAL_IP</code>, <code>PUBLIC_HOST</code>,{" "}
               <code>PUBLIC_URL</code>, <code>SIP_DOMAIN</code>,{" "}
               <code>SIP_WSS_URL</code>, veritabanı kimlik bilgileri, oturum ve
-              şifreleme anahtarları ile yönetici parolasını koyun. Tam
-              yapılandırma için{" "}
+              şifreleme anahtarları ile yönetici parolasını koyun.{" "}
+              <code>LOCAL_NETS</code> varsayılanı Docker köprüsü + loopback’tir
+              (NAT masa telefonları için güvenli); genelde dokunmanıza gerek
+              yok. Tam yapılandırma için{" "}
               <a href={sourceDoc("DEPLOY-VPS")}>VPS rehberine</a> bakın.
             </p>
           </>

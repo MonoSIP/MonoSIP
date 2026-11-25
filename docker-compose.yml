@@ -63,7 +63,7 @@ services:
       PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
       PUBLIC_URL: ${PUBLIC_URL:-https://localhost}
       EXTERNAL_IP: ${EXTERNAL_IP:-}
-      LOCAL_NETS: ${LOCAL_NETS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32}
+      LOCAL_NETS: ${LOCAL_NETS:-172.16.0.0/12,127.0.0.0/8}
       # Only the nginx container may set the client IP via X-Forwarded-For.
       MONOSIP_TRUSTED_PROXY_CIDRS: ${MONOSIP_TRUSTED_PROXY_CIDRS:-172.16.0.0/12,127.0.0.1/32,::1/128}
       SIP_DOMAIN: ${SIP_DOMAIN:-localhost}

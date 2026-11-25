@@ -34,6 +34,9 @@ ADMIN_PASSWORD=…
 ASTERISK_ARI_PASSWORD=…
 ASTERISK_AMI_PASSWORD=…
 
+# LOCAL_NETS comes from .env.example (Docker bridge + loopback). Leave it unless
+# Asterisk is on the same L2 as desk phones without Docker NAT to EXTERNAL_IP.
+
 # Optional
 # RECORDING_ARCHIVE_PATH=/data/archive
 # TZ=Europe/Istanbul
@@ -89,6 +92,8 @@ After first boot, open **Admin → Extensions** (or wait for API seed) so PJSIP 
 ```bash
 docker compose restart api asterisk
 ```
+
+Desk phones that stay **Registered** in the phone UI but **Unavail** in MonoSIP usually mean Asterisk is advertising the Docker bridge address (`172.x`) in Via/Contact. That happens when `LOCAL_NETS` includes the phone LAN (e.g. `10.0.0.0/8`) while phones dial `EXTERNAL_IP` through Docker NAT. Current defaults and boot-time normalization prevent this; remove any vault override that still lists the phone LAN.
 
 ## 5. Connect phones
 

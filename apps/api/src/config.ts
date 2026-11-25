@@ -1,3 +1,5 @@
+import { normalizeLocalNets, parseLocalNetsEnv } from "./lib/local-nets.js";
+
 // Before the MonoSIP rename the env prefix was DSIP_; existing deployments keep
 // working: an old DSIP_X fills MONOSIP_X when that is not set.
 for (const [key, value] of Object.entries(process.env)) {
@@ -14,6 +16,8 @@ function required(name: string, fallback?: string): string {
   if (!v) throw new Error(`Missing env ${name}`);
   return v;
 }
+
+const externalIp = (process.env.EXTERNAL_IP ?? "").trim();
 
 export const config = {
   port: Number(process.env.API_PORT ?? 3000),
@@ -33,15 +37,13 @@ export const config = {
   publicUrl: process.env.PUBLIC_URL ?? "https://localhost",
   publicHost: process.env.PUBLIC_HOST ?? "localhost",
   /** Public IP/hostname for SIP/RTP (VPS). Empty = local Docker only. */
-  externalIp: (process.env.EXTERNAL_IP ?? "").trim(),
-  /** Comma-separated private nets Asterisk should treat as local. */
-  localNets: (
-    process.env.LOCAL_NETS ??
-    "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1/32"
-  )
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean),
+  externalIp,
+  /**
+   * Nets Asterisk treats as on-link (no EXTERNAL_IP rewrite). Default and
+   * {@link normalizeLocalNets} keep Docker NAT safe even if an old vault still
+   * lists the phone LAN (e.g. 10.0.0.0/8) or the 127.0.0.1/3 typo.
+   */
+  localNets: normalizeLocalNets(parseLocalNetsEnv(process.env.LOCAL_NETS), externalIp),
   /**
    * Reverse proxies whose X-Forwarded-For header is believed. Only these peers
    * may set the client address; every other peer is identified by its socket
