@@ -20,7 +20,35 @@ export function ProductSiteLink({ className = "" }: { className?: string }) {
   );
 }
 
-export function ProductVersion() {
+type VersionProps = {
+  /** When set and newer than APP_VERSION, chip links to the release notes. */
+  update?: { latest: string; releaseUrl: string } | null;
+};
+
+export function ProductVersion({ update = null }: VersionProps = {}) {
+  const { t } = useTranslation();
+  const hasUpdate = Boolean(update?.latest && update.releaseUrl);
+  const label = hasUpdate
+    ? update!.latest.startsWith("v")
+      ? update!.latest
+      : `v${update!.latest}`
+    : `v${APP_VERSION}`;
+
+  if (hasUpdate) {
+    return (
+      <a
+        className="brand-ver brand-ver-update"
+        href={update!.releaseUrl}
+        target="_blank"
+        rel="noreferrer"
+        title={t("updates.available", { version: label })}
+      >
+        <span>{label}</span>
+        <span className="brand-ver-new">{t("updates.new")}</span>
+      </a>
+    );
+  }
+
   return (
     <span className="brand-ver" title={`MonoSIP ${APP_VERSION}`}>
       v{APP_VERSION}

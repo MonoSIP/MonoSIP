@@ -28,8 +28,10 @@ import {
 import i18n, { toggleAppLocale } from "../i18n";
 import { AmbientBackground } from "../components/AmbientBackground";
 import { ProductSiteLink, ProductVersion, signOut } from "../components/AppBrand";
+import { UpdateBanner } from "../components/UpdateBanner";
 import { PageVeil } from "../components/PageVeil";
 import { Button } from "../components/ui";
+import { useUpdateCheck } from "../hooks/useUpdateCheck";
 import { useStore } from "../store";
 
 const links = [
@@ -58,6 +60,11 @@ export function AdminLayout() {
   const flowDesigner = useMatch("/flows/:id");
   const [navOpen, setNavOpen] = useState(false);
   const path = useLocation().pathname;
+  const { status, bannerVisible, dismissBanner } = useUpdateCheck();
+  const versionUpdate =
+    status?.updateAvailable && status.releaseUrl
+      ? { latest: status.latest, releaseUrl: status.releaseUrl }
+      : null;
 
   useEffect(() => {
     setNavOpen(false);
@@ -106,7 +113,7 @@ export function AdminLayout() {
           </nav>
           <div className="shell-site admin-site-row">
             <ProductSiteLink />
-            <ProductVersion />
+            <ProductVersion update={versionUpdate} />
           </div>
         </aside>
       )}
@@ -125,6 +132,9 @@ export function AdminLayout() {
             </Button>
           </div>
         )}
+        {!flowDesigner && bannerVisible && status ? (
+          <UpdateBanner status={status} onDismiss={dismissBanner} />
+        ) : null}
         <main
           className={`min-h-0 min-w-0 flex-1 ${flowDesigner ? "overflow-hidden p-0" : "overflow-auto p-4 md:p-8"}`}
         >

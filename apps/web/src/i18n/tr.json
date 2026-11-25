@@ -328,5 +328,11 @@
     "micNotFound": "Mikrofon bulunamadı. Sistem ayarlarından mikrofonu açın veya Ayarlar → Ses cihazları’nda varsayılanı seçip kaydedin.",
     "micDenied": "Mikrofon izni gerekli. Tarayıcı adres çubuğundan mikrofona izin verin.",
     "micInvalid": "Mikrofon ayarı bu tarayıcıda geçersiz. Ayarlar → Ses cihazları’nda «Sistem varsayılanı» seçip kaydedin, sonra tekrar deneyin."
+  },
+  "updates": {
+    "new": "Yeni",
+    "available": "MonoSIP {{version}} hazır",
+    "whatsNew": "Yenilikler",
+    "dismiss": "Kapat"
   }
 }

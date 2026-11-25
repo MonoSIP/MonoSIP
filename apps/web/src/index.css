@@ -1400,12 +1400,123 @@ html.light .dash {
 /* Version next to the product name: quiet, so the name leads */
 .brand-ver {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   padding: 0 0.28rem;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   font: 500 0.5625rem/1.35 var(--mono);
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
+  text-decoration: none;
+}
+a.brand-ver-update {
+  border-color: color-mix(in oklab, var(--accent-9) 45%, var(--border));
+  color: var(--accent-11);
+  transition: border-color 160ms cubic-bezier(0.2, 0, 0, 1), color 160ms cubic-bezier(0.2, 0, 0, 1),
+    transform 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+a.brand-ver-update:hover {
+  border-color: var(--accent-9);
+  color: var(--accent-12, var(--accent-11));
+}
+a.brand-ver-update:active {
+  transform: scale(0.96);
+}
+.brand-ver-new {
+  padding: 0.05rem 0.28rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent-9);
+  color: var(--accent-contrast);
+  font: 600 0.5rem/1.2 var(--sans, inherit);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.65rem 1rem 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: calc(var(--radius) + 0.1rem);
+  border: 1px solid color-mix(in oklab, var(--accent-9) 28%, var(--border));
+  background: color-mix(in oklab, var(--accent-a3, var(--accent-3)) 70%, transparent);
+  animation: update-banner-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@media (min-width: 768px) {
+  .update-banner {
+    margin: 0.75rem 2rem 0;
+  }
+}
+@keyframes update-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .update-banner {
+    animation: none;
+  }
+  a.brand-ver-update:active {
+    transform: none;
+  }
+}
+.update-banner-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  min-width: 0;
+}
+.update-banner-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--accent-9);
+  flex: none;
+}
+.update-banner-text {
+  font: 500 0.8125rem/1.35 var(--sans, inherit);
+  color: var(--gray-12);
+  text-wrap: pretty;
+}
+.update-banner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font: 600 0.8125rem/1.35 var(--sans, inherit);
+  color: var(--accent-11);
+  text-decoration: none;
+}
+.update-banner-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+.update-banner-dismiss {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background-color 140ms cubic-bezier(0.2, 0, 0, 1), color 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+.update-banner-dismiss:hover {
+  background: var(--gray-a3);
+  color: var(--gray-12);
 }
 
 .login-shell {

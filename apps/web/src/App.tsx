@@ -70,10 +70,19 @@ export default function App() {
   const [booting, setBooting] = useState(true);
 
   useEffect(() => {
+    const preview =
+      import.meta.env.VITE_UPDATE_PREVIEW === "1" || import.meta.env.VITE_UPDATE_PREVIEW === "true";
     api
       .get<{ actor: NonNullable<typeof actor> }>("/api/v1/auth/me")
       .then((r) => setActor(r.actor))
-      .catch(() => setActor(null))
+      .catch(() => {
+        // Local design of the update chip/banner without a running API session.
+        if (preview) {
+          setActor({ type: "admin", id: "preview", email: "preview@localhost" });
+          return;
+        }
+        setActor(null);
+      })
       .finally(() => setBooting(false));
   }, [setActor]);
 

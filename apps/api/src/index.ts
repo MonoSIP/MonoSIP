@@ -82,6 +82,8 @@ async function main() {
   await authRoutes(app);
   await adminExtensionRoutes(app);
   await adminResourceRoutes(app);
+  const { updateRoutes } = await import("./routes/updates.js");
+  await updateRoutes(app);
   const { securityRoutes } = await import("./routes/security.js");
   await securityRoutes(app);
   await portalRoutes(app);
