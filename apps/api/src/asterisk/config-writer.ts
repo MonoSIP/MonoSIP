@@ -459,9 +459,16 @@ async function writeAsteriskConfigNow(): Promise<void> {
     /* defaults */
   }
 
+  // Internet-facing address (providers, web widget guests): STUN when EXTERNAL_IP is private.
   const externalIp = await resolveExternalIp();
-  if (externalIp && !config.externalIp) {
-    console.warn(`[config] EXTERNAL_IP unset/private — advertising ${externalIp} (STUN/DNS)`);
+  // Address the office phones and portal softphones reach the PBX at. A private
+  // EXTERNAL_IP (e.g. 10.6.6.9 on the phone LAN/VPN) is deliberate: advertising the
+  // STUN WAN IP to them hairpins RTP through the router and queue calls had no audio.
+  const phoneIp = config.externalIp?.trim() || externalIp;
+  if (externalIp && externalIp !== phoneIp) {
+    console.warn(`[config] phones use EXTERNAL_IP ${phoneIp}; providers get ${externalIp} (STUN/DNS)`);
+  } else if (externalIp && !config.externalIp) {
+    console.warn(`[config] EXTERNAL_IP unset — advertising ${externalIp} (STUN/DNS)`);
   }
   // VPS / real phones: rewrite Contact to the observed source (NAT).
   // Local Docker Desktop (Mac): keep advertised Contact when EXTERNAL_IP is unset.
@@ -499,10 +506,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "verify_client=no",
     "verify_server=no",
   ];
-  if (externalIp) {
+  if (phoneIp) {
     for (const block of [transportUdp, transportWs, transportWss, transportTls]) {
-      block.push(`external_media_address=${externalIp}`);
-      block.push(`external_signaling_address=${externalIp}`);
+      block.push(`external_media_address=${phoneIp}`);
+      block.push(`external_signaling_address=${phoneIp}`);
     }
     for (const net of config.localNets) {
       transportUdp.push(`local_net=${net}`);
@@ -610,7 +617,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     // LOCAL_NETS when phones reach EXTERNAL_IP via Docker NAT — otherwise Via
     // and Contact stay on 172.x (strict phones reply there → Unavail).
     // media_address still forces EXTERNAL_IP into every SDP offer/answer.
-    const mediaAddress = externalIp ? [`media_address=${externalIp}`] : [];
+    const mediaAddress = phoneIp ? [`media_address=${phoneIp}`] : [];
     const sharedMedia = [
       `from_domain=${sipFromDomain(config.publicHost)}`,
       "context=from-internal",
