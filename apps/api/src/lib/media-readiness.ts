@@ -1,5 +1,6 @@
-import { lookup as dnsLookup } from "node:dns/promises";
 import { config } from "../config.js";
+import { resolveExternalIpDetailed } from "./external-ip.js";
+import { isPrivateOrLocalIpv4 } from "./stun-discover.js";
 
 export type MediaReadiness = {
   /** Softphone SIP/WSS can work; RTP may still need host UDP. */
@@ -10,22 +11,11 @@ export type MediaReadiness = {
    */
   rtpPortsPublished: boolean;
   externalIp: string | null;
+  externalIpSource?: string;
   rtpUdpRange: string;
   /** Human hints for deploy logs + portal banner (en + tr). */
   warnings: Array<{ code: string; en: string; tr: string }>;
 };
-
-async function resolveExternalIp(): Promise<string | null> {
-  if (config.externalIp) return config.externalIp;
-  const host = (config.publicHost || "").trim();
-  if (!host || host === "localhost" || host === "127.0.0.1") return null;
-  try {
-    const r = await dnsLookup(host, { family: 4 });
-    return r.address || null;
-  } catch {
-    return null;
-  }
-}
 
 /** Softphone media readiness for health + portal (NineDeploy RTP ports). */
 export async function getMediaReadiness(): Promise<MediaReadiness> {
@@ -40,7 +30,8 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
       ? true
       : !embedded || !isPublic;
 
-  const externalIp = await resolveExternalIp();
+  const resolved = await resolveExternalIpDetailed();
+  const externalIp = resolved.ip || null;
   const warnings: MediaReadiness["warnings"] = [];
 
   if (embedded && isPublic && !rtpPortsPublished) {
@@ -50,11 +41,11 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
       tr: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env MONOSIP_RTP_PUBLISHED=1.",
     });
   }
-  if (isPublic && !externalIp) {
+  if (isPublic && (!externalIp || isPrivateOrLocalIpv4(externalIp))) {
     warnings.push({
       code: "external_ip",
-      en: "Set EXTERNAL_IP to this server’s public IPv4 (or PUBLIC_HOST so it can be resolved) so WebRTC ICE can send media.",
-      tr: "WebRTC sesi için EXTERNAL_IP olarak sunucunun genel IPv4 adresini yazın (veya çözümlenebilir PUBLIC_HOST kullanın).",
+      en: "No public IPv4 yet. Enable STUN in Settings (or set EXTERNAL_IP / PUBLIC_HOST) so SIP and WebRTC advertise a reachable address.",
+      tr: "Genel IPv4 yok. SIP/WebRTC için Settings’te STUN’u açın veya EXTERNAL_IP / PUBLIC_HOST ayarlayın.",
     });
   }
 
@@ -62,6 +53,7 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
     signalingOk: true,
     rtpPortsPublished,
     externalIp,
+    externalIpSource: resolved.source,
     rtpUdpRange: "10000-10100",
     warnings,
   };

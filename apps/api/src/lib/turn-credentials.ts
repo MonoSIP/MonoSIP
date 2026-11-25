@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { config } from "../config.js";
+import { DEFAULT_STUN_SERVERS } from "./stun-discover.js";
 
 export type IceServer = {
   urls: string | string[];
@@ -29,9 +30,16 @@ export function mintTurnCredentials(userId = "monosip", ttlSec = 6 * 3600): {
 export function buildIceServers(opts?: {
   host?: string;
   userId?: string;
+  /** STUN host:port list from Settings (defaults to public STUN). */
+  stunServers?: string[];
 }): { iceServers: IceServer[]; turnsOn443: boolean; turnEnabled: boolean } {
   const host = (opts?.host || config.publicHost || "localhost").replace(/:\d+$/, "");
-  const iceServers: IceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+  const stunList =
+    opts?.stunServers?.length ? opts.stunServers : [...DEFAULT_STUN_SERVERS];
+  const iceServers: IceServer[] = stunList.map((s) => {
+    const bare = s.replace(/^stuns?:/i, "");
+    return { urls: `stun:${bare}` };
+  });
   const creds = mintTurnCredentials(opts?.userId ?? "monosip");
   const turnEnabled = Boolean(creds);
   const turnsOn443 = turnEnabled && config.turnsOn443;

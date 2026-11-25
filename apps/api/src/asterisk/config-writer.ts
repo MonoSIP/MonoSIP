@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
 import { config } from "../config.js";
 import { db } from "../db/client.js";
+import { resolveExternalIp } from "../lib/external-ip.js";
 import { parseCallerId, SettingsSchema } from "@monosip/shared";
 import {
   extensions,
@@ -70,19 +71,6 @@ export function directedPickupLines(): string[] {
     " same => n,PickupChan(PJSIP/${EXTEN:2}-&PJSIP/${EXTEN:2}w-)",
     " same => n,Hangup()",
   ];
-}
-
-/** Public IPv4 for RTP ICE candidates (vault EXTERNAL_IP or DNS of PUBLIC_HOST). */
-async function resolveExternalIp(): Promise<string> {
-  if (config.externalIp) return config.externalIp;
-  const host = (config.publicHost || "").trim();
-  if (!host || host === "localhost" || host === "127.0.0.1") return "";
-  try {
-    const r = await dnsLookup(host, { family: 4 });
-    return r.address || "";
-  } catch {
-    return "";
-  }
 }
 
 async function ensureDir(dir: string) {
@@ -468,7 +456,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
 
   const externalIp = await resolveExternalIp();
   if (externalIp && !config.externalIp) {
-    console.warn(`[config] EXTERNAL_IP unset — using ${externalIp} from PUBLIC_HOST`);
+    console.warn(`[config] EXTERNAL_IP unset/private — advertising ${externalIp} (STUN/DNS)`);
   }
   // VPS / real phones: rewrite Contact to the observed source (NAT).
   // Local Docker Desktop (Mac): keep advertised Contact when EXTERNAL_IP is unset.

@@ -2131,6 +2131,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (body.sslEmail !== undefined) {
       body.sslEmail = body.sslEmail?.trim() ? body.sslEmail.trim() : null;
     }
+    if (body.stunServers !== undefined) {
+      const { normalizeStunServerList } = await import("../lib/stun-discover.js");
+      body.stunServers = normalizeStunServerList(body.stunServers);
+    }
     const [row] = await db.select().from(settings).where(eq(settings.id, 1));
     const next = SettingsSchema.parse({ ...(row?.data as object), ...body });
     if (row) await db.update(settings).set({ data: next }).where(eq(settings.id, 1));
@@ -2141,6 +2145,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       after: body,
       ip: req.ip,
     });
+    if (body.stunEnabled !== undefined || body.stunServers !== undefined) {
+      const { clearExternalIpCache } = await import("../lib/external-ip.js");
+      clearExternalIpCache();
+    }
     // KVKK and queue language are baked into the dialplan; SIP nets live in PJSIP.
     // Unchanged files do not reload a module.
     await tryReloadAsterisk();
@@ -2166,6 +2174,15 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const { getSslStatus } = await import("../lib/ssl-certs.js");
     return getSslStatus();
+  });
+
+  /** Effective public IPv4 for SIP NAT (env / STUN / DNS) + configured STUN list. */
+  app.get("/api/v1/admin/network/external-ip", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const force = String((req.query as { refresh?: string }).refresh ?? "") === "1";
+    const { resolveExternalIpDetailed, clearExternalIpCache } = await import("../lib/external-ip.js");
+    if (force) clearExternalIpCache();
+    return resolveExternalIpDetailed({ force });
   });
 
   app.post("/api/v1/admin/ssl/renew", async (req, reply) => {

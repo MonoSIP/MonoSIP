@@ -59,12 +59,21 @@ type Settings = {
   blockAnonymousInbound?: boolean;
   maxOutboundPerHour?: number;
   hostname?: string | null;
+  stunEnabled?: boolean;
+  stunServers?: string[];
   autoSsl?: boolean;
   sslEmail?: string | null;
   sslStatus?: "none" | "pending" | "ok" | "error" | null;
   sslExpiresAt?: string | null;
   sslLastCheckAt?: string | null;
   sslLastError?: string | null;
+};
+
+type ExternalIpInfo = {
+  ip: string;
+  source: string;
+  stunServers: string[];
+  stunEnabled: boolean;
 };
 
 type SslStatus = {
@@ -122,6 +131,10 @@ export function SettingsPage() {
   const [blockAnon, setBlockAnon] = useState(true);
   const [maxPerHour, setMaxPerHour] = useState(60);
   const [hostname, setHostname] = useState("");
+  const [stunEnabled, setStunEnabled] = useState(true);
+  const [stunServers, setStunServers] = useState(
+    "stun.l.google.com:19302\nstun1.l.google.com:19302\nstun.cloudflare.com:3478",
+  );
   const [autoSsl, setAutoSsl] = useState(false);
   const [sslEmail, setSslEmail] = useState("");
   const [signInEmail, setSignInEmail] = useState("");
@@ -178,6 +191,11 @@ export function SettingsPage() {
     queryFn: () => api.get<SslStatus>("/api/v1/admin/ssl/status"),
     refetchInterval: (q) => (q.state.data?.status === "pending" ? 3000 : 30_000),
   });
+  const externalIp = useQuery({
+    queryKey: ["external-ip"],
+    queryFn: () => api.get<ExternalIpInfo>("/api/v1/admin/network/external-ip"),
+    refetchInterval: 60_000,
+  });
 
   useEffect(() => {
     if (settings.data) {
@@ -212,6 +230,13 @@ export function SettingsPage() {
       setBlockAnon(settings.data.blockAnonymousInbound ?? true);
       setMaxPerHour(settings.data.maxOutboundPerHour ?? 60);
       setHostname(settings.data.hostname ?? "");
+      setStunEnabled(settings.data.stunEnabled !== false);
+      setStunServers(
+        (settings.data.stunServers?.length
+          ? settings.data.stunServers
+          : ["stun.l.google.com:19302", "stun1.l.google.com:19302", "stun.cloudflare.com:3478"]
+        ).join("\n"),
+      );
       setAutoSsl(settings.data.autoSsl ?? false);
       setSslEmail(settings.data.sslEmail ?? "");
     }
@@ -264,6 +289,8 @@ export function SettingsPage() {
         blockAnonymousInbound: blockAnon,
         maxOutboundPerHour: maxPerHour,
         hostname: hostname.trim() || null,
+        stunEnabled,
+        stunServers: splitList(stunServers),
         autoSsl,
         sslEmail: sslEmail.trim() || null,
       }),
@@ -272,6 +299,7 @@ export function SettingsPage() {
       void qc.invalidateQueries({ queryKey: ["settings"] });
       void qc.invalidateQueries({ queryKey: ["security-status"] });
       void qc.invalidateQueries({ queryKey: ["ssl-status"] });
+      void qc.invalidateQueries({ queryKey: ["external-ip"] });
     },
   });
 
@@ -423,6 +451,49 @@ export function SettingsPage() {
             }}
           >
             {t("settings.sslRenewNow")}
+          </Button>
+        </div>
+      </SectionCard>
+      <SectionCard title={t("settings.stunSection")} icon={Globe} tone="cyan" className="space-y-4">
+        <Checkbox
+          checked={stunEnabled}
+          onCheckedChange={setStunEnabled}
+          label={t("settings.stunEnabled")}
+        />
+        <p className="text-xs text-[var(--text-muted)]">{t("settings.stunHint")}</p>
+        <TextAreaField
+          label={t("settings.stunServers")}
+          value={stunServers}
+          onChange={(e) => setStunServers(e.target.value)}
+          rows={4}
+          placeholder={"stun.l.google.com:19302\nstun.cloudflare.com:3478"}
+          disabled={!stunEnabled}
+        />
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-[var(--text-muted)]">{t("settings.stunDiscovered")}:</span>
+          <code className="text-[var(--text)]">
+            {externalIp.data?.ip || "—"}
+            {externalIp.data?.source ? ` (${externalIp.data.source})` : ""}
+          </code>
+          <Button
+            type="button"
+            disabled={!stunEnabled}
+            pending={actions.isPending("stun-refresh")}
+            onClick={() => {
+              void actions.run("stun-refresh", async () => {
+                try {
+                  const info = await api.get<ExternalIpInfo>(
+                    "/api/v1/admin/network/external-ip?refresh=1",
+                  );
+                  qc.setQueryData(["external-ip"], info);
+                  toast.success(t("settings.stunRefreshOk"));
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              });
+            }}
+          >
+            {t("settings.stunRefresh")}
           </Button>
         </div>
       </SectionCard>

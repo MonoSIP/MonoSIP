@@ -289,6 +289,19 @@ export const SettingsSchema = z.object({
   recordingArchiveSftp: z.string().optional().nullable(),
   /** Public FQDN for the panel (e.g. pbx.example.com). Used for softphone URLs + Let's Encrypt. */
   hostname: z.string().max(253).optional().nullable(),
+  /**
+   * Discover the public WAN IPv4 via STUN for Asterisk external_signaling /
+   * external_media when EXTERNAL_IP is unset or private (Docker NAT).
+   */
+  stunEnabled: z.boolean().default(true),
+  /**
+   * STUN servers as host:port (or stun:host:port). Empty → Google / Cloudflare defaults.
+   */
+  stunServers: z.array(z.string().max(253)).max(12).default([
+    "stun.l.google.com:19302",
+    "stun1.l.google.com:19302",
+    "stun.cloudflare.com:3478",
+  ]),
   /** When true, obtain/renew Let's Encrypt certs for `hostname` and install them for nginx. */
   autoSsl: z.boolean().default(false),
   /** Contact email for ACME registration (defaults to admin email). */

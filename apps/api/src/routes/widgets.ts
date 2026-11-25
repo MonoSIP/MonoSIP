@@ -123,7 +123,13 @@ export async function widgetRoutes(app: FastifyInstance) {
   // —— ICE for softphone + widget (public; creds are time-limited) ——
   app.get("/api/v1/ice-servers", async (req) => {
     const host = reqHost(req);
-    return buildIceServers({ host, userId: "webrtc" });
+    const { loadStunSettings } = await import("../lib/external-ip.js");
+    const stun = await loadStunSettings();
+    return buildIceServers({
+      host,
+      userId: "webrtc",
+      stunServers: stun.enabled ? stun.servers : undefined,
+    });
   });
 
   // —— Admin CRUD ——
@@ -295,7 +301,13 @@ export async function widgetRoutes(app: FastifyInstance) {
 
     await bumpStat(w.id, "calls");
     const host = reqHost(req);
-    const ice = buildIceServers({ host, userId: sipUser });
+    const { loadStunSettings } = await import("../lib/external-ip.js");
+    const stun = await loadStunSettings();
+    const ice = buildIceServers({
+      host,
+      userId: sipUser,
+      stunServers: stun.enabled ? stun.servers : undefined,
+    });
     const domain =
       config.sipDomain && config.sipDomain !== "localhost" ? config.sipDomain : host;
     const websocketUrl = browserWebsocketUrl(
