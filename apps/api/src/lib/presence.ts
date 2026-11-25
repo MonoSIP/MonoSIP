@@ -13,11 +13,12 @@ export async function extensionPresence(
   const eps = new Map((await ari.listPjsipEndpoints()).map((e) => [e.resource, e]));
   const out = new Map<string, Presence>();
   for (const r of rows) {
-    const ep = eps.get(r.number);
-    out.set(
-      r.number,
-      r.dnd ? "dnd" : (ep?.channel_ids?.length ?? 0) > 0 ? "busy" : ep?.state === "online" ? "online" : "offline",
-    );
+    // Desk phone (101) and browser softphone (101w) are separate endpoints of one
+    // extension. Only the desk one was read, so a web-only user showed offline.
+    const both = [eps.get(r.number), eps.get(`${r.number}w`)];
+    const busy = both.some((ep) => (ep?.channel_ids?.length ?? 0) > 0);
+    const online = both.some((ep) => ep?.state === "online");
+    out.set(r.number, r.dnd ? "dnd" : busy ? "busy" : online ? "online" : "offline");
   }
   return out;
 }

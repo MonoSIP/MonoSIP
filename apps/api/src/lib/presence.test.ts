@@ -6,6 +6,9 @@ vi.mock("../asterisk/ari.js", () => ({
       { resource: "101", state: "online", channel_ids: [] },
       { resource: "102", state: "online", channel_ids: ["c1"] },
       { resource: "103", state: "offline", channel_ids: [] },
+      { resource: "105", state: "offline", channel_ids: [] },
+      { resource: "105w", state: "online", channel_ids: [] },
+      { resource: "106w", state: "online", channel_ids: ["c2"] },
     ]),
   },
 }));
@@ -27,5 +30,13 @@ describe("extensionPresence", () => {
   it("DND wins over a registered phone", async () => {
     const p = await extensionPresence([{ number: "101", dnd: true }]);
     expect(p.get("101")).toBe("dnd");
+  });
+
+  it("counts the browser softphone endpoint (<number>w) as the same extension", async () => {
+    const p = await extensionPresence([
+      { number: "105", dnd: false },
+      { number: "106", dnd: false },
+    ]);
+    expect(Object.fromEntries(p)).toEqual({ "105": "online", "106": "busy" });
   });
 });
