@@ -803,9 +803,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
       );
     }
     // Inbound INVITEs must match this identify. Providers (e.g. Verimor) often
-    // send from a pool of IPs/hostnames, not only trunk.host — one match= line
-    // then drops calls before from-trunk. Extra hosts: comma-separated notes
-    // prefix "identify:" or known Verimor SIP edges when host looks like Verimor.
+    // send from a pool of IPs, not only trunk.host — one match= line then drops
+    // calls before from-trunk. Docker DNS sometimes fails for hostnames at
+    // identify-apply time, so resolve to A records and match IPs. Extra hosts:
+    // notes prefix "identify:1.2.3.4,5.6.7.8".
     const identifyHosts = new Set<string>([trunk.host.replace(/^sip:/i, "").split(":")[0]]);
     const notesIdentify = (trunk.notes || "").match(/identify:\s*([^\n;]+)/i);
     if (notesIdentify) {
@@ -819,6 +820,21 @@ async function writeAsteriskConfigNow(): Promise<void> {
         identifyHosts.add(h);
       }
     }
+    const identifyMatches = new Set<string>();
+    for (const h of identifyHosts) {
+      if (!h) continue;
+      if (/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(h)) {
+        identifyMatches.add(h);
+        continue;
+      }
+      identifyMatches.add(h);
+      try {
+        const r = await dnsLookup(h, { family: 4 });
+        if (r.address) identifyMatches.add(r.address);
+      } catch {
+        /* hostname kept; IP may still be listed explicitly */
+      }
+    }
     pjsip.push(
       `[${id}]`,
       "type=aor",
@@ -828,7 +844,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `[${id}]`,
       "type=identify",
       `endpoint=${id}`,
-      ...[...identifyHosts].filter(Boolean).map((h) => `match=${h}`),
+      ...[...identifyMatches].map((h) => `match=${h}`),
       "",
     );
     if (doRegister) {
