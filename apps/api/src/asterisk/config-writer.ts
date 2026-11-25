@@ -634,10 +634,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `[${id}]`,
       "type=endpoint",
       ...sharedMedia,
-      // Keep the phone's Contact port. rewrite_contact=yes replaces it with the
-      // UDP source port; Fanvil "ChgPort" then leaves Asterisk qualifying a port
-      // the phone no longer answers (Registered in UI, offline in MonoSIP).
-      "rewrite_contact=no",
+      // Prefer observed source port over Contact. Fanvil "ChgPort" can advertise
+      // a dead port (e.g. :5416) while REGISTER still arrives from :5060 — with
+      // rewrite_contact=no that dead Contact stays Unavail forever. ChgPort
+      // should stay off on the phone; rewrite keeps qualify on the real path.
+      "rewrite_contact=yes",
       `auth=${id}`,
       `aors=${id}`,
       // SDES when the phone supports it; plain RTP otherwise (PAP2, etc.)
@@ -801,6 +802,23 @@ async function writeAsteriskConfigNow(): Promise<void> {
         "",
       );
     }
+    // Inbound INVITEs must match this identify. Providers (e.g. Verimor) often
+    // send from a pool of IPs/hostnames, not only trunk.host — one match= line
+    // then drops calls before from-trunk. Extra hosts: comma-separated notes
+    // prefix "identify:" or known Verimor SIP edges when host looks like Verimor.
+    const identifyHosts = new Set<string>([trunk.host.replace(/^sip:/i, "").split(":")[0]]);
+    const notesIdentify = (trunk.notes || "").match(/identify:\s*([^\n;]+)/i);
+    if (notesIdentify) {
+      for (const h of notesIdentify[1].split(/[,\s]+/)) {
+        const t = h.trim();
+        if (t) identifyHosts.add(t.replace(/^sip:/i, "").split(":")[0]);
+      }
+    }
+    if (/verimor\.com\.tr$/i.test(trunk.host) || [...identifyHosts].some((h) => /verimor/i.test(h))) {
+      for (const h of ["sip.verimor.com.tr", "sip2.verimor.com.tr", "194.49.126.26", "185.159.116.16"]) {
+        identifyHosts.add(h);
+      }
+    }
     pjsip.push(
       `[${id}]`,
       "type=aor",
@@ -810,7 +828,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `[${id}]`,
       "type=identify",
       `endpoint=${id}`,
-      `match=${trunk.host}`,
+      ...[...identifyHosts].filter(Boolean).map((h) => `match=${h}`),
       "",
     );
     if (doRegister) {
