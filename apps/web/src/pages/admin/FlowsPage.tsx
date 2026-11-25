@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { Button, IconBtn, Modal, PageHeader, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
+import { fmtDateTime } from "../../lib/datetime";
 
 export function FlowsPage() {
   const { t } = useTranslation();
@@ -86,7 +87,7 @@ export function FlowsPage() {
                 <td className="col-grow">{f.name}</td>
                 <td className="font-mono">{f.extensionNumber ?? "—"}</td>
                 <td>{f.publishedVersionId ? "Published" : "Draft"}</td>
-                <td>{new Date(f.updatedAt).toLocaleString()}</td>
+                <td>{fmtDateTime(f.updatedAt)}</td>
                 <td className="col-actions">
                   <div className="btn-icon-row">
                     <IconBtn icon={Pencil} label={tr("Edit")} onClick={() => nav(`/flows/${f.id}`)} />

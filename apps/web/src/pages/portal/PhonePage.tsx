@@ -26,6 +26,7 @@ import { callPeer } from "../../lib/call-peer";
 import { formatCallTime, usePhone } from "../../lib/phone-context";
 import { CallBars, CallPulse } from "../../components/motion";
 import { Button } from "../../components/ui";
+import { dayKey, fmtDate, fmtTime } from "../../lib/datetime";
 
 const RECENTS_SEEN_KEY = "monosip.recentsSeenAt";
 
@@ -243,13 +244,12 @@ export function PhonePage() {
   }
 
   function recentTime(iso: string) {
-    const d = new Date(iso);
-    const now = new Date();
-    const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-    const diff = Math.round((day(now) - day(d)) / 86_400_000);
-    if (diff === 0) return d.toLocaleTimeString(i18n?.language ?? "en", { hour: "2-digit", minute: "2-digit" });
+    // Today / yesterday in the PBX time zone, like every other time on the page.
+    const day = (x: string | Date) => Date.parse(`${dayKey(x)}T00:00:00Z`);
+    const diff = Math.round((day(new Date()) - day(iso)) / 86_400_000);
+    if (diff === 0) return fmtTime(iso, { hour: "2-digit", minute: "2-digit" });
     if (diff === 1) return t("portal.yesterday");
-    return d.toLocaleDateString(i18n?.language ?? "en", { day: "2-digit", month: "2-digit" });
+    return fmtDate(iso, { day: "2-digit", month: "2-digit" });
   }
 
   /** One small round action with its caption; aria-label stays the accessible name. */

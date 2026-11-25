@@ -33,6 +33,7 @@ import { PageVeil } from "../components/PageVeil";
 import { Button } from "../components/ui";
 import { useUpdateCheck } from "../hooks/useUpdateCheck";
 import { useStore } from "../store";
+import { useSystemTimezone } from "../lib/datetime";
 
 const links = [
   { to: "/", icon: LayoutDashboard, key: "dashboard", end: true },
@@ -57,6 +58,7 @@ const links = [
 
 export function AdminLayout() {
   const { t } = useTranslation();
+  useSystemTimezone("admin");
   const flowDesigner = useMatch("/flows/:id");
   const [navOpen, setNavOpen] = useState(false);
   const path = useLocation().pathname;

@@ -7,6 +7,7 @@ import { api } from "../../lib/api";
 import { DestPicker } from "../../components/DestPicker";
 import { Button, Checkbox, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, SelectInput, TextField, usePendingAction } from "../../components/ui";
 import { tr } from "../../i18n";
+import { fmtDateTime, getSystemTimezone } from "../../lib/datetime";
 
 type Range = {
   id?: string;
@@ -94,7 +95,6 @@ export function SchedulesPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [timezone, setTimezone] = useState("Europe/Istanbul");
   const [ranges, setRanges] = useState<Range[]>([]);
   const [openDestType, setOpenDestType] = useState("queue");
   const [openDestId, setOpenDestId] = useState("");
@@ -127,7 +127,6 @@ export function SchedulesPage() {
     if (!selected) return;
     setSelectedId(selected.id);
     setName(selected.name);
-    setTimezone(selected.timezone || "Europe/Istanbul");
     setRanges(
       (selected.ranges ?? []).map((r) => ({
         dayOfWeek: r.dayOfWeek,
@@ -172,7 +171,7 @@ export function SchedulesPage() {
     mutationFn: () =>
       api.patch(`/api/v1/admin/schedules/${selected!.id}`, {
         name,
-        timezone,
+        timezone: getSystemTimezone(),
         ranges,
         openDestType,
         openDestId: openDestId || null,
@@ -194,7 +193,7 @@ export function SchedulesPage() {
     mutationFn: () =>
       api.post<Schedule>("/api/v1/admin/schedules", {
         name: newName || "Business hours",
-        timezone: "Europe/Istanbul",
+        timezone: getSystemTimezone(),
         ranges: [
           { dayOfWeek: 1, startTime: "09:00", endTime: "12:30", status: "open" },
           { dayOfWeek: 1, startTime: "12:30", endTime: "13:30", status: "lunch" },
@@ -356,9 +355,9 @@ export function SchedulesPage() {
               />
               <TextField
                 label={t("schedules.timezone", { defaultValue: "Timezone" })}
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                placeholder={tr("Europe/Istanbul")}
+                value={getSystemTimezone()}
+                disabled
+                hint={t("schedules.timezoneHint")}
               />
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -398,7 +397,7 @@ export function SchedulesPage() {
               </label>
               {selected.overrideUntil && (
                 <p className="text-xs text-[var(--text-muted)]">
-                  {tr("Active until")} {new Date(selected.overrideUntil).toLocaleString()}
+                  {tr("Active until")} {fmtDateTime(selected.overrideUntil)}
                 </p>
               )}
             </div>

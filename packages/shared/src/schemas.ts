@@ -240,6 +240,23 @@ export const WebhookSchema = z.object({
   active: z.boolean().default(true),
 });
 
+/** True when `tz` is an IANA time zone this runtime knows (e.g. Europe/Istanbul). */
+export function isValidTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const TimeZoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .refine(isValidTimeZone, "Unknown time zone");
+
 export const SettingsSchema = z.object({
   companyName: z.string().default("MonoSIP"),
   defaultLocale: z.enum(["en", "tr"]).default("en"),
@@ -301,6 +318,19 @@ export const SettingsSchema = z.object({
     "stun.l.google.com:19302",
     "stun1.l.google.com:19302",
     "stun.cloudflare.com:3478",
+  ]),
+  /**
+   * IANA time zone the whole PBX runs in: schedules, holidays, reports, nightly jobs
+   * and every time shown in the admin panel and portal.
+   */
+  timezone: TimeZoneSchema.default("Europe/Istanbul"),
+  /** Check the clock against NTP and warn when it drifts. */
+  ntpEnabled: z.boolean().default(true),
+  /** NTP servers (host or host:port), tried in order. */
+  ntpServers: z.array(z.string().trim().min(1).max(253)).max(6).default([
+    "pool.ntp.org",
+    "time.google.com",
+    "time.cloudflare.com",
   ]),
   /** When true, obtain/renew Let's Encrypt certs for `hostname` and install them for nginx. */
   autoSsl: z.boolean().default(false),

@@ -7,6 +7,7 @@ import { api } from "../../lib/api";
 import { Button, IconBtn, Modal, PageHeader, SectionCard, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { voiceOptions } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
+import { fmtDateTime } from "../../lib/datetime";
 
 type PromptRow = {
   source: "prompt" | "cache";
@@ -23,7 +24,7 @@ type PromptRow = {
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString();
+    return fmtDateTime(iso);
   } catch {
     return "—";
   }

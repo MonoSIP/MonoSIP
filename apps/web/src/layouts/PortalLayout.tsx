@@ -12,6 +12,7 @@ import { AppBrand, ProductSiteLink, ProductVersion, signOut } from "../component
 import { PageVeil } from "../components/PageVeil";
 import { MiniPhone } from "../components/MiniPhone";
 import { PhoneProvider, usePhone } from "../lib/phone-context";
+import { useSystemTimezone } from "../lib/datetime";
 
 const links = [
   { to: "/", icon: Phone, key: "phone", end: true },
@@ -31,6 +32,7 @@ export function PortalLayout() {
 }
 
 function PortalChrome() {
+  useSystemTimezone("portal");
   const { t } = useTranslation();
   const navigate = useNavigate();
   const actor = useStore((s) => s.actor);

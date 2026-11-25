@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   AudioLines,
   Building2,
+  Clock,
   Globe,
   Mail,
   KeyRound,
@@ -19,6 +20,7 @@ import { Button, Checkbox, PageHeader, SectionCard, SelectField, TextAreaField, 
 import { SPEECH_VOICES } from "./flow/nodeMeta";
 import { tr } from "../../i18n";
 import { Link } from "react-router-dom";
+import { fmtDateTime } from "../../lib/datetime";
 
 /** SSL status codes shown as words (translated with tr at render). */
 const SSL_STATUS_LABEL: Record<string, string> = {
@@ -61,6 +63,9 @@ type Settings = {
   hostname?: string | null;
   stunEnabled?: boolean;
   stunServers?: string[];
+  timezone?: string;
+  ntpEnabled?: boolean;
+  ntpServers?: string[];
   autoSsl?: boolean;
   sslEmail?: string | null;
   sslStatus?: "none" | "pending" | "ok" | "error" | null;
@@ -68,6 +73,31 @@ type Settings = {
   sslLastCheckAt?: string | null;
   sslLastError?: string | null;
 };
+
+type TimeStatus = {
+  timezone: string;
+  utcOffset: string;
+  now: string;
+  maxDriftMs: number;
+  clock: {
+    ok: boolean;
+    server: string | null;
+    offsetMs: number | null;
+    roundTripMs: number | null;
+    checkedAt: string;
+    error: string | null;
+  } | null;
+};
+
+const DEFAULT_NTP = ["pool.ntp.org", "time.google.com", "time.cloudflare.com"];
+
+/** Every IANA zone this browser knows, with the PBX's own zone kept if missing. */
+function timeZoneOptions(current: string) {
+  const intl = Intl as unknown as { supportedValuesOf?: (k: string) => string[] };
+  const all = intl.supportedValuesOf?.("timeZone") ?? ["Europe/Istanbul", "UTC"];
+  const list = all.includes(current) || !current ? all : [current, ...all];
+  return list.map((z) => ({ value: z, label: z.replace(/_/g, " ") }));
+}
 
 type ExternalIpInfo = {
   ip: string;
@@ -131,6 +161,14 @@ export function SettingsPage() {
   const [blockAnon, setBlockAnon] = useState(true);
   const [maxPerHour, setMaxPerHour] = useState(60);
   const [hostname, setHostname] = useState("");
+  const [timezone, setTimezone] = useState("Europe/Istanbul");
+  const [ntpEnabled, setNtpEnabled] = useState(true);
+  const [ntpServers, setNtpServers] = useState(DEFAULT_NTP.join("\n"));
+  const timeStatus = useQuery({
+    queryKey: ["admin-time"],
+    queryFn: () => api.get<TimeStatus>("/api/v1/admin/time"),
+    refetchInterval: 30_000,
+  });
   const [stunEnabled, setStunEnabled] = useState(true);
   const [stunServers, setStunServers] = useState(
     "stun.l.google.com:19302\nstun1.l.google.com:19302\nstun.cloudflare.com:3478",
@@ -230,6 +268,9 @@ export function SettingsPage() {
       setBlockAnon(settings.data.blockAnonymousInbound ?? true);
       setMaxPerHour(settings.data.maxOutboundPerHour ?? 60);
       setHostname(settings.data.hostname ?? "");
+      setTimezone(settings.data.timezone || "Europe/Istanbul");
+      setNtpEnabled(settings.data.ntpEnabled !== false);
+      setNtpServers((settings.data.ntpServers?.length ? settings.data.ntpServers : DEFAULT_NTP).join("\n"));
       setStunEnabled(settings.data.stunEnabled !== false);
       setStunServers(
         (settings.data.stunServers?.length
@@ -289,6 +330,9 @@ export function SettingsPage() {
         blockAnonymousInbound: blockAnon,
         maxOutboundPerHour: maxPerHour,
         hostname: hostname.trim() || null,
+        timezone,
+        ntpEnabled,
+        ntpServers: splitList(ntpServers),
         stunEnabled,
         stunServers: splitList(stunServers),
         autoSsl,
@@ -297,6 +341,8 @@ export function SettingsPage() {
     onSuccess: () => {
       toast.success(tr("Saved"));
       void qc.invalidateQueries({ queryKey: ["settings"] });
+      void qc.invalidateQueries({ queryKey: ["admin-time"] });
+      void qc.invalidateQueries({ queryKey: ["system-timezone"] });
       void qc.invalidateQueries({ queryKey: ["security-status"] });
       void qc.invalidateQueries({ queryKey: ["ssl-status"] });
       void qc.invalidateQueries({ queryKey: ["external-ip"] });
@@ -419,7 +465,7 @@ export function SettingsPage() {
           </span>
           {sslStatus.data?.expiresAt ? (
             <span className="text-[var(--text-muted)]">
-              {t("settings.sslExpires")}: {new Date(sslStatus.data.expiresAt).toLocaleString()}
+              {t("settings.sslExpires")}: {fmtDateTime(sslStatus.data.expiresAt)}
               {sslStatus.data.daysRemaining != null
                 ? ` (${sslStatus.data.daysRemaining}d)`
                 : ""}
@@ -451,6 +497,71 @@ export function SettingsPage() {
             }}
           >
             {t("settings.sslRenewNow")}
+          </Button>
+        </div>
+      </SectionCard>
+      <SectionCard title={t("settings.timeSection")} icon={Clock} tone="cyan" className="space-y-4">
+        <p className="text-xs text-[var(--text-muted)]">{t("settings.timeHint")}</p>
+        <SelectField
+          label={t("settings.timezone")}
+          value={timezone}
+          onValueChange={setTimezone}
+          options={timeZoneOptions(timezone)}
+        />
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-[var(--text-muted)]">{t("settings.timeNow")}:</span>
+          <code className="text-[var(--text)]">
+            {timeStatus.data
+              ? `${fmtDateTime(timeStatus.data.now)} (${timeStatus.data.timezone}, UTC${timeStatus.data.utcOffset})`
+              : "—"}
+          </code>
+        </div>
+        <Checkbox checked={ntpEnabled} onCheckedChange={setNtpEnabled} label={t("settings.ntpEnabled")} />
+        <p className="text-xs text-[var(--text-muted)]">{t("settings.ntpHint")}</p>
+        <TextAreaField
+          label={t("settings.ntpServers")}
+          value={ntpServers}
+          onChange={(e) => setNtpServers(e.target.value)}
+          rows={3}
+          placeholder={"pool.ntp.org\ntime.google.com"}
+          disabled={!ntpEnabled}
+        />
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-[var(--text-muted)]">{t("settings.ntpDrift")}:</span>
+          <code
+            className={
+              timeStatus.data?.clock && !timeStatus.data.clock.ok ? "text-[var(--danger,#dc2626)]" : "text-[var(--text)]"
+            }
+          >
+            {(() => {
+              const c = timeStatus.data?.clock;
+              if (!c) return t("settings.ntpNotChecked");
+              if (c.error) return `${t("settings.ntpFailed")}: ${c.error}`;
+              if (c.offsetMs === null) return t("settings.ntpOff");
+              const sign = c.offsetMs > 0 ? "+" : "";
+              return `${sign}${c.offsetMs} ms · ${c.server} · ${fmtDateTime(c.checkedAt)}${c.ok ? "" : ` · ${t("settings.ntpTooFar")}`}`;
+            })()}
+          </code>
+          <Button
+            type="button"
+            disabled={!ntpEnabled}
+            pending={actions.isPending("ntp-check")}
+            onClick={() => {
+              void actions.run("ntp-check", async () => {
+                try {
+                  const c = await api.post<TimeStatus["clock"]>("/api/v1/admin/time/check", {
+                    servers: splitList(ntpServers),
+                  });
+                  qc.setQueryData<TimeStatus | undefined>(["admin-time"], (old) => (old ? { ...old, clock: c } : old));
+                  if (c?.error) toast.error(`${t("settings.ntpFailed")}: ${c.error}`);
+                  else toast.success(t("settings.ntpChecked"));
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              });
+            }}
+          >
+            {t("settings.ntpCheck")}
           </Button>
         </div>
       </SectionCard>
@@ -814,7 +925,7 @@ export function SettingsPage() {
                 <td className="py-1 font-mono text-xs">{b.ip}</td>
                 <td>{b.source}</td>
                 <td className="text-xs">
-                  {b.expiresAt ? new Date(b.expiresAt).toLocaleString() : "permanent"}
+                  {b.expiresAt ? fmtDateTime(b.expiresAt) : "permanent"}
                 </td>
                 <td>
                   <Button
@@ -838,7 +949,7 @@ export function SettingsPage() {
               <tr key={`mem-${m.ip}`} className="border-t border-[var(--border)] opacity-80">
                 <td className="py-1 font-mono text-xs">{m.ip}</td>
                 <td>{m.source} {tr("(memory)")}</td>
-                <td className="text-xs">{new Date(m.expiresAt).toLocaleString()}</td>
+                <td className="text-xs">{fmtDateTime(m.expiresAt)}</td>
                 <td />
               </tr>
             ))}
@@ -1138,7 +1249,7 @@ export function SettingsPage() {
             ) : (
               audit.data?.slice(0, 40).map((a) => (
                 <tr key={a.id}>
-                  <td>{new Date(a.at).toLocaleString()}</td>
+                  <td>{fmtDateTime(a.at)}</td>
                   <td>{a.action}</td>
                   <td className="font-mono text-xs">{a.objectId ?? "—"}</td>
                 </tr>

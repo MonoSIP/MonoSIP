@@ -6,6 +6,7 @@ import { api } from "../../lib/api";
 import { Button, IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 import { nodeTitle } from "./flow/nodeMeta";
+import { fmtDateTime, fmtTime } from "../../lib/datetime";
 
 type CdrRow = {
   id: string;
@@ -48,7 +49,6 @@ function describeEvent(e: TimelineEvent): { title: string; detail: string } {
 
 const DIRECTION_LABEL: Record<string, string> = { internal: "Internal", inbound: "Inbound", outbound: "Outbound" };
 
-const fmtTime = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString() : "—");
 
 export function CdrPage() {
   const { t } = useTranslation();
@@ -167,7 +167,7 @@ export function CdrPage() {
                       <td>
                         <span className="inline-flex items-center gap-1.5">
                           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                          {new Date(r.startedAt).toLocaleString()}
+                          {fmtDateTime(r.startedAt)}
                         </span>
                       </td>
                       <td className="text-xs uppercase text-[var(--text-muted)]">{tr(DIRECTION_LABEL[r.direction] ?? r.direction)}</td>
@@ -237,7 +237,7 @@ export function CdrPage() {
                                     const { title, detail } = describeEvent(e);
                                     return (
                                       <li key={e.id} className={`cdr-step cdr-step--${e.type.replace(/\W/g, "-")}`}>
-                                        <span className="cdr-step-time">{new Date(e.at).toLocaleTimeString()}</span>
+                                        <span className="cdr-step-time">{fmtTime(e.at)}</span>
                                         <span className="cdr-step-title">{title}</span>
                                         {detail && <span className="cdr-step-detail">{detail}</span>}
                                       </li>

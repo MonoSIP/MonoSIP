@@ -135,6 +135,17 @@ else
   sed -i "s|;externaddr=__EXTERNAL_IP__||g" /etc/asterisk/rtp.conf
 fi
 
+# PBX time zone from Settings (written by the API) for the OS and Asterisk logs.
+TZ_FILE=/var/lib/asterisk/monosip/timezone
+if [ -f "$TZ_FILE" ]; then
+  TZ_NAME="$(head -n1 "$TZ_FILE" | tr -d '[:space:]')"
+  if [ -n "$TZ_NAME" ] && [ -f "/usr/share/zoneinfo/$TZ_NAME" ]; then
+    ln -sf "/usr/share/zoneinfo/$TZ_NAME" /etc/localtime
+    echo "$TZ_NAME" > /etc/timezone 2>/dev/null || true
+    export TZ="$TZ_NAME"
+  fi
+fi
+
 # Ensure generated includes exist
 touch /var/lib/asterisk/monosip/pjsip_monosip.conf
 touch /var/lib/asterisk/monosip/acl_monosip.conf

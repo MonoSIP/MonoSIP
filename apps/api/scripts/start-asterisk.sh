@@ -43,6 +43,17 @@ if [ -e /var/lib/asterisk/monosip ] && [ ! -L /var/lib/asterisk/monosip ]; then
 fi
 ln -sfn "$AST_CFG" /var/lib/asterisk/monosip
 
+# PBX time zone from Settings (written by the API) for the OS and Asterisk logs.
+TZ_FILE=/var/lib/asterisk/monosip/timezone
+if [ -f "$TZ_FILE" ]; then
+  TZ_NAME="$(head -n1 "$TZ_FILE" | tr -d '[:space:]')"
+  if [ -n "$TZ_NAME" ] && [ -f "/usr/share/zoneinfo/$TZ_NAME" ]; then
+    ln -sf "/usr/share/zoneinfo/$TZ_NAME" /etc/localtime
+    echo "$TZ_NAME" > /etc/timezone 2>/dev/null || true
+    export TZ="$TZ_NAME"
+  fi
+fi
+
 # Asterisk drops to runuser=asterisk — /data must be traversable and confs readable.
 # World-readable is enough; never chown -R (hangs NineDeploy volumes).
 chmod 755 "$DATA_DIR" "$AST_CFG" 2>/dev/null || true

@@ -474,10 +474,13 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const body = ScheduleSchema.parse(req.body);
     const { ranges, overrideUntil, ...rest } = body;
+    const { systemTimezone } = await import("../lib/system-time.js");
     const [row] = await db
       .insert(schedules)
       .values({
         ...rest,
+        // Schedules run in the PBX time zone (Settings), not a per-schedule one.
+        timezone: systemTimezone(),
         overrideUntil: overrideUntil ? new Date(overrideUntil) : null,
       })
       .returning();
@@ -2124,6 +2127,32 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   });
 
   // Settings / webhooks / api keys / audit
+  /** PBX time zone, current time and the last NTP drift measurement. */
+  app.get("/api/v1/admin/time", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { systemTimezone, utcOffsetLabel, lastClockCheck, MAX_DRIFT_MS } = await import(
+      "../lib/system-time.js"
+    );
+    const tz = systemTimezone();
+    return {
+      timezone: tz,
+      utcOffset: utcOffsetLabel(tz),
+      now: new Date().toISOString(),
+      maxDriftMs: MAX_DRIFT_MS,
+      clock: lastClockCheck(),
+    };
+  });
+
+  /** Measure clock drift now (Settings → Time → Check). */
+  app.post("/api/v1/admin/time/check", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const body = z
+      .object({ servers: z.array(z.string().trim().min(1).max(253)).max(6).optional() })
+      .parse(req.body ?? {});
+    const { checkClock } = await import("../lib/system-time.js");
+    return checkClock(body.servers);
+  });
+
   app.get("/api/v1/admin/settings", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const [row] = await db.select().from(settings).where(eq(settings.id, 1));
@@ -2158,6 +2187,17 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (body.stunEnabled !== undefined || body.stunServers !== undefined) {
       const { clearExternalIpCache } = await import("../lib/external-ip.js");
       clearExternalIpCache();
+    }
+    if (body.timezone !== undefined) {
+      // One zone for the whole PBX: schedules follow it too.
+      const { applyTimezone, writeAsteriskTimezoneFile } = await import("../lib/system-time.js");
+      const tz = applyTimezone(next.timezone);
+      await db.update(schedules).set({ timezone: tz });
+      await writeAsteriskTimezoneFile(tz);
+    }
+    if (body.ntpEnabled !== undefined || body.ntpServers !== undefined) {
+      const { checkClock } = await import("../lib/system-time.js");
+      void checkClock().catch(() => undefined);
     }
     // KVKK and queue language are baked into the dialplan; SIP nets live in PJSIP.
     // Unchanged files do not reload a module.

@@ -129,7 +129,9 @@ export async function evaluateScheduleStatus(
     if (!sched.overrideUntil || sched.overrideUntil > at) return "closed";
   }
 
-  const tz = sched.timezone || "Europe/Istanbul";
+  // The PBX time zone from Settings; schedules no longer keep their own.
+  const { systemTimezone } = await import("../lib/system-time.js");
+  const tz = systemTimezone();
   const fmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: tz,
     year: "numeric",

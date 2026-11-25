@@ -170,6 +170,7 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 - **IP policy:** Settings `adminIpAllowlist` / `portalIpAllowlist` / `sipIpAllowlist` / `sipIpDenylist`; bans under Security section.
 - **Login flood guard:** API memory + `ip_bans` table after repeated failures (complements fail2ban).
 - **TTS:** embedded in the main image (`127.0.0.1:5500`) — see [TTS.md](TTS.md). No sidecar.
+- **Time zone and clock:** set the zone under Admin → Settings → Time and time zone (applied to the API at once; Asterisk logs follow after the next restart). The container cannot set the clock, so keep NTP on the host: `timedatectl set-ntp true` (systemd-timesyncd) or chrony. Settings shows the measured drift and flags more than 2 seconds.
 
 ## 8. Troubleshooting
 

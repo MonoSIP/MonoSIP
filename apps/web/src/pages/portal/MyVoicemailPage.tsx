@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Pause, Play, Trash2, Voicemail } from "lucide-react";
 import { api } from "../../lib/api";
 import { IconBtn, PageHeader, usePendingAction } from "../../components/ui";
+import { fmtDateTime } from "../../lib/datetime";
 
 type VoicemailRow = {
   id: string;
@@ -197,7 +198,7 @@ function MessageRow({
         <span className="w-40 shrink-0">
           <span className="block truncate font-mono text-sm">{row.caller || "—"}</span>
           <span className="block truncate text-xs text-[var(--text-muted)]">
-            {new Date(row.at).toLocaleString()}
+            {fmtDateTime(row.at)}
           </span>
         </span>
         <IconBtn

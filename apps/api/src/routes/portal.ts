@@ -40,6 +40,8 @@ export async function portalRoutes(app: FastifyInstance) {
       voicemailGreeting: ext.voicemailGreeting ?? "",
       voicemailGreetingVoice: ext.voicemailGreetingVoice,
       voicemailGreetingLang: ext.voicemailGreetingLang,
+      // Times in the portal are shown in the PBX time zone, not the browser's.
+      timezone: (await import("../lib/system-time.js")).systemTimezone(),
     };
   });
 

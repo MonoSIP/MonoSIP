@@ -7,6 +7,7 @@ import { acknowledgeMissed } from "../../lib/acknowledge-missed";
 import { api } from "../../lib/api";
 import { callPeer } from "../../lib/call-peer";
 import { Button, PageHeader, SectionCard } from "../../components/ui";
+import { fmtDateTime } from "../../lib/datetime";
 
 type Tab = "all" | "inbound" | "outbound" | "missed";
 
@@ -94,7 +95,7 @@ export function MyCallsPage() {
                 <div className="call-row-main">
                   <span className="call-row-peer font-mono">{m.number}</span>
                   <span className="call-row-meta">
-                    {new Date(m.at).toLocaleString()} · {m.status}
+                    {fmtDateTime(m.at)} · {m.status}
                   </span>
                 </div>
                 <Button
@@ -135,7 +136,7 @@ export function MyCallsPage() {
                       <span className="font-mono">{c.callee}</span>
                     </span>
                     <span className="call-row-meta">
-                      {new Date(c.startedAt).toLocaleString()} · {c.disposition}
+                      {fmtDateTime(c.startedAt)} · {c.disposition}
                     </span>
                   </div>
                   {num && (

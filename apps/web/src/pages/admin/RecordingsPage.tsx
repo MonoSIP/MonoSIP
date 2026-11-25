@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { IconBtn, IconLink, Modal, PageHeader, SectionCard } from "../../components/ui";
 import { tr } from "../../i18n";
+import { fmtDateTime } from "../../lib/datetime";
 
 type Rec = {
   id: string;
@@ -107,7 +108,7 @@ export function RecordingsPage() {
         description={
           loadError ??
           (playing
-            ? `${new Date(playing.createdAt).toLocaleString()} · ${playing.duration}s`
+            ? `${fmtDateTime(playing.createdAt)} · ${playing.duration}s`
             : undefined)
         }
         maxWidth="40rem"
@@ -149,7 +150,7 @@ export function RecordingsPage() {
           <ul className="space-y-1 text-sm">
             {access.data?.map((a) => (
               <li key={a.id}>
-                {new Date(a.at).toLocaleString()} · {a.actorType} · {a.action}
+                {fmtDateTime(a.at)} · {a.actorType} · {a.action}
               </li>
             ))}
           </ul>
@@ -175,7 +176,7 @@ export function RecordingsPage() {
                   <tr key={r.id}>
                     <td className="font-mono text-sm">{parties(r)}</td>
                     <td>{r.duration}s</td>
-                    <td>{new Date(r.createdAt).toLocaleString()}</td>
+                    <td>{fmtDateTime(r.createdAt)}</td>
                     <td className="col-actions">
                       <div className="btn-icon-row">
                         <IconBtn icon={Play} label={tr("Play")} onClick={() => setPlayingId(r.id)} />

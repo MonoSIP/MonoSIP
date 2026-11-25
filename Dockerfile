@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl openssl ffmpeg python3 python3-pip python3-venv \
     espeak-ng libsndfile1 \
     postgresql-17 postgresql-client-17 \
-    xz-utils \
+    xz-utils tzdata \
   && NODE_ARCH="$TARGETARCH" \
   && if [ "$NODE_ARCH" = "amd64" ]; then NODE_ARCH=x64; fi \
   && curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \

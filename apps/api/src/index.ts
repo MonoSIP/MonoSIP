@@ -28,6 +28,11 @@ async function main() {
   await mkdir(config.uploadsDir, { recursive: true });
   await mkdir(config.asterisk.configDir, { recursive: true });
   await mkdir(path.join(config.asterisk.configDir, "voicemail"), { recursive: true });
+  // Settings time zone for this process: schedules, nightly jobs, reports.
+  const { loadSystemTimezone, writeAsteriskTimezoneFile } = await import("./lib/system-time.js");
+  const tz = await loadSystemTimezone();
+  await writeAsteriskTimezoneFile(tz);
+  console.info(`[time] timezone ${tz}`);
 
   const app = Fastify({
     logger: true,
@@ -137,6 +142,8 @@ async function main() {
   startNightlyBackupJob();
   const { startSslRenewJob } = await import("./jobs/ssl-renew.js");
   startSslRenewJob();
+  const { startClockCheckJob } = await import("./jobs/clock-check.js");
+  startClockCheckJob();
 
   // Pre-generate queue position TTS (MOH ducks during announce) — non-blocking
   void import("./lib/queue-announce-tts.js")

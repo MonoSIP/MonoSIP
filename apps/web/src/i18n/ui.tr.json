@@ -33,7 +33,6 @@
   "Allowed IPs": "İzinli IP adresleri",
   "Allowed countries (ISO, comma — e.g. TR,DE or ALL)": "İzinli ülkeler (ISO, virgülle — örn. TR,DE veya ALL)",
   "Allowed websites": "İzinli web siteleri",
-  "Announce": "Anons",
   "Announce / Play": "Anons / Çal",
   "Announce hold time (TTS, MOH pauses)": "Bekleme süresini anons et (TTS, bekleme müziği duraklar)",
   "Announce position (TTS ~30s, MOH pauses)": "Sıra numarasını anons et (TTS ~30 sn, bekleme müziği duraklar)",
@@ -591,5 +590,8 @@
   "— select schedule —": "— takvim seçin —",
   "— select secret —": "— gizli değer seçin —",
   "— select —": "— seçin —",
-  "— synthesize text above —": "— yukarıdaki metni seslendir —"
+  "— synthesize text above —": "— yukarıdaki metni seslendir —",
+  "Status": "Durum",
+  "Updated": "Güncellendi",
+  "Hours": "Saatler"
 }

@@ -5,6 +5,7 @@ import { List, PhoneMissed } from "lucide-react";
 import { api } from "../../lib/api";
 import { Button, PageHeader, SectionCard } from "../../components/ui";
 import { tr } from "../../i18n";
+import { fmtDateTime } from "../../lib/datetime";
 
 export function MissedPage() {
   const { t } = useTranslation();
@@ -81,7 +82,7 @@ export function MissedPage() {
                   <tr key={m.id}>
                     <td className="font-mono">{m.number}</td>
                     <td>{m.target}</td>
-                    <td>{new Date(m.at).toLocaleString()}</td>
+                    <td>{fmtDateTime(m.at)}</td>
                     <td>
                       <span className="badge">{m.status}</span>
                     </td>

@@ -38,7 +38,8 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Manual override: Auto / Open now / Closed now, optional end time
 - Separate destination or menu per status (open, lunch, after hours, holiday). Lunch and holiday fall back to the after-hours destination when empty
 - Takes effect only when an inbound route (or a schedule node in a flow) points to the schedule
-- Timezone: Europe/Istanbul
+- Time zone: one PBX-wide zone under **Settings → Time and time zone** (default Europe/Istanbul). Schedules, holidays, reports and nightly jobs run in it, and every time in the admin panel and portal is shown in it, whatever the viewer's browser zone
+- Clock check: NTP servers in Settings; drift is measured every 15 minutes and flagged above 2 seconds
 
 ## IVR and speech
 

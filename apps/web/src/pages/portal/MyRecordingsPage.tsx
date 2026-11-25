@@ -7,6 +7,7 @@ import { FileAudio, Pause, Play } from "lucide-react";
 import { api } from "../../lib/api";
 import { tr } from "../../i18n";
 import { Button, IconBtn, Modal, PageHeader, SectionCard } from "../../components/ui";
+import { fmtDateTime } from "../../lib/datetime";
 
 export function MyRecordingsPage() {
   const { t } = useTranslation();
@@ -87,7 +88,7 @@ export function MyRecordingsPage() {
         description={
           loadError ??
           (playing
-            ? `${new Date(playing.createdAt).toLocaleString()} · ${playing.duration}s`
+            ? `${fmtDateTime(playing.createdAt)} · ${playing.duration}s`
             : undefined)
         }
         maxWidth="40rem"
@@ -133,7 +134,7 @@ export function MyRecordingsPage() {
                     {r.caller || r.callee ? `${r.caller || "—"} → ${r.callee || "—"}` : "—"}
                   </div>
                   <div className="text-xs text-[var(--text-muted)]">
-                    {new Date(r.createdAt).toLocaleString()} · {r.duration}s
+                    {fmtDateTime(r.createdAt)} · {r.duration}s
                   </div>
                 </div>
                 <Button type="button" onClick={() => setPlayingId(r.id)}>
