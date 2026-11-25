@@ -747,23 +747,24 @@ describe("ari.playAndWait", () => {
     expect(playCalls()).toBe(1);
   });
 
-  it.each(["PlaybackFinished", "PlaybackFailed"])(
-    "resolves the waiter on %s",
-    async (eventType) => {
-      playRoute(["pb-1"]);
+  it.each([
+    ["PlaybackFinished", "done", true],
+    ["PlaybackFailed", undefined, false],
+    ["PlaybackFinished", "failed", false],
+  ] as const)("resolves the waiter on %s (state %s) with %s", async (eventType, state, expected) => {
+    playRoute(["pb-1"]);
 
-      const running = ari.playAndWait("ch-1", "sound:hi", 30_000);
-      await vi.advanceTimersByTimeAsync(0);
+    const running = ari.playAndWait("ch-1", "sound:hi", 30_000);
+    await vi.advanceTimersByTimeAsync(0);
 
-      last().fire(
-        "message",
-        JSON.stringify({ type: eventType, playback: { id: "pb-1" } }),
-      );
-      // Both outcomes resolve — a failed playback must not leave the caller
-      // blocked for the full timeout.
-      await expect(running).resolves.toBe(true);
-    },
-  );
+    last().fire(
+      "message",
+      JSON.stringify({ type: eventType, playback: { id: "pb-1", ...(state ? { state } : {}) } }),
+    );
+    // Every outcome resolves at once — a failed playback must not leave the caller
+    // blocked for the full timeout — and a file Asterisk cannot play reports false.
+    await expect(running).resolves.toBe(expected);
+  });
 
   it("resolves true when the wait times out with no playback event", async () => {
     playRoute(["pb-1"]);

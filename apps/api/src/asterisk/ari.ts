@@ -23,7 +23,7 @@ type AriEvent = {
   application?: string;
   channel?: { id: string; caller?: { number?: string }; state?: string };
   digit?: string;
-  playback?: { id: string };
+  playback?: { id: string; state?: string };
   args?: string[];
   cause?: number;
 };
@@ -34,7 +34,7 @@ class AriClient extends EventEmitter {
   private pollTimer?: NodeJS.Timeout;
   private sockets: WebSocket[] = [];
   private dtmfWaiters = new Map<string, { resolve: (d: string | null) => void; timer: NodeJS.Timeout }>();
-  private playbackWaiters = new Map<string, { resolve: () => void; channelId: string }>();
+  private playbackWaiters = new Map<string, { resolve: (ok?: boolean) => void; channelId: string }>();
   /** Digits pressed while no waiter (e.g. during menu prompt playback). */
   private dtmfBuffers = new Map<string, string[]>();
   private activePlaybackByChannel = new Map<string, string>();
@@ -165,7 +165,9 @@ class AriClient extends EventEmitter {
       const w = this.playbackWaiters.get(ev.playback.id);
       if (w) {
         this.playbackWaiters.delete(ev.playback.id);
-        w.resolve();
+        // A file Asterisk cannot open (e.g. an MP3 prompt) ends as PlaybackFailed /
+        // state "failed" right away; callers fall back instead of treating it as played.
+        w.resolve(!(ev.type === "PlaybackFailed" || ev.playback?.state === "failed"));
       }
       for (const [ch, pb] of this.activePlaybackByChannel) {
         if (pb === ev.playback.id) this.activePlaybackByChannel.delete(ch);
@@ -461,23 +463,23 @@ class AriClient extends EventEmitter {
     }
     if (!id) return false;
     if (opts.interruptible) this.activePlaybackByChannel.set(channelId, id);
-    await new Promise<void>((resolve) => {
+    const ok = await new Promise<boolean>((resolve) => {
       const timer = setTimeout(() => {
         this.playbackWaiters.delete(id!);
-        resolve();
+        resolve(true);
       }, timeoutMs);
       this.playbackWaiters.set(id, {
         channelId,
-        resolve: () => {
+        resolve: (played = true) => {
           clearTimeout(timer);
-          resolve();
+          resolve(played);
         },
       });
     });
     if (opts.interruptible && this.activePlaybackByChannel.get(channelId) === id) {
       this.activePlaybackByChannel.delete(channelId);
     }
-    return true;
+    return ok;
   }
 
   clearDtmfBuffer(channelId: string) {

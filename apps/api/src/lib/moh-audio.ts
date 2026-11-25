@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { convertWavToAsterisk8k, isLikelyWav } from "./tts.js";
 import { config } from "../config.js";
@@ -31,6 +32,28 @@ function runFfmpeg(args: string[]): Promise<void> {
       else reject(new Error(err.slice(-500) || `ffmpeg exit ${code}`));
     });
   });
+}
+
+/**
+ * Any uploaded prompt (MP3, OGG, M4A, WAV) as 8 kHz mono PCM WAV bytes.
+ * Asterisk has no MP3 player here: a prompt stored as .mp3 failed to play and the
+ * IVR went straight to its next node (often hangup) in silence.
+ */
+export async function promptAudioToWav(buf: Buffer, ext: string): Promise<Buffer> {
+  if (isLikelyWav(buf)) return convertWavToAsterisk8k(buf);
+  if (!(await ffmpegAvailable())) {
+    throw new Error("This audio format needs ffmpeg in the API image. Upload a WAV file instead.");
+  }
+  const dir = await mkdtemp(path.join(os.tmpdir(), "monosip-prompt-"));
+  const input = path.join(dir, `in.${ext.replace(/[^\w]/g, "") || "bin"}`);
+  const output = path.join(dir, "out.wav");
+  try {
+    await writeFile(input, buf);
+    await runFfmpeg(["-y", "-i", input, "-ac", "1", "-ar", "8000", "-c:a", "pcm_s16le", output]);
+    return await readFile(output);
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  }
 }
 
 /**

@@ -407,8 +407,8 @@ export async function executeFlowLoop(
             const [pr] = await db.select().from(promptsTable).where(eq(promptsTable.id, promptId));
             const media = promptMediaUri(pr?.filePath, promptId);
             if (media) {
-              await ari.playAndWait(channelId, media, 60_000);
-              played = true;
+              played = await ari.playAndWait(channelId, media, 60_000);
+              if (!played) console.warn(`[flow] ${channelId} prompt ${promptId} could not play; speaking the text`);
             }
           } catch (e) {
             console.warn(`[flow] prompt play failed`, (e as Error).message);

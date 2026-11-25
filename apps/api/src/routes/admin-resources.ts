@@ -964,7 +964,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const language = fieldValue(fields, "language") === "en" ? "en" : "tr";
     const ttsText = fieldValue(fields, "ttsText") ?? null;
     const id = crypto.randomUUID();
-    const written = await writePromptWav(id, buf, ext);
+    const { promptAudioToWav } = await import("../lib/moh-audio.js");
+    const wav = await promptAudioToWav(buf, ext).catch((e: Error) => e);
+    if (wav instanceof Error) return reply.code(400).send({ error: wav.message });
+    const written = await writePromptWav(id, wav);
     const [row] = await db
       .insert(prompts)
       .values({
@@ -1006,7 +1009,14 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         error: "Not a valid WAV file. Prefer mono WAV (8–22 kHz) for Asterisk.",
       });
     }
-    const written = await writePromptWav(id, buf, ext);
+    const { promptAudioToWav } = await import("../lib/moh-audio.js");
+    const wav = await promptAudioToWav(buf, ext).catch((e: Error) => e);
+    if (wav instanceof Error) return reply.code(400).send({ error: wav.message });
+    const written = await writePromptWav(id, wav);
+    if (existing.filePath && existing.filePath !== written.filePath) {
+      const { unlink } = await import("node:fs/promises");
+      await unlink(existing.filePath).catch(() => undefined);
+    }
     await db.update(prompts).set({ filePath: written.filePath }).where(eq(prompts.id, id));
     await writeAudit({
       actor: actor as never,
