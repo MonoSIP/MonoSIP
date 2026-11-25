@@ -621,7 +621,6 @@ async function writeAsteriskConfigNow(): Promise<void> {
       // VPN/NAT softphones put an unreachable IP in SDP; send media to the
       // address we actually received SIP/RTP from (same idea as WebRTC).
       "media_use_received_transport=yes",
-      `rewrite_contact=${rewriteContact}`,
       ...mediaAddress,
       "dtmf_mode=auto",
       `callerid="${display}" <${id}>`,
@@ -635,6 +634,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `[${id}]`,
       "type=endpoint",
       ...sharedMedia,
+      // Keep the phone's Contact port. rewrite_contact=yes replaces it with the
+      // UDP source port; Fanvil "ChgPort" then leaves Asterisk qualifying a port
+      // the phone no longer answers (Registered in UI, offline in MonoSIP).
+      "rewrite_contact=no",
       `auth=${id}`,
       `aors=${id}`,
       // SDES when the phone supports it; plain RTP otherwise (PAP2, etc.)
@@ -649,8 +652,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "",
       `[${id}]`,
       "type=aor",
-      "max_contacts=3",
-      "remove_existing=no",
+      "max_contacts=1",
+      "remove_existing=yes",
       "default_expiration=300",
       "maximum_expiration=300",
       "qualify_frequency=30",
@@ -661,6 +664,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       `[${idW}]`,
       "type=endpoint",
       ...sharedMedia,
+      `rewrite_contact=${rewriteContact}`,
       `auth=${idW}`,
       `aors=${idW}`,
       "webrtc=yes",
