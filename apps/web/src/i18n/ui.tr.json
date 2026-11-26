@@ -593,5 +593,14 @@
   "— synthesize text above —": "— yukarıdaki metni seslendir —",
   "Status": "Durum",
   "Updated": "Güncellendi",
-  "Hours": "Saatler"
+  "Hours": "Saatler",
+  "{{from}}–{{to}} of {{total}}": "{{from}}–{{to}} / {{total}}",
+  "Rows per page": "Sayfa başına",
+  "Previous page": "Önceki sayfa",
+  "Next page": "Sonraki sayfa",
+  "Page {{n}}": "Sayfa {{n}}",
+  "Number": "Numara",
+  "Caller or called number": "Arayan veya aranan numara",
+  "No recordings match these filters.": "Bu filtrelere uyan kayıt yok.",
+  "No recordings yet.": "Henüz kayıt yok."
 }

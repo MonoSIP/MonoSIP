@@ -84,3 +84,40 @@ export function useSystemTimezone(source: "admin" | "portal"): string {
   });
   return q.data ?? systemTz;
 }
+
+/** UTC offset of `tz` at instant `t`, in ms (Istanbul: +3 h). */
+function zoneOffsetMs(tz: string, t: number): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+      .formatToParts(new Date(t))
+      .map((p) => [p.type, p.value]),
+  );
+  const asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+  return asUtc - Math.floor(t / 1000) * 1000;
+}
+
+/**
+ * A wall-clock time typed in a filter ("2026-11-26" or "2026-11-26T09:30"), read
+ * in the PBX zone, as an ISO instant. `endOfDay` turns a bare date into its last ms.
+ */
+export function pbxLocalToIso(value: string, endOfDay = false): string | null {
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi] = m;
+  const bareDate = h === undefined;
+  const wall = Date.UTC(+y, +mo - 1, +d, bareDate ? 0 : +h, bareDate ? 0 : +mi);
+  // Two passes settle the offset across a DST change.
+  let t = wall - zoneOffsetMs(systemTz, wall);
+  t = wall - zoneOffsetMs(systemTz, t);
+  if (bareDate && endOfDay) t += 24 * 3600_000 - 1;
+  return new Date(t).toISOString();
+}

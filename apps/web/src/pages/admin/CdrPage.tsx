@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronRight, Download, Filter, History, Play } from "lucide-react";
 import { api } from "../../lib/api";
-import { Button, IconBtn, IconLink, PageHeader, SectionCard, SelectField, TextField } from "../../components/ui";
+import { Button, IconBtn, IconLink, PageHeader, Pagination, SectionCard, SelectField, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
 import { nodeTitle } from "./flow/nodeMeta";
-import { fmtDateTime, fmtTime } from "../../lib/datetime";
+import { fmtDateTime, fmtTime, pbxLocalToIso } from "../../lib/datetime";
+import { pagerLabels, type Paged } from "../../lib/pager";
 
 type CdrRow = {
   id: string;
@@ -57,17 +58,31 @@ export function CdrPage() {
   const [caller, setCaller] = useState("");
   const [disposition, setDisposition] = useState("");
   const [timelineId, setTimelineId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
+  // Filter times are PBX wall-clock (Settings → Time), like every time on the page.
   const qs = new URLSearchParams();
-  if (from) qs.set("from", new Date(from).toISOString());
-  if (to) qs.set("to", new Date(to).toISOString());
+  const fromIso = from ? pbxLocalToIso(from) : null;
+  const toIso = to ? pbxLocalToIso(to) : null;
+  if (fromIso) qs.set("from", fromIso);
+  if (toIso) qs.set("to", toIso);
   if (caller) qs.set("caller", caller);
   if (disposition) qs.set("disposition", disposition);
+  const pageQs = new URLSearchParams(qs);
+  pageQs.set("page", String(page));
+  pageQs.set("pageSize", String(pageSize));
 
   const list = useQuery({
-    queryKey: ["cdr", from, to, caller, disposition],
-    queryFn: () => api.get<CdrRow[]>(`/api/v1/admin/cdr?${qs.toString()}`),
+    queryKey: ["cdr", pageQs.toString()],
+    queryFn: () => api.get<Paged<CdrRow>>(`/api/v1/admin/cdr?${pageQs.toString()}`),
+    placeholderData: (prev) => prev,
   });
+  const rows = list.data?.items ?? [];
+  const filterChange = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v);
+    setPage(1);
+  };
 
   const timeline = useQuery({
     queryKey: ["cdr-timeline", timelineId],
@@ -105,17 +120,17 @@ export function CdrPage() {
             void list.refetch();
           }}
         >
-          <TextField label={tr("From")} type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <TextField label={tr("To")} type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
+          <TextField label={tr("From")} type="datetime-local" value={from} onChange={(e) => filterChange(setFrom)(e.target.value)} />
+          <TextField label={tr("To")} type="datetime-local" value={to} onChange={(e) => filterChange(setTo)(e.target.value)} />
           <TextField
             label={t("cdr.caller")}
             value={caller}
-            onChange={(e) => setCaller(e.target.value)}
+            onChange={(e) => filterChange(setCaller)(e.target.value)}
           />
           <SelectField
             label={t("cdr.disposition")}
             value={disposition}
-            onValueChange={setDisposition}
+            onValueChange={filterChange(setDisposition)}
             options={[
               { value: "", label: tr("All dispositions") },
               { value: "ANSWERED", label: tr("ANSWERED") },
@@ -148,14 +163,14 @@ export function CdrPage() {
             </tr>
           </thead>
           <tbody>
-            {(list.data ?? []).length === 0 ? (
+            {rows.length === 0 ? (
               <tr>
                 <td colSpan={11} className="text-[var(--text-muted)]">
                   {tr("No call records yet. Dial 900 from softphone to create one.")}
                 </td>
               </tr>
             ) : (
-              list.data?.map((r) => {
+              rows.map((r) => {
                 const open = timelineId === r.id;
                 return (
                   <Fragment key={r.id}>
@@ -256,6 +271,22 @@ export function CdrPage() {
             )}
           </tbody>
         </table>
+        {(list.data?.total ?? 0) > 0 ? (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={list.data?.total ?? 0}
+            onPage={(p) => {
+              setPage(p);
+              setTimelineId(null);
+            }}
+            onPageSize={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+            labels={pagerLabels()}
+          />
+        ) : null}
       </SectionCard>
     </div>
   );

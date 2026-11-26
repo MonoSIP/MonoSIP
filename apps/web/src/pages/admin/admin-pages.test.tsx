@@ -356,7 +356,9 @@ function seedAdmin() {
       ];
     }
     if (path.includes("/admin/cdr")) {
-      return [{ id: "c1", caller: "1000", callee: "101", disposition: "ANSWERED", duration: 42 }];
+      const items = [{ id: "c1", caller: "1000", callee: "101", disposition: "ANSWERED", duration: 42 }];
+      // The call log pages; other screens still read the plain list.
+      return path.includes("page=") ? { items, total: 1, page: 1, pageSize: 25 } : items;
     }
     if (path.includes("/reports/quality")) return { total: 3, avgMos: 4.2, avgJitter: 5, avgLoss: 0.5 };
     if (path.includes("/reports/extensions")) {
@@ -1330,17 +1332,22 @@ describe("PortalLayout", () => {
 describe("RecordingsPage", () => {
   it("opens the access log in a dialog", async () => {
     apiGet.mockImplementation(async (path: string) => {
-      if (path === "/api/v1/admin/recordings") {
-        return [
-          {
-            id: "r1",
-            callId: "c1",
-            caller: "100",
-            callee: "101",
-            duration: 12,
-            createdAt: "2026-01-01T10:00:00Z",
-          },
-        ];
+      if (path.startsWith("/api/v1/admin/recordings?")) {
+        return {
+          items: [
+            {
+              id: "r1",
+              callId: "c1",
+              caller: "100",
+              callee: "101",
+              duration: 12,
+              createdAt: "2026-01-01T10:00:00Z",
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 25,
+        };
       }
       if (path === "/api/v1/admin/recordings/r1/access-log") {
         return [

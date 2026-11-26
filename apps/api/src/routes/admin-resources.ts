@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import path from "node:path";
-import { and, desc, eq, gt, gte, inArray, like, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import {
   BlacklistSchema,
   InboundRouteSchema,
@@ -63,6 +63,23 @@ import { csvCell } from "../lib/csv.js";
 
 async function admin(req: Parameters<typeof requireAdmin>[0], reply: Parameters<typeof requireAdmin>[1]) {
   return requireAdmin(req, reply);
+}
+
+/**
+ * Optional paging for list endpoints. Without `page` a list keeps its old shape
+ * (a plain array); with it the reply is `{ items, total, page, pageSize }`.
+ */
+export function pageParams(q: { page?: string; pageSize?: string }) {
+  if (q.page === undefined) return null;
+  const page = Math.max(1, Math.floor(Number(q.page)) || 1);
+  const pageSize = Math.min(200, Math.max(5, Math.floor(Number(q.pageSize)) || 25));
+  return { page, pageSize, offset: (page - 1) * pageSize };
+}
+
+/** Digits a user typed in a number search ("0532 487 43 90" → "05324874390"). */
+export function numberSearch(raw: string | undefined): string | null {
+  const v = (raw ?? "").replace(/[\s()+-]/g, "");
+  return v ? v.replace(/[%_\\]/g, "") : null;
 }
 
 function cleanList(values: string[] | undefined): string[] {
@@ -1740,30 +1757,40 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       disposition?: string;
       direction?: string;
       limit?: string;
+      number?: string;
+      page?: string;
+      pageSize?: string;
     };
     const clauses = [];
     if (q.from) clauses.push(gte(cdr.startedAt, new Date(q.from)));
     if (q.to) clauses.push(lte(cdr.startedAt, new Date(q.to)));
     if (q.caller) clauses.push(like(cdr.caller, `%${q.caller}%`));
+    const num = numberSearch(q.number);
+    if (num) clauses.push(or(like(cdr.caller, `%${num}%`), like(cdr.callee, `%${num}%`))!);
     if (q.disposition) clauses.push(eq(cdr.disposition, q.disposition));
     if (q.direction) clauses.push(eq(cdr.direction, q.direction));
-    const lim = Math.min(Number(q.limit ?? 500), 2000);
-    const rows = clauses.length
-      ? await db
-          .select()
-          .from(cdr)
-          .where(and(...clauses))
-          .orderBy(desc(cdr.startedAt))
-          .limit(lim)
-      : await db.select().from(cdr).orderBy(desc(cdr.startedAt)).limit(lim);
-    if (!rows.length) return rows;
-    const callIds = rows.map((r) => r.callId);
-    const recs = await db
-      .select({ id: recordings.id, callId: recordings.callId })
-      .from(recordings)
-      .where(inArray(recordings.callId, callIds));
-    const byCall = new Map(recs.map((r) => [r.callId, r.id]));
-    return rows.map((r) => ({ ...r, recordingId: byCall.get(r.callId) ?? null }));
+    const where = clauses.length ? and(...clauses) : undefined;
+    const paged = pageParams(q);
+    const lim = paged ? paged.pageSize : Math.min(Number(q.limit ?? 500), 2000);
+    const rows = await db
+      .select()
+      .from(cdr)
+      .where(where)
+      .orderBy(desc(cdr.startedAt))
+      .limit(lim)
+      .offset(paged?.offset ?? 0);
+    const withRec = async () => {
+      if (!rows.length) return rows;
+      const recs = await db
+        .select({ id: recordings.id, callId: recordings.callId })
+        .from(recordings)
+        .where(inArray(recordings.callId, rows.map((r) => r.callId)));
+      const byCall = new Map(recs.map((r) => [r.callId, r.id]));
+      return rows.map((r) => ({ ...r, recordingId: byCall.get(r.callId) ?? null }));
+    };
+    if (!paged) return withRec();
+    const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(cdr).where(where);
+    return { items: await withRec(), total: n, page: paged.page, pageSize: paged.pageSize };
   });
 
   app.get("/api/v1/admin/cdr/export", async (req, reply) => {
@@ -1824,13 +1851,44 @@ export async function adminResourceRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/admin/recordings", async (req, reply) => {
     if (!(await admin(req, reply))) return;
+    const q = req.query as {
+      from?: string;
+      to?: string;
+      number?: string;
+      page?: string;
+      pageSize?: string;
+    };
+    const clauses = [gt(recordings.duration, 0)];
+    if (q.from) clauses.push(gte(recordings.createdAt, new Date(q.from)));
+    if (q.to) clauses.push(lte(recordings.createdAt, new Date(q.to)));
+    const num = numberSearch(q.number);
+    if (num) {
+      // A transferred call has several CDR rows; match the number on any of them.
+      clauses.push(
+        inArray(
+          recordings.callId,
+          db
+            .select({ callId: cdr.callId })
+            .from(cdr)
+            .where(or(like(cdr.caller, `%${num}%`), like(cdr.callee, `%${num}%`))),
+        ),
+      );
+    }
+    const where = and(...clauses);
+    const paged = pageParams(q);
     const rows = await db
       .select()
       .from(recordings)
-      .where(gt(recordings.duration, 0))
+      .where(where)
       .orderBy(desc(recordings.createdAt))
-      .limit(200);
-    if (!rows.length) return rows;
+      .limit(paged ? paged.pageSize : 200)
+      .offset(paged?.offset ?? 0);
+    const total = paged
+      ? (await db.select({ n: sql<number>`count(*)::int` }).from(recordings).where(where))[0].n
+      : 0;
+    const reply_ = (items: unknown[]) =>
+      paged ? { items, total, page: paged.page, pageSize: paged.pageSize } : items;
+    if (!rows.length) return reply_(rows);
     const parties = await db
       .select({
         callId: cdr.callId,
@@ -1846,10 +1904,28 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         byCall.set(party.callId, { caller: party.caller, callee: party.callee });
       }
     }
-    return rows.map((r) => {
-      const party = byCall.get(r.callId);
-      return { ...r, caller: party?.caller ?? null, callee: party?.callee ?? null };
-    });
+    return reply_(
+      rows.map((r) => {
+        const party = byCall.get(r.callId);
+        return { ...r, caller: party?.caller ?? null, callee: party?.callee ?? null };
+      }),
+    );
+  });
+
+  /** One recording with its call parties (player opened from the call log). */
+  app.get("/api/v1/admin/recordings/:id", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { id } = req.params as { id: string };
+    if (!z.string().uuid().safeParse(id).success) return reply.code(404).send({ error: "Not found" });
+    const [rec] = await db.select().from(recordings).where(eq(recordings.id, id));
+    if (!rec) return reply.code(404).send({ error: "Not found" });
+    const [party] = await db
+      .select({ caller: cdr.caller, callee: cdr.callee })
+      .from(cdr)
+      .where(eq(cdr.callId, rec.callId))
+      .orderBy(desc(cdr.startedAt))
+      .limit(1);
+    return { ...rec, caller: party?.caller ?? null, callee: party?.callee ?? null };
   });
 
   app.get("/api/v1/admin/recordings/:id/stream", async (req, reply) => {

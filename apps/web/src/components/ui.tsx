@@ -18,7 +18,7 @@ import {
   Tooltip,
   useThemeContext,
 } from "@radix-ui/themes";
-import { type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import {
   useCallback,
   useId,
@@ -753,5 +753,95 @@ export function MenuItem({ onSelect, children }: { onSelect?: () => void; childr
       {children}
     </DropdownMenu.Item>
     </InTheme>
+  );
+}
+
+/** Page numbers to show: first, last, and two either side of the current one. */
+export function pageWindow(page: number, pages: number): Array<number | "gap"> {
+  const keep = new Set([1, pages, page - 2, page - 1, page, page + 1, page + 2]);
+  const out: Array<number | "gap"> = [];
+  for (let p = 1; p <= pages; p++) {
+    if (!keep.has(p)) continue;
+    const prev = out[out.length - 1];
+    if (typeof prev === "number" && p - prev > 1) out.push("gap");
+    out.push(p);
+  }
+  return out;
+}
+
+/** Table footer: "26–50 of 340", rows per page, and page buttons. */
+export function Pagination({
+  page,
+  pageSize,
+  total,
+  onPage,
+  onPageSize,
+  sizes = [25, 50, 100],
+  labels,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPage: (page: number) => void;
+  onPageSize?: (size: number) => void;
+  sizes?: number[];
+  labels: { range: (from: number, to: number, total: number) => string; perPage: string; prev: string; next: string; page: (n: number) => string };
+}) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(total, page * pageSize);
+  return (
+    <nav className="pager" aria-label={labels.page(page)}>
+      <span className="pager-range">{labels.range(from, to, total)}</span>
+      <div className="pager-controls">
+        {onPageSize ? (
+          <label className="pager-size">
+            <span>{labels.perPage}</span>
+            <SelectInput
+              aria-label={labels.perPage}
+              value={String(pageSize)}
+              onValueChange={(v) => onPageSize(Number(v))}
+              options={sizes.map((n) => ({ value: String(n), label: String(n) }))}
+            />
+          </label>
+        ) : null}
+        <button
+          type="button"
+          className="pager-btn"
+          aria-label={labels.prev}
+          disabled={page <= 1}
+          onClick={() => onPage(page - 1)}
+        >
+          <ChevronLeft size={16} />
+        </button>
+        {pageWindow(page, pages).map((p, i) =>
+          p === "gap" ? (
+            <span key={`gap-${i}`} className="pager-gap" aria-hidden>
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              type="button"
+              className={`pager-btn${p === page ? " is-current" : ""}`}
+              aria-label={labels.page(p)}
+              aria-current={p === page ? "page" : undefined}
+              onClick={() => onPage(p)}
+            >
+              {p}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          className="pager-btn"
+          aria-label={labels.next}
+          disabled={page >= pages}
+          onClick={() => onPage(page + 1)}
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </nav>
   );
 }

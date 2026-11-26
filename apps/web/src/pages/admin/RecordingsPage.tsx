@@ -3,12 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import WaveSurfer from "wavesurfer.js";
-import { ClipboardList, Disc, Download, Pause, Play } from "lucide-react";
+import { ClipboardList, Disc, Download, Filter, Pause, Play, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { IconBtn, IconLink, Modal, PageHeader, SectionCard } from "../../components/ui";
+import { Button, IconBtn, IconLink, Modal, PageHeader, Pagination, SectionCard, TextField } from "../../components/ui";
 import { tr } from "../../i18n";
-import { fmtDateTime } from "../../lib/datetime";
+import { fmtDateTime, pbxLocalToIso } from "../../lib/datetime";
+import { pagerLabels, type Paged } from "../../lib/pager";
 
 type Rec = {
   id: string;
@@ -37,12 +38,35 @@ export function RecordingsPage() {
   const [waveNode, setWaveNode] = useState<HTMLDivElement | null>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
 
+  // Typed filters apply on submit, so a half-typed number does not fire a query per key.
+  const [draft, setDraft] = useState({ from: "", to: "", number: "" });
+  const [filters, setFilters] = useState(draft);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  const fromIso = filters.from ? pbxLocalToIso(filters.from) : null;
+  const toIso = filters.to ? pbxLocalToIso(filters.to, true) : null;
+  if (fromIso) qs.set("from", fromIso);
+  if (toIso) qs.set("to", toIso);
+  if (filters.number.trim()) qs.set("number", filters.number.trim());
+  const filtered = !!(filters.from || filters.to || filters.number.trim());
+
   const list = useQuery({
-    queryKey: ["recordings"],
-    queryFn: () => api.get<Rec[]>("/api/v1/admin/recordings"),
+    queryKey: ["recordings", qs.toString()],
+    queryFn: () => api.get<Paged<Rec>>(`/api/v1/admin/recordings?${qs.toString()}`),
+    placeholderData: (prev) => prev,
   });
-  const playing = (list.data ?? []).find((r) => r.id === playingId) ?? null;
-  const accessRec = (list.data ?? []).find((r) => r.id === accessId) ?? null;
+  const rows = list.data?.items ?? [];
+  // A recording opened from the call log (?id=) may be on another page.
+  const single = useQuery({
+    queryKey: ["recording", playingId],
+    queryFn: () => api.get<Rec>(`/api/v1/admin/recordings/${playingId}`),
+    enabled: !!playingId && !rows.some((r) => r.id === playingId),
+    retry: false,
+  });
+  const playing = rows.find((r) => r.id === playingId) ?? single.data ?? null;
+  const accessRec = rows.find((r) => r.id === accessId) ?? null;
 
   const access = useQuery({
     queryKey: ["rec-access", accessId],
@@ -156,6 +180,57 @@ export function RecordingsPage() {
           </ul>
         )}
       </Modal>
+      <SectionCard title={tr("Filters")} icon={Filter} tone="cyan">
+        <form
+          className="toolbar toolbar-wrap"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setFilters(draft);
+            setPage(1);
+          }}
+        >
+          <TextField
+            label={tr("From")}
+            type="date"
+            value={draft.from}
+            max={draft.to || undefined}
+            onChange={(e) => setDraft({ ...draft, from: e.target.value })}
+          />
+          <TextField
+            label={tr("To")}
+            type="date"
+            value={draft.to}
+            min={draft.from || undefined}
+            onChange={(e) => setDraft({ ...draft, to: e.target.value })}
+          />
+          <TextField
+            className="flex-1"
+            label={tr("Number")}
+            inputMode="tel"
+            placeholder={tr("Caller or called number")}
+            value={draft.number}
+            onChange={(e) => setDraft({ ...draft, number: e.target.value })}
+          />
+          <Button variant="solid" type="submit">
+            <Filter size={16} />
+            {tr("Filter")}
+          </Button>
+          {filtered || draft.from || draft.to || draft.number ? (
+            <Button
+              type="button"
+              onClick={() => {
+                const empty = { from: "", to: "", number: "" };
+                setDraft(empty);
+                setFilters(empty);
+                setPage(1);
+              }}
+            >
+              <X size={16} />
+              {tr("Clear")}
+            </Button>
+          ) : null}
+        </form>
+      </SectionCard>
       <SectionCard title={tr("Recordings")} icon={Disc} tone="blue" flush>
         <table className="table">
             <thead>
@@ -167,12 +242,18 @@ export function RecordingsPage() {
               </tr>
             </thead>
             <tbody>
-              {(list.data ?? []).length === 0 ? (
+              {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>—</td>
+                  <td colSpan={4} className="text-[var(--text-muted)]">
+                    {list.isLoading
+                      ? t("common.loading")
+                      : filtered
+                        ? tr("No recordings match these filters.")
+                        : tr("No recordings yet.")}
+                  </td>
                 </tr>
               ) : (
-                list.data?.map((r) => (
+                rows.map((r) => (
                   <tr key={r.id}>
                     <td className="font-mono text-sm">{parties(r)}</td>
                     <td>{r.duration}s</td>
@@ -197,6 +278,19 @@ export function RecordingsPage() {
               )}
             </tbody>
           </table>
+        {(list.data?.total ?? 0) > 0 ? (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={list.data?.total ?? 0}
+            onPage={setPage}
+            onPageSize={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+            labels={pagerLabels()}
+          />
+        ) : null}
       </SectionCard>
     </div>
   );

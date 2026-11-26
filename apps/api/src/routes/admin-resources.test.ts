@@ -76,7 +76,7 @@ const { __state } = (await import("../db/client.js")) as unknown as {
   };
 };
 
-import { adminResourceRoutes } from "./admin-resources.js";
+import { adminResourceRoutes, numberSearch, pageParams } from "./admin-resources.js";
 
 type Handler = (req: unknown, reply: unknown) => Promise<unknown>;
 
@@ -256,5 +256,24 @@ describe("GET /api/v1/admin/cdr/export", () => {
     });
     const body = (await cdrExport!({ query: {} }, fakeReply())) as string;
     expect(body.split("\n")[1]).toContain(",201,05321112233,");
+  });
+});
+
+describe("list paging helpers", () => {
+  it("keeps the plain list when no page is asked for", () => {
+    expect(pageParams({})).toBeNull();
+  });
+
+  it("clamps page and page size", () => {
+    expect(pageParams({ page: "3", pageSize: "50" })).toEqual({ page: 3, pageSize: 50, offset: 100 });
+    expect(pageParams({ page: "0", pageSize: "9999" })).toEqual({ page: 1, pageSize: 200, offset: 0 });
+    expect(pageParams({ page: "x" })).toEqual({ page: 1, pageSize: 25, offset: 0 });
+  });
+
+  it("searches a number as typed, without spaces or LIKE wildcards", () => {
+    expect(numberSearch("0532 487 43 90")).toBe("05324874390");
+    expect(numberSearch("+90 (532)")).toBe("90532");
+    expect(numberSearch("12%_")).toBe("12");
+    expect(numberSearch("  ")).toBeNull();
   });
 });
