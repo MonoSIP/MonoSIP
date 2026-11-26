@@ -13,6 +13,8 @@ const routes = [
   "/docs/softphone/",
   "/docs/voicemail/",
   "/docs/integrations/",
+  "/docs/sip-trunks/",
+  "/docs/schedules/",
   "/docs/security/",
 ];
 for (const width of [375, 768, 1024, 1440, 1920, 2560, 3840]) {

@@ -304,8 +304,8 @@ export const docsTr = {
               <code>pnpm db:reset-admin</code> her yönetici parolasını kurulum
               varsayılanı <code>Admin123!</code> değerine döndürür. Giriş
               e-postası değişmez; komut hangi adresle girileceğini yazar. İki
-              adımlı doğrulama açıksa durur. Açık yönetici oturumları kapanır
-              ve veritabanındaki yönetici giriş yasakları silinir.
+              adımlı doğrulama açıksa durur. Açık yönetici oturumları kapanır ve
+              veritabanındaki yönetici giriş yasakları silinir.
             </p>
             <CodeBlock
               code={`docker compose exec api pnpm db:reset-admin\ndocker exec monosip pnpm db:reset-admin`}
@@ -322,8 +322,8 @@ export const docsTr = {
               Girişten sonra parolayı Ayarlar → Admin girişinden değiştirin.
               Panel hâlâ çok fazla hatalı giriş diyorsa API’yi yeniden başlatın
               (<code>docker compose restart api</code> veya{" "}
-              <code>docker restart monosip</code>); yasak sayacı çalışan
-              sürecin belleğindedir.
+              <code>docker restart monosip</code>); yasak sayacı çalışan sürecin
+              belleğindedir.
             </p>
           </>
         ),
@@ -938,8 +938,8 @@ export const docsTr = {
               gösterilir.
             </p>
             <p>
-              Anahtarları Yönetici → Entegrasyonlar’da oluşturun. Bu anahtarların
-              sözleşmesi bir sonraki bölümde.
+              Anahtarları Yönetici → Entegrasyonlar’da oluşturun. Bu
+              anahtarların sözleşmesi bir sonraki bölümde.
             </p>
           </>
         ),
@@ -951,8 +951,9 @@ export const docsTr = {
           <>
             <p>
               Adı siz verirsiniz. MonoSIP anahtarı ve bariyeri üretir. Anahtar
-              listede kalır. Bariyer pencerede yalnız bir kez görünür; kapatmadan
-              kopyalayın. Saklanan şey bariyerin kendisi değil, özetidir.
+              listede kalır. Bariyer pencerede yalnız bir kez görünür;
+              kapatmadan kopyalayın. Saklanan şey bariyerin kendisi değil,
+              özetidir.
             </p>
             <p>
               Anahtarı <code>X-Api-Key</code> veya{" "}
@@ -964,7 +965,10 @@ export const docsTr = {
               headings={["İzin", "Ne açar"]}
               rows={[
                 ["announce", "Bir numarayı arar ve metni okur."],
-                ["originate", "Önce bir dahiliyi çaldırır, sonra numarayı arar."],
+                [
+                  "originate",
+                  "Önce bir dahiliyi çaldırır, sonra numarayı arar.",
+                ],
                 ["cdr", "Arama ayrıntı kayıtlarını okur."],
                 ["recordings", "Kayıtlı bir konuşmayı akıtır."],
               ]}
@@ -994,14 +998,14 @@ Content-Type: application/json
             <p>
               <code>number</code> 2 ile 20 hane arasındadır. <code>101</code>{" "}
               geçerlidir. Numara bir dahiliyse telefon doğrudan çalar; diğer
-              numaralar bir SIP operatöründen çıkar.{" "}
-              <code>language</code> <code>en</code> veya <code>tr</code> olur.{" "}
-              <code>voice</code> <code>female</code>, <code>male</code> veya{" "}
-              <code>ema</code> olur. EMA yalnız Türkçe konuşur.{" "}
-              <code>mode</code> başarıyı seçer: <code>answered</code> hat
-              açılınca, <code>played</code> metin bitince, <code>dtmf</code>{" "}
-              arayan en az bir tuş basınca. Tuşlar <code>#</code> veya kısa bir
-              sessizlikte durur, en fazla 16 hane. Tuş yoksa başarısızdır.
+              numaralar bir SIP operatöründen çıkar. <code>language</code>{" "}
+              <code>en</code> veya <code>tr</code> olur. <code>voice</code>{" "}
+              <code>female</code>, <code>male</code> veya <code>ema</code> olur.
+              EMA yalnız Türkçe konuşur. <code>mode</code> başarıyı seçer:{" "}
+              <code>answered</code> hat açılınca, <code>played</code> metin
+              bitince, <code>dtmf</code> arayan en az bir tuş basınca. Tuşlar{" "}
+              <code>#</code> veya kısa bir sessizlikte durur, en fazla 16 hane.
+              Tuş yoksa başarısızdır.
             </p>
             <p>
               Cevap hemen bir kimlik döner. Sonucu aynı anahtar ve bariyerle{" "}
@@ -1111,7 +1115,9 @@ curl -sS "$PBX/api/v1/ext/calls/CALL_ID" \\
               <code>language: en</code> ise cevap <code>400</code> olur.
             </p>
             <p>
-              <strong>Eski entegrasyon çağrıları da aynı çifti kullanır.</strong>{" "}
+              <strong>
+                Eski entegrasyon çağrıları da aynı çifti kullanır.
+              </strong>{" "}
               Anahtarda ilgili izin olmalıdır: <code>originate</code>,{" "}
               <code>cdr</code> veya <code>recordings</code>. Bariyer yoksa bu
               uçlar da <code>401</code> döner.
@@ -1229,6 +1235,188 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
                 kendi alıcınızla deneyin.
               </li>
             </ul>
+          </>
+        ),
+      },
+    ],
+  },
+  "sip-trunks": {
+    title: "Dış dünyaya ulaşın.",
+    summary:
+      "Bir SIP operatörü bağlayın, gelen numaraları ve dış aramaları yönlendirin, hattı NAT arkasında çalışır tutun.",
+    source: "DEPLOY-VPS",
+    sections: [
+      {
+        id: "provider",
+        title: "Operatörünüzü ekleyin",
+        content: (
+          <>
+            <p>
+              Yönetim → SIP sağlayıcıları ekranında operatörün verdiği bilgileri
+              girin: kayıt sunucusu, SIP kullanıcı adı, parola ve hesaptaki
+              numaralar (DID). Kaydettiğinizde MonoSIP kaydı yazar ve Asterisk’i
+              yeniden yükler. Sağlayıcı listesi birkaç saniye içinde Kayıtlı
+              gösterir.
+            </p>
+            <Table
+              headings={["Alan", "Ne girilir"]}
+              rows={[
+                [
+                  "Sunucu",
+                  "Operatörün kayıt sunucusu, ör. sip.operator.example",
+                ],
+                [
+                  "Kullanıcı adı",
+                  "SIP girişi; Contact kullanıcısı olarak da gönderilir",
+                ],
+                ["Numaralar", "Santralinizi çaldırması gereken her DID"],
+                ["Arayan numara", "Dış aramalarda görünen numara"],
+              ]}
+            />
+          </>
+        ),
+      },
+      {
+        id: "nat",
+        title: "Port yönlendirmeden NAT arkasında çalışır",
+        content: (
+          <>
+            <p>
+              Operatörler 5070 numaralı UDP portundaki kendi taşıyıcılarından
+              kayıt olur. Operatör gelen aramayı gördüğü adres ve porta
+              gönderir; kaynak portu değiştiren modemler de aramayı iletir.
+              Kayıt olan bir hat için gelen yönde güvenlik duvarı kuralı
+              gerekmez.
+            </p>
+            <Callout>
+              <code>EXTERNAL_IP</code> değerini telefonlarınızın ulaştığı adres
+              (LAN veya VPN) yapın. Operatörlere STUN ile bulunan genel adres
+              verilir; iki taraf da kullanabileceği adresi alır.
+            </Callout>
+          </>
+        ),
+      },
+      {
+        id: "inbound",
+        title: "Her numarayı doğru yere gönderin",
+        content: (
+          <>
+            <p>
+              Gelen yönlendirmeler bir DID ile eşleşir ve aramayı dahiliye, zil
+              grubuna, kuyruğa veya IVR’a gönderir. Mesai dışında hedefi
+              değiştirmek için yönlendirmeye bir zaman planı ekleyin. Arayanın
+              kendi numarası telefon ekranında görünür.
+            </p>
+            <Link className="text-link" href={href("/docs/schedules/")}>
+              Mesai saatlerini ve tatilleri ayarlayın →
+            </Link>
+          </>
+        ),
+      },
+      {
+        id: "outbound",
+        title: "Dış aramaları denetleyin",
+        content: (
+          <>
+            <p>
+              Dış yönlendirmeler arama desenine göre hat seçer, önek ekleyip
+              çıkarabilir. Dahili izinleri kimin cep, uluslararası veya özel
+              ücretli numaraları arayabileceğini belirler. Acil numaralar
+              kısıtlı dahililerden bile her zaman çıkar.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "troubleshoot",
+        title: "Aramalar gelmiyorsa",
+        content: (
+          <>
+            <ol>
+              <li>
+                Hattın Kayıtlı göründüğünü kontrol edin. Değilse kullanıcı adı
+                ve parolayı yeniden kontrol edin.
+              </li>
+              <li>
+                <code>pjsip set logger on</code> çalıştırıp numarayı arayın. Hiç
+                INVITE gelmiyorsa operatör kayıttaki Contact adresine
+                ulaşamıyordur.
+              </li>
+              <li>
+                404 ile yanıtlanan bir INVITE, numaranın hatta tanımlı
+                olmadığını veya gelen yönlendirmesi bulunmadığını gösterir.
+              </li>
+            </ol>
+          </>
+        ),
+      },
+    ],
+  },
+  schedules: {
+    title: "Açıkken açık olun.",
+    summary:
+      "Mesai saatleri, öğle arası ve resmi tatiller aramaların nereye gideceğini belirler; hepsi NTP ile doğru tutulan tek bir santral saat dilimiyle.",
+    source: "FEATURES",
+    sections: [
+      {
+        id: "hours",
+        title: "Mesai saatlerini tanımlayın",
+        content: (
+          <>
+            <p>
+              Yönetim → Zaman planları haftalık çalışma saatlerini tutar. Her
+              gün birden fazla aralık alabilir; cumartesi 09:00–12:00 açık, öğle
+              arası kapalı ve 13:00–15:00 yeniden açık olabilir. Gelen
+              yönlendirmeye bağlanan plan aramayı açık veya kapalı hedefe
+              gönderir; örneğin gündüz IVR’ı ve mesai dışı IVR’ı.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "holidays",
+        title: "Resmi tatilleri yükleyin",
+        content: (
+          <>
+            <p>
+              Bir ülke paketiyle bu yılın ve gelecek yılın resmi tatillerini tek
+              adımda, tarihe göre sıralı ekleyin. Arife gibi yarım günler öğlene
+              kadar açık kalabilir. Kendi kapalı günlerinizi de yanlarına
+              ekleyin.
+            </p>
+            <Callout>
+              Tatiller haftalık saatlerden önce gelir: tam gün tatilde gün boyu
+              kapalı hedef yanıt verir.
+            </Callout>
+          </>
+        ),
+      },
+      {
+        id: "timezone",
+        title: "Tüm santral için tek saat dilimi",
+        content: (
+          <>
+            <p>
+              Ayarlar → Saat ve saat dilimi santralin çalıştığı dilimi belirler
+              (varsayılan Europe/Istanbul). Zaman planları, tatiller, arama
+              raporları ve gece işleri buna uyar; yönetim paneli ve portaldaki
+              her saat, yurt dışındaki bir çalışma arkadaşı için bile bu dilimle
+              gösterilir.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "ntp",
+        title: "Saati doğru tutun",
+        content: (
+          <>
+            <p>
+              MonoSIP saati 15 dakikada bir NTP sunucularınızla karşılaştırır ve
+              2 saniyeden fazla kaymayı işaretler. Konteyner saati ayarlayamaz;
+              NTP’yi sunucuda açık tutun:
+            </p>
+            <CodeBlock code="sudo timedatectl set-ntp true" />
           </>
         ),
       },

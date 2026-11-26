@@ -223,11 +223,11 @@ export const docs: Record<
             <p>
               <code>EXTERNAL_IP</code> is the address your phones and browsers
               reach. Behind NAT it may be the host&apos;s LAN or VPN address:
-              desk phones and the portal softphone are given that address,
-              while SIP providers and website widget guests get the public IP
-              found through STUN. Always set <code>PUBLIC_HOST</code> to the
-              hostname people open, so the softphone never connects to a
-              container address.
+              desk phones and the portal softphone are given that address, while
+              SIP providers and website widget guests get the public IP found
+              through STUN. Always set <code>PUBLIC_HOST</code> to the hostname
+              people open, so the softphone never connects to a container
+              address.
             </p>
           </>
         ),
@@ -303,8 +303,8 @@ export const docs: Record<
         content: (
           <>
             <p>
-              <code>pnpm db:reset-admin</code> sets every admin password back
-              to the install default <code>Admin123!</code>. The sign-in email
+              <code>pnpm db:reset-admin</code> sets every admin password back to
+              the install default <code>Admin123!</code>. The sign-in email
               stays as it is; the command prints it. Two-factor authentication
               stays on. Open admin sessions are signed out, and admin
               login-flood bans stored in the database are cleared.
@@ -321,8 +321,8 @@ export const docs: Record<
             </p>
             <p>
               Sign in, then change the password under Settings → Admin sign-in.
-              If the panel still says too many failed logins, restart the API
-              (<code>docker compose restart api</code> or{" "}
+              If the panel still says too many failed logins, restart the API (
+              <code>docker compose restart api</code> or{" "}
               <code>docker restart monosip</code>) so its in-memory ban counter
               drops.
             </p>
@@ -984,8 +984,8 @@ Content-Type: application/json
             />
             <p>
               <code>number</code> is 2 to 20 digits. <code>101</code> is valid.
-              When that number is an extension, the phone is rung directly;
-              any other number goes out through a SIP provider.{" "}
+              When that number is an extension, the phone is rung directly; any
+              other number goes out through a SIP provider.{" "}
               <code>language</code> is <code>en</code> or <code>tr</code>.{" "}
               <code>voice</code> is <code>female</code>, <code>male</code> or{" "}
               <code>ema</code>. EMA speaks Turkish only. <code>mode</code>{" "}
@@ -1030,9 +1030,9 @@ export KEY=monosip_your_key
 export BARRIER=your_barrier`}
             />
             <p>
-              <strong>The message finishes.</strong> Mode{" "}
-              <code>played</code> succeeds only after the whole sentence is
-              spoken. Hang-up during playback is <code>ok: false</code> and{" "}
+              <strong>The message finishes.</strong> Mode <code>played</code>{" "}
+              succeeds only after the whole sentence is spoken. Hang-up during
+              playback is <code>ok: false</code> and{" "}
               <code>reason: playback</code>.
             </p>
             <CodeBlock
@@ -1051,11 +1051,11 @@ curl -sS "$PBX/api/v1/ext/calls/CALL_ID" \\
 # {"status":"done","ok":true,"reason":"played","digits":null}`}
             />
             <p>
-              <strong>The caller presses a key.</strong> Mode{" "}
-              <code>dtmf</code> asks for a digit and waits for <code>#</code>{" "}
-              or a short pause. One digit is success. Silence is{" "}
-              <code>reason: no-digit</code>. With <code>webhookUrl</code> set,
-              the same result is POSTed when the call ends.
+              <strong>The caller presses a key.</strong> Mode <code>dtmf</code>{" "}
+              asks for a digit and waits for <code>#</code> or a short pause.
+              One digit is success. Silence is <code>reason: no-digit</code>.
+              With <code>webhookUrl</code> set, the same result is POSTed when
+              the call ends.
             </p>
             <CodeBlock
               title="confirm with 1"
@@ -1223,6 +1223,179 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
                 enabling business workflows.
               </li>
             </ul>
+          </>
+        ),
+      },
+    ],
+  },
+  "sip-trunks": {
+    title: "Reach the outside world.",
+    summary:
+      "Connect a SIP provider, route inbound numbers and outbound calls, and keep the trunk working behind NAT.",
+    source: "DEPLOY-VPS",
+    sections: [
+      {
+        id: "provider",
+        title: "Add your provider",
+        content: (
+          <>
+            <p>
+              Open Admin → SIP providers and enter the details your provider
+              gives you: registrar host, SIP login, password and the numbers
+              (DIDs) on the account. Save, and MonoSIP writes the registration
+              and reloads Asterisk. The provider list shows Registered within a
+              few seconds.
+            </p>
+            <Table
+              headings={["Field", "What to enter"]}
+              rows={[
+                ["Host", "The provider's registrar, e.g. sip.provider.example"],
+                ["Username", "SIP login; also sent as the Contact user"],
+                ["Numbers", "Every DID that should ring your PBX"],
+                ["Caller ID", "The number shown on outbound calls"],
+              ]}
+            />
+          </>
+        ),
+      },
+      {
+        id: "nat",
+        title: "Works behind NAT without a port forward",
+        content: (
+          <>
+            <p>
+              Providers register from their own UDP transport on port 5070. The
+              provider sends inbound calls back to the address and port it saw,
+              so routers that rewrite the source port still deliver them. A
+              registering trunk needs no inbound firewall rule.
+            </p>
+            <Callout>
+              Set <code>EXTERNAL_IP</code> to the address your phones reach (LAN
+              or VPN). Providers are given the public address found through
+              STUN, so both sides get an address they can use.
+            </Callout>
+          </>
+        ),
+      },
+      {
+        id: "inbound",
+        title: "Send each number where it belongs",
+        content: (
+          <>
+            <p>
+              Inbound routes match a DID and send the call to an extension, ring
+              group, queue or IVR. Add a schedule to a route to switch
+              destinations outside business hours. Callers keep their own number
+              on the phone display.
+            </p>
+            <Link className="text-link" href="/docs/schedules/">
+              Set business hours and holidays →
+            </Link>
+          </>
+        ),
+      },
+      {
+        id: "outbound",
+        title: "Control outbound dialling",
+        content: (
+          <>
+            <p>
+              Outbound routes pick a trunk by dial pattern and can strip or add
+              prefixes. Extension permissions decide who may call mobiles,
+              international numbers or premium lines. Emergency numbers always
+              go out, even from restricted extensions.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "troubleshoot",
+        title: "When calls do not arrive",
+        content: (
+          <>
+            <ol>
+              <li>
+                Check the trunk shows Registered. If not, re-check login and
+                password.
+              </li>
+              <li>
+                Run <code>pjsip set logger on</code> and call the number. No
+                INVITE means the provider cannot reach the registration Contact.
+              </li>
+              <li>
+                An INVITE answered with 404 means the number is not listed on
+                the trunk or has no inbound route.
+              </li>
+            </ol>
+          </>
+        ),
+      },
+    ],
+  },
+  schedules: {
+    title: "Open when you are open.",
+    summary:
+      "Business hours, lunch breaks and public holidays decide where calls go, all on one PBX time zone kept accurate by NTP.",
+    source: "FEATURES",
+    sections: [
+      {
+        id: "hours",
+        title: "Define business hours",
+        content: (
+          <>
+            <p>
+              Admin → Schedules holds weekly opening hours. Each day can have
+              several ranges, so a Saturday can open 09:00–12:00, close for
+              lunch and open again 13:00–15:00. A schedule attached to an
+              inbound route sends calls to the open or closed destination, for
+              example a day IVR and an after-hours IVR.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "holidays",
+        title: "Load public holidays",
+        content: (
+          <>
+            <p>
+              Load a country pack to add this year&apos;s and next year&apos;s
+              public holidays in one step, sorted by date. Half days, such as
+              the eve of a religious holiday, can stay open until noon. Add your
+              own closed days next to them.
+            </p>
+            <Callout>
+              Holidays take priority over weekly hours: on a full holiday the
+              closed destination answers all day.
+            </Callout>
+          </>
+        ),
+      },
+      {
+        id: "timezone",
+        title: "One time zone for the whole PBX",
+        content: (
+          <>
+            <p>
+              Settings → Time and time zone sets the zone the PBX runs in
+              (default Europe/Istanbul). Schedules, holidays, call reports and
+              nightly jobs all follow it, and every time in the admin panel and
+              portal is shown in it, even for a colleague abroad.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "ntp",
+        title: "Keep the clock accurate",
+        content: (
+          <>
+            <p>
+              MonoSIP checks the clock against your NTP servers every 15 minutes
+              and flags drift above 2 seconds. A container cannot set the clock,
+              so keep NTP running on the host:
+            </p>
+            <CodeBlock code="sudo timedatectl set-ntp true" />
           </>
         ),
       },

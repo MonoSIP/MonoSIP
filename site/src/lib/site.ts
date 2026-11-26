@@ -138,6 +138,18 @@ export const docNav = [
     icon: "code",
   },
   {
+    slug: "sip-trunks",
+    title: "SIP providers",
+    detail: "Connect a trunk and route numbers in and out.",
+    icon: "server",
+  },
+  {
+    slug: "schedules",
+    title: "Business hours & time",
+    detail: "Hours, holidays, time zone and an accurate clock.",
+    icon: "clock",
+  },
+  {
     slug: "security",
     title: "Security & operations",
     detail: "Plan access, persistence and recovery.",

@@ -27,6 +27,14 @@ const docNavTr = [
     detail: "Telefon sistemini araçlarınıza bağlayın.",
   },
   {
+    title: "SIP sağlayıcıları",
+    detail: "Hat bağlayın, numaraları içeri ve dışarı yönlendirin.",
+  },
+  {
+    title: "Mesai saatleri ve zaman",
+    detail: "Saatler, tatiller, saat dilimi ve doğru saat.",
+  },
+  {
     title: "Güvenlik ve işletim",
     detail: "Erişim, kalıcılık ve kurtarmayı planlayın.",
   },
