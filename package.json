@@ -1,7 +1,7 @@
 {
   "name": "monosip",
   "private": true,
-  "version": "1.9.3",
+  "version": "1.9.4",
   "license": "MIT",
   "description": "Self-hosted company PBX. Asterisk, visual IVR, browser softphone, one Docker image.",
   "author": "diggyen",
