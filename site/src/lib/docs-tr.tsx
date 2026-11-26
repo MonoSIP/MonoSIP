@@ -110,6 +110,21 @@ export const docsTr = {
             </p>
             <CodeBlock code={dockerCommand} title="docker run" />
             <p>
+              Panele <code>admin@example.com</code> ile girin. İmaj, ilk açılışta
+              benzersiz bir yönetici parolası üretip konteyner logunda bir kez
+              yazdırır — <code>docker logs monosip</code> ile okuyun (hosting
+              panelinde servisin Runtime log’unu açıp “first-run admin login”
+              satırına bakın). Oturum sırrı, şifreleme anahtarı ve Asterisk
+              parolaları otomatik üretilip <code>/data</code>’ya yazılır; siz
+              hiçbir şey girmezsiniz. Parolayı kendiniz seçmek için ilk açılıştan
+              önce <code>ADMIN_PASSWORD</code> verin. Girdikten sonra Ayarlar →
+              Yönetici girişi’nden değiştirin.
+            </p>
+            <CodeBlock
+              code={`============================================================\n MonoSIP first-run admin login (save it, change after login)\n   email:    admin@example.com\n   password: 4f3c…(benzersiz)\n============================================================`}
+              title="docker logs monosip"
+            />
+            <p>
               Uygulama portu 3000’i, herkese açık alan adınız için bir HTTPS
               ters vekilinin arkasına alın. Tarayıcıdan arama HTTPS, çalışan WSS
               sinyali ve erişilebilir ortam portları ister. İmaj,{" "}

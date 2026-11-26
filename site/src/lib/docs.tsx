@@ -117,6 +117,22 @@ export const docs: Record<
             </p>
             <CodeBlock code={dockerCommand} title="docker run" />
             <p>
+              Sign in to the panel at <code>admin@example.com</code>. On first
+              start the image generates a unique admin password and prints it
+              once in the container log — read it with{" "}
+              <code>docker logs monosip</code> (on a hosting panel, open the
+              service’s Runtime logs and look for “first-run admin login”). The
+              session secret, encryption key and Asterisk passwords are generated
+              and persisted to <code>/data</code> automatically, so you set
+              nothing. To choose the admin password yourself, pass{" "}
+              <code>ADMIN_PASSWORD</code> before the first start. Change it
+              afterwards under Settings → Admin sign-in.
+            </p>
+            <CodeBlock
+              code={`============================================================\n MonoSIP first-run admin login (save it, change after login)\n   email:    admin@example.com\n   password: 4f3c…(unique)\n============================================================`}
+              title="docker logs monosip"
+            />
+            <p>
               Put the application port 3000 behind an HTTPS reverse proxy for
               your public hostname. Browser calling needs HTTPS, working WSS
               signalling and reachable media ports. The image can also use a
