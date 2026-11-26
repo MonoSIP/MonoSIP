@@ -1346,11 +1346,30 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       .where(eq(recordings.callId, body.callId))
       .limit(1);
     if (existing[0]) {
+      // One call, one recording. A transferred call can produce several files on
+      // the same caller channel (IVR snoop, then each extension or queue leg);
+      // every one runs until hangup, so the larger file is the one that starts
+      // earlier and holds the whole conversation. Never let a later leg replace it.
+      const { locatedRecording } = await import("../lib/recording-files.js");
+      const prev = existing[0];
+      const prevFile = prev.filePath === apiPath ? null : locatedRecording(prev.filePath);
+      if (prevFile && prevFile.size >= sizeBytes) {
+        if (prevFile.path !== filePath) deleteRecordingFile(filePath);
+        await db
+          .update(recordings)
+          .set({
+            sizeBytes: prevFile.size,
+            duration: Math.max(prev.duration ?? 0, wavDurationSeconds(prevFile.path)),
+          })
+          .where(eq(recordings.id, prev.id));
+        return { ok: true, id: prev.id, kept: true };
+      }
+      if (prevFile) deleteRecordingFile(prevFile.path);
       await db
         .update(recordings)
         .set({ filePath: apiPath, sizeBytes, duration })
-        .where(eq(recordings.id, existing[0].id));
-      return { ok: true, id: existing[0].id, updated: true, duration };
+        .where(eq(recordings.id, prev.id));
+      return { ok: true, id: prev.id, updated: true, duration };
     }
     const [row] = await db
       .insert(recordings)

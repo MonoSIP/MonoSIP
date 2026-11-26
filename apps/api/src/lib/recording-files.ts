@@ -79,7 +79,7 @@ function siblingRecordingPath(filePath: string): string {
 }
 
 /** Spool and /data/recordings are the same volume; use whichever path exists. */
-function locatedRecording(filePath: string): { path: string; size: number } | null {
+export function locatedRecording(filePath: string): { path: string; size: number } | null {
   for (const candidate of [filePath, siblingRecordingPath(filePath)]) {
     if (!candidate || !existsSync(candidate)) continue;
     try {

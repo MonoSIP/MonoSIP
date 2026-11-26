@@ -331,6 +331,9 @@ export async function runFlowOnChannel(
       const name = `rec-${channelId.replace(/\W/g, "")}`;
       const recName = await ari.record(channelId, name);
       if (recName) {
+        // Extension and queue legs after a transfer see this and do not start a
+        // second, shorter recording of the same caller.
+        await ari.setChannelVar(channelId, "MONOSIP_FLOWREC", "1");
         const filePath = path.join(config.recordingsDir, `${recName}.wav`);
         await db.insert(recordings).values({
           callId: channelId,

@@ -1058,7 +1058,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
     const recFile = `/var/spool/asterisk/recording/\${UNIQUEID}-${ext.number}.wav`;
     const recRegister = internalPost(
       "recording",
-      `{"callId":"\${UNIQUEID}","file":"/data/recordings/\${UNIQUEID}-${ext.number}.wav","extension":"${ext.number}","duration":\${MONOSIP_BILL}}`,
+      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","extension":"${ext.number}","duration":\${MONOSIP_BILL}}`,
     );
     // on_demand / off / never: no auto MixMonitor. always and external record.
     // A call between extensions is kept when either side is set to record.
@@ -1070,9 +1070,14 @@ async function writeAsteriskConfigNow(): Promise<void> {
       .filter((n) => /^\d+$/.test(n))
       .map((n) => `"\${CALLERID(num)}" = "${n}"`)
       .join(" | ");
+    // One recording per caller channel. A transferred or forwarded call arrives here
+    // again on the same channel: the IVR snoop (MONOSIP_FLOWREC) or the first leg's
+    // MixMonitor is still running until hangup and already holds every leg.
     const recLines = [
+      ` same => n,GotoIf($["\${MONOSIP_FLOWREC}" = "1" | "\${MONOSIP_RECFILE}" != ""]?recon)`,
       ` same => n,Set(MONOSIP_RECFILE=/data/recordings/\${UNIQUEID}-${ext.number}.wav)`,
       ` same => n,MixMonitor(${recFile})`,
+      ` same => n(recon),NoOp(Recording on)`,
     ];
 
     extensionsConf.push(
@@ -1127,7 +1132,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ...qosPrepLines(),
         // Ring time before answer (DIALEDTIME includes talk time)
         ` same => n,Set(MONOSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER"]?$[\${MONOSIP_DUR} - \${MONOSIP_BILL}]:)})`,
-        ` same => n,GotoIf($["\${MONOSIP_RECFILE}" = ""]?skiprec)`,
+        // Keep recording through no-answer/busy forwarding; the h handler or the
+        // answered leg registers the file once the conversation is over.
+        ` same => n,GotoIf($["\${MONOSIP_RECFILE}" = "" | "\${DIALSTATUS}" != "ANSWER"]?skiprec)`,
         ` same => n,StopMixMonitor()`,
         ` same => n,${recRegister}`,
         ` same => n,Set(MONOSIP_REC_DONE=1)`,
@@ -1210,19 +1217,21 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "",
     // Caller BYE during Dial aborts the dialplan — catch CDR here once.
     "exten => h,1,NoOp(Hangup handler CDR)",
-    ` same => n,GotoIf($["\${MONOSIP_CDR_DONE}" = "1"]?cdrdone)`,
+    // CDR already posted (e.g. an unanswered leg that forwarded on): still file the recording.
+    ` same => n,GotoIf($["\${MONOSIP_CDR_DONE}" = "1"]?hrec)`,
     ` same => n,GotoIf($["\${MONOSIP_QUEUE}" != ""]?hqueue)`,
     ` same => n,GotoIf($["\${MONOSIP_CALLEE}" = ""]?cdrdone)`,
     ...qosPrepLines(),
     // Caller BYE aborts the lines after Dial(), so the MixMonitor file never reached the panel.
-    ` same => n,GotoIf($["\${MONOSIP_REC_DONE}" = "1" | "\${MONOSIP_RECFILE}" = ""]?reccdr)`,
+    ` same => n(hrec),GotoIf($["\${MONOSIP_REC_DONE}" = "1" | "\${MONOSIP_RECFILE}" = ""]?reccdr)`,
     ` same => n,StopMixMonitor()`,
     ` same => n,${internalPost(
       "recording",
-      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","duration":\${MONOSIP_BILL}}`,
+      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","duration":\${IF($["\${MONOSIP_BILL}" = ""]?0:\${MONOSIP_BILL})}}`,
     )}`,
     ` same => n,Set(MONOSIP_REC_DONE=1)`,
     ` same => n(reccdr),NoOp(Recording)`,
+    ` same => n,GotoIf($["\${MONOSIP_CDR_DONE}" = "1"]?cdrdone)`,
     ` same => n,Set(MONOSIP_WAIT=\${IF($["\${DIALSTATUS}" = "ANSWER" | "\${DIALSTATUS}" = ""]?$[\${MONOSIP_DUR} - \${MONOSIP_BILL}]:)})`,
     ` same => n,Set(MONOSIP_DISP=\${IF($["\${DIALSTATUS}"=""]?ANSWER:\${DIALSTATUS})})`,
     ` same => n,${internalPost(
@@ -1393,7 +1402,8 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ` same => n,GotoIf($["\${KVKK_DONE}" = "1"]?qkvkk)`,
       ` same => n,Set(__KVKK_DONE=1)`,
       kvkkEnabled ? kvkkPlaybackLine(kvkkPromptId) : ` same => n,NoOp(KVKK off)`,
-      ` same => n(qkvkk),MixMonitor(${qRecFile})`,
+      // The IVR snoop already records this caller for the whole call.
+      ` same => n(qkvkk),ExecIf($["\${MONOSIP_FLOWREC}" != "1"]?MixMonitor(${qRecFile}))`,
       // Hold music starts right away
       ` same => n,StartMusicOnHold(${mohName})`,
       ` same => n,Wait(1)`,
@@ -1427,7 +1437,9 @@ async function writeAsteriskConfigNow(): Promise<void> {
       ...(q.announcePosition ? [` same => n,Set(CHANNEL(language)=${qLang})`] : []),
       ` same => n,StopMixMonitor()`,
       ...qosPrepLines({ dialedTime: false }),
+      ` same => n,GotoIf($["\${MONOSIP_FLOWREC}" = "1"]?qrecdone)`,
       ` same => n,${qRecRegister}`,
+      ` same => n(qrecdone),NoOp(Queue recording)`,
       ...queueSelfUnpauseLines(q.number, "qunpaused"),
       ...queueCdrLines,
       ...afterQueue,

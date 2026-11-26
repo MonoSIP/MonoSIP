@@ -287,6 +287,40 @@ describe("POST /api/v1/internal/recording", () => {
     expect(rows[0]?.duration).toBe(25);
   });
 
+  it("keeps the whole-call recording when a later, shorter leg registers", async () => {
+    // Transferred call: the IVR file runs from the start, the last leg only from its transfer.
+    const id = callId();
+    callIds.push(id);
+    const whole = stageAudio("int-rec-whole.wav", TONE_LONG);
+    const leg = stageAudio("int-rec-leg.wav");
+
+    await postInternal("/api/v1/internal/recording", { callId: id, file: whole, duration: 60 });
+    const res = await postInternal("/api/v1/internal/recording", { callId: id, file: leg, duration: 15 });
+    expect(res.json()).toMatchObject({ ok: true, kept: true });
+
+    const rows = await db.select().from(recordings).where(eq(recordings.callId, id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.filePath).toBe(whole);
+    expect(rows[0]?.duration).toBe(60);
+    expect(existsSync(leg)).toBe(false);
+    expect(existsSync(whole)).toBe(true);
+  });
+
+  it("replaces a shorter earlier file with a longer one", async () => {
+    const id = callId();
+    callIds.push(id);
+    const short = stageAudio("int-rec-short.wav");
+    const long = stageAudio("int-rec-long.wav", TONE_LONG);
+
+    await postInternal("/api/v1/internal/recording", { callId: id, file: short, duration: 5 });
+    await postInternal("/api/v1/internal/recording", { callId: id, file: long, duration: 30 });
+
+    const rows = await db.select().from(recordings).where(eq(recordings.callId, id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.filePath).toBe(long);
+    expect(existsSync(short)).toBe(false);
+  });
+
   it("discards a recording with no talk time and reports why", async () => {
     const id = callId();
     callIds.push(id);
