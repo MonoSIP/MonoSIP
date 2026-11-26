@@ -1225,9 +1225,11 @@ async function writeAsteriskConfigNow(): Promise<void> {
     // Caller BYE aborts the lines after Dial(), so the MixMonitor file never reached the panel.
     ` same => n(hrec),GotoIf($["\${MONOSIP_REC_DONE}" = "1" | "\${MONOSIP_RECFILE}" = ""]?reccdr)`,
     ` same => n,StopMixMonitor()`,
+    // Flat var: nested () inside the CURL payload breaks the call.
+    ` same => n,Set(MONOSIP_RECDUR=\${IF($["\${MONOSIP_BILL}" = ""]?0:\${MONOSIP_BILL})})`,
     ` same => n,${internalPost(
       "recording",
-      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","duration":\${IF($["\${MONOSIP_BILL}" = ""]?0:\${MONOSIP_BILL})}}`,
+      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","duration":\${MONOSIP_RECDUR}}`,
     )}`,
     ` same => n,Set(MONOSIP_REC_DONE=1)`,
     ` same => n(reccdr),NoOp(Recording)`,
