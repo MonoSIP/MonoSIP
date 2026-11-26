@@ -22,6 +22,8 @@ import { wsRoutes } from "./routes/ws.js";
 import { asteriskWsProxyRoutes } from "./routes/asterisk-ws-proxy.js";
 
 async function main() {
+  const { assertSecretsConfigured } = await import("./lib/secret-check.js");
+  assertSecretsConfigured();
   await mkdir(config.recordingsDir, { recursive: true });
   // umask 0077 would leave this 0700, and MixMonitor then cannot store the wav.
   await chmod(config.recordingsDir, 0o777).catch(() => undefined);
@@ -41,8 +43,11 @@ async function main() {
     trustProxy: createTrustProxy(config.trustedProxyCidrs),
   });
 
+  const { isAllowedCorsOrigin } = await import("./lib/cors-origin.js");
   await app.register(cors, {
-    origin: true,
+    // Only same-origin / configured / LAN origins may send credentials; an
+    // arbitrary site must not be reflected back with Allow-Credentials.
+    origin: (origin, cb) => cb(null, isAllowedCorsOrigin(origin ?? undefined)),
     credentials: true,
   });
   await app.register(cookie, {
@@ -61,7 +66,9 @@ async function main() {
       return reply.code(400).send({ error: "Validation failed", details: err });
     }
     app.log.error(err);
-    return reply.code(500).send({ error: error.message ?? "Internal error" });
+    // Never surface the raw error text to the client — it can leak internal
+    // paths, SQL, or config. The detail is in the server log above.
+    return reply.code(500).send({ error: "Internal error" });
   });
 
   app.addHook("onRequest", async (req, reply) => {

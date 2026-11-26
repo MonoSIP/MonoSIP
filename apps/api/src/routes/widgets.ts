@@ -366,14 +366,21 @@ export async function widgetRoutes(app: FastifyInstance) {
 
     const phone = body.phone.replace(/[^\d+]/g, "");
     const prefixes = (w.callbackPrefixes as string[]) ?? [];
-    if (prefixes.length) {
-      const ok = prefixes.some((p) => phone.replace(/^\+/, "").startsWith(p.replace(/^\+/, "")));
-      if (!ok) {
-        return reply
-          .header("Access-Control-Allow-Origin", origin || "*")
-          .code(400)
-          .send({ error: "Number prefix not allowed" });
-      }
+    // No prefix list = dial anything the visitor types, which turns the widget
+    // into an open dialer (toll fraud). Fail closed: a call-back widget must
+    // declare which number prefixes it is allowed to ring.
+    if (!prefixes.length) {
+      return reply
+        .header("Access-Control-Allow-Origin", origin || "*")
+        .code(400)
+        .send({ error: "Call-back number prefixes not configured" });
+    }
+    const ok = prefixes.some((p) => phone.replace(/^\+/, "").startsWith(p.replace(/^\+/, "")));
+    if (!ok) {
+      return reply
+        .header("Access-Control-Allow-Origin", origin || "*")
+        .code(400)
+        .send({ error: "Number prefix not allowed" });
     }
 
     const dialNum = phone.replace(/^\+/, "");

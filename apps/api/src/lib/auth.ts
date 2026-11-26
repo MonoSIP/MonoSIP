@@ -47,7 +47,9 @@ export async function resolveActor(token?: string): Promise<Actor | null> {
     .from(extensions)
     .where(eq(extensions.id, row.actorId))
     .limit(1);
-  if (!ext) return null;
+  // Revoking portal access (portalEnabled=false) must drop live sessions too,
+  // not just block new logins.
+  if (!ext || !ext.portalEnabled) return null;
   return { type: "extension", id: ext.id, number: ext.number, name: ext.name };
 }
 
