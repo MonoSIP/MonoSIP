@@ -257,9 +257,13 @@ export const docsTr = {
           <>
             <ol>
               <li>
-                Yönetici paneline girin. Laboratuvar varsayılanları{" "}
-                <code>admin@example.com</code> / <code>Admin123!</code>;
-                kurulumu açmadan önce bunları değiştirin.
+                Yönetici paneline <code>admin@example.com</code> ile girin. Compose
+                laboratuvar parolası <code>Admin123!</code>’tür; tek-konteyner imajı
+                ise ilk açılışta benzersiz bir yönetici parolası üretip konteyner
+                logunda bir kez yazdırır (<code>docker logs monosip</code> veya
+                sunucunuzun Runtime log’u — “first-run admin login” satırı). Giriş
+                yaptıktan sonra değiştirin; kendi parolanızı kullanmak için ilk
+                açılıştan önce <code>ADMIN_PASSWORD</code> verin.
               </li>
               <li>
                 Alan adını koyun ve güvenilen HTTPS’i ayarlayın. Compose

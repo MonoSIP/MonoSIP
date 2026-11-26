@@ -87,6 +87,32 @@ docker run -d --name monosip --restart unless-stopped \
   ghcr.io/monosip/monosip:latest
 ```
 
+#### First-run admin password
+
+The single image provisions itself: on first start it generates and persists the
+session secret, the encryption key and the Asterisk ARI/AMI passwords to the
+`/data` volume — you set none of them. It also generates a **unique admin
+password** (not `Admin123!`) and prints it **once** in the container log. Read it
+right after the first start:
+
+```bash
+docker logs monosip | grep -A4 "first-run admin login"
+```
+```
+============================================================
+ MonoSIP first-run admin login (save it, change after login)
+   email:    admin@example.com
+   password: 4f3c…(unique)
+============================================================
+```
+
+On a hosting panel (NineDeploy, Coolify, Dokploy, …) the same line appears in the
+service's **Runtime logs / deploy log**. Save it, sign in at `admin@example.com`,
+and change it under **Settings → Admin sign-in**. To choose the password yourself
+instead, set `ADMIN_PASSWORD=<strong password>` before the first start; your value
+is used and no password is printed. Lost it later: [Forgot the admin
+password](#forgot-the-admin-password) resets to `Admin123!`.
+
 | Tag | Source |
 | --- | --- |
 | `latest`, `X.Y.Z`, `X.Y` | release tags (`vX.Y.Z`) |
@@ -134,7 +160,7 @@ No env is required for a first boot:
 - Demo extensions (100–103) + sample IVR are seeded **once** on an empty DB, then marked done — deleting them and rebuilding will **not** bring them back. Set `MONOSIP_LAB_SEED=0` to skip demo users on a fresh volume. Demo SIP trunk still requires `MONOSIP_LAB_SEED=1` (Compose default for local labs).
 - With `PUBLIC_HOST` set (or `MONOSIP_REQUIRE_PERSISTENT_DATA=1`), boot **refuses** to start if `/data` is not a real volume (prevents silent wipe). Lab-only escape: `MONOSIP_ALLOW_EPHEMERAL_DATA=1`
 
-Default admin (change it under Settings → Admin sign-in): `admin@example.com` / `Admin123!`. Forgot it later: [Forgot the admin password](#forgot-the-admin-password).
+Admin sign-in email: `admin@example.com` (override with `ADMIN_EMAIL`). The password is **generated on first start and printed in the log** unless you set `ADMIN_PASSWORD` above — see [First-run admin password](#first-run-admin-password). Change it afterwards under Settings → Admin sign-in; forgot it later: [Forgot the admin password](#forgot-the-admin-password).
 
 **Vault (recommended for a public host such as `pbx.example.com`):**
 

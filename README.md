@@ -18,6 +18,18 @@ docker run -d --name monosip --restart unless-stopped \
   ghcr.io/monosip/monosip:latest
 ```
 
+Sign in at `admin@example.com`. This image **generates a unique admin password on first start** and prints it once in its log — read it with `docker logs monosip` (on a hosting panel, open the service's Runtime logs):
+
+```
+============================================================
+ MonoSIP first-run admin login (save it, change after login)
+   email:    admin@example.com
+   password: 4f3c…(unique)
+============================================================
+```
+
+Change it under Settings → Admin sign-in after you log in. To choose the password yourself instead, pass `-e ADMIN_PASSWORD=<strong password>` on first run. All other secrets (session, encryption, Asterisk) are generated and persisted to the `/data` volume automatically — you set nothing.
+
 Recommended: 2 vCPU and 4 GB RAM (neural speech runs on the PBX CPU).
 
 From source with Docker Compose:
@@ -37,7 +49,7 @@ Open **https://localhost** (self-signed cert — accept the browser warning).
 | Admin | `admin@example.com` | `Admin123!` |
 | Portal (ext 101) | `101` | `portal101` |
 
-Lab passwords only — change them for production. Demo extensions are seeded once on an empty DB; deleting them and rebuilding will not recreate them (`MONOSIP_LAB_SEED=0` skips them on a fresh volume). Forgot the admin password later: `pnpm db:reset-admin` (inside the container: `docker compose exec api pnpm db:reset-admin` or `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`. See [INSTALL.md](docs/INSTALL.md).
+These are the **Compose** lab defaults (`.env` sets them) — change them for production. The prebuilt single-container image above does not use `Admin123!`; it generates a unique admin password on first start and prints it in the log. Demo extensions are seeded once on an empty DB; deleting them and rebuilding will not recreate them (`MONOSIP_LAB_SEED=0` skips them on a fresh volume). Forgot the admin password later: `pnpm db:reset-admin` (inside the container: `docker compose exec api pnpm db:reset-admin` or `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`, from which you sign in and set a new one. See [INSTALL.md](docs/INSTALL.md).
 
 ## What you get
 

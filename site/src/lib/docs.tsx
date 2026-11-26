@@ -261,9 +261,14 @@ export const docs: Record<
           <>
             <ol>
               <li>
-                Sign in to the admin panel. Lab defaults are{" "}
-                <code>admin@example.com</code> / <code>Admin123!</code>; replace
-                them before exposing the installation.
+                Sign in to the admin panel as <code>admin@example.com</code>. The
+                Compose lab password is <code>Admin123!</code>; the single-container
+                image instead generates a unique admin password on first start and
+                prints it once in the container log (
+                <code>docker logs monosip</code>, or your host’s Runtime logs —
+                look for “first-run admin login”). Change it after signing in, and
+                set <code>ADMIN_PASSWORD</code> before first start to choose your
+                own.
               </li>
               <li>
                 Set the hostname and configure trusted HTTPS. In the Compose
