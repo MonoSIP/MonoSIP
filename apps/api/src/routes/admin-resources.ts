@@ -1353,7 +1353,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       const { locatedRecording } = await import("../lib/recording-files.js");
       const prev = existing[0];
       const prevFile = prev.filePath === apiPath ? null : locatedRecording(prev.filePath);
-      if (prevFile && prevFile.size >= sizeBytes) {
+      // A converted .ogg is ~4x smaller than the WAV it came from and belongs to a
+      // finished call, so size says nothing there: keep it.
+      const prevConverted = prevFile !== null && !/\.wav$/i.test(prevFile.path);
+      if (prevFile && (prevConverted || prevFile.size >= sizeBytes)) {
         if (prevFile.path !== filePath) deleteRecordingFile(filePath);
         await db
           .update(recordings)

@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { eq } from "drizzle-orm";
@@ -68,10 +68,15 @@ const seededMissed: string[] = [];
 const seededExtensions: string[] = [];
 const seededCdrs: string[] = [];
 
-function writeWav(name: string): string {
+/** A finished recording: last written an hour ago unless `fresh`. */
+function writeWav(name: string, fresh = false): string {
   const p = path.join(WORK, name);
   mkdirSync(path.dirname(p), { recursive: true });
   writeFileSync(p, readFileSync(FIXTURE));
+  if (!fresh) {
+    const old = new Date(Date.now() - 3600_000);
+    utimesSync(p, old, old);
+  }
   return p;
 }
 
@@ -161,6 +166,13 @@ describe("convertWavToOpus", () => {
     expect(after?.filePath).toBe(path.join(WORK, "a.ogg"));
     expect(existsSync(path.join(WORK, "a.ogg"))).toBe(true);
     expect(existsSync(file)).toBe(false);
+  });
+
+  it("leaves a recording that is still being written", async () => {
+    const file = writeWav("live.wav", true);
+    await seedRecordingRow("opus-live", file);
+    expect(await convertWavToOpus()).toBe(0);
+    expect(existsSync(file)).toBe(true);
   });
 
   it("skips already-archived recordings", async () => {

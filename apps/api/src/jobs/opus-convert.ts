@@ -1,8 +1,11 @@
 import { spawn } from "node:child_process";
-import { unlink } from "node:fs/promises";
+import { stat, unlink } from "node:fs/promises";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { recordings } from "../db/schema.js";
+
+/** Untouched for this long means Asterisk has closed the file. */
+const BUSY_MS = 5 * 60_000;
 
 /** Optional: convert WAV recordings to Opus (ogg) when ffmpeg is available. */
 export async function convertWavToOpus(limit = 20): Promise<number> {
@@ -10,6 +13,11 @@ export async function convertWavToOpus(limit = 20): Promise<number> {
   const wavs = rows.filter((r) => r.filePath.endsWith(".wav") && !r.archived).slice(0, limit);
   let n = 0;
   for (const rec of wavs) {
+    // A recording still being written (IVR rows exist from the start of the call)
+    // must not be converted: the WAV would be deleted under Asterisk and the rest
+    // of the call lost. Asterisk writes every few ms, so a quiet file is finished.
+    const st = await stat(rec.filePath).catch(() => null);
+    if (!st || Date.now() - st.mtimeMs < BUSY_MS) continue;
     const out = rec.filePath.replace(/\.wav$/i, ".ogg");
     const ok = await runFfmpeg(rec.filePath, out);
     if (!ok) continue;
