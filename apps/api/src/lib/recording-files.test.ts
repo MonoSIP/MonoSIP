@@ -63,6 +63,15 @@ describe("wavDurationSeconds", () => {
     expect(wavDurationSeconds(file)).toBe(1);
   });
 
+  it("estimates a compressed 32 kbps recording at ~4 KB a second", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "monosip-wav-"));
+    dirs.push(dir);
+    const file = path.join(dir, "short.mp3");
+    // 3 s of 32 kbps MP3: read as PCM this was 0 s and the boot purge deleted it.
+    writeFileSync(file, Buffer.alloc(12_000, 0xff));
+    expect(wavDurationSeconds(file)).toBe(3);
+  });
+
   it("returns 0 for empty data chunk", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "monosip-wav-"));
     dirs.push(dir);

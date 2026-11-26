@@ -16,8 +16,10 @@ export function wavDurationSeconds(filePath: string): number {
       const hdr = Buffer.alloc(12);
       readSync(fd, hdr, 0, 12, 0);
       if (hdr.toString("ascii", 0, 4) !== "RIFF" || hdr.toString("ascii", 8, 12) !== "WAVE") {
-        // Non-WAV: rough estimate as 8 kHz 16-bit mono PCM
-        return Math.max(0, Math.floor((st.size - 44) / 16000));
+        // Compressed recordings (MP3/OGG at 32 kbps) hold ~4 KB a second. Reading
+        // them as 16 KB/s PCM made every clip under ~4 s look empty, and the boot
+        // purge deleted it.
+        return Math.max(0, Math.floor(st.size / 4000));
       }
       let offset = 12;
       let sampleRate = 8000;
