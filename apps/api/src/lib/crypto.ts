@@ -11,8 +11,19 @@ import { config } from "../config.js";
 
 const ALGO = "aes-256-gcm";
 
-function keyBytes(): Buffer {
-  return Buffer.from(config.encryptionKey.slice(0, 64), "hex");
+function keyBytes(hex: string = config.encryptionKey): Buffer {
+  return Buffer.from(hex.slice(0, 64), "hex");
+}
+
+/**
+ * The previous ENCRYPTION_KEY during a key rotation. When set, {@link decrypt}
+ * falls back to it so the app can still read values that have not yet been
+ * re-encrypted under the new key (see db/rotate-encryption-key.ts). New writes
+ * always use the primary key, so the old key can be dropped once the rotation
+ * migration has run. Empty = no rotation in progress.
+ */
+function oldKeyHex(): string {
+  return (process.env.ENCRYPTION_KEY_OLD ?? "").trim();
 }
 
 export function encrypt(plain: string): string {
@@ -23,15 +34,31 @@ export function encrypt(plain: string): string {
   return `${iv.toString("hex")}:${tag.toString("hex")}:${enc.toString("hex")}`;
 }
 
-export function decrypt(payload: string): string {
+function decryptWith(payload: string, key: Buffer): string {
   const [ivHex, tagHex, dataHex] = payload.split(":");
   if (!ivHex || !tagHex || !dataHex) throw new Error("Invalid ciphertext");
-  const decipher = createDecipheriv(ALGO, keyBytes(), Buffer.from(ivHex, "hex"));
+  const decipher = createDecipheriv(ALGO, key, Buffer.from(ivHex, "hex"));
   decipher.setAuthTag(Buffer.from(tagHex, "hex"));
   return Buffer.concat([
     decipher.update(Buffer.from(dataHex, "hex")),
     decipher.final(),
   ]).toString("utf8");
+}
+
+export function decrypt(payload: string): string {
+  try {
+    return decryptWith(payload, keyBytes());
+  } catch (err) {
+    const old = oldKeyHex();
+    if (old) {
+      try {
+        return decryptWith(payload, keyBytes(old));
+      } catch {
+        /* fall through to the original error */
+      }
+    }
+    throw err;
+  }
 }
 
 export function randomSecret(length = 32): string {
