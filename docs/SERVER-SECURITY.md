@@ -15,7 +15,7 @@ All components run on a single on-prem or hosted VM. Sizing assumes at most ~8�
 
 ## Network
 
-- **Recording footprint:** WAV ≈ 1 MB/min; 1,000 minutes/day ≈ 20–25 GB/month. Opus cuts that ~5–8×
+- **Recording footprint:** WAV ≈ 1 MB/min; 1,000 minutes/day ≈ 20–25 GB/month. MP3 storage (32 kbps) cuts that ~4×.
 - **Network:** Stable private IP. Disable SIP ALG on modem/firewall
 - **Exposed:** 443 for panel/portal (HTTPS + WSS). TURN 3478 + relay range. SIP/RTP toward the carrier only on the provider’s IPs
 - **Not exposed:** 5060/5061 SIP, AMI, ARI, PostgreSQL. Off-site desk phones use VPN

@@ -9,8 +9,9 @@ import {
 } from "../test/jobs-harness.js";
 import { startRetentionJob } from "./retention.js";
 import { startArchiveJob } from "./archive.js";
-import { startOpusConvertJob } from "./opus-convert.js";
+import { startRecordingConvertJob } from "./recording-convert.js";
 import { startQueueCallbackJob } from "./queue-callback.js";
+import { utimesSync, writeFileSync } from "node:fs";
 
 /**
  * Crash-safety of the background job starters.
@@ -34,7 +35,7 @@ vi.mock("../lib/ami.js", () => ({
 
 vi.mock("node:child_process", () => ({
   spawn: vi.fn((cmd: string) => {
-    // opus-convert shells out to ffmpeg. Throwing synchronously from spawn
+    // recording-convert shells out to ffmpeg. Throwing synchronously from spawn
     // rejects the promise runFfmpeg() wraps it in.
     if (cmd === "ffmpeg") throw new Error("ffmpeg exploded");
     return { stderr: { on: vi.fn() }, on: vi.fn() };
@@ -93,8 +94,12 @@ async function waitForOutcome(settled: () => boolean, ms = 5000): Promise<void> 
 }
 
 async function seedWavRecording(): Promise<void> {
-  // convertWavToOpus only shells out to ffmpeg for a pending .wav row, so the
+  // convertRecordingsToMp3 only shells out to ffmpeg for a pending .wav row, so the
   // loop has to have something to work on for the failure to happen at all.
+  // The file must exist and be quiet (not still being written) to be picked up.
+  writeFileSync("/tmp/crash-wav.wav", Buffer.alloc(44));
+  const old = new Date(Date.now() - 3600_000);
+  utimesSync("/tmp/crash-wav.wav", old, old);
   const [row] = await db
     .insert(recordings)
     .values({ callId: "crash-wav", filePath: "/tmp/crash-wav.wav", duration: 1, sizeBytes: 44 })
@@ -144,15 +149,15 @@ describe("job starters never leak an unhandled rejection", () => {
     expect(warnings.some((w) => w.includes("[archive]"))).toBe(true);
   });
 
-  it("startOpusConvertJob handles a failing run", async () => {
+  it("startRecordingConvertJob handles a failing run", async () => {
     await seedWavRecording();
 
-    const timer = startOpusConvertJob(3600_000);
+    const timer = startRecordingConvertJob(3600_000);
     await waitForOutcome(() => warnings.length > 0 || unhandled.length > 0);
     clearInterval(timer);
 
     expect(unhandled).toEqual([]);
-    expect(warnings.some((w) => w.includes("[opus]"))).toBe(true);
+    expect(warnings.some((w) => w.includes("[mp3]"))).toBe(true);
   });
 
   it("startQueueCallbackJob handles a failing run", async () => {

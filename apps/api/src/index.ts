@@ -131,8 +131,8 @@ async function main() {
   startSummaryEmailJob();
   const { startArchiveJob } = await import("./jobs/archive.js");
   startArchiveJob();
-  const { startOpusConvertJob } = await import("./jobs/opus-convert.js");
-  startOpusConvertJob();
+  const { startRecordingConvertJob } = await import("./jobs/recording-convert.js");
+  startRecordingConvertJob();
   // Ban addresses that brute-force SIP (AMI security events → SIP ACL deny)
   const { startSipGuard } = await import("./lib/sip-guard.js");
   startSipGuard();

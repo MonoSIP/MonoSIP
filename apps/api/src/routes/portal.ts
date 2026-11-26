@@ -22,6 +22,7 @@ import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { importMailboxFiles, voicemailGreetingMediaId } from "../lib/voicemail-inbox.js";
+import { audioContentType } from "../lib/audio-mime.js";
 
 export async function portalRoutes(app: FastifyInstance) {
   app.get("/api/v1/me", async (req, reply) => {
@@ -193,17 +194,7 @@ export async function portalRoutes(app: FastifyInstance) {
       actorId: a.id,
       action: "stream",
     });
-    {
-      const ext = rec.filePath.split(".").pop()?.toLowerCase();
-      reply.header(
-        "content-type",
-        ext === "wav"
-          ? "audio/wav"
-          : ext === "ogg" || ext === "opus"
-            ? "audio/ogg"
-            : "application/octet-stream",
-      );
-    }
+    reply.header("content-type", audioContentType(rec.filePath));
     reply.header("content-disposition", "inline");
     reply.header("content-length", String(st.size));
     reply.header("accept-ranges", "bytes");

@@ -10,6 +10,7 @@ import { ipAllowed } from "../lib/ip-allowlist.js";
 import { announcePublic, openRecording, placeAnnounceCall } from "../lib/announce-call.js";
 import { dialNumberPattern } from "../lib/announce-policy.js";
 import { authBlocked, clearAuthFailure, keyExpired, noteAuthFailure, verifyBarrier } from "../lib/api-key-auth.js";
+import { audioContentType } from "../lib/audio-mime.js";
 
 type ApiKeyRow = typeof apiKeys.$inferSelect;
 
@@ -71,12 +72,6 @@ async function authenticate(req: FastifyRequest, perm?: string): Promise<KeyAuth
   return { ok: true, key };
 }
 
-function audioContentType(filePath: string): string {
-  const ext = filePath.split(".").pop()?.toLowerCase();
-  if (ext === "wav") return "audio/wav";
-  if (ext === "ogg" || ext === "opus") return "audio/ogg";
-  return "application/octet-stream";
-}
 
 export async function integrationRoutes(app: FastifyInstance) {
   app.post("/api/v1/ext/calls/originate", async (req, reply) => {

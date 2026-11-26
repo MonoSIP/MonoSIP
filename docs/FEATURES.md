@@ -71,7 +71,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 ## Recording and logs
 
 - Per-extension or per-queue recording; KVKK announcement on inbound/outbound when recording
-- Optional Opus convert; retention job deletes expired files; NAS or SFTP archive
+- Finished recordings are stored as MP3 (8 kHz mono, 32 kbps, ~240 KB/min; older OGG files are moved to MP3); retention job deletes expired files; NAS or SFTP archive
 - Waveform player in the panel; admin can download
 - CDR: filters, CSV export, link to recording, DND inbound flagged
 - Missed calls: list, email notify, auto “called back” when returned

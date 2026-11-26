@@ -355,7 +355,7 @@ Simulate alone is insufficient. Mark LIVE.
 | K-13 | Missed call list | Entry on missed inbound | LIVE | |
 | K-14 | Missed → called back | Status updates | LIVE | |
 | K-15 | Missed email notify | SMTP or log-only | LIVE | |
-| K-16 | Opus convert job | ogg when ffmpeg present | AUTO | |
+| K-16 | Recording convert job | mp3 when ffmpeg present; skips files still being written | AUTO | |
 | K-17 | Retention job | Expired deleted (respect archive) | AUTO | |
 | K-18 | Archive local/SFTP | Marked archived | AUTO+MANUAL | |
 
@@ -477,7 +477,7 @@ Simulate alone is insufficient. Mark LIVE.
 | --- | --- | --- | --- | --- |
 | Q-01 | Retention | Expired recordings removed | AUTO | |
 | Q-02 | Archive job / manual run | Files on path/SFTP; flagged | AUTO | |
-| Q-03 | Opus convert | Converts when ffmpeg present; skip archived | AUTO | |
+| Q-03 | Recording convert | WAV and OGG to MP3 when ffmpeg present; skip archived | AUTO | |
 | Q-04 | Queue callback job | Dials waiting callback | AUTO+LIVE | |
 | Q-05 | Summary email daily/monthly | Sent or log-only | AUTO | |
 | Q-06 | Trunk monitor | Detects down; alerts | AUTO+LIVE | |

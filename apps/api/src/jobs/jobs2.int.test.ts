@@ -16,7 +16,7 @@ import {
 } from "../test/jobs-harness.js";
 import { fetchQueueAvailableAgents, fetchQueueWaiting, fetchTrunkEndpointStatus } from "../lib/ami.js";
 import { sendSmtpMail } from "../lib/smtp.js";
-import { convertWavToOpus, startOpusConvertJob } from "../jobs/opus-convert.js";
+import { convertRecordingsToMp3, startRecordingConvertJob } from "../jobs/recording-convert.js";
 import { processQueueCallbacks, startQueueCallbackJob } from "../jobs/queue-callback.js";
 import { startTrunkMonitorJob } from "../jobs/trunk-monitor.js";
 import { runNightlyBackup, startNightlyBackupJob } from "../jobs/nightly-backup.js";
@@ -44,7 +44,7 @@ vi.mock("node:child_process", async () => {
       setTimeout(() => {
         if (cmd === "ffmpeg") {
           const out = args[args.length - 1]!;
-          fs.writeFileSync(out, "fake-ogg-bytes");
+          fs.writeFileSync(out, "fake-mp3-bytes");
           handlers.close?.forEach((f) => f(0));
         } else {
           handlers.error?.forEach((f) => f(new Error("ENOENT")));
@@ -153,42 +153,50 @@ async function seedRecordingRow(callId: string, filePath: string, archived = fal
   return row;
 }
 
-// ------------------------------------------------------------ opus-convert
+// ------------------------------------------------------- recording-convert
 
-describe("convertWavToOpus", () => {
+describe("convertRecordingsToMp3", () => {
   it("converts a pending WAV, repoints the row and removes the source", async () => {
     const file = writeWav("a.wav");
     const row = await seedRecordingRow("opus-1", file);
 
-    expect(await convertWavToOpus()).toBe(1);
+    expect(await convertRecordingsToMp3()).toBe(1);
 
     const [after] = await db.select().from(recordings).where(eq(recordings.id, row.id));
-    expect(after?.filePath).toBe(path.join(WORK, "a.ogg"));
-    expect(existsSync(path.join(WORK, "a.ogg"))).toBe(true);
+    expect(after?.filePath).toBe(path.join(WORK, "a.mp3"));
+    expect(existsSync(path.join(WORK, "a.mp3"))).toBe(true);
     expect(existsSync(file)).toBe(false);
   });
 
   it("leaves a recording that is still being written", async () => {
     const file = writeWav("live.wav", true);
     await seedRecordingRow("opus-live", file);
-    expect(await convertWavToOpus()).toBe(0);
+    expect(await convertRecordingsToMp3()).toBe(0);
     expect(existsSync(file)).toBe(true);
   });
 
   it("skips already-archived recordings", async () => {
     await seedRecordingRow("opus-2", writeWav("b.wav"), true);
-    expect(await convertWavToOpus()).toBe(0);
+    expect(await convertRecordingsToMp3()).toBe(0);
     expect(existsSync(path.join(WORK, "b.wav"))).toBe(true);
   });
 
-  it("skips recordings that are already .ogg", async () => {
-    await seedRecordingRow("opus-3", writeWav("c.ogg"));
-    expect(await convertWavToOpus()).toBe(0);
+  it("moves recordings an older release stored as .ogg to .mp3", async () => {
+    const row = await seedRecordingRow("opus-ogg", writeWav("o.ogg"));
+    expect(await convertRecordingsToMp3()).toBe(1);
+    const [after] = await db.select().from(recordings).where(eq(recordings.id, row.id));
+    expect(after?.filePath).toBe(path.join(WORK, "o.mp3"));
+    expect(existsSync(path.join(WORK, "o.ogg"))).toBe(false);
+  });
+
+  it("skips recordings that are already .mp3", async () => {
+    await seedRecordingRow("opus-3", writeWav("c.mp3"));
+    expect(await convertRecordingsToMp3()).toBe(0);
   });
 
   it("honours the batch limit", async () => {
     for (let i = 0; i < 3; i++) await seedRecordingRow(`opus-lim-${i}`, writeWav(`lim${i}.wav`));
-    expect(await convertWavToOpus(2)).toBe(2);
+    expect(await convertRecordingsToMp3(2)).toBe(2);
   });
 
   it("leaves the row untouched when ffmpeg is unavailable", async () => {
@@ -206,17 +214,17 @@ describe("convertWavToOpus", () => {
       };
     }) as never);
 
-    expect(await convertWavToOpus()).toBe(0);
+    expect(await convertRecordingsToMp3()).toBe(0);
     const [after] = await db.select().from(recordings).where(eq(recordings.id, row.id));
     expect(after?.filePath).toBe(file);
   });
 });
 
-describe("startOpusConvertJob", () => {
+describe("startRecordingConvertJob", () => {
   it("registers the hourly interval and the callback converts", async () => {
     await seedRecordingRow("opus-tick", writeWav("tick.wav"));
     const cap = captureInterval();
-    const timer = startOpusConvertJob(3600_000);
+    const timer = startRecordingConvertJob(3600_000);
     cap.restore();
 
     expect(cap.period()).toBe(3600_000);
