@@ -112,6 +112,17 @@ fi
 if [ -z "${ASTERISK_AMI_USER:-}" ]; then
   ASTERISK_AMI_USER="monosip"
 fi
+# First install needs no public-default admin login: when ADMIN_PASSWORD is not
+# supplied (and none is persisted yet), generate a unique one and print it once
+# below, so the operator never signs in with the public Admin123!.
+# Only on a first-ever boot (no persisted secrets yet): an existing install
+# already has its admin row, so generating/printing a password here would be a
+# value seed never applies.
+ADMIN_PASSWORD_NEW=0
+if [ -z "${ADMIN_PASSWORD:-}" ] && [ "$HAD_SECRETS" = "0" ]; then
+  ADMIN_PASSWORD="$(openssl rand -hex 12)"
+  ADMIN_PASSWORD_NEW=1
+fi
 
 # Only the secrets file is private: a global umask 077 leaked into Asterisk's
 # sound folders (root 700), which Asterisk (runuser=asterisk) then cannot read.
@@ -123,6 +134,7 @@ export ASTERISK_ARI_USER='$ASTERISK_ARI_USER'
 export ASTERISK_ARI_PASSWORD='$ASTERISK_ARI_PASSWORD'
 export ASTERISK_AMI_USER='$ASTERISK_AMI_USER'
 export ASTERISK_AMI_PASSWORD='$ASTERISK_AMI_PASSWORD'
+export ADMIN_PASSWORD='$ADMIN_PASSWORD'
 EOF
 then
   echo "WARN: cannot write $SECRETS_FILE (volume permissions?) — secrets will not persist"
@@ -133,7 +145,19 @@ export SESSION_SECRET ENCRYPTION_KEY INTERNAL_API_SECRET
 export ASTERISK_ARI_USER ASTERISK_ARI_PASSWORD ASTERISK_AMI_USER ASTERISK_AMI_PASSWORD
 
 export ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
+# Generated + persisted above; the default is only a last resort if secret
+# generation was unavailable (openssl missing).
 export ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin123!}"
+if [ "${ADMIN_PASSWORD_NEW:-0}" = "1" ]; then
+  echo ""
+  echo "============================================================"
+  echo " MonoSIP first-run admin login (save it, change after login)"
+  echo "   email:    ${ADMIN_EMAIL}"
+  echo "   password: ${ADMIN_PASSWORD}"
+  echo " Lost it? 'docker exec <container> pnpm db:reset-admin' resets to Admin123!"
+  echo "============================================================"
+  echo ""
+fi
 export RECORDINGS_DIR="${RECORDINGS_DIR:-$DATA_DIR/recordings}"
 export UPLOADS_DIR="${UPLOADS_DIR:-$DATA_DIR/uploads}"
 export ASTERISK_CONFIG_DIR="${ASTERISK_CONFIG_DIR:-$DATA_DIR/asterisk}"
