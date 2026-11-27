@@ -81,25 +81,15 @@ Agent o zaman SEQUENCE’i uygular ve başarıda durumu **PRODUCTION EXECUTION V
 
 ---
 
-## Şu anki durum (son kontrol — 2026-11-27T19:56Z)
+## Şu anki durum (2026-11-27T21:00Z)
 
 | Madde | Durum |
 |-------|--------|
-| Kod + SQL + lab + docs paketi | Hazır (`READY FOR CONTROLLED PRODUCTION EXECUTION`) |
-| Preflight counts vs forensics (Admin CDR API walk) | **MATCH** — `prod_preflight_refresh.json` (7504 rows, 8 groups, discard 7244, G8 billsec 40) |
-| Production health `cdr` metrik alanı | **Yok** |
-| `GET /api/v1/admin/cdr-integrity` | **404** — remediating image **not live** on `sip.dgn.tr` |
-| SSH to STUN IP `95.130.168.22:22` | **Connection refused** |
-| Production DB `psql` / NineDeploy panel (agent) | **Yok** — SEQUENCE #1 (deploy) blocked until operator redeploys `ghcr.io/monosip/monosip:main` |
-| Production SQL A/B / 0019 | **Not touched** |
+| Kod + SQL + lab + docs paketi | Hazır |
+| Remediating image on `sip.dgn.tr` | **Live** (`monosip-352`, health + `cdr`) |
+| Preflight | **MATCH** then applied |
+| SQL A / SQL B / UNIQUE (`03_enforce_unique`) | **DONE** |
+| Post-verify | **PASS** — 259 rows, 0 dups, `cdr_call_id_uidx` |
+| Record | `PRODUCTION_EXECUTION_RECORD.md` |
 
-### Agent’in devam edebilmesi için tek eksik sinyal
-
-NineDeploy (veya mevcut orchestrator) üzerinde remediating image’ı deploy et; sonra doğrula:
-
-```bash
-curl --fail-with-body https://sip.dgn.tr/api/v1/health
-# JSON içinde "cdr": { … } olmalı
-```
-
-Deploy + backup restore kanıtı + “ingest pause yetkisi var” mesajından sonra SEQUENCE #3’ten uygulanır.
+**PRODUCTION EXECUTION VERIFIED.**

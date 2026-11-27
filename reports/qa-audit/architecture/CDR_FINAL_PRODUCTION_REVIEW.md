@@ -28,5 +28,5 @@ Apply **only** when `GROUP BY call_id HAVING count(*)>1` is empty (after A+B).
 
 ## Production
 
-**Storm SQL A/B + prod `0019` not applied.** Remediation code is on `main` / GHCR.  
-See `CDR_PRODUCTION_RUNBOOK.md` + `AUDIT_CLOSEOUT.md`. Explicit operator approval still required for the maintenance window.
+**EXECUTED 2026-11-27** on `sip.dgn.tr` — see `cdr-dedupe/PRODUCTION_EXECUTION_RECORD.md`.  
+Post-state: 259 CDR rows, 0 duplicate groups, `cdr_call_id_uidx`, health/integrity OK.

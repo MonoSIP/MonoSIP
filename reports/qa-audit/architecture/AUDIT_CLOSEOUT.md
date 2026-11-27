@@ -14,9 +14,9 @@
 | Lab package (SQL A → B → 0019, rollback/re-apply) | **PASS** (re-run 2026-11-27) |
 | Architecture regression suite | **PASS** — `arch:test` 60 · `arch:test:int` 27 |
 | CI | **PASS** on current `main` |
-| Production storm dedupe (SQL A/B) + first `0019` on prod volume | **NOT EXECUTED** — needs operator handoff + explicit apply |
+| Production storm dedupe (SQL A/B) + UNIQUE enforce on prod volume | **DONE** — see `cdr-dedupe/PRODUCTION_EXECUTION_RECORD.md` |
 
-Audit engineering work is **closed**. Remaining work is **ops execution**, not discovery.
+Audit engineering + production execution are **closed**.
 
 ---
 
