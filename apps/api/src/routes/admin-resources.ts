@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import path from "node:path";
-import { and, desc, eq, gt, gte, inArray, like, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import {
   BlacklistSchema,
   InboundRouteSchema,
@@ -1316,7 +1316,11 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       })
       .parse(req.body);
     const { existsSync, statSync } = await import("node:fs");
-    const { wavDurationSeconds, deleteRecordingFile } = await import("../lib/recording-files.js");
+    const {
+      wavDurationSeconds,
+      deleteRecordingFile,
+      isKeepableRecording,
+    } = await import("../lib/recording-files.js");
     // Asterisk spool and API share the recordings volume (spool ↔ /data/recordings)
     const candidates = [
       body.file,
@@ -1334,10 +1338,12 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     } catch {
       /* ignore */
     }
+    // Dialplan stamps ANSWEREDTIME as `duration`. Explicit 0 = never answered
+    // (ringback-only MixMonitor). Omitting duration (ARI/tests) trusts the file.
+    const billed = body.duration;
     const fromWav = wavDurationSeconds(filePath);
-    const duration = Math.max(body.duration ?? 0, fromWav);
-    // Do not keep empty / 0-second recordings
-    if (duration < 1 || sizeBytes < 500) {
+    const duration = Math.max(billed ?? 0, fromWav);
+    if (billed === 0 || !isKeepableRecording({ durationSec: duration, sizeBytes })) {
       deleteRecordingFile(filePath);
       const existing = await db
         .select()
@@ -1351,8 +1357,10 @@ export async function adminResourceRoutes(app: FastifyInstance) {
           .set({ recordingId: null })
           .where(eq(cdr.callId, body.callId));
       }
-      console.log(`[recording] discarded 0s callId=${body.callId} size=${sizeBytes}`);
-      return { ok: true, discarded: true, reason: "zero_duration" };
+      console.log(
+        `[recording] discarded short/unanswered callId=${body.callId} billed=${billed ?? "omit"} dur=${duration} size=${sizeBytes}`,
+      );
+      return { ok: true, discarded: true, reason: "short_or_unanswered" };
     }
     const apiPath = filePath.includes("/data/recordings/")
       ? filePath
@@ -1858,7 +1866,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       page?: string;
       pageSize?: string;
     };
-    const clauses = [gt(recordings.duration, 0)];
+    // Hide sub-minimum clips the same way purge/register do (ringback noise, etc.).
+    const { MIN_KEEP_RECORDING_SECONDS } = await import("../lib/recording-files.js");
+    const clauses = [gte(recordings.duration, MIN_KEEP_RECORDING_SECONDS)];
     if (q.from) clauses.push(gte(recordings.createdAt, new Date(q.from)));
     if (q.to) clauses.push(lte(recordings.createdAt, new Date(q.to)));
     const num = numberSearch(q.number);

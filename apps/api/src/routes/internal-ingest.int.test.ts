@@ -265,13 +265,44 @@ describe("POST /api/v1/internal/recording", () => {
   it("derives duration from the WAV when none is supplied", async () => {
     const id = callId();
     callIds.push(id);
-    const file = stageAudio("int-rec-dur.wav", TONE_LONG);
+    // 3 s of 8 kHz PCM — must clear MIN_KEEP_RECORDING_SECONDS (2).
+    const samples = 8000 * 3;
+    const dataSize = samples * 2;
+    const buf = Buffer.alloc(44 + dataSize);
+    buf.write("RIFF", 0);
+    buf.writeUInt32LE(36 + dataSize, 4);
+    buf.write("WAVE", 8);
+    buf.write("fmt ", 12);
+    buf.writeUInt32LE(16, 16);
+    buf.writeUInt16LE(1, 20);
+    buf.writeUInt16LE(1, 22);
+    buf.writeUInt32LE(8000, 24);
+    buf.writeUInt32LE(16000, 28);
+    buf.writeUInt16LE(2, 32);
+    buf.writeUInt16LE(16, 34);
+    buf.write("data", 36);
+    buf.writeUInt32LE(dataSize, 40);
+    const file = path.join(REC_DIR, "int-rec-dur.wav");
+    writeFileSync(file, buf);
+    writtenFiles.push(file);
 
     await postInternal("/api/v1/internal/recording", { callId: id, file });
     const [rec] = await db.select().from(recordings).where(eq(recordings.callId, id));
-    // The 1.5s fixture parses to a whole >=1 second, so the row is kept.
-    expect(rec?.duration).toBeGreaterThanOrEqual(1);
+    expect(rec?.duration).toBeGreaterThanOrEqual(2);
     expect(rec?.sizeBytes).toBeGreaterThan(0);
+  });
+
+  it("discards a 1-second clip even when billed talk time is positive", async () => {
+    const id = callId();
+    callIds.push(id);
+    const file = stageAudio("int-rec-1s.wav", TONE_LONG); // 1.5s → floor 1s
+    const res = await postInternal("/api/v1/internal/recording", {
+      callId: id,
+      file,
+      duration: 1,
+    });
+    expect(res.json()).toMatchObject({ ok: true, discarded: true, reason: "short_or_unanswered" });
+    expect(await db.select().from(recordings).where(eq(recordings.callId, id))).toHaveLength(0);
   });
 
   it("is idempotent: re-registering updates the existing row", async () => {
@@ -328,7 +359,7 @@ describe("POST /api/v1/internal/recording", () => {
 
     const res = await postInternal("/api/v1/internal/recording", { callId: id, file, duration: 0 });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ ok: true, discarded: true, reason: "zero_duration" });
+    expect(res.json()).toMatchObject({ ok: true, discarded: true, reason: "short_or_unanswered" });
     expect(await db.select().from(recordings).where(eq(recordings.callId, id))).toHaveLength(0);
   });
 

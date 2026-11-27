@@ -1,8 +1,26 @@
 import { existsSync, openSync, readFileSync, readSync, closeSync, unlinkSync, statSync } from "node:fs";
 import { spawn } from "node:child_process";
-import { eq, lte, or, isNull } from "drizzle-orm";
+import { eq, lt, or, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { cdr, recordings } from "../db/schema.js";
+
+/**
+ * Shortest clip we keep in the Recordings panel. MixMonitor starts before answer,
+ * so a missed/abandoned call still writes ~1 s of ringback/silence; those must
+ * not become rows. Same for announce calls that hang up before any speech.
+ */
+export const MIN_KEEP_RECORDING_SECONDS = 2;
+
+/** Tiny WAVs are headers only; ~0.5 s of 8 kHz PCM is already past this. */
+export const MIN_KEEP_RECORDING_BYTES = 500;
+
+/** True when duration/size look like a real conversation (or announcement). */
+export function isKeepableRecording(opts: {
+  durationSec: number;
+  sizeBytes: number;
+}): boolean {
+  return opts.durationSec >= MIN_KEEP_RECORDING_SECONDS && opts.sizeBytes >= MIN_KEEP_RECORDING_BYTES;
+}
 
 /** Duration in whole seconds from a WAV file; 0 if unreadable/empty. */
 export function wavDurationSeconds(filePath: string): number {
@@ -93,7 +111,7 @@ export function locatedRecording(filePath: string): { path: string; size: number
   return null;
 }
 
-/** Remove DB row + file for a call when recording is empty / 0s. */
+/** Remove DB row + file for a call when recording is empty / too short. */
 export async function discardEmptyRecordingsForCall(callId: string): Promise<number> {
   const rows = await db.select().from(recordings).where(eq(recordings.callId, callId));
   let n = 0;
@@ -102,8 +120,8 @@ export async function discardEmptyRecordingsForCall(callId: string): Promise<num
     const dur = Math.max(rec.duration ?? 0, found ? wavDurationSeconds(found.path) : 0);
     const size = Math.max(rec.sizeBytes ?? 0, found?.size ?? 0);
     // IVR rows are inserted with duration 0 and size 0 before the wav is measured.
-    // Keep them when the file itself has audio; the stored size is not the signal.
-    if (dur >= 1 || size >= 500) {
+    // Keep them only when the file itself has enough audio.
+    if (isKeepableRecording({ durationSec: dur, sizeBytes: size })) {
       const stored = found?.path.includes("/var/spool/asterisk/recording/")
         ? found.path.replace("/var/spool/asterisk/recording/", "/data/recordings/")
         : (found?.path ?? rec.filePath);
@@ -124,25 +142,37 @@ export async function discardEmptyRecordingsForCall(callId: string): Promise<num
   return n;
 }
 
-/** Purge all existing 0-second / empty recording rows. */
+/**
+ * Purge empty and sub-minimum recording rows (boot + ops). Also re-measures
+ * duration when a row was inserted as 0 before the file was closed.
+ */
 export async function purgeZeroSecondRecordings(): Promise<number> {
   const rows = await db
     .select()
     .from(recordings)
-    .where(or(lte(recordings.duration, 0), isNull(recordings.duration)));
+    .where(or(lt(recordings.duration, MIN_KEEP_RECORDING_SECONDS), isNull(recordings.duration)));
   let n = 0;
   for (const rec of rows) {
-    const dur = wavDurationSeconds(rec.filePath);
-    if (dur >= 1) {
-      await db.update(recordings).set({ duration: dur }).where(eq(recordings.id, rec.id));
+    const found = locatedRecording(rec.filePath);
+    const dur = Math.max(rec.duration ?? 0, found ? wavDurationSeconds(found.path) : 0);
+    const size = Math.max(rec.sizeBytes ?? 0, found?.size ?? 0);
+    if (isKeepableRecording({ durationSec: dur, sizeBytes: size })) {
+      const stored = found?.path.includes("/var/spool/asterisk/recording/")
+        ? found.path.replace("/var/spool/asterisk/recording/", "/data/recordings/")
+        : (found?.path ?? rec.filePath);
+      await db
+        .update(recordings)
+        .set({ duration: dur, sizeBytes: size, filePath: stored })
+        .where(eq(recordings.id, rec.id));
       continue;
     }
-    deleteRecordingFile(rec.filePath);
+    if (found) deleteRecordingFile(found.path);
+    else deleteRecordingFile(rec.filePath);
     await db.delete(recordings).where(eq(recordings.id, rec.id));
     await db.update(cdr).set({ recordingId: null }).where(eq(cdr.callId, rec.callId));
     n++;
   }
-  if (n) console.log(`[recording] purged ${n} zero-second recording(s)`);
+  if (n) console.log(`[recording] purged ${n} empty/short recording(s)`);
   return n;
 }
 

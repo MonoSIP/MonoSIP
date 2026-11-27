@@ -2,7 +2,12 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { deleteRecordingFile, repairWavHeader, wavDurationSeconds } from "./recording-files.js";
+import {
+  deleteRecordingFile,
+  isKeepableRecording,
+  repairWavHeader,
+  wavDurationSeconds,
+} from "./recording-files.js";
 
 function makeWav(sampleRate: number, samples: number): Buffer {
   const dataSize = samples * 2;
@@ -46,6 +51,14 @@ describe("repairWavHeader", () => {
     const file = path.join(dir, "fixed.wav");
     writeFileSync(file, buf);
     expect(wavDurationSeconds(file)).toBe(1);
+  });
+});
+
+describe("isKeepableRecording", () => {
+  it("rejects one-second and tiny clips", () => {
+    expect(isKeepableRecording({ durationSec: 1, sizeBytes: 16_000 })).toBe(false);
+    expect(isKeepableRecording({ durationSec: 5, sizeBytes: 100 })).toBe(false);
+    expect(isKeepableRecording({ durationSec: 2, sizeBytes: 8_000 })).toBe(true);
   });
 });
 

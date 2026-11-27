@@ -193,10 +193,17 @@ async function storeRecording(channelId: string, recName: string | null): Promis
   } catch {
     return null;
   }
-  if (size < 500) return null;
+  const { wavDurationSeconds, deleteRecordingFile, isKeepableRecording } = await import(
+    "./recording-files.js"
+  );
+  const duration = wavDurationSeconds(filePath);
+  if (!isKeepableRecording({ durationSec: duration, sizeBytes: size })) {
+    deleteRecordingFile(filePath);
+    return null;
+  }
   const [row] = await db
     .insert(recordings)
-    .values({ callId: channelId, filePath, duration: 0, sizeBytes: size })
+    .values({ callId: channelId, filePath, duration, sizeBytes: size })
     .returning();
   return row?.id ?? null;
 }
