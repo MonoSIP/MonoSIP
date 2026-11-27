@@ -100,7 +100,11 @@ export function PhonePage() {
     acknowledgeMissed(qc);
   }, [view, qc]);
 
-  const mediaWarning = health.data?.media?.warnings?.[0];
+  // Softphone only cares about RTP / reachable media IP — trunk UDP 5070 is
+  // an admin/deploy concern (Verimor inbound), not a softphone banner.
+  const mediaWarning = health.data?.media?.warnings?.find(
+    (w) => w.code === "rtp_udp_ports" || w.code === "external_ip",
+  );
   const showMediaBanner = Boolean(mediaWarning) || noRtp;
 
   useEffect(() => {
