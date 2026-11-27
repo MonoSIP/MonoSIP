@@ -21,10 +21,12 @@ export type ExternalIpResult = {
 
 type Cache = { at: number; result: ExternalIpResult };
 let cache: Cache | null = null;
+let inflight: Promise<ExternalIpResult> | null = null;
 const CACHE_MS = 5 * 60 * 1000;
 
 export function clearExternalIpCache(): void {
   cache = null;
+  inflight = null;
 }
 
 export async function loadStunSettings(): Promise<{ enabled: boolean; servers: string[] }> {
@@ -51,75 +53,87 @@ export async function resolveExternalIpDetailed(opts?: {
   if (!opts?.force && cache && Date.now() - cache.at < CACHE_MS) {
     return cache.result;
   }
+  // Boot races media-readiness + config-writer; share one discovery.
+  if (!opts?.force && inflight) return inflight;
 
-  const stun = await loadStunSettings();
-  const envIp = (config.externalIp || "").trim();
-  const envPublic = envIp && !isPrivateOrLocalIpv4(envIp) ? envIp : "";
+  const run = (async (): Promise<ExternalIpResult> => {
+    const stun = await loadStunSettings();
+    const envIp = (config.externalIp || "").trim();
+    const envPublic = envIp && !isPrivateOrLocalIpv4(envIp) ? envIp : "";
 
-  if (envPublic) {
-    const result: ExternalIpResult = {
-      ip: envPublic,
-      source: "env",
-      stunServers: stun.servers,
-      stunEnabled: stun.enabled,
-    };
-    cache = { at: Date.now(), result };
-    return result;
-  }
-
-  if (stun.enabled) {
-    const viaStun = await discoverPublicIpv4ViaStun(stun.servers);
-    if (viaStun) {
+    if (envPublic) {
       const result: ExternalIpResult = {
-        ip: viaStun,
-        source: "stun",
+        ip: envPublic,
+        source: "env",
         stunServers: stun.servers,
         stunEnabled: stun.enabled,
       };
       cache = { at: Date.now(), result };
-      console.info(`[nat] EXTERNAL_IP via STUN: ${viaStun} (${stun.servers[0]})`);
       return result;
     }
-  }
 
-  const host = (config.publicHost || "").trim();
-  if (host && host !== "localhost" && host !== "127.0.0.1") {
-    try {
-      const r = await dnsLookup(host, { family: 4 });
-      if (r.address) {
+    if (stun.enabled) {
+      const viaStun = await discoverPublicIpv4ViaStun(stun.servers);
+      if (viaStun) {
         const result: ExternalIpResult = {
-          ip: r.address,
-          source: "dns",
+          ip: viaStun,
+          source: "stun",
           stunServers: stun.servers,
           stunEnabled: stun.enabled,
         };
         cache = { at: Date.now(), result };
+        console.info(`[nat] EXTERNAL_IP via STUN: ${viaStun} (${stun.servers[0]})`);
         return result;
       }
-    } catch {
-      /* fall through */
     }
-  }
 
-  if (envIp) {
+    const host = (config.publicHost || "").trim();
+    if (host && host !== "localhost" && host !== "127.0.0.1") {
+      try {
+        const r = await dnsLookup(host, { family: 4 });
+        if (r.address) {
+          const result: ExternalIpResult = {
+            ip: r.address,
+            source: "dns",
+            stunServers: stun.servers,
+            stunEnabled: stun.enabled,
+          };
+          cache = { at: Date.now(), result };
+          return result;
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
+    if (envIp) {
+      const result: ExternalIpResult = {
+        ip: envIp,
+        source: "env-private",
+        stunServers: stun.servers,
+        stunEnabled: stun.enabled,
+      };
+      cache = { at: Date.now(), result };
+      return result;
+    }
+
     const result: ExternalIpResult = {
-      ip: envIp,
-      source: "env-private",
+      ip: "",
+      source: "none",
       stunServers: stun.servers,
       stunEnabled: stun.enabled,
     };
     cache = { at: Date.now(), result };
     return result;
-  }
+  })();
 
-  const result: ExternalIpResult = {
-    ip: "",
-    source: "none",
-    stunServers: stun.servers,
-    stunEnabled: stun.enabled,
-  };
-  cache = { at: Date.now(), result };
-  return result;
+  if (!opts?.force) {
+    inflight = run.finally(() => {
+      inflight = null;
+    });
+    return inflight;
+  }
+  return run;
 }
 
 export async function resolveExternalIp(force = false): Promise<string> {

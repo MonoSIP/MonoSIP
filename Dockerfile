@@ -98,4 +98,8 @@ ENV WEB_DIST=/app/apps/web/dist \
 # Softphone WebRTC also needs host UDP 10000-10100 published + EXTERNAL_IP in vault.
 EXPOSE 3000
 EXPOSE 10000-10100/udp
+# Override the Asterisk base-image healthcheck (CLI ping). Healthy means the API
+# (and dialplan readiness behind /api/v1/health) answers — not just Asterisk up.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:3000/api/v1/health || exit 1
 ENTRYPOINT ["/entrypoint.sh"]

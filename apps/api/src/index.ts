@@ -38,9 +38,29 @@ async function main() {
 
   const app = Fastify({
     logger: true,
+    // Default access logs spam health probes + Vite assets; we log selectively below.
+    disableRequestLogging: true,
     // Only the configured reverse proxies may set the client address via
     // X-Forwarded-For; every other peer is identified by its socket address.
     trustProxy: createTrustProxy(config.trustedProxyCidrs),
+  });
+
+  const { shouldLogHttpAccess } = await import("./lib/http-access-log.js");
+  app.addHook("onResponse", (req, reply, done) => {
+    if (!shouldLogHttpAccess(req.url, reply.statusCode)) {
+      done();
+      return;
+    }
+    req.log.info(
+      {
+        reqId: req.id,
+        req: { method: req.method, url: req.url },
+        res: { statusCode: reply.statusCode },
+        responseTime: reply.elapsedTime,
+      },
+      "request completed",
+    );
+    done();
   });
 
   const { isAllowedCorsOrigin } = await import("./lib/cors-origin.js");
@@ -144,10 +164,8 @@ async function main() {
   const { startClockCheckJob } = await import("./jobs/clock-check.js");
   startClockCheckJob();
 
-  // Pre-generate queue position TTS (MOH ducks during announce) — non-blocking
-  void import("./lib/queue-announce-tts.js")
-    .then(({ ensureQueueAnnounceSounds }) => ensureQueueAnnounceSounds())
-    .catch((e) => console.warn("[queue-tts]", (e as Error).message));
+  // Queue announce TTS packs are built from writeAsteriskConfig when a queue
+  // needs position/holdtime/callback prompts (avoids a second boot-time scan).
 
   // Drop expired live IVR TTS cache rows (+ WAV files)
   void import("./lib/tts.js")

@@ -223,7 +223,10 @@ async function buildAllPacks(): Promise<{ written: number; skipped: number }> {
   }
 
   await wirePositionSentences(root);
-  console.log(`[queue-tts] announce pack written=${written} skipped=${skipped}`);
+  // Cache hits (written=0) are normal on every boot/config reload — stay quiet.
+  if (written > 0) {
+    console.log(`[queue-tts] announce pack written=${written} skipped=${skipped}`);
+  }
   return { written, skipped };
 }
 
