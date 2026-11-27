@@ -95,6 +95,9 @@ services:
       TURN_REALM: ${TURN_REALM:-localhost}
       MONOSIP_TURNS_ON_443: ${MONOSIP_TURNS_ON_443:-1}
     volumes:
+      # /data itself must be a mount when PUBLIC_HOST is not localhost
+      # (bootstrap refuses ephemeral overlay so secrets/settings survive rebuilds).
+      - api_data:/data
       - asterisk_config:/var/lib/asterisk/monosip
       - recordings:/data/recordings
       - uploads:/data/uploads
@@ -106,6 +109,20 @@ services:
         condition: service_healthy
       asterisk:
         condition: service_started
+    # Base image (andrius/asterisk) HEALTHCHECK looks for a local asterisk
+    # process; Compose uses the separate asterisk service instead.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     networks:
       - monosip
     expose:
@@ -194,6 +211,7 @@ services:
 
 volumes:
   pgdata:
+  api_data:
   asterisk_config:
   asterisk_logs:
   recordings:
