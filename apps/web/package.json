@@ -1,6 +1,6 @@
 {
   "name": "@monosip/web",
-  "version": "1.9.7",
+  "version": "1.9.8",
   "license": "MIT",
   "private": true,
   "type": "module",
