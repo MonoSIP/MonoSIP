@@ -3199,9 +3199,9 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       WHERE ended_at IS NULL
         AND started_at < now() - interval '2 hours'
     `);
-    const dupRows = (dup as { rows?: Array<{ groups: number }> }).rows
+    const dupRows = (dup as unknown as { rows?: Array<{ groups: number }> }).rows
       ?? (dup as unknown as Array<{ groups: number }>);
-    const openRows = (openLong as { rows?: Array<{ n: number }> }).rows
+    const openRows = (openLong as unknown as { rows?: Array<{ n: number }> }).rows
       ?? (openLong as unknown as Array<{ n: number }>);
     const duplicateCallIdGroups = Array.isArray(dupRows) ? (dupRows[0]?.groups ?? 0) : 0;
     const openOlderThan2h = Array.isArray(openRows) ? (openRows[0]?.n ?? 0) : 0;

@@ -343,13 +343,20 @@ export const cdr = pgTable(
   ],
 );
 
-export const callEvents = pgTable("call_events", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  callId: varchar("call_id", { length: 64 }).notNull(),
-  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
-  type: varchar("type", { length: 64 }).notNull(),
-  data: jsonb("data").notNull().default({}),
-});
+export const callEvents = pgTable(
+  "call_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    callId: varchar("call_id", { length: 64 }).notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    type: varchar("type", { length: 64 }).notNull(),
+    data: jsonb("data").notNull().default({}),
+  },
+  (t) => [
+    index("call_events_call_id_idx").on(t.callId),
+    index("call_events_call_id_at_idx").on(t.callId, t.at.desc()),
+  ],
+);
 
 export const queueEvents = pgTable("queue_events", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -361,16 +368,20 @@ export const queueEvents = pgTable("queue_events", {
   at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const recordings = pgTable("recordings", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  callId: varchar("call_id", { length: 64 }).notNull(),
-  filePath: text("file_path").notNull(),
-  duration: integer("duration").default(0),
-  sizeBytes: integer("size_bytes").default(0),
-  deleteAt: timestamp("delete_at", { withTimezone: true }),
-  archived: boolean("archived").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+export const recordings = pgTable(
+  "recordings",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    callId: varchar("call_id", { length: 64 }).notNull(),
+    filePath: text("file_path").notNull(),
+    duration: integer("duration").default(0),
+    sizeBytes: integer("size_bytes").default(0),
+    deleteAt: timestamp("delete_at", { withTimezone: true }),
+    archived: boolean("archived").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("recordings_call_id_idx").on(t.callId)],
+);
 
 export const recordingAccessLog = pgTable("recording_access_log", {
   id: uuid("id").defaultRandom().primaryKey(),

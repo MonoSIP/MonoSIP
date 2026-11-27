@@ -33,7 +33,7 @@ async function explain(query: string): Promise<string> {
 }
 
 describe("hot-path indexes — EXPLAIN", () => {
-  it("cdr by call_id uses cdr_call_id_uidx (unique)", async () => {
+  it("cdr by call_id has cdr_call_id_uidx (unique)", async () => {
     const id = cid();
     callIds.push(id);
     await db.insert(cdr).values({
@@ -42,10 +42,19 @@ describe("hot-path indexes — EXPLAIN", () => {
       direction: "internal",
       disposition: "NOANSWER",
     });
+    // Tiny tables often seq-scan even with a unique index — assert the catalog.
+    const idx = await db.execute(sql`
+      SELECT indexname FROM pg_indexes
+      WHERE tablename = 'cdr' AND indexname = 'cdr_call_id_uidx'
+    `);
+    const rows = (idx as { rows?: Array<{ indexname: string }> }).rows
+      ?? (idx as unknown as Array<{ indexname: string }>);
+    expect((Array.isArray(rows) ? rows : []).length).toBe(1);
+
     const plan = await explain(
       `SELECT * FROM cdr WHERE call_id = '${id.replace(/'/g, "")}'`,
     );
-    expect(plan.toLowerCase()).toMatch(/cdr_call_id_uidx|index/);
+    expect(plan.length).toBeGreaterThan(10);
   });
 
 
@@ -64,10 +73,7 @@ describe("hot-path indexes — EXPLAIN", () => {
     expect((Array.isArray(rows) ? rows : []).length).toBe(1);
   });
 
-  it("recordings_call_id_idx exists after 0020 (or create for lab assert)", async () => {
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS recordings_call_id_idx ON recordings (call_id)
-    `);
+  it("recordings_call_id_idx exists after migration 0020", async () => {
     const id = cid();
     callIds.push(id);
     for (let i = 0; i < 40; i++) {
@@ -91,16 +97,11 @@ describe("hot-path indexes — EXPLAIN", () => {
     const plan = await explain(
       `SELECT * FROM recordings WHERE call_id = '${id}-0'`,
     );
+    // Empty/tiny tables may still seq-scan; catalog proves the index.
     expect(plan.toLowerCase()).toMatch(/index|bitmap|seq scan/);
   });
 
-  it("call_events call_id indexes exist after 0020 (or create for lab assert)", async () => {
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS call_events_call_id_idx ON call_events (call_id)
-    `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS call_events_call_id_at_idx ON call_events (call_id, at DESC)
-    `);
+  it("call_events call_id indexes exist after migration 0020", async () => {
     const catalog = await db.execute(sql`
       SELECT indexname FROM pg_indexes
       WHERE tablename = 'call_events' AND indexname IN (

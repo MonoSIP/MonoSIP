@@ -51,6 +51,19 @@ describe("database schema integrity (static)", () => {
     expect(BASE_SQL).toMatch(/cdr_started_idx|CREATE INDEX.*"cdr_started/i);
   });
 
+  it("indexes hot recordings / call_events lookup paths (migration 0020)", () => {
+    expect(SCHEMA).toContain('index("recordings_call_id_idx")');
+    expect(SCHEMA).toContain('index("call_events_call_id_idx")');
+    expect(SCHEMA).toContain('index("call_events_call_id_at_idx")');
+    const sql0020 = readFileSync(
+      join(ROOT, "apps/api/drizzle/0020_hotpath_call_id_indexes.sql"),
+      "utf8",
+    );
+    expect(sql0020).toContain("recordings_call_id_idx");
+    expect(sql0020).toContain("call_events_call_id_idx");
+    expect(sql0020).toContain("call_events_call_id_at_idx");
+  });
+
 
   it("documents intentional non-FK soft references on CDR", () => {
     // CDR must survive trunk/recording deletion for billing history.
@@ -99,13 +112,6 @@ describe("database schema integrity (static)", () => {
     expect(apiSrc).not.toMatch(/insert\(cdr\)[\s\S]{0,200}trunkId\s*:/);
   });
 
-
-  it("documents missing recordings(call_id) index despite join hot path", () => {
-    const recBlock = SCHEMA.slice(SCHEMA.indexOf("export const recordings = pgTable"));
-    const truncated = recBlock.slice(0, recBlock.indexOf("export const recordingAccessLog"));
-    expect(truncated).toContain('callId: varchar("call_id"');
-    expect(truncated).not.toMatch(/index\(["']recordings_call/);
-  });
 
   it("base migration FKs match schema cascade set", () => {
     for (const name of [
