@@ -1,0 +1,1420 @@
+{
+  "groups": [
+    {
+      "call_id": "1793211608.40",
+      "count": 3639,
+      "unique_pks": 3639,
+      "min_startedAt": "2026-10-28T18:20:08.201Z",
+      "max_startedAt": "2026-10-28T18:30:48.722Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 3639,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 3639,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 3639
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 3639,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 3639
+        }
+      },
+      "trunkId_dist": {
+        "null": 3639
+      },
+      "direction_dist": {
+        "outbound": 3639
+      },
+      "caller_dist": {
+        "130": 3639
+      },
+      "callee_dist": {
+        "900": 3639
+      },
+      "did_dist": {
+        "null": 3639
+      },
+      "extension_dist": {
+        "130": 3639
+      },
+      "queue_dist": {
+        "null": 3639
+      },
+      "disposition_dist": {
+        "ANSWERED": 3639
+      },
+      "startedAt_span_sec": 640.521,
+      "median_started_delta_ms": 175.0,
+      "p95_started_delta_ms": 186.0,
+      "sample_rows": [
+        {
+          "id": "c80c248f-6b47-4e1f-8029-71add1b3d085",
+          "startedAt": "2026-10-28T18:20:08.201Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "0701d5f3-4c44-4944-94d4-99e6e8563e98",
+          "startedAt": "2026-10-28T18:20:08.380Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "8a23db05-e3a1-440a-9106-609759b56856",
+          "startedAt": "2026-10-28T18:20:08.555Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "c5a4bcc3-7915-4e14-8ae7-8ff94d5ca08f",
+          "startedAt": "2026-10-28T18:20:08.730Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "d77257db-7ba7-4817-940e-0a6ead608977",
+          "startedAt": "2026-10-28T18:20:08.906Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "a76d608c-ff8d-43e5-a5d9-a2294f3d8d8e",
+          "startedAt": "2026-10-28T18:30:48.356Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "e39bd7f0-0446-48e0-a3fb-7bf6190f9706",
+          "startedAt": "2026-10-28T18:30:48.537Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        },
+        {
+          "id": "17f62bb1-e4fc-438b-806c-842ce3db921f",
+          "startedAt": "2026-10-28T18:30:48.722Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:30:48.727Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 3639
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793217547.7",
+      "count": 2748,
+      "unique_pks": 2748,
+      "min_startedAt": "2026-10-28T19:59:07.645Z",
+      "max_startedAt": "2026-10-28T20:07:03.354Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 2748,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 2748,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 2748
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 2748,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 2748
+        }
+      },
+      "trunkId_dist": {
+        "null": 2748
+      },
+      "direction_dist": {
+        "outbound": 2748
+      },
+      "caller_dist": {
+        "130": 2748
+      },
+      "callee_dist": {
+        "900": 2748
+      },
+      "did_dist": {
+        "null": 2748
+      },
+      "extension_dist": {
+        "130": 2748
+      },
+      "queue_dist": {
+        "null": 2748
+      },
+      "disposition_dist": {
+        "ANSWERED": 2748
+      },
+      "startedAt_span_sec": 475.709,
+      "median_started_delta_ms": 172.0,
+      "p95_started_delta_ms": 182.0,
+      "sample_rows": [
+        {
+          "id": "91a91b63-75e2-4e50-9aa1-5e33e6533da7",
+          "startedAt": "2026-10-28T19:59:07.645Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "14a9f59e-23ec-44cd-8c9a-e4ef4366719d",
+          "startedAt": "2026-10-28T19:59:07.813Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "9b0b3bc2-3546-4f97-8c56-2bd089abffd3",
+          "startedAt": "2026-10-28T19:59:07.987Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "679f027a-677e-4898-b202-31362523ff52",
+          "startedAt": "2026-10-28T19:59:08.156Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "91cd6c63-cd04-4fea-b1fa-903a37fd25c1",
+          "startedAt": "2026-10-28T19:59:08.325Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "7401a3a1-99a1-4346-a2a2-c8a251b5218b",
+          "startedAt": "2026-10-28T20:07:02.997Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "55057cbe-4321-4e51-9ec3-d32ab272d454",
+          "startedAt": "2026-10-28T20:07:03.178Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        },
+        {
+          "id": "c4904a18-48c9-4632-a119-ba9859a32e34",
+          "startedAt": "2026-10-28T20:07:03.354Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T20:07:03.358Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 2748
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793211593.39",
+      "count": 402,
+      "unique_pks": 402,
+      "min_startedAt": "2026-10-28T18:19:53.627Z",
+      "max_startedAt": "2026-10-28T18:21:03.583Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 402,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 402,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 402
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 402,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 402
+        }
+      },
+      "trunkId_dist": {
+        "null": 402
+      },
+      "direction_dist": {
+        "outbound": 402
+      },
+      "caller_dist": {
+        "130": 402
+      },
+      "callee_dist": {
+        "900": 402
+      },
+      "did_dist": {
+        "null": 402
+      },
+      "extension_dist": {
+        "130": 402
+      },
+      "queue_dist": {
+        "null": 402
+      },
+      "disposition_dist": {
+        "ANSWERED": 402
+      },
+      "startedAt_span_sec": 69.956,
+      "median_started_delta_ms": 173.0,
+      "p95_started_delta_ms": 185.0,
+      "sample_rows": [
+        {
+          "id": "9476a2c5-d036-4341-8dbd-f103546c8aa4",
+          "startedAt": "2026-10-28T18:19:53.627Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "e4a3651f-7185-4ccf-934b-12f255671c85",
+          "startedAt": "2026-10-28T18:19:53.796Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "b27322f5-a2bb-48f5-a4fd-bd563821f2c7",
+          "startedAt": "2026-10-28T18:19:53.963Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "73f9c8c6-984f-4fc7-8d85-92b61fdc149e",
+          "startedAt": "2026-10-28T18:19:54.130Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "9e1084c4-ef99-44fb-bf9f-d42c04a69d6f",
+          "startedAt": "2026-10-28T18:19:54.304Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "81f00cc9-af0e-49a1-990e-e1cb7b7d66a3",
+          "startedAt": "2026-10-28T18:21:03.230Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "7585cbd3-3a6c-41d9-9cf7-d8d071ee02a2",
+          "startedAt": "2026-10-28T18:21:03.410Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        },
+        {
+          "id": "2e055adc-92c4-460e-8707-e3828e253142",
+          "startedAt": "2026-10-28T18:21:03.583Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:21:03.587Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 402
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793211552.38",
+      "count": 207,
+      "unique_pks": 207,
+      "min_startedAt": "2026-10-28T18:19:12.719Z",
+      "max_startedAt": "2026-10-28T18:19:47.676Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 207,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 207,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 207
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 207,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 207
+        }
+      },
+      "trunkId_dist": {
+        "null": 207
+      },
+      "direction_dist": {
+        "outbound": 207
+      },
+      "caller_dist": {
+        "130": 207
+      },
+      "callee_dist": {
+        "900": 207
+      },
+      "did_dist": {
+        "null": 207
+      },
+      "extension_dist": {
+        "130": 207
+      },
+      "queue_dist": {
+        "null": 207
+      },
+      "disposition_dist": {
+        "ANSWERED": 207
+      },
+      "startedAt_span_sec": 34.957,
+      "median_started_delta_ms": 169.0,
+      "p95_started_delta_ms": 175.0,
+      "sample_rows": [
+        {
+          "id": "b623af1b-b7e2-4b17-8da0-443d4e751203",
+          "startedAt": "2026-10-28T18:19:12.719Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "dcc0557d-8cb3-4321-a6c7-09958fe56c4a",
+          "startedAt": "2026-10-28T18:19:12.902Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "fc8792f9-1bf4-4a6e-b7b2-b4531bf82060",
+          "startedAt": "2026-10-28T18:19:13.071Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "a217a067-b998-41ee-bda2-fc3f74e78484",
+          "startedAt": "2026-10-28T18:19:13.249Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "a673d9b8-4aa2-477e-8d92-c25f22dfaf77",
+          "startedAt": "2026-10-28T18:19:13.418Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "e3d8622a-346e-4d1b-a06e-399816ed7f80",
+          "startedAt": "2026-10-28T18:19:47.335Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "517becfb-0f49-4101-bb03-a4c010766002",
+          "startedAt": "2026-10-28T18:19:47.505Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        },
+        {
+          "id": "743024f9-2b57-4fd4-9068-ff8a731f1400",
+          "startedAt": "2026-10-28T18:19:47.676Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:19:47.680Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 207
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793211511.36",
+      "count": 125,
+      "unique_pks": 125,
+      "min_startedAt": "2026-10-28T18:18:31.723Z",
+      "max_startedAt": "2026-10-28T18:18:53.058Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 125,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 125,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 125
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 125,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 125
+        }
+      },
+      "trunkId_dist": {
+        "null": 125
+      },
+      "direction_dist": {
+        "outbound": 125
+      },
+      "caller_dist": {
+        "130": 125
+      },
+      "callee_dist": {
+        "900": 125
+      },
+      "did_dist": {
+        "null": 125
+      },
+      "extension_dist": {
+        "130": 125
+      },
+      "queue_dist": {
+        "null": 125
+      },
+      "disposition_dist": {
+        "ANSWERED": 125
+      },
+      "startedAt_span_sec": 21.335,
+      "median_started_delta_ms": 170.5,
+      "p95_started_delta_ms": 181.0,
+      "sample_rows": [
+        {
+          "id": "4ee7b799-8e64-4e4d-b67d-95dc9d661b02",
+          "startedAt": "2026-10-28T18:18:31.723Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "e01b9031-0da9-48c3-96ff-2a0bf46f68dc",
+          "startedAt": "2026-10-28T18:18:31.909Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "f0a13d1a-0f79-47ca-828e-c1e86aeba93a",
+          "startedAt": "2026-10-28T18:18:32.081Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "d1e190ad-fb80-4e5a-a5a8-b4244d098f5e",
+          "startedAt": "2026-10-28T18:18:32.253Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "240ed9e1-0169-4352-aa56-aad824888b9d",
+          "startedAt": "2026-10-28T18:18:32.426Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "05f7a853-099f-4635-8805-ac957b5b9e99",
+          "startedAt": "2026-10-28T18:18:52.717Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "49a081d8-e4c9-482f-9412-e9d905193300",
+          "startedAt": "2026-10-28T18:18:52.886Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        },
+        {
+          "id": "25387074-20c6-4399-b33d-1057c2406db5",
+          "startedAt": "2026-10-28T18:18:53.058Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T18:18:53.063Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 125
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793215834.0",
+      "count": 81,
+      "unique_pks": 81,
+      "min_startedAt": "2026-10-28T19:30:34.315Z",
+      "max_startedAt": "2026-10-28T19:30:47.911Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 81,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 81,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 81
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 81,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 81
+        }
+      },
+      "trunkId_dist": {
+        "null": 81
+      },
+      "direction_dist": {
+        "outbound": 81
+      },
+      "caller_dist": {
+        "130": 81
+      },
+      "callee_dist": {
+        "900": 81
+      },
+      "did_dist": {
+        "null": 81
+      },
+      "extension_dist": {
+        "130": 81
+      },
+      "queue_dist": {
+        "null": 81
+      },
+      "disposition_dist": {
+        "ANSWERED": 81
+      },
+      "startedAt_span_sec": 13.596,
+      "median_started_delta_ms": 170.0,
+      "p95_started_delta_ms": 175.0,
+      "sample_rows": [
+        {
+          "id": "f33e5eb0-0253-4c2b-88c9-ba8832b06c15",
+          "startedAt": "2026-10-28T19:30:34.315Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "20c71d12-1579-4e3a-b804-88cdee90339d",
+          "startedAt": "2026-10-28T19:30:34.496Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "73aee72b-57e9-4d9c-894b-821cd4a481e3",
+          "startedAt": "2026-10-28T19:30:34.669Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "d8bdc3cb-91ce-405c-9348-3b7931ea5a09",
+          "startedAt": "2026-10-28T19:30:34.846Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "aa5776d6-6dc1-42e8-988b-e41afcd50576",
+          "startedAt": "2026-10-28T19:30:35.018Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "a6693643-44d3-4259-af6b-ded82b268f9e",
+          "startedAt": "2026-10-28T19:30:47.566Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "ff09512f-db02-44f5-ba6d-8eca3ecf35f8",
+          "startedAt": "2026-10-28T19:30:47.741Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        },
+        {
+          "id": "635c1a1f-241c-4fa9-b835-dd840a72e435",
+          "startedAt": "2026-10-28T19:30:47.911Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:30:47.915Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 81
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793215885.1",
+      "count": 49,
+      "unique_pks": 49,
+      "min_startedAt": "2026-10-28T19:31:25.948Z",
+      "max_startedAt": "2026-10-28T19:31:34.080Z",
+      "min_endedAt": null,
+      "max_endedAt": null,
+      "endedAt_null": 49,
+      "endedAt_set": 0,
+      "billsec": {
+        "null": 0,
+        "zero": 49,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 49
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 49,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 49
+        }
+      },
+      "trunkId_dist": {
+        "null": 49
+      },
+      "direction_dist": {
+        "outbound": 49
+      },
+      "caller_dist": {
+        "130": 49
+      },
+      "callee_dist": {
+        "900": 49
+      },
+      "did_dist": {
+        "null": 49
+      },
+      "extension_dist": {
+        "130": 49
+      },
+      "queue_dist": {
+        "null": 49
+      },
+      "disposition_dist": {
+        "ANSWERED": 49
+      },
+      "startedAt_span_sec": 8.132,
+      "median_started_delta_ms": 169.0,
+      "p95_started_delta_ms": 173.0,
+      "sample_rows": [
+        {
+          "id": "ab81759e-2d08-4ccc-bb01-0df414a46259",
+          "startedAt": "2026-10-28T19:31:25.948Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "2ff60a26-fda1-4526-b212-78caef1e7f11",
+          "startedAt": "2026-10-28T19:31:26.119Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "62756814-2a86-4cb6-b289-033c05f3981b",
+          "startedAt": "2026-10-28T19:31:26.290Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "a4a2dde8-930c-4ee9-a751-8d623de934ca",
+          "startedAt": "2026-10-28T19:31:26.457Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "b36b61a1-1433-4d6e-85bf-1901bb31078e",
+          "startedAt": "2026-10-28T19:31:26.630Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "c34e8ac6-0204-4ffb-aaf4-ac6f38c8d9eb",
+          "startedAt": "2026-10-28T19:31:33.742Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "5b6ae818-45a9-45c7-a17f-455fb0023981",
+          "startedAt": "2026-10-28T19:31:33.910Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        },
+        {
+          "id": "cfed5e0a-9783-4817-a71d-697ed70ac652",
+          "startedAt": "2026-10-28T19:31:34.080Z",
+          "endedAt": null,
+          "billsec": 0,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "900",
+          "disposition": "ANSWERED",
+          "extensionNumber": "130",
+          "queueNumber": null,
+          "trunkId": null,
+          "answeredAt": "2026-10-28T19:31:34.085Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '900', None, 'ANSWERED')": 49
+      },
+      "distinct_party_signatures": 1
+    },
+    {
+      "call_id": "1793233454.37",
+      "count": 2,
+      "unique_pks": 2,
+      "min_startedAt": "2026-10-29T00:24:14.168Z",
+      "max_startedAt": "2026-10-29T00:25:48.221Z",
+      "min_endedAt": "2026-10-29T00:25:48.235Z",
+      "max_endedAt": "2026-10-29T00:25:48.235Z",
+      "endedAt_null": 0,
+      "endedAt_set": 2,
+      "billsec": {
+        "null": 0,
+        "zero": 0,
+        "nonzero": 2,
+        "min": 20,
+        "max": 20,
+        "top": {
+          "20": 2
+        }
+      },
+      "duration": {
+        "null": 0,
+        "zero": 2,
+        "nonzero": 0,
+        "min": 0,
+        "max": 0,
+        "top": {
+          "0": 2
+        }
+      },
+      "trunkId_dist": {
+        "null": 2
+      },
+      "direction_dist": {
+        "outbound": 1,
+        "internal": 1
+      },
+      "caller_dist": {
+        "130": 2
+      },
+      "callee_dist": {
+        "110": 1,
+        "800": 1
+      },
+      "did_dist": {
+        "null": 2
+      },
+      "extension_dist": {
+        "140": 2
+      },
+      "queue_dist": {
+        "300": 2
+      },
+      "disposition_dist": {
+        "ANSWERED": 2
+      },
+      "startedAt_span_sec": 94.053,
+      "median_started_delta_ms": 94053.0,
+      "p95_started_delta_ms": 94053.0,
+      "sample_rows": [
+        {
+          "id": "b28b0280-4f16-4c7c-a4b1-2777bb0c03de",
+          "startedAt": "2026-10-29T00:24:14.168Z",
+          "endedAt": "2026-10-29T00:25:48.235Z",
+          "billsec": 20,
+          "duration": 0,
+          "direction": "internal",
+          "caller": "130",
+          "callee": "800",
+          "disposition": "ANSWERED",
+          "extensionNumber": "140",
+          "queueNumber": "300",
+          "trunkId": null,
+          "answeredAt": "2026-10-29T00:24:14.172Z"
+        },
+        {
+          "id": "68da5aff-65d2-4773-aab3-2db95a417ca6",
+          "startedAt": "2026-10-29T00:25:48.221Z",
+          "endedAt": "2026-10-29T00:25:48.235Z",
+          "billsec": 20,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "110",
+          "disposition": "ANSWERED",
+          "extensionNumber": "140",
+          "queueNumber": "300",
+          "trunkId": null,
+          "answeredAt": "2026-10-29T00:24:14.172Z"
+        },
+        {
+          "id": "b28b0280-4f16-4c7c-a4b1-2777bb0c03de",
+          "startedAt": "2026-10-29T00:24:14.168Z",
+          "endedAt": "2026-10-29T00:25:48.235Z",
+          "billsec": 20,
+          "duration": 0,
+          "direction": "internal",
+          "caller": "130",
+          "callee": "800",
+          "disposition": "ANSWERED",
+          "extensionNumber": "140",
+          "queueNumber": "300",
+          "trunkId": null,
+          "answeredAt": "2026-10-29T00:24:14.172Z"
+        },
+        {
+          "id": "68da5aff-65d2-4773-aab3-2db95a417ca6",
+          "startedAt": "2026-10-29T00:25:48.221Z",
+          "endedAt": "2026-10-29T00:25:48.235Z",
+          "billsec": 20,
+          "duration": 0,
+          "direction": "outbound",
+          "caller": "130",
+          "callee": "110",
+          "disposition": "ANSWERED",
+          "extensionNumber": "140",
+          "queueNumber": "300",
+          "trunkId": null,
+          "answeredAt": "2026-10-29T00:24:14.172Z"
+        }
+      ],
+      "party_signatures": {
+        "('outbound', '130', '110', None, 'ANSWERED')": 1,
+        "('internal', '130', '800', None, 'ANSWERED')": 1
+      },
+      "distinct_party_signatures": 2
+    }
+  ],
+  "singletons": 251
+}

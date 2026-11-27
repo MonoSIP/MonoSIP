@@ -1,0 +1,13 @@
+WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
+Resolving remote host '172.30.0.10'... Done.
+2026-11-27	11:53:16.143432	1795780396.143432: Dead call 1-1@172.30.0.41 (aborted at index 3), received 'SIP/2.0 481 Call/Transaction Does Not Exist
+Via: SIP/2.0/UDP 172.30.0.41:5060;received=172.30.0.41;branch=z9hG4bK-1-1--1
+Call-ID: 1-1@172.30.0.41
+From: <sip:101@172.30.0.10>;tag=1R1
+To: <sip:101@172.30.0.10>;tag=z9hG4bK-1-1-0
+CSeq: 2 BYE
+Server: Asterisk PBX 22.11.0
+Content-Length:  0
+
+'.
+sipp: There were more errors, enable -trace_err to log them.

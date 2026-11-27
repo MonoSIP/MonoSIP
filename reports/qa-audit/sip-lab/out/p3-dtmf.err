@@ -1,0 +1,9 @@
+WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
+In pcap /sipp/g711a.pcap, npkts 236
+max pkt length 260
+base port 2006
+In pcap /sipp/dtmf_2833_1.pcap, npkts 10
+max pkt length 24
+base port 10000
+Resolving remote host '172.30.0.10'... Done.
+2026-11-27	12:12:18.239531	1795781538.239531: Aborting call on an unexpected BYE for call: 1-1@172.30.0.211.

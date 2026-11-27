@@ -338,7 +338,8 @@ export const cdr = pgTable(
   },
   (t) => [
     index("cdr_started_idx").on(t.startedAt),
-    index("cdr_call_id_idx").on(t.callId),
+    /** One logical CDR per Asterisk UNIQUEID / ARI channel id (ingest idempotency). */
+    uniqueIndex("cdr_call_id_uidx").on(t.callId),
   ],
 );
 

@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "before_total": 7303,
+  "before_billsec_sum": 1290,
+  "after_ab_total": 58,
+  "after_ab_billsec_sum": 1270,
+  "after_dup_groups": 0,
+  "g8_billsec_delta": -20,
+  "unique_index": "cdr_call_id_uidx",
+  "sequence": ["SQL_A","SQL_B","0019","rerun_noop","rollback_B_A","reapply_A_B_0019"],
+  "notes": "Lab used production counts; G8 answeredAt evidence seeded; clean.* rows preserved."
+}

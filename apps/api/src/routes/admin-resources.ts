@@ -1213,24 +1213,11 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (existing[0]) {
       // Always prefer dialplan durations (redirect left Stasis before talk time)
       if (disposition === "ANSWERED" || body.billsec > 0) await cdrAnswered(body.callId);
-      if (!existing[0].endedAt) {
-        await cdrEnd(body.callId, disposition, {
-          billsec: body.billsec,
-          duration: body.duration ?? body.billsec,
-        });
-      } else {
-        await db
-          .update(cdr)
-          .set({
-            disposition,
-            billsec: body.billsec,
-            duration: body.duration ?? body.billsec,
-            ...(disposition === "ANSWERED" || body.billsec > 0
-              ? { answeredAt: existing[0].answeredAt ?? new Date() }
-              : {}),
-          })
-          .where(eq(cdr.callId, body.callId));
-      }
+      // cdrEnd: first finalize, or enrich billsec=0→N; never rewrite finished billsec>0
+      await cdrEnd(body.callId, disposition, {
+        billsec: body.billsec,
+        duration: body.duration ?? body.billsec,
+      });
       await applyQos();
       if (body.queueNumber) {
         await db
@@ -1270,18 +1257,15 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       queueNumber: body.queueNumber,
     });
     if (disposition === "ANSWERED" || body.billsec > 0) await cdrAnswered(body.callId);
-    await cdrEnd(body.callId, disposition);
+    await cdrEnd(body.callId, disposition, {
+      billsec: body.billsec,
+      duration: body.duration ?? body.billsec,
+    });
     await applyQos();
-    // Prefer dialplan-provided durations when present
-    if (body.duration != null || body.billsec > 0 || agentExtNew) {
+    if (agentExtNew) {
       await db
         .update(cdr)
-        .set({
-          ...(body.duration != null || body.billsec > 0
-            ? { duration: body.duration ?? body.billsec, billsec: body.billsec }
-            : {}),
-          ...(agentExtNew ? { extensionNumber: agentExtNew } : {}),
-        })
+        .set({ extensionNumber: agentExtNew })
         .where(eq(cdr.callId, body.callId));
     }
     // Agent returned a missed call by dialing that number successfully
@@ -3184,6 +3168,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     const dialplan = isDialplanReady();
     const { getMediaReadiness } = await import("../lib/media-readiness.js");
     const media = await getMediaReadiness();
+    const { getCdrMetricsSnapshot } = await import("../lib/cdr.js");
     // NineDeploy cuts the old container over on a successful health check.
     // 200/ok only after Postgres, Asterisk, and the dialplan are actually up.
     const ok = isServingReady({ db: dbOk, asterisk: asteriskOk, dialplan });
@@ -3194,8 +3179,42 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       dialplan,
       publicUrl: config.publicUrl,
       media,
+      cdr: getCdrMetricsSnapshot(),
     };
     if (!ok) return reply.code(503).send(body);
     return body;
+  });
+
+  /** Auth-required CDR integrity probe for ops monitoring. */
+  app.get("/api/v1/admin/cdr-integrity", async (req, reply) => {
+    if (!(await admin(req, reply))) return;
+    const { getCdrMetricsSnapshot } = await import("../lib/cdr.js");
+    const dup = await db.execute(sql`
+      SELECT count(*)::int AS groups
+      FROM (SELECT call_id FROM cdr GROUP BY call_id HAVING count(*) > 1) d
+    `);
+    const openLong = await db.execute(sql`
+      SELECT count(*)::int AS n
+      FROM cdr
+      WHERE ended_at IS NULL
+        AND started_at < now() - interval '2 hours'
+    `);
+    const dupRows = (dup as { rows?: Array<{ groups: number }> }).rows
+      ?? (dup as unknown as Array<{ groups: number }>);
+    const openRows = (openLong as { rows?: Array<{ n: number }> }).rows
+      ?? (openLong as unknown as Array<{ n: number }>);
+    const duplicateCallIdGroups = Array.isArray(dupRows) ? (dupRows[0]?.groups ?? 0) : 0;
+    const openOlderThan2h = Array.isArray(openRows) ? (openRows[0]?.n ?? 0) : 0;
+    return {
+      ok: duplicateCallIdGroups === 0,
+      duplicateCallIdGroups,
+      openOlderThan2h,
+      metrics: getCdrMetricsSnapshot(),
+      thresholds: {
+        duplicateCallIdGroups: { warn: 1, critical: 1 },
+        openOlderThan2h: { warn: 20, critical: 100 },
+        endErrors: { warn: 5, critical: 50 },
+      },
+    };
   });
 }

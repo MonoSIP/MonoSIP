@@ -1,0 +1,159 @@
+----------------------------------------------- 2026-11-27 12:12:11.018312
+UDP message sent (513 bytes):
+
+INVITE sip:900@172.30.0.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.211:5060;branch=z9hG4bK-1-1-0
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10:5060>
+Call-ID: 1-1@172.30.0.211
+CSeq: 1 INVITE
+Contact: <sip:100@172.30.0.211:5060>
+Max-Forwards: 70
+Content-Type: application/sdp
+Content-Length:   191
+
+v=0
+o=user1 53655765 2353687637 IN IP4 172.30.0.211
+s=-
+c=IN IP4 172.30.0.211
+t=0 0
+m=audio 6000 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-15
+
+----------------------------------------------- 2026-11-27 12:12:11.020244
+UDP message received [439] bytes :
+
+SIP/2.0 401 Unauthorized
+Via: SIP/2.0/UDP 172.30.0.211:5060;rport=5060;received=172.30.0.211;branch=z9hG4bK-1-1-0
+Call-ID: 1-1@172.30.0.211
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10>;tag=z9hG4bK-1-1-0
+CSeq: 1 INVITE
+WWW-Authenticate: Digest realm="asterisk",nonce="1795781531/a2743df85b6de49c04ed3afb09e2a3b7",opaque="49b092a04e31c7d1",algorithm=MD5,qop="auth"
+Server: Asterisk PBX 22.11.0
+Content-Length:  0
+
+
+----------------------------------------------- 2026-11-27 12:12:11.021413
+UDP message sent (261 bytes):
+
+ACK sip:900@172.30.0.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.211:5060;branch=z9hG4bK-1-1-3
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10:5060>;tag=z9hG4bK-1-1-0
+Call-ID: 1-1@172.30.0.211
+CSeq: 1 ACK
+Max-Forwards: 70
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:12:11.023899
+UDP message sent (770 bytes):
+
+INVITE sip:900@172.30.0.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.211:5060;branch=z9hG4bK-1-1-4
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10:5060>
+Call-ID: 1-1@172.30.0.211
+CSeq: 2 INVITE
+Contact: <sip:100@172.30.0.211:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781531/a2743df85b6de49c04ed3afb09e2a3b7",response="a00eb5edc9a78e471c74b142801e6e62",algorithm=MD5,opaque="49b092a04e31c7d1"
+Max-Forwards: 70
+Content-Type: application/sdp
+Content-Length:   191
+
+v=0
+o=user1 53655765 2353687637 IN IP4 172.30.0.211
+s=-
+c=IN IP4 172.30.0.211
+t=0 0
+m=audio 6000 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-15
+
+----------------------------------------------- 2026-11-27 12:12:11.029565
+UDP message received [269] bytes :
+
+SIP/2.0 100 Trying
+Via: SIP/2.0/UDP 172.30.0.211:5060;rport=5060;received=172.30.0.211;branch=z9hG4bK-1-1-4
+Call-ID: 1-1@172.30.0.211
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10>
+CSeq: 2 INVITE
+Server: Asterisk PBX 22.11.0
+Content-Length:  0
+
+
+----------------------------------------------- 2026-11-27 12:12:11.221904
+UDP message received [771] bytes :
+
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 172.30.0.211:5060;rport=5060;received=172.30.0.211;branch=z9hG4bK-1-1-4
+Call-ID: 1-1@172.30.0.211
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10>;tag=38b200c8-a8fc-4184-a0fc-1e8f8043ebc2
+CSeq: 2 INVITE
+Server: Asterisk PBX 22.11.0
+Contact: <sip:172.30.0.10:5060>
+Allow: OPTIONS, REGISTER, SUBSCRIBE, NOTIFY, PUBLISH, INVITE, ACK, BYE, CANCEL, UPDATE, PRACK, MESSAGE, INFO, REFER
+Supported: 100rel, timer, replaces, norefersub
+Content-Type: application/sdp
+Content-Length:   233
+
+v=0
+o=- 53655765 2353687639 IN IP4 172.30.0.10
+s=Asterisk
+c=IN IP4 172.30.0.10
+t=0 0
+m=audio 10038 RTP/AVP 8 101
+a=rtpmap:8 PCMA/8000
+a=rtpmap:101 telephone-event/8000
+a=fmtp:101 0-16
+a=ptime:20
+a=maxptime:140
+a=sendrecv
+
+----------------------------------------------- 2026-11-27 12:12:11.222698
+UDP message sent (281 bytes):
+
+ACK sip:172.30.0.10:5060 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.211:5060;branch=z9hG4bK-1-1-10
+From: <sip:100@172.30.0.10>;tag=1C1
+To: <sip:900@172.30.0.10:5060>;tag=38b200c8-a8fc-4184-a0fc-1e8f8043ebc2
+Call-ID: 1-1@172.30.0.211
+CSeq: 2 ACK
+Max-Forwards: 70
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:12:18.238423
+UDP message received [380] bytes :
+
+BYE sip:100@172.30.0.211:5060 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.10:5060;rport;branch=z9hG4bKPje24d00a4-99de-4ce8-be13-eb2e78255eb5
+From: <sip:900@172.30.0.10>;tag=38b200c8-a8fc-4184-a0fc-1e8f8043ebc2
+To: <sip:100@172.30.0.10>;tag=1C1
+Call-ID: 1-1@172.30.0.211
+CSeq: 11845 BYE
+Reason: Q.850;cause=16
+Max-Forwards: 70
+User-Agent: Asterisk PBX 22.11.0
+Content-Length:  0
+
+
+----------------------------------------------- 2026-11-27 12:12:18.239766
+UDP message sent (328 bytes):
+
+SIP/2.0 200 OK
+Via: SIP/2.0/UDP 172.30.0.10:5060;rport;branch=z9hG4bKPje24d00a4-99de-4ce8-be13-eb2e78255eb5
+From: <sip:900@172.30.0.10>;tag=38b200c8-a8fc-4184-a0fc-1e8f8043ebc2
+To: <sip:100@172.30.0.10>;tag=1C1
+Call-ID: 1-1@172.30.0.211
+CSeq: 11845 BYE
+Contact: <sip:172.30.0.211:5060;transport=UDP>
+Content-Length: 0
+
+

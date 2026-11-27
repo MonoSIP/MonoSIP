@@ -38,10 +38,15 @@ jobs:
         run: pnpm lint
       - name: Unit tests (api)
         run: pnpm --filter @monosip/api test
+      - name: Architectural boundary tests
+        run: pnpm arch:test
+      - name: Architectural dependency rules
+        run: pnpm arch:deps
       - name: Unit tests (web)
         run: pnpm --filter @monosip/web test
       - name: Build web
         run: pnpm --filter @monosip/web build
+
 
   # ---- Integration + smoke (real Postgres) --------------------------------
   integration:
@@ -78,6 +83,8 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
       - name: Build shared package
         run: pnpm --filter @monosip/shared build
+      - name: Architectural integration tests
+        run: pnpm arch:test:int
       - name: Integration tests (api)
         run: pnpm --filter @monosip/api run test:integration
 

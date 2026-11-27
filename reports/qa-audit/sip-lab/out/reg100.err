@@ -1,0 +1,15 @@
+WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
+Resolving remote host '172.30.0.10'... Done.
+2026-11-27	11:52:44.127839	1795780364.127839: Discarding message which can't be mapped to a known SIPp call:
+OPTIONS sip:100@172.30.0.40:5060 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.10:5060;rport;branch=z9hG4bKPjc4e9dc86-4493-4988-aae4-0f426eed7ddc
+From: <sip:100@localhost>;tag=e6ef8f25-bbbb-4b3b-a47b-9c918432fb07
+To: <sip:100@172.30.0.40>
+Contact: <sip:100@172.30.0.10:5060>
+Call-ID: 1f891a1d-1574-4dd0-8995-ce4cb09bb8b0
+CSeq: 46539 OPTIONS
+Max-Forwards: 70
+User-Agent: Asterisk PBX 22.11.0
+Content-Length:  0
+
+.

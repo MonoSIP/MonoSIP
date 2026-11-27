@@ -134,6 +134,20 @@
       "when": 1793251200000,
       "tag": "0018_trunk_caller_id_name",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793337600000,
+      "tag": "0019_cdr_call_id_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793424000000,
+      "tag": "0020_hotpath_call_id_indexes",
+      "breakpoints": true
     }
   ]
 }

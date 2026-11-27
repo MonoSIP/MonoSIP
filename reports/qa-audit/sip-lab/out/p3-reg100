@@ -1,0 +1,125 @@
+----------------------------------------------- 2026-11-27 12:11:55.877594
+UDP message sent (292 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-0
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 1 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:11:55.879627
+UDP message received [441] bytes :
+
+SIP/2.0 401 Unauthorized
+Via: SIP/2.0/UDP 172.30.0.210:5060;rport=5060;received=172.30.0.210;branch=z9hG4bK-1-1-0
+Call-ID: 1-1@172.30.0.210
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>;tag=z9hG4bK-1-1-0
+CSeq: 1 REGISTER
+WWW-Authenticate: Digest realm="asterisk",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",opaque="32a24ca31eb91141",algorithm=MD5,qop="auth"
+Server: Asterisk PBX 22.11.0
+Content-Length:  0
+
+
+----------------------------------------------- 2026-11-27 12:11:55.881569
+UDP message sent (549 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-2
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 2 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",response="cdb438fda429f751b68d2ac491c04253",algorithm=MD5,opaque="32a24ca31eb91141"
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:11:56.381618
+UDP message sent (549 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-2
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 2 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",response="cdb438fda429f751b68d2ac491c04253",algorithm=MD5,opaque="32a24ca31eb91141"
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:11:57.383786
+UDP message sent (549 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-2
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 2 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",response="cdb438fda429f751b68d2ac491c04253",algorithm=MD5,opaque="32a24ca31eb91141"
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:11:59.385957
+UDP message sent (549 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-2
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 2 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",response="cdb438fda429f751b68d2ac491c04253",algorithm=MD5,opaque="32a24ca31eb91141"
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:12:03.388791
+UDP message sent (549 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-2
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 2 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",response="cdb438fda429f751b68d2ac491c04253",algorithm=MD5,opaque="32a24ca31eb91141"
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+
+----------------------------------------------- 2026-11-27 12:12:07.389325
+UDP message sent (549 bytes):
+
+REGISTER sip:172.30.0.10 SIP/2.0
+Via: SIP/2.0/UDP 172.30.0.210:5060;branch=z9hG4bK-1-1-2
+From: <sip:100@172.30.0.10>;tag=1R1
+To: <sip:100@172.30.0.10>
+Call-ID: 1-1@172.30.0.210
+CSeq: 2 REGISTER
+Contact: <sip:100@172.30.0.210:5060>
+Authorization: Digest username="100",realm="asterisk",cnonce="6b8b4567",nc=00000001,qop=auth,uri="sip:172.30.0.10:5060",nonce="1795781515/a8b36e4d8af3dc94474326f1efe4ec9c",response="cdb438fda429f751b68d2ac491c04253",algorithm=MD5,opaque="32a24ca31eb91141"
+Max-Forwards: 70
+Expires: 3600
+Content-Length: 0
+
+

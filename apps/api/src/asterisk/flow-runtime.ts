@@ -73,6 +73,20 @@ type PendingTransfer = {
 const pendingTransfers = new Map<string, PendingTransfer>();
 
 /**
+ * Process-local only — cleared on API/container restart. Exposed for architecture
+ * regression tests (restart/recovery). Not a persistence API.
+ */
+export function pendingTransferSnapshot(): { size: number; channelIds: string[] } {
+  return { size: pendingTransfers.size, channelIds: [...pendingTransfers.keys()] };
+}
+
+/** Clears in-memory transfer resume state (simulates process restart in tests). */
+export function clearPendingTransfers(): void {
+  pendingTransfers.clear();
+}
+
+
+/**
  * Follow a transfer dial-status exit (noanswer / busy / chanunavail). Matching is
  * strict so a busy call never wanders down another exit's edge; with no exit
  * wired the caller goes back to the menu, or the call ends when there is none.
@@ -1108,7 +1122,8 @@ export function attachFlowRuntime(): void {
           if (ev.application === "monosip-outbound") {
             await ari.answer(channelId);
             await handleOutbound(channelId, args[0] ?? "", caller);
-            void dispatchWebhooks("call.ended", { channelId, direction: "outbound", ...vars });
+            // call.ended is emitted from cdrEnd after DB commit (or ChannelDestroyed → cdrEnd).
+            // Do not fire while CDR remains open (short-number / trunk redirect).
             return;
           }
 
@@ -1206,15 +1221,11 @@ export function attachFlowRuntime(): void {
               }
             }
             await applyResolved(channelId, resolved, vars);
-            // If redirected to dialplan/queue, billsec finalized on ChannelDestroyed / dialplan curl
+            // If redirected to dialplan/queue, billsec finalized on ChannelDestroyed / dialplan curl.
+            // hangup path: cdrEnd commits then emits call.ended (after DB write).
             if (resolved.kind === "hangup") {
               await cdrEnd(channelId, "NOANSWER");
             }
-            void dispatchWebhooks("call.ended", {
-              channelId,
-              direction: "inbound",
-              ...vars,
-            });
             return;
           }
 
@@ -1254,8 +1265,8 @@ export function attachFlowRuntime(): void {
               await cdrEnd(channelId, "FAILED");
               throw e;
             }
-            // If still open (IVR hung up in Stasis without redirect), ChannelDestroyed ends it
-            void dispatchWebhooks("call.ended", { channelId, direction: "flow", ...vars });
+            // If still open (IVR hung up in Stasis without redirect), ChannelDestroyed → cdrEnd
+            // emits call.ended after DB commit.
             return;
           }
 

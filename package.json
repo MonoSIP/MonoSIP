@@ -26,7 +26,10 @@
     "test": "pnpm -r run test",
     "test:smoke": "bash scripts/smoke-test.sh",
     "test:integration": "pnpm --filter @monosip/api run test:integration",
-    "test:coverage": "pnpm --filter @monosip/api run test:coverage"
+    "test:coverage": "pnpm --filter @monosip/api run test:coverage",
+    "arch:deps": "bash scripts/arch-deps.sh",
+    "arch:test": "pnpm --filter @monosip/api exec vitest run src/architecture",
+    "arch:test:int": "pnpm --filter @monosip/api exec vitest run --config vitest.integration.config.ts src/architecture"
   },
   "engines": {
     "node": ">=26.13.1"

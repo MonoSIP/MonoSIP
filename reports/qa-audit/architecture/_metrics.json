@@ -1,0 +1,167 @@
+{
+  "non_test_files": 91,
+  "total_loc": 18960,
+  "avg_loc": 208.4,
+  "by_module": {
+    "routes": {
+      "files": 11,
+      "loc": 5380
+    },
+    "asterisk": {
+      "files": 9,
+      "loc": 5259
+    },
+    "db": {
+      "files": 6,
+      "loc": 1193
+    },
+    "lib": {
+      "files": 54,
+      "loc": 6009
+    },
+    "root": {
+      "files": 2,
+      "loc": 362
+    },
+    "jobs": {
+      "files": 9,
+      "loc": 757
+    }
+  },
+  "top_loc": [
+    {
+      "path": "apps/api/src/routes/admin-resources.ts",
+      "loc": 3202,
+      "cx": 473
+    },
+    {
+      "path": "apps/api/src/asterisk/config-writer.ts",
+      "loc": 1751,
+      "cx": 206
+    },
+    {
+      "path": "apps/api/src/asterisk/flow-runtime.ts",
+      "loc": 1281,
+      "cx": 244
+    },
+    {
+      "path": "apps/api/src/asterisk/ari.ts",
+      "loc": 814,
+      "cx": 102
+    },
+    {
+      "path": "apps/api/src/db/schema.ts",
+      "loc": 560,
+      "cx": 1
+    },
+    {
+      "path": "apps/api/src/lib/tts.ts",
+      "loc": 445,
+      "cx": 81
+    },
+    {
+      "path": "apps/api/src/lib/announce-call.ts",
+      "loc": 422,
+      "cx": 44
+    },
+    {
+      "path": "apps/api/src/routes/widgets.ts",
+      "loc": 422,
+      "cx": 60
+    },
+    {
+      "path": "apps/api/src/asterisk/routing.ts",
+      "loc": 404,
+      "cx": 103
+    },
+    {
+      "path": "apps/api/src/lib/call-policy.ts",
+      "loc": 402,
+      "cx": 95
+    },
+    {
+      "path": "apps/api/src/routes/portal.ts",
+      "loc": 392,
+      "cx": 66
+    },
+    {
+      "path": "apps/api/src/asterisk/flow-engine.ts",
+      "loc": 389,
+      "cx": 104
+    },
+    {
+      "path": "apps/api/src/lib/queue-announce-tts.ts",
+      "loc": 389,
+      "cx": 65
+    },
+    {
+      "path": "apps/api/src/db/seed.ts",
+      "loc": 361,
+      "cx": 41
+    },
+    {
+      "path": "apps/api/src/asterisk/flow-logic.ts",
+      "loc": 338,
+      "cx": 78
+    }
+  ],
+  "top_cx": [
+    {
+      "path": "apps/api/src/routes/admin-resources.ts",
+      "loc": 3202,
+      "cx": 473
+    },
+    {
+      "path": "apps/api/src/asterisk/flow-runtime.ts",
+      "loc": 1281,
+      "cx": 244
+    },
+    {
+      "path": "apps/api/src/asterisk/config-writer.ts",
+      "loc": 1751,
+      "cx": 206
+    },
+    {
+      "path": "apps/api/src/asterisk/flow-engine.ts",
+      "loc": 389,
+      "cx": 104
+    },
+    {
+      "path": "apps/api/src/asterisk/routing.ts",
+      "loc": 404,
+      "cx": 103
+    },
+    {
+      "path": "apps/api/src/asterisk/ari.ts",
+      "loc": 814,
+      "cx": 102
+    },
+    {
+      "path": "apps/api/src/lib/call-policy.ts",
+      "loc": 402,
+      "cx": 95
+    },
+    {
+      "path": "apps/api/src/lib/tts.ts",
+      "loc": 445,
+      "cx": 81
+    },
+    {
+      "path": "apps/api/src/asterisk/flow-logic.ts",
+      "loc": 338,
+      "cx": 78
+    },
+    {
+      "path": "apps/api/src/routes/portal.ts",
+      "loc": 392,
+      "cx": 66
+    }
+  ],
+  "madge_circular": 0,
+  "folder_soft_cycle": [
+    "db",
+    "lib"
+  ],
+  "depcruiser_modules": 99,
+  "arch_tests": 48
+}
