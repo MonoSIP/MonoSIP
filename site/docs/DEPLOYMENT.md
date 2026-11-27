@@ -5,7 +5,7 @@ Public URL: **https://www.monosip.com**.
 
 Pushing `main` runs `.github/workflows/pages.yml`. The workflow builds this folder and publishes the static export with GitHub Pages.
 
-- Node.js: `26.12.1` (`site/.node-version`)
+- Node.js: `26.13.1` (`site/.node-version`)
 - Package manager: pnpm `12.14.0`
 - Build: `pnpm install --frozen-lockfile && pnpm build`
 - Output: `out/`

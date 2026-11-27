@@ -10,7 +10,7 @@
 # Compose still runs a separate asterisk service and sets ASTERISK_ARI_URL=http://asterisk:8088
 # so the embedded PBX is skipped in that mode.
 
-FROM node:26.12.1-bookworm-slim AS builder
+FROM node:26.13.1-bookworm-slim AS builder
 WORKDIR /app
 # Node 26 no longer ships corepack. Install pnpm the same way the runtime stage does.
 RUN npm install -g pnpm@12.14.0
@@ -32,7 +32,7 @@ LABEL org.opencontainers.image.licenses="MIT" \
 
 USER root
 ARG TARGETARCH
-ARG NODE_VERSION=26.12.1
+ARG NODE_VERSION=26.13.1
 
 # Pin major Postgres so image rebuilds do not silently break /data/postgres clusters.
 # python3-pip + libsndfile: embedded TTS (Edge / EMA) — no sidecar.

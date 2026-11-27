@@ -6,7 +6,7 @@ Public address: **https://www.monosip.com**. Source repository: **[MonoSIP/MonoS
 
 ## Local development
 
-Use **Node 26.12.1** and **pnpm 12.14.0**; `.node-version`, package metadata and CI agree.
+Use **Node 26.13.1** and **pnpm 12.14.0**; `.node-version`, package metadata and CI agree.
 
 ```sh
 npm install --global pnpm@12.14.0
@@ -26,7 +26,7 @@ Preview serves `out/`, with directory-index routes and real HTTP 404 responses. 
 The implementation machine has a workspace-local, ignored Node runtime under `.tools/`. PowerShell example:
 
 ```powershell
-$env:Path = (Join-Path $PWD '.tools/node-v26.12.1-win-x64') + ';' + $env:Path
+$env:Path = (Join-Path $PWD '.tools/node-v26.13.1-win-x64') + ';' + $env:Path
 npm exec --yes --package=pnpm@12.14.0 -- pnpm dev
 ```
 
