@@ -656,7 +656,7 @@ const wavFile = () => new File([new Uint8Array([82, 73, 70, 70])], "tone.wav", {
 function stubUploadFetch(body: unknown, ok = true) {
   // Typed parameters so mock.calls[0] is a [url, init] tuple, not [].
   const fetchMock = vi.fn(
-    async (url: string, init?: RequestInit) =>
+    async (_url: string, _init?: RequestInit) =>
       new Response(JSON.stringify(body), { status: ok ? 200 : 500 }),
   );
   vi.stubGlobal("fetch", fetchMock);

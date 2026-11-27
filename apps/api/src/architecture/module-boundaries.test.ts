@@ -57,7 +57,7 @@ function parseImports(file: string): string[] {
 
 function resolveImport(fromFile: string, spec: string): string | null {
   // Strip .js extension used in ESM imports; resolve relative to fromFile.
-  let cleaned = spec.replace(/\.js$/, "");
+  const cleaned = spec.replace(/\.js$/, "");
   const base = join(fromFile, "..", cleaned);
   for (const cand of [`${base}.ts`, join(base, "index.ts")]) {
     try {

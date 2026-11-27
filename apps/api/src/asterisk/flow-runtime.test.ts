@@ -183,7 +183,7 @@ import {
   resolveOutboundDial,
 } from "../lib/call-policy.js";
 import { evaluateScheduleStatus } from "./routing.js";
-import { ensureSpeechMedia, promptMediaUri, synthesizeSpeech } from "../lib/tts.js";
+import { ensureSpeechMedia, promptMediaUri } from "../lib/tts.js";
 import { decrypt } from "../lib/crypto.js";
 
 // ---------------------------------------------------------------- fixtures

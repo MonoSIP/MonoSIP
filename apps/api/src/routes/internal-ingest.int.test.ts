@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { cdr, extensions, missedCalls, recordings, voicemails } from "../db/schema.js";
 import {

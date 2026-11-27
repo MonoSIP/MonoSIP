@@ -83,7 +83,6 @@ afterEach(async () => {
 
 const H = () => auth(fx.adminToken);
 const post = (url: string, payload: unknown) => app.inject({ method: "POST", url, headers: H(), payload });
-const put = (url: string, payload: unknown) => app.inject({ method: "PUT", url, headers: H(), payload });
 const patch = (url: string, payload: unknown) => app.inject({ method: "PATCH", url, headers: H(), payload });
 const del = (url: string) => app.inject({ method: "DELETE", url, headers: H() });
 
