@@ -9,6 +9,7 @@ import { chmod, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
+import { QuietAccessLogController } from "./lib/http-access-log.js";
 import { createTrustProxy } from "./lib/trust-proxy.js";
 import { ari } from "./asterisk/ari.js";
 import { attachFlowRuntime } from "./asterisk/flow-runtime.js";
@@ -38,29 +39,11 @@ async function main() {
 
   const app = Fastify({
     logger: true,
-    // Default access logs spam health probes + Vite assets; we log selectively below.
-    disableRequestLogging: true,
+    // Quiet health probes + SPA assets; keep API traffic and failures.
+    logController: new QuietAccessLogController(),
     // Only the configured reverse proxies may set the client address via
     // X-Forwarded-For; every other peer is identified by its socket address.
     trustProxy: createTrustProxy(config.trustedProxyCidrs),
-  });
-
-  const { shouldLogHttpAccess } = await import("./lib/http-access-log.js");
-  app.addHook("onResponse", (req, reply, done) => {
-    if (!shouldLogHttpAccess(req.url, reply.statusCode)) {
-      done();
-      return;
-    }
-    req.log.info(
-      {
-        reqId: req.id,
-        req: { method: req.method, url: req.url },
-        res: { statusCode: reply.statusCode },
-        responseTime: reply.elapsedTime,
-      },
-      "request completed",
-    );
-    done();
   });
 
   const { isAllowedCorsOrigin } = await import("./lib/cors-origin.js");
