@@ -43,7 +43,8 @@ services:
     networks:
       - monosip
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   # TTS runs embedded inside the api/all-in-one image (127.0.0.1:5500).
   # Optional standalone: docker build -t monosip-tts ./docker/tts

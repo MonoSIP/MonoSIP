@@ -9,9 +9,9 @@ Only evidence-backed items. No invented multi-tenant bugs (product is single-ten
 ### P1 — Dual CDR ingest idempotency — **HARDENED** (2026-11-27)
 
 - **Fix:** `cdrStart` advisory-locked + exist-check; `UNIQUE cdr_call_id_uidx`; `cdrEnd` no-op on finished retry.
-- **Migration:** `0019_cdr_call_id_unique.sql` (prod not applied; throwaway verified).
+- **Migration:** `0019_cdr_call_id_unique.sql` + hot-path `0020_hotpath_call_id_indexes.sql` (in tree; Compose/lab migrate applies; CI int suite green).
 - **Evidence:** `CDR_IDEMPOTENCY_HARDENING.md`; int tests — parallel/retry → exactly 1 row; raw 2nd INSERT → `23505`.
-- **Residual:** Prod apply only after `SELECT call_id, count(*) … HAVING count(*) > 1` is empty (migration fails loud if not).
+- **Residual:** Existing production volumes still need empty-duplicate preflight before first `0019` apply (migration fails loud if not).
 
 ---
 

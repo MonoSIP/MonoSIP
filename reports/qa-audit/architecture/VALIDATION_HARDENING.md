@@ -16,30 +16,20 @@
 
 Same call often uses **A then B** (inbound/flow redirect → dialplan hangup curl).
 
-### Teknik kanıt
-- `cdr.call_id` has **non-unique** index `cdr_call_id_idx` only (`schema.ts` L339–341).
-- Double `cdrStart` → **≥2 rows** (int test).
-- Parallel triple `cdrStart` → **≥2 rows**.
-- Dialplan second POST → **1 row** updated (`updated: true`).
-- Stasis start + dialplan finalize → **1 row**, billsec from dialplan.
+### Teknik kanıt (pre-hardening baseline)
+- Was: non-unique `cdr_call_id_idx`; double/parallel `cdrStart` could create ≥2 rows.
+- Dialplan second POST already updated a single row; Stasis→dialplan finalize was 1 row.
+
+### Shipped fix (2026-11-27+)
+- `UNIQUE cdr_call_id_uidx` via `0019_cdr_call_id_unique.sql` + `schema.ts`.
+- `cdrStart` advisory-locked + exist-check; finished `cdrEnd` retries no-op.
+- Int suite asserts parallel/retry → exactly 1 row; raw 2nd INSERT → `23505`.
 
 ### Tekrarlanabilir test
-- `apps/api/src/architecture/cdr-idempotency.int.test.ts` (9 tests): normal, duplicate start, retry end, concurrency, dialplan create/update, Stasis→dialplan, auth fail, catalog uniqueness.
+- `apps/api/src/architecture/cdr-idempotency.int.test.ts`: normal, duplicate start, retry end, concurrency, dialplan create/update, Stasis→dialplan, auth fail, catalog uniqueness.
 
-### Kullanıcı / işletme etkisi
-Duplicate CDR rows inflate reports, portal call lists, and spend-limit sums for the same `call_id`. Rare in happy path; more likely under ARI reconnect / double StasisStart.
-
-### Risk
-**P1** (data integrity under retry/reconnect). Dialplan path alone is closer to idempotent.
-
-### Önerilen çözüm (onay gerekli)
-1. Deduplicate existing `cdr` by `call_id` (keep latest `ended_at` / max billsec).  
-2. Add **`UNIQUE (call_id)`** (draft note in `drizzle/0019_arch_hotpath_indexes.sql.draft`).  
-3. Change `cdrStart` to upsert / no-op if row exists.  
-**Geriye dönük:** unique index fails if duplicates remain — must clean first.
-
-### Regresyon
-Int suite above; keep failing “duplicate inserts ≥2” until upsert lands, then flip assertion to `length === 1`.
+### Residual
+Production volumes still need empty-duplicate preflight before first apply of `0019` (migration fails loud if dup groups remain).
 
 ---
 
@@ -113,25 +103,20 @@ Integrators querying DB on `call.ended` may see incomplete CDR; dialplan-only le
 
 ## 4. Hot-path index audit
 
-### Mevcut davranış / EXPLAIN (55433 lab)
+### Mevcut davranış (shipped)
 
-| Query | Plan (evidence) |
+| Query | Catalog / plan notes |
 |---|---|
-| `cdr WHERE call_id = …` | **Index Scan** `cdr_call_id_idx` |
-| `recordings WHERE call_id = …` (200 rows) | **Seq Scan** + Filter (199 removed) |
-| Join recordings ∈ recent cdr call_ids | **Seq Scan on recordings** + hash semi join |
-| `call_events(call_id)` | **No index** in catalog |
+| `cdr WHERE call_id = …` | Unique `cdr_call_id_uidx` (tiny tables may still seq-scan in EXPLAIN) |
+| `recordings WHERE call_id = …` | `recordings_call_id_idx` (`0020`) |
+| `call_events(call_id)` / `(call_id, at DESC)` | `call_events_call_id_idx` + `call_events_call_id_at_idx` (`0020`) |
 | `sessions.token` | Unique index present |
 
 ### INSERT/UPDATE cost
-Secondary btree on `recordings(call_id)` / `call_events(call_id)`: low write amplification for PBX-scale volumes; high read win on admin CDR list joins.
-
-### Önerilen çözüm
-Draft only: `apps/api/drizzle/0019_arch_hotpath_indexes.sql.draft`  
-**Not applied.** Awaits approval. Prefer `CREATE INDEX` in numbered migration for small deploys (CONCURRENTLY needs non-txn ops window).
+Secondary btree on `recordings(call_id)` / `call_events(call_id)`: low write amplification for PBX-scale volumes; high read win on admin CDR list joins. Large prod tables may prefer `CREATE INDEX CONCURRENTLY` outside drizzle txn (see comments in `0020_*.sql`).
 
 ### Regresyon
-`hotpath-indexes.int.test.ts` (5) — locks “no recordings(call_id) index today”.
+`hotpath-indexes.int.test.ts` — asserts catalog indexes from `0019`/`0020` (does not rely on EXPLAIN picking the index on empty/tiny tables).
 
 ---
 

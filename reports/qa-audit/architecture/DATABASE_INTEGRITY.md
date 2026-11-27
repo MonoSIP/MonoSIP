@@ -70,13 +70,13 @@ Locked by `architecture/schema-integrity.test.ts`.
 
 | Path | Coverage |
 |---|---|
-| CDR by `started_at` / `call_id` | Unique index `cdr_call_id_uidx` (Phase 1 hardening) |
-| Recordings join by `callId` (admin list) | **No** index — **Seq Scan** on 200-row lab sample |
+| CDR by `started_at` / `call_id` | Unique index `cdr_call_id_uidx` (`0019_cdr_call_id_unique`) |
+| Recordings join by `callId` (admin list) | `recordings_call_id_idx` (`0020_hotpath_call_id_indexes`) |
 | Portal CDR by extension/caller/callee | **No** covering index |
-| `call_events` by `callId` / `type` | **No** indexes |
+| `call_events` by `callId` / time | `call_events_call_id_idx` + `call_events_call_id_at_idx` (`0020`) |
 | Recording retention by `created_at` | **No** index (OK at small scale) |
 
-**Draft migration (not applied):** `apps/api/drizzle/0019_arch_hotpath_indexes.sql.draft`  
+Shipped in tree + Compose migrate: `0019_cdr_call_id_unique.sql`, `0020_hotpath_call_id_indexes.sql` (schema mirrors in `schema.ts`).  
 Full validation write-up: `VALIDATION_HARDENING.md`.
 
 ## Cascade risk assessment
@@ -91,9 +91,10 @@ Cascades are confined to **membership and satellite** rows (devices, members, fl
 
 ## Migration consistency
 
-- Sequential numbered SQL migrations through `0018_`.
-- Architecture tests assert base FK names still present.
+- Sequential numbered SQL migrations through `0020_`.
+- Architecture tests assert base FK names + hot-path indexes still present.
 - Repeated migrate: Drizzle journal in `meta/` — standard; not re-audited destructively here.
+- Note: `meta/*_snapshot.json` stops at `0005` (hand-written later SQL); journal tags drive migrate, not snapshots.
 
 ## Retention / deletion policies
 
