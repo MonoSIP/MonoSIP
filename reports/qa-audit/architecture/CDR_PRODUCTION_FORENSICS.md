@@ -149,7 +149,7 @@ From v1.0.0 (`be69a3a`) through HEAD:
 | Era | Behaviour |
 |---|---|
 | v1.0.0 … **released HEAD (1.9.9)** | Unconditional `INSERT` — no exist-check, no unique index |
-| **Working tree (unreleased)** | Advisory lock + exist-check + migration `UNIQUE(call_id)` |
+| **Shipped on `main` / GHCR** | Advisory lock + exist-check + migration `UNIQUE(call_id)` (+ `0020` indexes) |
 
 Git history for `apps/api/src/lib/cdr.ts` shows the insert-always body since the initial release; Phase 1 hardening is **not in a tagged release yet**.
 
@@ -185,7 +185,7 @@ If `900` was not a concrete extension/queue/RG/flow (or dialplan bounced back in
 | Layer | Status on production today |
 |---|---|
 | Stasis short-number loop (`e6261e5`) | **Fixed** in tree since 2026-10-28; present in 1.9.9 |
-| `cdrStart` idempotency + `UNIQUE(call_id)` | **Not applied** on prod DB; code hardening is local working tree |
+| `cdrStart` idempotency + `UNIQUE(call_id)` | **Code shipped** on `main` / GHCR; **prod DB UNIQUE + storm SQL A/B not applied** (operator sequence) |
 
 ### Version window of bad rows
 
@@ -252,12 +252,12 @@ CREATE TABLE cdr_dup_archive (LIKE cdr INCLUDING ALL);
 
 | Condition | Status |
 |---|---|
-| Duplicate groups = 0 | **FAIL** (8 groups) |
-| Idempotent `cdrStart` deployed to prod | **FAIL** (unreleased working-tree fix) |
-| `UNIQUE` migration applied | **FAIL** (blocked) |
-| Backup / archive before delete | **Not done** |
-| Operator-approved dedupe script | **Pending** |
-| Post-dedupe verification query | **Pending** |
+| Duplicate groups = 0 | **FAIL on last forensics snapshot** (8 groups) — awaiting SQL A+B |
+| Idempotent `cdrStart` in registry/`main` | **PASS** (shipped); confirm prod instance digest before window |
+| `UNIQUE` migration on prod DB | **FAIL** (blocked until A+B leave 0 dups) |
+| Backup / archive before delete | **Operator checklist** (`OPERATOR_ACCESS_HANDOFF.md`) |
+| Operator-approved dedupe scripts | **Ready** — `cdr-dedupe/01_*.sql`, `02_*.sql`, sequence MD |
+| Post-dedupe verification | **Ready** — `CDR_POST_MIGRATION_VERIFICATION.md` |
 
 ---
 

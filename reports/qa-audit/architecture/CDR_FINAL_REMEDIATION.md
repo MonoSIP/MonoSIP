@@ -4,10 +4,10 @@
 **Authority sequence:** `cdr-dedupe/OPERATOR_APPLY_SEQUENCE.md`  
 **Ops checklist:** `cdr-dedupe/OPERATOR_PREFLIGHT_CHECKLIST.md`  
 **Access handoff:** `cdr-dedupe/OPERATOR_ACCESS_HANDOFF.md`  
-**Status:** **READY FOR CONTROLLED PRODUCTION EXECUTION**
+**Status:** **READY FOR CONTROLLED PRODUCTION EXECUTION**  
+**Code / registry:** shipped on `main` (image publish green). See `AUDIT_CLOSEOUT.md`.
 
-Production not touched. Commit / push / deploy not performed in this work.  
-Production execution blocked until handoff checklist is satisfied (no DB/SSH/deploy access in agent environment; prod health has no `cdr` metrics yet).
+Production DB not touched. Production execution blocked until `OPERATOR_ACCESS_HANDOFF.md` is satisfied and the operator runs `OPERATOR_APPLY_SEQUENCE.md`.
 
 ---
 
@@ -47,21 +47,21 @@ Doc-only fix in this close-out: expanded `CDR_POST_MIGRATION_VERIFICATION.md` ch
 
 ---
 
-## 2. Tests (re-run 2026-11-27)
+## 2. Tests (re-run 2026-11-27 close-out)
 
-Throwaway Postgres `127.0.0.1:55433` / lab docker — **not production**.
+Throwaway Postgres / lab docker — **not production**.
 
 | Suite | Result |
 |-------|--------|
 | `pnpm arch:test` | **60 passed** |
 | `pnpm arch:test:int` | **27 passed** (cdr-idempotency 16, webhook 6, hotpath 5) |
-| `flow-runtime.test.ts` | **123 passed** |
-| `internal-ingest.int.test.ts` | **46 passed** |
-| `cdr-dedupe/lab_rehearsal.sh` | **PASS** — A→B→0019, re-run no-op, rollback B then A (7251 / G8=2), re-apply; billsec 1290→1270; dup groups 0 |
+| `cdr-dedupe/lab_rehearsal.sh` | **PASS** — A→B→0019, re-run no-op, rollback B then A, re-apply; billsec 1290→1270; dup groups 0 |
+| GitHub Actions CI on `main` | **PASS** (check + integration) |
+| GHCR image publish | **PASS** |
 
-Covered by above: parallel `cdrStart`, repeated `cdrEnd`, UNIQUE reject, webhook-after-commit, SQL A/B+rollback lab.
+Covered: parallel `cdrStart`, repeated `cdrEnd`, UNIQUE reject, webhook-after-commit, SQL A/B+rollback lab, hot-path catalog indexes.
 
-**Not run:** full GitHub Actions CI job on remote; live production smoke; real PSTN call.
+**Not run:** live production SQL A/B; real PSTN call on prod.
 
 ---
 
@@ -100,9 +100,9 @@ Separate maintenance only. Do not bundle with 0019. Prefer `psql -f 0020_…` or
 
 ## 4. Production execution
 
-**Production not touched.**
+**Production CDR dedupe not executed.**
 
-No production SQL, migrate, archive, delete, ingest pause/resume, or deploy was performed in this task.
+Remediating code is on `main` / GHCR. No production SQL A/B, archive, delete, ingest pause/resume, or prod `0019` apply was performed in audit work.
 
 ---
 

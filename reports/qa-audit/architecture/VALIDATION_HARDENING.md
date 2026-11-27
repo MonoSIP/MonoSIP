@@ -151,11 +151,13 @@ Isolated Asterisk call placement: **not run** (per rules). Transfer hangup-on-mi
 
 ---
 
-## Unresolved risks (no fix applied)
+## Resolved vs residual (close-out 2026-11-27)
 
-1. Non-unique `cdr.call_id` → duplicate rows under concurrent Stasis start.  
-2. Early `call.ended` vs open CDR; dialplan path silent on ended.  
-3. `pendingTransfers` lost on restart.  
-4. Missing `recordings(call_id)` / `call_events(call_id)` indexes (draft only).
+| Item | Status |
+|---|---|
+| Non-unique `cdr.call_id` / concurrent duplicate starts | **Fixed in tree** — UNIQUE + idempotent `cdrStart` (prod storm cleanup still operator-gated) |
+| Early `call.ended` while CDR open | **Fixed** — emit after `cdrEnd` commit |
+| Missing `recordings` / `call_events` call_id indexes | **Fixed** — migration `0020` + schema |
+| `pendingTransfers` lost on restart | **Residual P2** — documented; persistence not implemented (needs explicit approval) |
 
-**Awaiting approval** before upsert/unique, webhook reordering, index migration apply, or transfer persistence.
+See `AUDIT_CLOSEOUT.md` for re-run evidence and production handoff boundary.

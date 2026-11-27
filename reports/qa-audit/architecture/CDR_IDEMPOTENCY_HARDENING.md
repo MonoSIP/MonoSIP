@@ -131,8 +131,8 @@ Throwaway kanıt: `duplicate_groups: []`, unique index mevcut, ikinci INSERT `23
 ## Dokunulmayanlar (bilinçli)
 
 - `call.ended` webhook ordering  
-- `recordings(call_id)` / diğer hot-path index draft’ları  
-- `pendingTransfers` persistence  
+- `pendingTransfers` persistence (hâlâ P2; uygulanmadı)  
+- Production storm SQL A/B + ilk `0019` (operatör penceresi — `AUDIT_CLOSEOUT.md`)
 
 ---
 

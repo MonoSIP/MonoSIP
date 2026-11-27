@@ -50,8 +50,10 @@ The main structural risks are **file size / cohesion** (`admin-resources.ts`, la
 2. Loose IVR `data` validation  
 3. Single-process job + CDR memory + `pendingTransfers` if API restarts mid-call or is scaled  
 4. Dialplan string regressions (weak mutation kill rate)  
-5. Dual CDR ingest paths drifting apart; early webhook “ended” vs DB  
+5. Production CDR storm cleanup not yet executed (code shipped; ops window gated — `AUDIT_CLOSEOUT.md`)  
 6. Web/API schema drift while shared Zod stays API-centric  
+
+Dual CDR ingest + early `call.ended` + hot-path call_id indexes are **hardened in tree** (lab + CI verified).
 
 Discovery inputs also folded from mapping passes [Schema/IVR/SIP map](6cf2993d-a58d-45d0-ac5e-2bbc7a0ffcbc) and [API architecture map](fbba3c1a-cf14-455d-89f8-c53258c5b134).
 
@@ -73,5 +75,6 @@ Architecture is **accepted for continued production operation** under the modula
 9. `MUTATION_TEST_REPORT.md`  
 10. `ARCHITECTURE_RECOMMENDATIONS.md`  
 11. `ARCHITECTURAL_ACCEPTANCE.md` (this file)  
+12. `AUDIT_CLOSEOUT.md` — engineering close-out vs operator-gated prod dedupe  
 
 Tooling: `.dependency-cruiser.cjs`, `scripts/arch-deps.sh`, `apps/api/src/architecture/*.test.ts`, CI steps in `.github/workflows/ci.yml`.

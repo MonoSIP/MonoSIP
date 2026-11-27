@@ -28,4 +28,5 @@ Apply **only** when `GROUP BY call_id HAVING count(*)>1` is empty (after A+B).
 
 ## Production
 
-**Not applied.** See `CDR_PRODUCTION_RUNBOOK.md` for operator steps. Explicit approval still required.
+**Storm SQL A/B + prod `0019` not applied.** Remediation code is on `main` / GHCR.  
+See `CDR_PRODUCTION_RUNBOOK.md` + `AUDIT_CLOSEOUT.md`. Explicit operator approval still required for the maintenance window.
