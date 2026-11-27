@@ -1,0 +1,23 @@
+{
+  "fetchedAt": "2026-11-27T19:56:08.780717+00:00",
+  "host": "https://sip.dgn.tr",
+  "total_rows": 7504,
+  "api_total": 7504,
+  "distinct_call_id": 259,
+  "dup_groups": 8,
+  "group_counts": {
+    "1793211608.40": 3639,
+    "1793217547.7": 2748,
+    "1793211593.39": 402,
+    "1793211552.38": 207,
+    "1793211511.36": 125,
+    "1793215834.0": 81,
+    "1793215885.1": 49,
+    "1793233454.37": 2
+  },
+  "preflight_match": true,
+  "definite_discard_candidates": 7244,
+  "g8_billsec_sum": 40,
+  "remediation_deployed": false,
+  "notes": "cdr-integrity 404; health has no cdr field \u2014 remediating image not live yet"
+}
