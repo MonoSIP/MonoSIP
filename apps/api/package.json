@@ -1,6 +1,6 @@
 {
   "name": "@monosip/api",
-  "version": "1.9.8",
+  "version": "1.9.9",
   "license": "MIT",
   "private": true,
   "type": "module",
