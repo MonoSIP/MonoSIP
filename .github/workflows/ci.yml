@@ -19,6 +19,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          # package.json packageManager field would make setup-node enable pnpm
+          # before we npm-install it (same pattern as pages.yml).
+          package-manager-cache: false
       - run: npm install -g pnpm@12.14.0
       - name: Cache pnpm store
         uses: actions/cache@v5
@@ -64,6 +67,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
       - run: npm install -g pnpm@12.14.0
       - name: Cache pnpm store
         uses: actions/cache@v5
@@ -118,6 +122,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
       - run: npm install -g pnpm@12.14.0
       - run: pnpm install --frozen-lockfile=false
       # Block on CRITICAL (there are currently none). High/moderate are reported
