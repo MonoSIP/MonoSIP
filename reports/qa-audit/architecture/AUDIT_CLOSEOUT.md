@@ -47,7 +47,9 @@ Compose/lab migrate applies 0019+0020 together. Production storm cleanup must st
 
 ## Still open (operator-only)
 
-1. **Deploy remediating image** to `sip.dgn.tr` (NineDeploy / orchestrator). Live probe 2026-11-27T19:56Z: health has **no** `cdr`; `cdr-integrity` → **404**.  
+1. **Deploy remediating image** to `sip.dgn.tr` (NineDeploy / orchestrator).  
+   **Incident 2026-11-27 ~23:30+03:** hard `0019` UNIQUE on boot killed migrate while 8 dup groups remained → container never listened → **502 Bad Gateway** on `/api/v1/health`. Fixed by soft-defer `0019` + manual `03_enforce_unique.sql` after SQL A/B. Redeploy this build to restore health.  
+
 2. Fill remaining `OPERATOR_ACCESS_HANDOFF.md` items (DB role / `psql`, backup restore proof, ingest stop/start).  
 3. Maintenance window: backup → ingest pause → SQL preflight → SQL A → SQL B → `0019` → post-verify → resume.  
 4. Later window: `0020` (or migrate once 0019 already present).  

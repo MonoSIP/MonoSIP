@@ -19,10 +19,10 @@
 8. Verify A: 7 keepers, G8 still 2, `SUM(billsec)` unchanged vs baseline.
 9. **SQL B** — `02_g8_manual_dedupe.sql` (G8, archive 1, SUM for call 40→20).
 10. Verify B: **0** duplicate `call_id` groups.
-11. **Migration 0019 only** — `apps/api/drizzle/0019_cdr_call_id_unique.sql` via `psql -f` (not full `db:migrate`).
+11. **UNIQUE enforce** — `cdr-dedupe/03_enforce_unique.sql` via `psql -f` (hard fail if dups remain). Auto-migrate `0019` is soft-defer and must not be relied on for this step.
 12. Post checks: `CDR_POST_MIGRATION_VERIFICATION.md`.
 13. Resume ingest.
-14. (Separate window) Migration **0020** — independent of CDR dedupe.
+14. (Separate window) Migration **0020** if indexes missing — independent of CDR dedupe.
 
 ## DB access
 
@@ -67,9 +67,9 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
   -f reports/qa-audit/architecture/cdr-dedupe/02_g8_manual_dedupe.sql
 
-# UNIQUE only — do NOT run full drizzle migrate here (journal also has 0020).
+# Hard UNIQUE after A+B (auto-migrate 0019 soft-defers while dups exist).
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
-  -f apps/api/drizzle/0019_cdr_call_id_unique.sql
+  -f reports/qa-audit/architecture/cdr-dedupe/03_enforce_unique.sql
 ```
 
 Monitoring after resume (TLS validating):

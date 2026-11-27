@@ -139,7 +139,7 @@ Sapma → **DUR**, re-forensics.
 | 8 | Verify A | counts / billsec | 7 keeper; G8=2; billsec=baseline | **DUR** → A rollback öner |
 | 9 | SQL B | `psql … -f …/02_g8_manual_dedupe.sql` | `g8-manual`=1; G8 sum=20 | **DUR** |
 | 10 | Verify B | dup query | **0** dup group | **DUR** — 0019 yok |
-| 11 | 0019 | `psql … -f apps/api/drizzle/0019_cdr_call_id_unique.sql` | `cdr_call_id_uidx` | **DUR**. **`db:migrate` yok. 0020 yok.** |
+| 11 | UNIQUE | `psql … -f …/cdr-dedupe/03_enforce_unique.sql` | `cdr_call_id_uidx` | **DUR**. Soft-0019 auto-migrate yeterli değil. |
 
 ---
 

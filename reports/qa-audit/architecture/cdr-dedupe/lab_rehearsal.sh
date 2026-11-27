@@ -10,7 +10,8 @@ PGUSER=lab
 PGPASSWORD=lab
 PGDATABASE=lab
 export PGPASSWORD
-MIGRATE_UNIQUE="$ROOT/../../../../apps/api/drizzle/0019_cdr_call_id_unique.sql"
+# Hard enforce (matches production SEQUENCE #11). Soft auto-migrate 0019 is separate.
+MIGRATE_UNIQUE="$ROOT/03_enforce_unique.sql"
 MIGRATE_UNIQUE_DOWN="$ROOT/../../../../apps/api/drizzle/0019_cdr_call_id_unique.down.sql"
 
 cleanup() { docker rm -f "$CONTAINER" >/dev/null 2>&1 || true; }

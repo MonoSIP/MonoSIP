@@ -3,7 +3,7 @@
 **Bu dosya production CDR dedupe için tek sıralı listedir.**  
 Onay yoksa çalıştırma. Production’a bu listeden bağımsız SQL/migrate uygulama.
 
-Kaynak doğruluk: `keeper-manifest.json` · `01_*.sql` · `02_*.sql` · `0019_cdr_call_id_unique.sql`  
+Kaynak doğruluk: `keeper-manifest.json` · `01_*.sql` · `02_*.sql` · `03_enforce_unique.sql`  
 Güvenlik / ingest ayrıntısı: `OPERATOR_PREFLIGHT_CHECKLIST.md`  
 Erişim teslimi: `OPERATOR_ACCESS_HANDOFF.md`  
 (çelişkide **bu sequence** esas).
@@ -53,16 +53,16 @@ G8 discard (archive only): `68da5aff-65d2-4773-aab3-2db95a417ca6`
 | 7 | **SQL A** | `01_definite_dedupe.sql` | COMMIT; archive 7244 | ERROR / ROLLBACK |
 | 8 | Verify A | 7 keepers; G8=2; sum(billsec)=baseline; batch `definite-g1-g7`=7244 | Aksi halde → rollback A |
 | 9 | **SQL B** | `02_g8_manual_dedupe.sql` | COMMIT; archive 1; G8 sum=20 | ERROR → rollback B (A’yı da gerekirse) |
-| 10 | Verify B | `HAVING count(*)>1` → **0 satır** | Dup kaldıysa **0019 yok** |
-| 11 | **0019 UNIQUE** | `psql -f apps/api/drizzle/0019_cdr_call_id_unique.sql` | `cdr_call_id_uidx` UNIQUE | Dup exception |
+| 10 | Verify B | `HAVING count(*)>1` → **0 satır** | Dup kaldıysa UNIQUE yok |
+| 11 | **UNIQUE enforce** | `psql -f …/cdr-dedupe/03_enforce_unique.sql` | `cdr_call_id_uidx` UNIQUE | Dup exception |
 | 12 | Post-verify | `CDR_POST_MIGRATION_VERIFICATION.md` | 8 keeper; G8 billsec 20; integrity ok=true | Eksik keeper / dup |
 | 13 | Ingest aç | API/ARI | Yeni çağrı → 1 CDR | — |
-| 14 | *(ayrı pencere)* 0020 | `0020_hotpath_call_id_indexes.sql` veya sonra `db:migrate` | Indexler | Dedupe penceresine karıştırma |
+| 14 | *(ayrı pencere)* 0020 | zaten soft-0019 boot’ta gelmiş olabilir; yoksa `0020_….sql` | Indexler | Dedupe ile karıştırma |
 
-### 0019 için önemli
+### UNIQUE / migrate notu
 
-`pnpm … db:migrate` / `tsx src/db/migrate.ts` bekleyen **0019 + 0020**’yi birlikte uygular.  
-Bu pencerede **yalnızca** `0019_cdr_call_id_unique.sql` dosyasını `psql -f` ile çalıştır.
+`db:migrate` içindeki `0019_cdr_call_id_unique.sql` **soft-defer**: duplicate varken NOTICE + no-op (API boot düşmez).  
+Production storm temizliği sonrası UNIQUE için **`03_enforce_unique.sql`** kullan (sert FAIL).
 
 ---
 
