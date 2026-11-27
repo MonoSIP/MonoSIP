@@ -9,7 +9,7 @@
  * Also applies pending Drizzle migrations so host vitest stays in sync with
  * compose (API entrypoint migrates `monosip`, not `monosip_test`).
  */
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { drizzle } from "drizzle-orm/node-postgres";
@@ -57,6 +57,37 @@ for (const dir of ["asterisk", "recordings", "uploads"]) {
     { asterisk: "ASTERISK_CONFIG_DIR", recordings: "RECORDINGS_DIR", uploads: "UPLOADS_DIR" }[dir]!
   ] = full;
 }
+
+/** Minimal 8 kHz mono PCM WAV (CI has no checked-in .temp_files/). */
+function writeToneWav(filePath: string, durationSec: number) {
+  const sampleRate = 8000;
+  const n = Math.floor(sampleRate * durationSec);
+  const dataSize = n * 2;
+  const buf = Buffer.alloc(44 + dataSize);
+  buf.write("RIFF", 0);
+  buf.writeUInt32LE(36 + dataSize, 4);
+  buf.write("WAVE", 8);
+  buf.write("fmt ", 12);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20);
+  buf.writeUInt16LE(1, 22);
+  buf.writeUInt32LE(sampleRate, 24);
+  buf.writeUInt32LE(sampleRate * 2, 28);
+  buf.writeUInt16LE(2, 32);
+  buf.writeUInt16LE(16, 34);
+  buf.write("data", 36);
+  buf.writeUInt32LE(dataSize, 40);
+  for (let i = 0; i < n; i++) {
+    buf.writeInt16LE(Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 16000, 44 + i * 2);
+  }
+  writeFileSync(filePath, buf);
+}
+
+const fixturesDir = path.join(repoRoot, ".temp_files", "fixtures");
+mkdirSync(fixturesDir, { recursive: true });
+writeToneWav(path.join(fixturesDir, "tone-8k-mono.wav"), 0.25);
+writeToneWav(path.join(fixturesDir, "tone-8k-mono-1s.wav"), 1);
+writeFileSync(path.join(fixturesDir, "too-small.wav"), Buffer.from("not-a-wav"));
 
 const migrationsFolder = path.join(apiRoot, "drizzle");
 const pool = new pg.Pool({ connectionString: testUrl });

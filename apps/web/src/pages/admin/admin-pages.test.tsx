@@ -319,22 +319,26 @@ describe("SettingsPage", () => {
     renderPage(<SettingsPage />);
 
     expect(await screen.findByDisplayValue("admin@example.com")).toBeInTheDocument();
-    await userEvent.clear(screen.getByLabelText("auth.email"));
-    await userEvent.type(screen.getByLabelText("auth.email"), "new-admin@example.com");
-    await userEvent.type(screen.getByLabelText("settings.currentPassword"), "Old-pass-1");
-    await userEvent.type(screen.getByLabelText("settings.newPassword", { exact: false }), "New-pass-2");
-    await userEvent.type(screen.getByLabelText("settings.confirmPassword"), "New-pass-2");
-    await userEvent.click(screen.getByRole("button", { name: "settings.saveSignIn" }));
+    // userEvent.type is slow under CI load when many fields are filled in sequence.
+    const ue = userEvent.setup({ delay: null });
+    await ue.clear(screen.getByLabelText("auth.email"));
+    await ue.type(screen.getByLabelText("auth.email"), "new-admin@example.com");
+    await ue.type(screen.getByLabelText("settings.currentPassword"), "Old-pass-1");
+    await ue.type(screen.getByLabelText("settings.newPassword", { exact: false }), "New-pass-2");
+    await ue.type(screen.getByLabelText("settings.confirmPassword"), "New-pass-2");
+    await ue.click(screen.getByRole("button", { name: "settings.saveSignIn" }));
 
-    await waitFor(() =>
-      expect(apiPost).toHaveBeenCalledWith("/api/v1/admin/auth/password", {
-        currentPassword: "Old-pass-1",
-        email: "new-admin@example.com",
-        newPassword: "New-pass-2",
-      }),
+    await waitFor(
+      () =>
+        expect(apiPost).toHaveBeenCalledWith("/api/v1/admin/auth/password", {
+          currentPassword: "Old-pass-1",
+          email: "new-admin@example.com",
+          newPassword: "New-pass-2",
+        }),
+      { timeout: 15_000 },
     );
     expect(toastSuccess).toHaveBeenCalledWith("settings.passwordChanged");
-  });
+  }, 20_000);
 
   it("triggers an Asterisk reload", async () => {
     seedSettings();
