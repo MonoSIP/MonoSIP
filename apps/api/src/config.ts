@@ -1,4 +1,4 @@
-import { normalizeLocalNets, parseLocalNetsEnv } from "./lib/local-nets.js";
+import { normalizeLocalNets, parseLocalNetsEnv, usableExternalIp } from "./lib/local-nets.js";
 
 // Before the MonoSIP rename the env prefix was DSIP_; existing deployments keep
 // working: an old DSIP_X fills MONOSIP_X when that is not set.
@@ -18,6 +18,17 @@ function required(name: string, fallback?: string): string {
 }
 
 const externalIp = (process.env.EXTERNAL_IP ?? "").trim();
+// The config writer stamps EXTERNAL_IP into every endpoint's media_address, which
+// forces the SDP address for all peers. A loopback/unspecified value only works
+// for a browser on this same host (Docker port publishing); every other phone
+// gets no audio. Respect an explicit operator value, but say so loudly. (The
+// silent case — deriving 127.0.0.1 from PUBLIC_HOST=localhost — is blocked in
+// bootstrap-runtime.sh.)
+if (externalIp && !usableExternalIp(externalIp)) {
+  console.warn(
+    `[config] EXTERNAL_IP=${externalIp} is loopback/unspecified: only clients on this host will get audio; phones elsewhere will be silent`,
+  );
+}
 
 export const config = {
   port: Number(process.env.API_PORT ?? 3000),

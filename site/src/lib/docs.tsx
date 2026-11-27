@@ -164,14 +164,16 @@ export const docs: Record<
             </p>
             <CodeBlock code={composeCommand} title="Docker Compose" />
             <p>
-              The lab panel opens at <code>https://localhost</code>. For
-              production, edit <code>.env</code> before starting the stack. Set{" "}
-              <code>EXTERNAL_IP</code>, <code>PUBLIC_HOST</code>,{" "}
-              <code>PUBLIC_URL</code>, <code>SIP_DOMAIN</code>,{" "}
-              <code>SIP_WSS_URL</code>, database credentials, session/encryption
-              keys and the admin password. <code>LOCAL_NETS</code> defaults to
-              the Docker bridge and loopback (safe for NAT desk phones); you
-              usually leave it alone. Follow the{" "}
+              The lab panel opens at <code>https://localhost</code>. Compose
+              seeds <code>ADMIN_PASSWORD=Admin123!</code> from{" "}
+              <code>.env.example</code> for local testing only — replace it
+              before any real use. For production, edit <code>.env</code> before
+              starting the stack. Set <code>EXTERNAL_IP</code>,{" "}
+              <code>PUBLIC_HOST</code>, <code>PUBLIC_URL</code>,{" "}
+              <code>SIP_DOMAIN</code>, <code>SIP_WSS_URL</code>, database
+              credentials, session/encryption keys and a strong admin password.{" "}
+              <code>LOCAL_NETS</code> defaults to the Docker bridge and loopback
+              (safe for NAT desk phones); you usually leave it alone. Follow the{" "}
               <a href={sourceDoc("DEPLOY-VPS")}>upstream VPS guide</a> for the
               complete configuration.
             </p>
@@ -277,14 +279,17 @@ export const docs: Record<
           <>
             <ol>
               <li>
-                Sign in to the admin panel as <code>admin@example.com</code>. The
-                Compose lab password is <code>Admin123!</code>; the single-container
-                image instead generates a unique admin password on first start and
-                prints it once in the container log (
-                <code>docker logs monosip</code>, or your host’s Runtime logs —
-                look for “first-run admin login”). Change it after signing in, and
-                set <code>ADMIN_PASSWORD</code> before first start to choose your
-                own.
+                Sign in to the admin panel as <code>admin@example.com</code>. On
+                the prebuilt single-container image (v1.9.7+), the admin password
+                is <strong>generated on first start</strong> and printed once in
+                the container log (<code>docker logs monosip</code>, or your
+                host’s Runtime logs — look for “first-run admin login”). It is
+                not <code>Admin123!</code>. Pass{" "}
+                <code>ADMIN_PASSWORD</code> before first start to choose your
+                own. Compose lab installs still seed{" "}
+                <code>Admin123!</code> from <code>.env.example</code> — change
+                that before any real use. After signing in, rotate the password
+                under Settings → Admin sign-in and enable TOTP.
               </li>
               <li>
                 Set the hostname and configure trusted HTTPS. In the Compose
@@ -324,15 +329,18 @@ export const docs: Record<
         content: (
           <>
             <p>
-              <code>pnpm db:reset-admin</code> sets every admin password back to
-              the install default <code>Admin123!</code>. The sign-in email
-              stays as it is; the command prints it. Two-factor authentication
-              stays on. Open admin sessions are signed out, and admin
-              login-flood bans stored in the database are cleared.
+              A fresh single-image install prints a unique first-run password in
+              the container log — check that first. If it is gone,{" "}
+              <code>pnpm db:reset-admin</code> is lockout recovery: it sets
+              every admin password to the fixed recovery value{" "}
+              <code>Admin123!</code> (not the random first-run password). The
+              sign-in email stays as it is; the command prints it. Two-factor
+              authentication stays on. Open admin sessions are signed out, and
+              admin login-flood bans stored in the database are cleared.
             </p>
             <CodeBlock
               code={`docker compose exec api pnpm db:reset-admin\ndocker exec monosip pnpm db:reset-admin`}
-              title="Restore the install default"
+              title="Lockout recovery"
             />
             <p>
               Use the Compose command on a Compose stack. Use{" "}
@@ -341,7 +349,9 @@ export const docs: Record<
               with <code>DATABASE_URL</code> already pointing at Postgres.
             </p>
             <p>
-              Sign in, then change the password under Settings → Admin sign-in.
+              Sign in with <code>Admin123!</code>, then{" "}
+              <strong>immediately</strong> set a strong unique password under
+              Settings → Admin sign-in and enable TOTP.
               If the panel still says too many failed logins, restart the API (
               <code>docker compose restart api</code> or{" "}
               <code>docker restart monosip</code>) so its in-memory ban counter
@@ -1445,14 +1455,16 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
               fraud is a practical risk when an extension is compromised.
             </p>
             <p>
-              If the admin password is forgotten,{" "}
-              <code>pnpm db:reset-admin</code> restores the install default{" "}
-              <code>Admin123!</code>. Run{" "}
+              Single-image installs (v1.9.7+) use a unique first-run admin
+              password from the container log — not <code>Admin123!</code>. If
+              that password is forgotten,{" "}
+              <code>pnpm db:reset-admin</code> temporarily restores the recovery
+              value <code>Admin123!</code>. Run{" "}
               <code>docker compose exec api pnpm db:reset-admin</code> on
               Compose, or <code>docker exec monosip pnpm db:reset-admin</code>{" "}
               on the single image. The sign-in email and two-factor
-              authentication stay as they are. Change the password after you
-              sign in.
+              authentication stay as they are. Change the password immediately
+              after you sign in and enable TOTP.
             </p>
             <Callout>
               <p>

@@ -20,7 +20,6 @@ function mockReqReply(opts: { secret?: string; peer?: string }) {
     headers: opts.secret ? { "x-monosip-internal": opts.secret } : {},
     socket: { remoteAddress: opts.peer ?? "127.0.0.1" },
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { req: req as any, reply: reply as any, replyMock: reply };
 }
 

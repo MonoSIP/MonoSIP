@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---- Static + unit + build (no DB) --------------------------------------
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: npm install -g pnpm@12.14.0
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile=false
+      - name: Build shared package
+        run: pnpm --filter @monosip/shared build
+      - name: Type check
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Unit tests (api)
+        run: pnpm --filter @monosip/api test
+      - name: Unit tests (web)
+        run: pnpm --filter @monosip/web test
+      - name: Build web
+        run: pnpm --filter @monosip/web build
+
+  # ---- Integration + smoke (real Postgres) --------------------------------
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: monosip
+          POSTGRES_PASSWORD: monosip_secret_change_me
+          POSTGRES_DB: monosip_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U monosip -d monosip_test"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://monosip:monosip_secret_change_me@localhost:5432/monosip_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: npm install -g pnpm@12.14.0
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile=false
+      - name: Build shared package
+        run: pnpm --filter @monosip/shared build
+      - name: Integration tests (api)
+        run: pnpm --filter @monosip/api run test:integration
+
+      - name: Smoke test (boot API, verify real functionality)
+        env:
+          DATABASE_URL: postgresql://monosip:monosip_secret_change_me@localhost:5432/monosip
+          SESSION_SECRET: ci-session-secret-000000000000000000
+          ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          ADMIN_EMAIL: admin@example.com
+          ADMIN_PASSWORD: Admin123!
+          API_PORT: "3000"
+          MONOSIP_LAB_SEED: "1"
+          ASTERISK_CONFIG_DIR: /tmp/ci-ast
+          RECORDINGS_DIR: /tmp/ci-rec
+          UPLOADS_DIR: /tmp/ci-up
+        run: |
+          set -e
+          PGPASSWORD=monosip_secret_change_me psql -h localhost -U monosip -d postgres \
+            -c "CREATE DATABASE monosip" || true
+          pnpm --filter @monosip/api exec tsx src/db/migrate.ts
+          pnpm --filter @monosip/api exec tsx src/db/seed.ts
+          pnpm --filter @monosip/api exec tsx src/index.ts &
+          API_PID=$!
+          for i in $(seq 1 40); do
+            curl -sf -o /dev/null "http://127.0.0.1:3000/api/v1/health" && break || sleep 1
+          done
+          BASE_URL=http://127.0.0.1:3000 bash scripts/smoke-test.sh
+          kill "$API_PID" 2>/dev/null || true
+
+  # ---- Dependency vulnerability gate --------------------------------------
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: npm install -g pnpm@12.14.0
+      - run: pnpm install --frozen-lockfile=false
+      # Block on CRITICAL (there are currently none). High/moderate are reported
+      # but non-blocking (one known HIGH: zod v4 migration — tracked separately).
+      - name: Audit (critical blocks)
+        run: pnpm audit --audit-level=critical
+      - name: Audit report (high+, informational)
+        run: pnpm audit --audit-level=high || true

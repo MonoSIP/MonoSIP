@@ -232,7 +232,7 @@ describe("startRecordingConvertJob", () => {
     cap.tick()();
     const done = await settle(async () => {
       const [r] = await db.select().from(recordings).where(eq(recordings.id, again.id));
-      return r?.filePath.endsWith(".ogg") === true;
+      return r?.filePath.endsWith(".mp3") === true;
     });
     expect(done).toBe(true);
     clearInterval(timer);

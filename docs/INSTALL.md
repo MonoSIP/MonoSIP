@@ -29,11 +29,11 @@ Open **https://localhost** and accept the self-signed certificate warning.
 
 | Role | Login | Password |
 | --- | --- | --- |
-| Admin | `admin@example.com` | `Admin123!` |
+| Admin (Compose lab) | `admin@example.com` | `Admin123!` from `.env.example` — **local lab only** |
 | Portal | `101` | `portal101` |
 | Portal | `100`–`103` | `portal{number}` |
 
-Change these passwords before any production use.
+Change these passwords before any production use. The **prebuilt single-container image** (recommended production path below) does **not** use `Admin123!` on first install — it generates a unique admin password and prints it in the container log. See [First-run admin password](#first-run-admin-password).
 
 ### Useful commands
 
@@ -47,7 +47,7 @@ docker compose down -v       # stop AND delete DB/recordings volumes
 
 ### Forgot the admin password
 
-`pnpm db:reset-admin` sets every admin password back to the install default `Admin123!`. The sign-in email is unchanged (the command prints it). Two-factor authentication stays on. Open admin sessions are signed out, and admin login-flood bans stored in the database are cleared.
+`pnpm db:reset-admin` is a **lockout recovery** tool: it sets every admin password to the fixed recovery value `Admin123!` (this is not the random first-run password from a single-image install). The sign-in email is unchanged (the command prints it). Two-factor authentication stays on. Open admin sessions are signed out, and admin login-flood bans stored in the database are cleared.
 
 ```bash
 # Docker Compose
@@ -60,7 +60,7 @@ docker exec monosip pnpm db:reset-admin
 pnpm db:reset-admin
 ```
 
-Sign in, then change the password under Settings → Admin sign-in. If the panel still says too many failed logins, restart the API (`docker compose restart api` or `docker restart monosip`) so its in-memory ban counter drops.
+Sign in with `Admin123!`, then **immediately** set a strong unique password under Settings → Admin sign-in (and enable TOTP). If the panel still says too many failed logins, restart the API (`docker compose restart api` or `docker restart monosip`) so its in-memory ban counter drops.
 
 ## Deploy on any platform (single Docker image)
 
@@ -111,7 +111,8 @@ service's **Runtime logs / deploy log**. Save it, sign in at `admin@example.com`
 and change it under **Settings → Admin sign-in**. To choose the password yourself
 instead, set `ADMIN_PASSWORD=<strong password>` before the first start; your value
 is used and no password is printed. Lost it later: [Forgot the admin
-password](#forgot-the-admin-password) resets to `Admin123!`.
+password](#forgot-the-admin-password) temporarily restores the recovery value
+`Admin123!` — change it again right after you sign in.
 
 | Tag | Source |
 | --- | --- |

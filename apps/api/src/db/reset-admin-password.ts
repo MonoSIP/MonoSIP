@@ -6,11 +6,12 @@ import { db, pool } from "./client.js";
 import { admins, ipBans, sessions } from "./schema.js";
 
 /**
- * Lockout recovery: set every admin password back to the install default.
- * Sign-in email and two-factor setup are left as they are. Existing admin
- * sessions are removed. Login-flood rows in ip_bans are cleared; the API
- * process still keeps its own in-memory counter until it restarts or the
- * ban window ends.
+ * Lockout recovery: set every admin password to the fixed recovery value
+ * (`DEFAULT_ADMIN_PASSWORD` / Admin123!). This is not the random first-run
+ * password from a single-image install. Sign-in email and two-factor setup
+ * are left as they are. Existing admin sessions are removed. Login-flood
+ * rows in ip_bans are cleared; the API process still keeps its own
+ * in-memory counter until it restarts or the ban window ends.
  */
 async function resetAdminPassword() {
   const rows = await db.select().from(admins);
@@ -56,7 +57,7 @@ async function resetAdminPassword() {
           ),
         ),
       );
-    console.log("Admin password restored to the install default.");
+    console.log("Admin password restored to the recovery value (change it after sign-in).");
     console.log("Sign in as:");
     for (const admin of rows) {
       const totp = admin.totpEnabled ? " — two-factor authentication is still required" : "";

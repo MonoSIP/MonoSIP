@@ -10,7 +10,7 @@ import {
 } from "../test/helpers.js";
 import { clearLoginFailures } from "../lib/login-guard.js";
 import { db } from "../db/client.js";
-import { admins, sessions } from "../db/schema.js";
+import { admins, ipBans, sessions } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { scryptHash } from "../lib/crypto.js";
 
@@ -40,11 +40,16 @@ afterAll(async () => {
 
 beforeEach(async () => {
   clearLoginFailures(TEST_IP);
+  // A login-flood case can persist a DB ban for 127.0.0.1; the in-memory reset
+  // above does not remove it. Clear the shared ip_bans row too so it cannot
+  // poison other suites (which inject from the same 127.0.0.1) with a 403.
+  await db.delete(ipBans).where(eq(ipBans.ip, TEST_IP));
   creds = await seedCredentials();
 });
 
 afterEach(async () => {
   clearLoginFailures(TEST_IP);
+  await db.delete(ipBans).where(eq(ipBans.ip, TEST_IP));
   await cleanupCredentials(creds);
 });
 

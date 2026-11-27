@@ -8,3 +8,15 @@ autoInstallPeers: true
 allowBuilds:
   esbuild: true
   sharp: true
+
+# Security remediation — force patched transitive dependencies (QA audit phase 2).
+# These parents are already at their latest; only the transitive was vulnerable.
+overrides:
+  node-forge: "^1.4.4"          # acme-client>node-forge advisories (<=1.4.2)
+  follow-redirects: "^1.16.3"   # acme-client>axios>follow-redirects (1.16.0-1.16.1)
+  tinypool: "^2.2.0"            # vitest>tinypool (critical, dev)
+  esbuild: "^0.28.2"           # vitest>esbuild (moderate, dev)
+  "fast-uri@3": "^3.1.9"        # fastify>fast-uri (3.x line)
+  "fast-uri@4": "^4.2.3"        # fastify>fast-uri (4.x line)
+minimumReleaseAgeExclude:
+  - "@fastify/static@11.0.0"

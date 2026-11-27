@@ -73,23 +73,34 @@ try {
   if (!(await page.locator(".react-flow").first().isVisible())) throw new Error("React Flow canvas not visible");
 
   // Save -> PATCH metadata + PUT draft graph.
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().endsWith("/api/v1/admin/flows/f1"));
-  await page.waitForResponse((r) => r.request().method() === "PUT" && r.url().endsWith("/api/v1/admin/flows/f1/draft"));
+  // Arm waiters before click so a fast mock response cannot race past us.
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().endsWith("/api/v1/admin/flows/f1")),
+    page.waitForResponse((r) => r.request().method() === "PUT" && r.url().endsWith("/api/v1/admin/flows/f1/draft")),
+    page.getByRole("button", { name: "Save", exact: true }).click(),
+  ]);
 
   // Validate -> POST validate + "Valid" toast.
-  await page.getByRole("button", { name: "Validate", exact: true }).click();
-  await page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/flows/f1/validate"));
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/flows/f1/validate")),
+    page.getByRole("button", { name: "Validate", exact: true }).click(),
+  ]);
   await page.getByText("Valid", { exact: true }).waitFor({ state: "visible", timeout: 5_000 });
 
   // Publish -> save() first, then POST publish + "Published v2" + versions refetch.
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/flows/f1/publish"));
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/flows/f1/publish")),
+    page.getByRole("button", { name: "Publish", exact: true }).click(),
+  ]);
   await page.getByText("Published v2").waitFor({ state: "visible", timeout: 5_000 });
 
   // Canvas interactions: add two nodes via the palette, connect them, delete one.
-  await page.getByRole("button", { name: "announce", exact: true }).click();
-  await page.getByRole("button", { name: "hangup", exact: true }).click();
+  // Palette labels are title-cased. addNode opens the settings sheet — dismiss
+  // it before the next palette click (sheet makes the palette inert).
+  await page.locator(".flow-palette-chip", { hasText: "Announce" }).click();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.locator(".flow-palette-chip", { hasText: "Hangup" }).click();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.locator(".react-flow__node").first().waitFor({ state: "visible" });
   if ((await page.locator(".react-flow__node").count()) !== 2)
     throw new Error(`expected 2 canvas nodes after palette adds`);

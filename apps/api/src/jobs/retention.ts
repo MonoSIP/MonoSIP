@@ -2,7 +2,22 @@ import { and, eq, lt } from "drizzle-orm";
 import { unlink } from "node:fs/promises";
 import { SettingsSchema } from "@monosip/shared";
 import { db } from "../db/client.js";
-import { recordings, settings } from "../db/schema.js";
+import { recordings, sessions, settings } from "../db/schema.js";
+
+/**
+ * Delete session rows past their expiry. `resolveActor` already ignores expired
+ * sessions, but nothing deleted them, so the table grew without bound (every
+ * login, widget call and extension sign-in adds a row). Pruning them is purely
+ * housekeeping — no live session is affected — and keeps the hot auth lookup fast.
+ */
+export async function pruneExpiredSessions(): Promise<number> {
+  const res = (await db
+    .delete(sessions)
+    .where(lt(sessions.expiresAt, new Date()))) as { rowCount?: number | null };
+  const n = res?.rowCount ?? 0;
+  if (n) console.log(`[retention] pruned ${n} expired sessions`);
+  return n;
+}
 
 export async function runRecordingRetention(): Promise<number> {
   const [row] = await db.select().from(settings).where(eq(settings.id, 1));
@@ -46,12 +61,17 @@ export async function runRecordingRetention(): Promise<number> {
   return deleted;
 }
 
+async function runRetentionCycle(): Promise<void> {
+  await runRecordingRetention();
+  await pruneExpiredSessions();
+}
+
 export function startRetentionJob(intervalMs = 6 * 3600_000) {
   // Without a rejection handler a failed run (SettingsSchema.parse, a DB error)
   // becomes an unhandled rejection, which is fatal and takes the API down.
-  void runRecordingRetention().catch((e) => console.warn("[retention]", (e as Error).message));
+  void runRetentionCycle().catch((e) => console.warn("[retention]", (e as Error).message));
   return setInterval(
-    () => void runRecordingRetention().catch((e) => console.warn("[retention]", (e as Error).message)),
+    () => void runRetentionCycle().catch((e) => console.warn("[retention]", (e as Error).message)),
     intervalMs,
   );
 }

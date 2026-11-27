@@ -576,7 +576,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const body = z
       .object({
-        scheduleId: z.string().uuid().optional().nullable(),
+        scheduleId: z.guid().optional().nullable(),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         name: z.string().min(1),
         halfDay: z.boolean().default(false),
@@ -748,7 +748,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   app.post("/api/v1/admin/flows/:id/rollback", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const { id } = req.params as { id: string };
-    const body = z.object({ versionId: z.string().uuid() }).parse(req.body);
+    const body = z.object({ versionId: z.guid() }).parse(req.body);
     const [ver] = await db
       .select()
       .from(flowVersions)
@@ -772,7 +772,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         did: z.string(),
         time: z.string().optional(),
         dtmfSequence: z.array(z.string()).optional(),
-        mockApiResponses: z.record(z.unknown()).optional(),
+        mockApiResponses: z.record(z.string(), z.unknown()).optional(),
       })
       .parse(req.body);
     const [row] = await db.select().from(flows).where(eq(flows.id, id));
@@ -787,11 +787,11 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       .object({
         method: z.string().default("GET"),
         url: z.string().url(),
-        headers: z.record(z.string()).optional(),
+        headers: z.record(z.string(), z.string()).optional(),
         body: z.string().optional(),
         timeoutMs: z.number().max(10000).default(3000),
         authType: z.enum(["none", "bearer", "basic", "header"]).optional(),
-        secretId: z.string().uuid().optional(),
+        secretId: z.guid().optional(),
         authHeader: z.string().optional(),
       })
       .parse(req.body);
@@ -1916,7 +1916,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/recordings/:id", async (req, reply) => {
     if (!(await admin(req, reply))) return;
     const { id } = req.params as { id: string };
-    if (!z.string().uuid().safeParse(id).success) return reply.code(404).send({ error: "Not found" });
+    if (!z.guid().safeParse(id).success) return reply.code(404).send({ error: "Not found" });
     const [rec] = await db.select().from(recordings).where(eq(recordings.id, id));
     if (!rec) return reply.code(404).send({ error: "Not found" });
     const [party] = await db
@@ -2887,7 +2887,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const body = z
       .object({
-        extensionId: z.string().uuid(),
+        extensionId: z.guid(),
         model: z.string().optional(),
         mac: z.string().optional(),
         provisioningProfile: z.string().optional(),
@@ -2983,7 +2983,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const body = z
       .object({
-        scheduleId: z.string().uuid().optional(),
+        scheduleId: z.guid().optional(),
         items: z.array(
           z.object({
             date: z.string(),
@@ -3009,7 +3009,7 @@ export async function adminResourceRoutes(app: FastifyInstance) {
     if (!(await admin(req, reply))) return;
     const body = z
       .object({
-        scheduleId: z.string().uuid().optional().nullable(),
+        scheduleId: z.guid().optional().nullable(),
         year: z.coerce.number().int().min(2024).max(2035).optional(),
         locale: z.enum(["en", "tr"]).optional(),
       })

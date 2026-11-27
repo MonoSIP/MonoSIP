@@ -159,11 +159,15 @@ export const docsTr = {
             <CodeBlock code={composeCommand} title="Docker Compose" />
             <p>
               Laboratuvar paneli <code>https://localhost</code> adresinde
-              açılır. Üretim için yığını başlatmadan <code>.env</code> dosyasını
-              düzenleyin. <code>EXTERNAL_IP</code>, <code>PUBLIC_HOST</code>,{" "}
+              açılır. Compose, yerel test için{" "}
+              <code>.env.example</code> içinden{" "}
+              <code>ADMIN_PASSWORD=Admin123!</code> eker — gerçek kullanımdan
+              önce değiştirin. Üretim için yığını başlatmadan{" "}
+              <code>.env</code> dosyasını düzenleyin.{" "}
+              <code>EXTERNAL_IP</code>, <code>PUBLIC_HOST</code>,{" "}
               <code>PUBLIC_URL</code>, <code>SIP_DOMAIN</code>,{" "}
-              <code>SIP_WSS_URL</code>, veritabanı kimlik bilgileri, oturum ve
-              şifreleme anahtarları ile yönetici parolasını koyun.{" "}
+              <code>SIP_WSS_URL</code>, veritabanı kimlik bilgileri, oturum /
+              şifreleme anahtarları ve güçlü bir yönetici parolası koyun.{" "}
               <code>LOCAL_NETS</code> varsayılanı Docker köprüsü + loopback’tir
               (NAT masa telefonları için güvenli); genelde dokunmanıza gerek
               yok. Tam yapılandırma için{" "}
@@ -272,13 +276,17 @@ export const docsTr = {
           <>
             <ol>
               <li>
-                Yönetici paneline <code>admin@example.com</code> ile girin. Compose
-                laboratuvar parolası <code>Admin123!</code>’tür; tek-konteyner imajı
-                ise ilk açılışta benzersiz bir yönetici parolası üretip konteyner
-                logunda bir kez yazdırır (<code>docker logs monosip</code> veya
-                sunucunuzun Runtime log’u — “first-run admin login” satırı). Giriş
-                yaptıktan sonra değiştirin; kendi parolanızı kullanmak için ilk
-                açılıştan önce <code>ADMIN_PASSWORD</code> verin.
+                Yönetici paneline <code>admin@example.com</code> ile girin. Hazır
+                tek-konteyner imajında (v1.9.7+) yönetici parolası{" "}
+                <strong>ilk açılışta üretilir</strong> ve konteyner logunda bir
+                kez yazdırılır (<code>docker logs monosip</code> veya sunucunuzun
+                Runtime log’u — “first-run admin login” satırı). Bu parola{" "}
+                <code>Admin123!</code> değildir. Kendi parolanızı kullanmak için
+                ilk açılıştan önce <code>ADMIN_PASSWORD</code> verin. Compose
+                laboratuvar kurulumları <code>.env.example</code> içinden{" "}
+                <code>Admin123!</code> eker — gerçek kullanımdan önce değiştirin.
+                Girişten sonra Ayarlar → Yönetici girişi’nden parolayı
+                yenileyin ve TOTP’yi açın.
               </li>
               <li>
                 Alan adını koyun ve güvenilen HTTPS’i ayarlayın. Compose
@@ -320,15 +328,17 @@ export const docsTr = {
         content: (
           <>
             <p>
-              <code>pnpm db:reset-admin</code> her yönetici parolasını kurulum
-              varsayılanı <code>Admin123!</code> değerine döndürür. Giriş
-              e-postası değişmez; komut hangi adresle girileceğini yazar. İki
-              adımlı doğrulama açıksa durur. Açık yönetici oturumları kapanır ve
-              veritabanındaki yönetici giriş yasakları silinir.
+              Taze tek-imaj kurulumunda ilk parola konteyner logundadır — önce
+              oraya bakın. Kaybolduysa <code>pnpm db:reset-admin</code>{" "}
+              kilit açma aracıdır: her yönetici parolasını sabit kurtarma değeri{" "}
+              <code>Admin123!</code> yapar (rastgele ilk-açılış parolası değil).
+              Giriş e-postası değişmez; komut hangi adresle girileceğini yazar.
+              İki adımlı doğrulama açıksa durur. Açık yönetici oturumları kapanır
+              ve veritabanındaki yönetici giriş yasakları silinir.
             </p>
             <CodeBlock
               code={`docker compose exec api pnpm db:reset-admin\ndocker exec monosip pnpm db:reset-admin`}
-              title="Kurulum varsayılanına dön"
+              title="Kilit açma"
             />
             <p>
               Compose yığınında ilk komutu kullanın. Tek imajda{" "}
@@ -338,9 +348,11 @@ export const docsTr = {
               <code>pnpm db:reset-admin</code> yeter.
             </p>
             <p>
-              Girişten sonra parolayı Ayarlar → Admin girişinden değiştirin.
-              Panel hâlâ çok fazla hatalı giriş diyorsa API’yi yeniden başlatın
-              (<code>docker compose restart api</code> veya{" "}
+              <code>Admin123!</code> ile giriş yapın, ardından parolayı Ayarlar →
+              Yönetici girişi’nden <strong>hemen</strong> güçlü ve benzersiz bir
+              değere çevirin ve TOTP’yi açın. Panel hâlâ çok fazla hatalı giriş
+              diyorsa API’yi yeniden başlatın (
+              <code>docker compose restart api</code> veya{" "}
               <code>docker restart monosip</code>); yasak sayacı çalışan sürecin
               belleğindedir.
             </p>
@@ -1466,13 +1478,15 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
               bir risktir.
             </p>
             <p>
-              Yönetici parolası unutulursa <code>pnpm db:reset-admin</code>{" "}
-              kurulum varsayılanı <code>Admin123!</code> değerine döner.
-              Compose’ta{" "}
+              Tek-imaj kurulumlarında (v1.9.7+) yönetici parolası konteyner
+              logundaki benzersiz ilk-açılış değeridir —{" "}
+              <code>Admin123!</code> değildir. Unutulursa{" "}
+              <code>pnpm db:reset-admin</code> geçici olarak kurtarma değeri{" "}
+              <code>Admin123!</code>’e döner. Compose’ta{" "}
               <code>docker compose exec api pnpm db:reset-admin</code>, tek
               imajda <code>docker exec monosip pnpm db:reset-admin</code>{" "}
               çalıştırın. Giriş e-postası ve iki adımlı doğrulama olduğu gibi
-              kalır. Girişten sonra parolayı değiştirin.
+              kalır. Girişten hemen sonra parolayı değiştirin ve TOTP’yi açın.
             </p>
             <Callout>
               <p>

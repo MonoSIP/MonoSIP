@@ -5,7 +5,7 @@ export default defineConfig({
     environment: "node",
     globals: false,
     include: ["src/**/*.int.test.ts"],
-    setupFiles: ["src/test/db-setup.ts"],
+    setupFiles: ["src/test/db-setup.ts", "src/test/reset-bans.ts"],
     // Integration tests share one Postgres schema; never run them concurrently.
     fileParallelism: false,
     testTimeout: 20_000,

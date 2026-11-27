@@ -26,7 +26,8 @@ Card payments, e-commerce plugins, predictive dialer / mass SMS, ticketing/CRM f
 | --- | --- |
 | Stack | `docker compose up --build -d` from repo root; volumes intact |
 | URL | `https://localhost` (accept self-signed cert) |
-| Admin | `admin@example.com` / `Admin123!` |
+| Admin (Compose lab) | `admin@example.com` / `Admin123!` from `.env` |
+| Admin (single image) | `admin@example.com` / unique password from `docker logs` (`first-run admin login`) |
 | Portal | `101` / `portal101` (also `100`–`103` / `portal{n}`) |
 | Softphone | Browser on HTTPS; mic permission; optional second browser / desk phone |
 | Optional | Real SIP trunk credentials, SMTP, public hostname for LE SSL, SFTP archive |

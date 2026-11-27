@@ -53,7 +53,7 @@ export async function runNightlyBackup(): Promise<void> {
   try {
     const { spawn } = await import("node:child_process");
     const dumpPath = path.join(archive, `monosip-db-${stamp}.sql`);
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
       const p = spawn("pg_dump", [config.databaseUrl, "-f", dumpPath], {
         stdio: ["ignore", "ignore", "pipe"],
       });

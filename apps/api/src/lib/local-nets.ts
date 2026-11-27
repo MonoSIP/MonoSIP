@@ -70,3 +70,25 @@ export function parseLocalNetsEnv(value: string | undefined): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+/**
+ * An EXTERNAL_IP that phones can never reach must not be used: the config
+ * writer stamps it into every endpoint's `media_address`, which forces the SDP
+ * connection address for all peers (LAN included). A loopback or unspecified
+ * address there means no phone ever receives audio. This happened when
+ * PUBLIC_HOST=localhost was resolved to 127.0.0.1 at boot.
+ *
+ * Returns the trimmed value, or "" when it is loopback (127.0.0.0/8, ::1),
+ * unspecified (0.0.0.0, ::) or not an IP address — i.e. not reachable by phones
+ * on other hosts. Used to warn at boot (see config.ts).
+ */
+export function usableExternalIp(raw: string | undefined): string {
+  const v = (raw ?? "").trim();
+  if (!v) return "";
+  if (v === "::1" || v === "::" || v === "0.0.0.0") return "";
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(v)) {
+    if (ipv4ToInt(v) === null) return "";
+    return ipv4InCidr(v, "127.0.0.0/8") ? "" : v;
+  }
+  return v.includes(":") ? v : ""; // IPv6 literal ok; hostnames are not IPs
+}

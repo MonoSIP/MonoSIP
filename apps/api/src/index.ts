@@ -60,16 +60,8 @@ async function main() {
   const { registerInternalFormParser } = await import("./lib/internal-form.js");
   registerInternalFormParser(app);
 
-  app.setErrorHandler((err, _req, reply) => {
-    const error = err as Error & { name?: string };
-    if (error.name === "ZodError") {
-      return reply.code(400).send({ error: "Validation failed", details: err });
-    }
-    app.log.error(err);
-    // Never surface the raw error text to the client — it can leak internal
-    // paths, SQL, or config. The detail is in the server log above.
-    return reply.code(500).send({ error: "Internal error" });
-  });
+  const { sendApiError } = await import("./lib/error-handler.js");
+  app.setErrorHandler((err, _req, reply) => sendApiError(err, reply, (e) => app.log.error(e)));
 
   app.addHook("onRequest", async (req, reply) => {
     const { adoptPublicIdentityFromHost } = await import("./lib/public-identity.js");
@@ -188,13 +180,15 @@ async function main() {
       preCompressed: true,
       // Cache-Control is set below; the plugin's own "max-age=0" overwrote it.
       cacheControl: false,
-      setHeaders: (res, filePath) => {
+      // @fastify/static v11 passes a FastifyReply here (v8 passed the raw
+      // ServerResponse), so use reply.header(), not res.setHeader().
+      setHeaders: (reply, filePath) => {
         // Hashed Vite chunks never change; index.html must always be revalidated
         // so a redeploy doesn't leave tabs pointing at deleted chunk hashes.
         if (filePath.includes(`${path.sep}assets${path.sep}`)) {
-          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          reply.header("Cache-Control", "public, max-age=31536000, immutable");
         } else if (filePath.endsWith(".html")) {
-          res.setHeader("Cache-Control", "no-cache");
+          reply.header("Cache-Control", "no-cache");
         }
       },
     });

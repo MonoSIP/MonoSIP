@@ -210,7 +210,7 @@ await scenario("C1", "Fresh softphone registers", "REGISTER → 401 → 200 OK, 
   return { ok: ms !== null, evidence: { registeredMs: ms, sip: await sipLog(p) } };
 });
 
-await scenario("C2", "Reload the page 6× in a row", "Every reload registers again (no stuck 'Connecting' after max_contacts=3)", async () => {
+await scenario("C2", "Reload the page 6× in a row", "Every reload registers again (no stuck 'Connecting' after max_contacts=2)", async () => {
   const p = await openPhone("101");
   const runs = [];
   for (let i = 0; i < 6; i++) {
@@ -220,16 +220,17 @@ await scenario("C2", "Reload the page 6× in a row", "Every reload registers aga
   return { ok: runs.every((r) => r !== null), evidence: { registeredMsPerReload: runs, lastSip: await sipLog(p) } };
 });
 
-await scenario("C3", "Four tabs on the same extension", "All tabs register (contacts beyond max_contacts must not hang the stack)", async () => {
+await scenario("C3", "Four tabs on the same extension", "First max_contacts tabs register; extras get 403 (stack must still answer)", async () => {
   const tabs = [];
   for (let i = 0; i < 4; i++) tabs.push(await openPhone("101"));
   const regs = [];
   for (const t of tabs) regs.push(await waitRegistered(t));
   const sips = await Promise.all(tabs.map(sipLog));
   const lastResponses = sips.map((s) => s.filter((l) => l.m.startsWith("<< SIP/2.0")).map((l) => l.m).slice(-2));
-  // A 403 (max contacts) is acceptable for the 4th tab; silence is not.
+  // WebRTC AoR is max_contacts=2, remove_existing=no. A 403 for tabs beyond
+  // that is expected; silence (no SIP reply) is not — that hung the stack.
   const answered = sips.every((s) => s.some((l) => l.m.startsWith("<< SIP/2.0")));
-  return { ok: answered && regs.slice(0, 3).every((r) => r !== null), evidence: { regs, lastResponses } };
+  return { ok: answered && regs.slice(0, 2).every((r) => r !== null), evidence: { regs, lastResponses } };
 });
 
 await scenario("C4", "Register while Asterisk reloads config (DND toggles)", "Connected phone stays usable and a new phone still registers during/after reloads", async () => {

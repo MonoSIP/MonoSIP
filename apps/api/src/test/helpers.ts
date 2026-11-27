@@ -44,13 +44,9 @@ export async function buildApp(opts?: {
   await adminExtensionRoutes(app);
   await adminResourceRoutes(app);
 
-  app.setErrorHandler((err, _req, reply) => {
-    const error = err as Error & { name?: string };
-    if (error.name === "ZodError") {
-      return reply.code(400).send({ error: "Validation failed" });
-    }
-    return reply.code(500).send({ error: error.message ?? "Internal error" });
-  });
+  // Same handler as the production server, so tests see the real contract.
+  const { sendApiError } = await import("../lib/error-handler.js");
+  app.setErrorHandler((err, _req, reply) => sendApiError(err, reply, () => undefined));
 
   return app;
 }

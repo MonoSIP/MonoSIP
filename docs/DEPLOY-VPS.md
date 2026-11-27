@@ -176,7 +176,7 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 
 - **Registers but no audio:** `EXTERNAL_IP` wrong / RTP ports blocked / SIP ALG on.
 - **401 forever:** wrong SIP password; AOR name must equal extension number (API generates this).
-- **Admin password forgotten:** `docker compose exec api pnpm db:reset-admin` (single image: `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`. Email and 2FA stay as they are. See [INSTALL.md](INSTALL.md).
+- **Admin password forgotten:** on a single-image install the first-run password is in `docker logs` (`first-run admin login`). If it is lost, `docker compose exec api pnpm db:reset-admin` (single image: `docker exec monosip pnpm db:reset-admin`) temporarily restores the recovery password `Admin123!` — change it immediately after sign-in. Email and 2FA stay as they are. See [INSTALL.md](INSTALL.md).
 - **WSS fails:** nginx cert / `SIP_WSS_URL` host mismatch / port 443 closed.
 - **WebRTC one-way audio off-site:** TURN `EXTERNAL_IP` and relay UDP range must be open.
 - **Provider registered, inbound calls never arrive:** `pjsip set logger on` and call the DID. No INVITE at all means the provider cannot reach the Contact: check that the registration leaves from `transport-trunk` (5070). An INVITE answered with `404` means the Request-URI user is not a DID; MonoSIP sets `contact_user` and also maps `s` to the DID in the To header.

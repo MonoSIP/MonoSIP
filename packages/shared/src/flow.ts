@@ -26,7 +26,7 @@ export const FlowNodeSchema = z.object({
   id: z.string(),
   type: FlowNodeType,
   position: z.object({ x: z.number(), y: z.number() }),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
 });
 
 export const FlowEdgeSchema = z.object({

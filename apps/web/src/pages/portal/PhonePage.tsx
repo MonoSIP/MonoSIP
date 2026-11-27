@@ -52,7 +52,7 @@ type HealthMedia = {
 };
 
 export function PhonePage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   // The softphone lives in the portal layout (lib/phone-context): leaving this
   // page keeps the registration and any call up.

@@ -4,6 +4,7 @@ import {
   ipv4InCidr,
   normalizeLocalNets,
   parseLocalNetsEnv,
+  usableExternalIp,
 } from "./local-nets.js";
 
 describe("ipv4InCidr", () => {
@@ -45,5 +46,20 @@ describe("normalizeLocalNets", () => {
 describe("parseLocalNetsEnv", () => {
   it("uses Docker-safe default when unset", () => {
     expect(parseLocalNetsEnv(undefined)).toEqual([...DEFAULT_LOCAL_NETS]);
+  });
+});
+
+describe("usableExternalIp", () => {
+  it("rejects loopback and unspecified addresses (would silence every call)", () => {
+    for (const bad of ["127.0.0.1", "127.1.2.3", "0.0.0.0", "::1", "::", "localhost", "999.1.1.1", ""]) {
+      expect(usableExternalIp(bad)).toBe("");
+    }
+  });
+
+  it("keeps real public, LAN/VPN and IPv6 addresses", () => {
+    expect(usableExternalIp(" 95.130.168.22 ")).toBe("95.130.168.22");
+    expect(usableExternalIp("10.6.6.9")).toBe("10.6.6.9");
+    expect(usableExternalIp("172.19.0.2")).toBe("172.19.0.2");
+    expect(usableExternalIp("2001:db8::1")).toBe("2001:db8::1");
   });
 });

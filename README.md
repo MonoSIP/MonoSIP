@@ -44,12 +44,15 @@ docker compose up --build -d
 
 Open **https://localhost** (self-signed cert — accept the browser warning).
 
-| Role | Login | Password |
-| --- | --- | --- |
-| Admin | `admin@example.com` | `Admin123!` |
-| Portal (ext 101) | `101` | `portal101` |
+**Admin password (v1.9.7+)**
 
-These are the **Compose** lab defaults (`.env` sets them) — change them for production. The prebuilt single-container image above does not use `Admin123!`; it generates a unique admin password on first start and prints it in the log. Demo extensions are seeded once on an empty DB; deleting them and rebuilding will not recreate them (`MONOSIP_LAB_SEED=0` skips them on a fresh volume). Forgot the admin password later: `pnpm db:reset-admin` (inside the container: `docker compose exec api pnpm db:reset-admin` or `docker exec monosip pnpm db:reset-admin`) restores `Admin123!`, from which you sign in and set a new one. See [INSTALL.md](docs/INSTALL.md).
+| How you run | Admin login | Password |
+| --- | --- | --- |
+| Prebuilt single image (`docker run` / GHCR) | `admin@example.com` | **Unique — printed once** in `docker logs` (`first-run admin login`). Not `Admin123!`. |
+| Docker Compose lab (`.env.example`) | `admin@example.com` | `Admin123!` from `.env` — **lab only**; change before any real use |
+| Portal (ext 101) | `101` | `portal101` (Compose / lab seed) |
+
+To pick the admin password yourself on first boot of the single image, pass `-e ADMIN_PASSWORD=<strong password>`. Demo extensions are seeded once on an empty DB; deleting them and rebuilding will not recreate them (`MONOSIP_LAB_SEED=0` skips them on a fresh volume). Forgot the admin password later: `pnpm db:reset-admin` (Compose: `docker compose exec api pnpm db:reset-admin`; single image: `docker exec monosip pnpm db:reset-admin`) restores the **recovery** password `Admin123!` — sign in and change it immediately under Settings → Admin sign-in. See [INSTALL.md](docs/INSTALL.md).
 
 ## What you get
 

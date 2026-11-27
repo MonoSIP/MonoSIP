@@ -34,7 +34,7 @@ export const ExtensionCreateSchema = z.object({
   mobileForwardAllowed: z.boolean().default(false),
   dnd: z.boolean().default(false),
   /** Extension id of the boss this secretary covers */
-  bossSecretaryOf: z.string().uuid().optional().nullable(),
+  bossSecretaryOf: z.guid().optional().nullable(),
 });
 
 export const ExtensionUpdateSchema = ExtensionCreateSchema.partial().omit({
@@ -262,7 +262,7 @@ export const SettingsSchema = z.object({
   defaultLocale: z.enum(["en", "tr"]).default("en"),
   recordingRetentionMonths: z.number().int().min(1).max(84).default(12),
   kvkkAnnouncementEnabled: z.boolean().default(true),
-  kvkkPromptId: z.string().uuid().optional().nullable(),
+  kvkkPromptId: z.guid().optional().nullable(),
   /**
    * Default TTS voice/model for live IVR speech: female | male | ema-lightning.
    * Used when a node is left on system default and ttsVoiceApplyAll is on.

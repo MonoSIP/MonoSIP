@@ -154,7 +154,7 @@ if [ "${ADMIN_PASSWORD_NEW:-0}" = "1" ]; then
   echo " MonoSIP first-run admin login (save it, change after login)"
   echo "   email:    ${ADMIN_EMAIL}"
   echo "   password: ${ADMIN_PASSWORD}"
-  echo " Lost it? 'docker exec <container> pnpm db:reset-admin' resets to Admin123!"
+  echo " Lost it? 'docker exec <container> pnpm db:reset-admin' restores recovery password Admin123! — change it after login"
   echo "============================================================"
   echo ""
 fi
@@ -175,6 +175,9 @@ fi
 # WebRTC/RTP needs a public address in ICE candidates (softphone audio).
 if [ -z "${EXTERNAL_IP:-}" ] && [ -n "${PUBLIC_HOST:-}" ]; then
   RESOLVED="$(getent ahostsv4 "$PUBLIC_HOST" 2>/dev/null | awk '{print $1; exit}')"
+  # A loopback answer (PUBLIC_HOST=localhost) is unreachable for phones and would
+  # become every endpoint's media_address — leave EXTERNAL_IP unset instead.
+  case "$RESOLVED" in 127.*|0.0.0.0) RESOLVED="" ;; esac
   if [ -n "$RESOLVED" ]; then
     export EXTERNAL_IP="$RESOLVED"
     echo "EXTERNAL_IP unset — using $EXTERNAL_IP from PUBLIC_HOST=$PUBLIC_HOST"

@@ -82,34 +82,42 @@ try {
     return fulfill({ ok: true });
   });
 
-  // --- PromptsPage: create-with-upload via the form's visible file input ---
+  // --- PromptsPage: create-with-upload via the Create modal's file input ---
   await page.goto(`${base}/prompts`, { waitUntil: "networkidle" });
   await page.reload({ waitUntil: "networkidle" }); // warm page: cold Vite may reload mid-load
+  await page.getByRole("button", { name: /create/i }).click();
   const formInput = page.locator("form input[type=file]");
   await formInput.waitFor({ state: "attached", timeout: 15_000 });
   await uploadViaFileChooser(formInput);
-  await page.locator("form button[type=submit]").click();
-  await page.waitForResponse(
-    (r) => r.request().method() === "POST" && r.url().endsWith("/api/v1/admin/prompts/upload"),
-  );
+  await Promise.all([
+    page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url().endsWith("/api/v1/admin/prompts/upload"),
+    ),
+    page.locator("form button[type=submit]").click(),
+  ]);
 
   // --- PromptsPage: per-row replace-audio ---
   const replace = page.getByRole("button", { name: /upload/i }).first();
   await replace.waitFor({ state: "visible", timeout: 10_000 });
-  await uploadViaFileChooser(replace);
-  await page.waitForResponse(
-    (r) => r.request().method() === "POST" && r.url().endsWith("/api/v1/admin/prompts/p1/upload"),
-  );
+  await Promise.all([
+    page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url().endsWith("/api/v1/admin/prompts/p1/upload"),
+    ),
+    uploadViaFileChooser(replace),
+  ]);
 
-  // --- MohPage: per-class upload ---
+  // --- MohPage: per-class upload (Upload lives in the Edit modal header) ---
   await page.goto(`${base}/moh`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /edit/i }).first().click();
   const mohUpload = page.getByRole("button", { name: /upload/i }).first();
   await mohUpload.waitFor({ state: "visible", timeout: 15_000 });
-  await uploadViaFileChooser(mohUpload);
-  await page.waitForResponse(
-    (r) => r.request().method() === "POST" && r.url().endsWith("/api/v1/admin/moh/mc1/upload"),
-  );
-  await page.getByText("Uploaded tone.wav").waitFor({ state: "visible", timeout: 5_000 });
+  await Promise.all([
+    page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url().endsWith("/api/v1/admin/moh/mc1/upload"),
+    ),
+    uploadViaFileChooser(mohUpload),
+  ]);
+  await page.getByText(/Uploaded/).waitFor({ state: "visible", timeout: 5_000 });
 
   await page.screenshot({ path: path.join(artifacts, "uploads-verified.png"), fullPage: true });
   writeFileSync(path.join(artifacts, "uploads-api-calls.json"), JSON.stringify(calls, null, 2));

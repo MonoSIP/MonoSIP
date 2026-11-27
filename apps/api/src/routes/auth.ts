@@ -20,7 +20,8 @@ import { clientIsHttps } from "../lib/public-identity.js";
 
 function sessionCookie(req: {
   protocol: string;
-  headers: { "x-forwarded-proto"?: string | string[] };
+  // Index signature so Fastify's IncomingHttpHeaders is assignable here.
+  headers: { "x-forwarded-proto"?: string | string[]; [key: string]: string | string[] | undefined };
 }) {
   return {
     path: "/",

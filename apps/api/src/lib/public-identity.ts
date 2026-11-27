@@ -28,7 +28,11 @@ export function isInternalHost(h: string): boolean {
 
 /** The scheme the browser actually used. A Secure cookie on plain HTTP is dropped, so login looks like it failed. */
 export function clientIsHttps(
-  headers: { "x-forwarded-proto"?: string | string[] | undefined },
+  // Index signature so Fastify's IncomingHttpHeaders is assignable here.
+  headers: {
+    "x-forwarded-proto"?: string | string[] | undefined;
+    [key: string]: string | string[] | undefined;
+  },
   protocol: string,
 ): boolean {
   const raw = headers["x-forwarded-proto"];

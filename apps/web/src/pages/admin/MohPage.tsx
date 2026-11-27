@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music, Pause, Pencil, Play, Plus, Trash2, Upload } from "lucide-react";
+import { Music, Pause, Pencil, Play, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { Button, ConfirmDialog, IconBtn, Modal, PageHeader, SectionCard, TextField, usePendingAction } from "../../components/ui";
