@@ -2,6 +2,14 @@ import { config } from "../config.js";
 import { resolveExternalIpDetailed } from "./external-ip.js";
 import { isPrivateOrLocalIpv4 } from "./stun-discover.js";
 
+/** Keep in sync with `TRUNK_SIP_PORT` in asterisk/config-writer.ts. */
+const TRUNK_SIP_PORT = 5070;
+
+function envFlag(name: string): boolean {
+  const v = process.env[name];
+  return v === "1" || v === "true";
+}
+
 export type MediaReadiness = {
   /** Softphone SIP/WSS can work; RTP may still need host UDP. */
   signalingOk: boolean;
@@ -10,9 +18,15 @@ export type MediaReadiness = {
    * (no public host). Otherwise softphone audio needs host UDP 10000–10100.
    */
   rtpPortsPublished: boolean;
+  /**
+   * Provider REGISTER Contact advertises UDP `TRUNK_SIP_PORT` (5070). Without
+   * that host publish, inbound INVITEs hit the host and never reach Asterisk.
+   */
+  trunkSipPublished: boolean;
   externalIp: string | null;
   externalIpSource?: string;
   rtpUdpRange: string;
+  trunkSipPort: number;
   /** Human hints for deploy logs + portal banner (en + tr). */
   warnings: Array<{ code: string; en: string; tr: string }>;
 };
@@ -26,7 +40,12 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
   const isPublic =
     !!publicHost && publicHost !== "localhost" && publicHost !== "127.0.0.1";
   const rtpPortsPublished =
-    process.env.MONOSIP_RTP_PUBLISHED === "1" || process.env.MONOSIP_RTP_PUBLISHED === "true"
+    envFlag("MONOSIP_RTP_PUBLISHED") || envFlag("DSIP_RTP_PUBLISHED")
+      ? true
+      : !embedded || !isPublic;
+  // Default assume published on non-embedded / lab; public all-in-one must opt in.
+  const trunkSipPublished =
+    envFlag("MONOSIP_TRUNK_SIP_PUBLISHED") || envFlag("DSIP_TRUNK_SIP_PUBLISHED")
       ? true
       : !embedded || !isPublic;
 
@@ -41,6 +60,13 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
       tr: "Softphone audio needs host UDP ports 10000–10100 published to this container. Add UDP 10000-10100, then set env MONOSIP_RTP_PUBLISHED=1.",
     });
   }
+  if (embedded && isPublic && !trunkSipPublished) {
+    warnings.push({
+      code: "trunk_sip_port",
+      en: `SIP provider inbound needs host UDP ${TRUNK_SIP_PORT} published to this container (transport-trunk Contact). Add UDP ${TRUNK_SIP_PORT}, then set env MONOSIP_TRUNK_SIP_PUBLISHED=1.`,
+      tr: `Santral gelen aramaları için host UDP ${TRUNK_SIP_PORT} bu konteynere publish edilmeli. UDP ${TRUNK_SIP_PORT} ekleyip MONOSIP_TRUNK_SIP_PUBLISHED=1 verin.`,
+    });
+  }
   if (isPublic && (!externalIp || isPrivateOrLocalIpv4(externalIp))) {
     warnings.push({
       code: "external_ip",
@@ -52,9 +78,11 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
   return {
     signalingOk: true,
     rtpPortsPublished,
+    trunkSipPublished,
     externalIp,
     externalIpSource: resolved.source,
     rtpUdpRange: "10000-10100",
+    trunkSipPort: TRUNK_SIP_PORT,
     warnings,
   };
 }
@@ -62,17 +90,18 @@ export async function getMediaReadiness(): Promise<MediaReadiness> {
 /** Loud banner for NineDeploy / docker logs at boot (English). */
 export function formatMediaDeployBanner(m: MediaReadiness): string {
   if (!m.warnings.length) {
-    return "[MonoSIP] Softphone media: OK (RTP ports marked published or local lab).";
+    return "[MonoSIP] Softphone media: OK (RTP + trunk SIP ports marked published or local lab).";
   }
   const lines = [
     "",
     "╔══════════════════════════════════════════════════════════════════════╗",
-    "║  MonoSIP — Softphone AUDIO needs host UDP ports                         ║",
+    "║  MonoSIP — host UDP ports required for media / provider inbound         ║",
     "╠══════════════════════════════════════════════════════════════════════╣",
-    "║  Publish UDP 10000-10100 to this container                            ║",
+    "║  Publish UDP 10000-10100 (softphone RTP)                              ║",
+    `║  Publish UDP ${String(m.trunkSipPort).padEnd(5)} (SIP provider / Verimor inbound)              ║`,
     "║  Env: EXTERNAL_IP=<server public IPv4>                               ║",
-    "║       MONOSIP_RTP_PUBLISHED=1   (after ports are open)                  ║",
-    "║  Without this: calls connect but stay SILENT.                        ║",
+    "║       MONOSIP_RTP_PUBLISHED=1                                         ║",
+    "║       MONOSIP_TRUNK_SIP_PUBLISHED=1                                   ║",
     "╚══════════════════════════════════════════════════════════════════════╝",
     "",
   ];

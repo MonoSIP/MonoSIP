@@ -97,6 +97,9 @@ ENV WEB_DIST=/app/apps/web/dist \
 # Asterisk ARI/WSS stay on 127.0.0.1:8088 inside the container (see start-asterisk.sh).
 # Softphone WebRTC also needs host UDP 10000-10100 published + EXTERNAL_IP in vault.
 EXPOSE 3000
+EXPOSE 5060/udp
+EXPOSE 5060/tcp
+EXPOSE 5070/udp
 EXPOSE 10000-10100/udp
 # Override the Asterisk base-image healthcheck (CLI ping). Healthy means the API
 # (and dialplan readiness behind /api/v1/health) answers — not just Asterisk up.
