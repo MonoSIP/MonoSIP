@@ -21,17 +21,25 @@ const apiRoot = path.resolve(here, "../..");
 const repoRoot = path.resolve(apiRoot, "../..");
 
 function baseDatabaseUrl(): string {
-  if (process.env.TEST_DATABASE_URL) return process.env.TEST_DATABASE_URL;
   const raw = readFileSync(path.join(repoRoot, ".env"), "utf8");
   const line = raw.split("\n").find((l) => l.startsWith("DATABASE_URL="));
   if (!line) throw new Error("DATABASE_URL not found in .env");
   return line.slice("DATABASE_URL=".length).trim().replace(/^["']|["']$/g, "");
 }
 
-const port = process.env.TEST_PG_PORT ?? "55433";
-const testUrl = baseDatabaseUrl()
-  .replace(/@[^/]+\//, `@localhost:${port}/`)
-  .replace(/\/[^/?]+(\?|$)/, "/monosip_test$1");
+/**
+ * Prefer an explicit TEST_DATABASE_URL (CI service Postgres on :5432). Locally,
+ * rewrite the Compose DATABASE_URL onto the host forwarder port (default 55433)
+ * and the throwaway monosip_test database.
+ */
+const testUrl = (() => {
+  const explicit = process.env.TEST_DATABASE_URL?.trim();
+  if (explicit) return explicit;
+  const port = process.env.TEST_PG_PORT ?? "55433";
+  return baseDatabaseUrl()
+    .replace(/@[^/]+\//, `@localhost:${port}/`)
+    .replace(/\/[^/?]+(\?|$)/, "/monosip_test$1");
+})();
 
 process.env.DATABASE_URL = testUrl;
 
