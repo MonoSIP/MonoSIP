@@ -622,6 +622,15 @@ describe("applyResolved", () => {
       expect(ari.redirect).toHaveBeenCalledWith("ch-r", expected[0], expected[1]);
     }
   });
+
+  it("hands an external destination to outbound trunk dial", async () => {
+    await applyResolved("ch-r", { kind: "external", number: "908501112233" }, { ...vars });
+    expect(ari.redirect).toHaveBeenCalledWith(
+      "ch-r",
+      "trunk_abcdef12_05321112233",
+      "monosip-trunk-dial",
+    );
+  });
 });
 
 describe("runFlowOnChannel", () => {
@@ -791,6 +800,9 @@ describe("executeFlowLoop — subflow node", () => {
 describe("executeFlowLoop — transfer node", () => {
   it("dials an online extension through the dialplan", async () => {
     dbState.rows = [{ id: "uuid-102", number: "102" }];
+    // Match production, where seed disables the KVKK consent announcement; with
+    // it enabled the transfer would (correctly) synthesize the notice first.
+    dbState.tables["settings"] = [{ data: { kvkkAnnouncementEnabled: false } }];
     const transfer = node("t", "transfer", {
       destType: "extension",
       destId: "102",

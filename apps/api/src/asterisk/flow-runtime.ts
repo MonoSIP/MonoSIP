@@ -255,6 +255,10 @@ export async function applyResolved(
       await playKvkkBeforePerson(channelId, vars);
       await ari.redirect(channelId, resolved.number, "from-internal");
       return;
+    case "external":
+      await playKvkkBeforePerson(channelId, vars);
+      await handleOutbound(channelId, resolved.number, vars.caller || vars.extension || "");
+      return;
     case "voicemail":
       await ari.redirect(channelId, `*${resolved.extension}`, "from-internal");
       return;
@@ -351,7 +355,7 @@ export async function runFlowOnChannel(
   // the flag makes that a no-op.
   if (!asSubflow) await startRecordingOnce();
 
-  let node = flow.nodes.find((n) => n.type === "start");
+  const node = flow.nodes.find((n) => n.type === "start");
   const visited = new Set<string>();
   return executeFlowLoop(channelId, flow, vars, depth, node, visited, startRecordingOnce, asSubflow);
 }

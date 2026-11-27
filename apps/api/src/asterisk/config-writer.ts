@@ -519,16 +519,44 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "verify_client=no",
     "verify_server=no",
   ];
+  // Desk-phone SIP over TCP (same port as UDP; Asterisk multiplexes by protocol).
+  const transportTcp = [
+    "[transport-tcp]",
+    "type=transport",
+    "protocol=tcp",
+    "bind=0.0.0.0:5060",
+  ];
+  // Provider-facing UDP on a dedicated port so REGISTER Contact does not fight
+  // desk-phone 5060 NAT remaps on the host.
+  const transportTrunk = [
+    "[transport-trunk]",
+    "type=transport",
+    "protocol=udp",
+    `bind=0.0.0.0:${TRUNK_SIP_PORT}`,
+  ];
   if (phoneIp) {
-    for (const block of [transportUdp, transportWs, transportWss, transportTls]) {
+    for (const block of [transportUdp, transportTcp, transportWs, transportWss, transportTls]) {
       block.push(`external_media_address=${phoneIp}`);
       block.push(`external_signaling_address=${phoneIp}`);
     }
     for (const net of config.localNets) {
       transportUdp.push(`local_net=${net}`);
+      transportTcp.push(`local_net=${net}`);
       transportWs.push(`local_net=${net}`);
       transportWss.push(`local_net=${net}`);
       transportTls.push(`local_net=${net}`);
+    }
+  }
+  // Carriers route in-dialog ACK/BYE to the 200 OK Contact. Without
+  // external_signaling_address that Contact is the Docker bridge IP and the
+  // carrier never reaches Asterisk (calls drop after ~32 s / 64×T1). Prefer the
+  // STUN/public address when it differs from the phone-LAN EXTERNAL_IP.
+  const trunkIp = externalIp || phoneIp;
+  if (trunkIp) {
+    transportTrunk.push(`external_media_address=${trunkIp}`);
+    transportTrunk.push(`external_signaling_address=${trunkIp}`);
+    for (const net of config.localNets) {
+      transportTrunk.push(`local_net=${net}`);
     }
   }
 
@@ -585,20 +613,15 @@ async function writeAsteriskConfigNow(): Promise<void> {
     "",
     ...transportUdp,
     "",
+    ...transportTcp,
+    "",
     ...transportWs,
     "",
     ...transportWss,
     "",
     ...transportTls,
     "",
-    // UDP providers register from their own port without external_signaling_address.
-    // Behind NAT the router may remap 5060 (seen: 5060 → 63166), so a Contact of
-    // EXTERNAL_IP:5060 sends inbound INVITEs to a dead port. A private Contact lets
-    // the provider answer to the observed source (received/rport), like 3CX does.
-    "[transport-trunk]",
-    "type=transport",
-    "protocol=udp",
-    `bind=0.0.0.0:${TRUNK_SIP_PORT}`,
+    ...transportTrunk,
     "",
   ];
 
@@ -779,7 +802,7 @@ async function writeAsteriskConfigNow(): Promise<void> {
       trunk.transport === "tls"
         ? "transport-tls"
         : trunk.transport === "tcp"
-          ? "transport-udp"
+          ? "transport-tcp"
           : "transport-trunk";
     const userpass = trunk.authType !== "ip";
     const fromDomain = (trunk.fromDomain?.trim() || trunk.host).replace(/^sip:/i, "");
@@ -1101,7 +1124,12 @@ async function writeAsteriskConfigNow(): Promise<void> {
       );
     }
     if (alwaysExternal) {
+      // Stasis outbound never posts StopMixMonitor / recording. The h hangup
+      // handler only registers when MONOSIP_CALLEE is set — stamp it here so
+      // always-forward externals do not leave orphan WAVs with null recordingId.
       extensionsConf.push(
+        ` same => n,Set(MONOSIP_CALLEE=${alwaysExternal})`,
+        ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
         ` same => n,Stasis(monosip-outbound,${alwaysExternal})`,
         ` same => n,Hangup()`,
         ` same => n(dndbusy),Goto(s-BUSY-${ext.number},1)`,

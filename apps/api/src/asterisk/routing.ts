@@ -204,9 +204,19 @@ export function destForScheduleStatus(
   }
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(id: string): boolean {
+  return UUID_RE.test(id);
+}
+
 export async function loadPublishedFlow(flowId?: string | null): Promise<FlowJson | null> {
   let row;
   if (flowId) {
+    // Non-uuid ids (e.g. an external number that fell through) must not hit the
+    // uuid column — Postgres throws and the call fails with FAILED.
+    if (!isUuid(flowId)) return null;
     [row] = await db.select().from(flows).where(eq(flows.id, flowId));
   } else {
     const all = await db.select().from(flows);
@@ -226,6 +236,7 @@ export type ResolvedInbound =
   | { kind: "extension"; number: string }
   | { kind: "queue"; number: string }
   | { kind: "ring_group"; number: string }
+  | { kind: "external"; number: string }
   | { kind: "hangup"; reason: string }
   | { kind: "voicemail"; extension: string };
 
@@ -234,6 +245,12 @@ export async function resolveDestination(dest: Dest): Promise<ResolvedInbound> {
   const id = dest.destId ?? null;
 
   if (type === "hangup" || type === "busy") return { kind: "hangup", reason: type };
+  if (type === "announce_hangup" || type === "park") {
+    return { kind: "hangup", reason: type };
+  }
+  if (type === "external" && id) {
+    return { kind: "external", number: id.trim() };
+  }
   if (type === "flow") {
     const flow = await loadPublishedFlow(id);
     if (!flow) return { kind: "hangup", reason: "no-flow" };

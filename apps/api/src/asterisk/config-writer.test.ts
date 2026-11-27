@@ -12,6 +12,9 @@ vi.hoisted(() => {
   process.env.ASTERISK_AMI_PORT = "1"; // connect refused immediately, caught by astdb-dnd
   process.env.MONOSIP_ASTERISK_CLI_RELOAD = "0";
   process.env.MONOSIP_SIP_GUARD = "0";
+  // Public EXTERNAL_IP so transport-trunk gets external_signaling_address
+  // (Docker NAT Contact rewrite for carrier ACK/BYE).
+  process.env.EXTERNAL_IP = "203.0.113.10";
 });
 
 // The config writer's DB reads are the boundary here; every table resolves to
@@ -112,6 +115,35 @@ describe("writeAsteriskConfig emergency dialplan", () => {
     const section = dialplan.slice(start, dialplan.indexOf("same => n(cdrdone)", start));
     expect(section).toContain('GotoIf($["${MONOSIP_QPAUSED}" != "1"]?hunpaused)');
     expect(section.indexOf("MONOSIP_QPAUSED")).toBeLessThan(section.indexOf("UnpauseQueueMember"));
+  });
+});
+
+describe("writeAsteriskConfig trunk transport NAT", () => {
+  let pjsip: string;
+
+  beforeEach(async () => {
+    mkdirSync(`${process.env.TMPDIR ?? "/tmp"}/monosip-cw-emergency-test`, { recursive: true });
+    await writeAsteriskConfig();
+    pjsip = readFileSync(
+      `${process.env.TMPDIR ?? "/tmp"}/monosip-cw-emergency-test/pjsip_monosip.conf`,
+      "utf8",
+    );
+  });
+
+  it("advertises EXTERNAL_IP on transport-trunk so carrier ACK reaches the host", () => {
+    const start = pjsip.indexOf("[transport-trunk]");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const section = pjsip.slice(start, pjsip.indexOf("\n[", start + 1));
+    expect(section).toContain("external_signaling_address=203.0.113.10");
+    expect(section).toContain("external_media_address=203.0.113.10");
+  });
+
+  it("exposes a real TCP transport for trunks saved as TCP", () => {
+    expect(pjsip).toContain("[transport-tcp]");
+    const start = pjsip.indexOf("[transport-tcp]");
+    const section = pjsip.slice(start, pjsip.indexOf("\n[", start + 1));
+    expect(section).toContain("protocol=tcp");
+    expect(section).toContain("external_signaling_address=203.0.113.10");
   });
 });
 
