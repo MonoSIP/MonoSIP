@@ -36,7 +36,7 @@
 ## Media plane (`asterisk`)
 
 - PJSIP endpoints, queues, dialplan generated from DB
-- MixMonitor recordings → shared `recordings` volume (also mounted on `api`)
+- MixMonitor recordings → shared `recordings` volume (also mounted on `api`); hangup handlers finalize MixMonitor after Stasis continue (trunk dial) and post CDR when the caller BYEs mid-bridge (`monosip-trunk-dial` / `monosip-flow-dial` `h`)
 
 ## Data
 

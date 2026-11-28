@@ -73,7 +73,7 @@ This list combines the agreed product scope with ideas from Netsipp, Verimor, Ka
 - Per-extension or per-queue recording; KVKK announcement on inbound/outbound when recording
 - Finished recordings are stored as MP3 (8 kHz mono, 32 kbps, ~240 KB/min; older OGG files are moved to MP3); retention job deletes expired files; NAS or SFTP archive
 - Waveform player in the panel; admin can download
-- CDR: filters, CSV export, link to recording, DND inbound flagged
+- CDR: filters, CSV export, link to recording, DND inbound flagged; answered IVR → extension/queue transfers keep disposition ANSWERED (hangup CDR + recording heal when the caller BYEs mid-bridge)
 - Missed calls: list, email notify, auto “called back” when returned
 - Call log rows expand in place: call facts plus the step-by-step IVR timeline (nodes, keys pressed)
 - Hold-music classes: upload, preview, delete (refused while a queue or flow uses the class); names are unique

@@ -186,4 +186,6 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 - **Queue or IVR call to a desk phone has no audio:** `EXTERNAL_IP` must be the address the phones reach (LAN/VPN), not the router's WAN IP. See [4b](#4b-behind-nat-vpn-or-a-private-external_ip).
 - **Softphone shows "This browser is not receiving the call" on calls the PBX sends it (IVR, queue):** fixed in 1.8.9. Hard-refresh the portal (Ctrl+F5) so the browser loads the new softphone code.
 - **Softphone connects to `172.x` or the wrong host:** set `PUBLIC_HOST` and redeploy (1.8.7 and later never adopt a container address).
+- **Softphone banner about SIP trunk 5070:** that warning is admin/health only. After publishing `5070/udp`, set `MONOSIP_TRUNK_SIP_PUBLISHED=1`. The softphone banner itself only shows RTP / external-IP issues.
+- **CDR shows NOANSWER but a long recording exists (IVR → extension):** fixed on main after 1.9.9 — answered flow marks CDR answered, `monosip-flow-dial` posts hangup CDR, and a keepable recording heals disposition.
 - **One IVR sentence sounds robotic:** that sentence fell back to espeak when the neural voice failed. Since 1.9.0 the fallback is not cached; on older versions delete the sentence under **Prompts** (TTS cache) so it is synthesized again.

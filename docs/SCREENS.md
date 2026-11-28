@@ -17,7 +17,7 @@ The admin panel has 15 screens; the user portal has 5. Both live in the same Vit
 | Prompts | Upload announcements, generate via TTS, live TTS cache |
 | Music on hold | Classes (unique names), upload, preview, delete |
 | Recordings | Filtered list, waveform player, download, access log |
-| Call logs | Filtered CDR table; a clicked row expands in place with call facts and the IVR step timeline; CSV export |
+| Call logs | Filtered CDR table; a clicked row expands in place with call facts and the IVR step timeline; CSV export; answered transfers keep ANSWERED when a recording exists |
 | Missed calls | Waiting / called-back list |
 | Reports | Summary, queue, extension, IVR DTMF, quality; date range |
 | Integration | Webhooks, API keys |

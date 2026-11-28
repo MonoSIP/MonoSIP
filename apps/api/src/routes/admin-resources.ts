@@ -1367,13 +1367,20 @@ export async function adminResourceRoutes(app: FastifyInstance) {
       const prevConverted = prevFile !== null && !/\.wav$/i.test(prevFile.path);
       if (prevFile && (prevConverted || prevFile.size >= sizeBytes)) {
         if (prevFile.path !== filePath) deleteRecordingFile(filePath);
+        const keptDur = Math.max(prev.duration ?? 0, wavDurationSeconds(prevFile.path));
         await db
           .update(recordings)
           .set({
             sizeBytes: prevFile.size,
-            duration: Math.max(prev.duration ?? 0, wavDurationSeconds(prevFile.path)),
+            duration: keptDur,
           })
           .where(eq(recordings.id, prev.id));
+        await db
+          .update(cdr)
+          .set({ recordingId: prev.id })
+          .where(eq(cdr.callId, body.callId));
+        const { cdrHealFromRecording } = await import("../lib/cdr.js");
+        await cdrHealFromRecording(body.callId, keptDur);
         return { ok: true, id: prev.id, kept: true };
       }
       if (prevFile) deleteRecordingFile(prevFile.path);
@@ -1381,6 +1388,12 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         .update(recordings)
         .set({ filePath: apiPath, sizeBytes, duration })
         .where(eq(recordings.id, prev.id));
+      await db
+        .update(cdr)
+        .set({ recordingId: prev.id })
+        .where(eq(cdr.callId, body.callId));
+      const { cdrHealFromRecording } = await import("../lib/cdr.js");
+      await cdrHealFromRecording(body.callId, duration);
       return { ok: true, id: prev.id, updated: true, duration };
     }
     const [row] = await db
@@ -1397,6 +1410,8 @@ export async function adminResourceRoutes(app: FastifyInstance) {
         .update(cdr)
         .set({ recordingId: row.id })
         .where(eq(cdr.callId, body.callId));
+      const { cdrHealFromRecording } = await import("../lib/cdr.js");
+      await cdrHealFromRecording(body.callId, duration);
     }
     return { ok: true, id: row.id, duration };
   });

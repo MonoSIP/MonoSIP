@@ -71,7 +71,8 @@ DigitalOcean App Platform, NineDeploy, a plain VM, …) with no platform-specifi
 
 ```bash
 docker build -t monosip .
-docker run -d -p 3000:3000 -p 10000-10100:10000-10100/udp -v monosip-data:/data monosip
+docker run -d -p 3000:3000 -p 5070:5070/udp -p 10000-10100:10000-10100/udp \
+  -v monosip-data:/data monosip
 ```
 
 ### Prebuilt image (GitHub Container Registry)
@@ -81,9 +82,10 @@ Every push to `main` and every `vX.Y.Z` tag publishes the same image to GHCR
 
 ```bash
 docker run -d --name monosip --restart unless-stopped \
-  -p 3000:3000 -p 10000-10100:10000-10100/udp \
+  -p 3000:3000 -p 5070:5070/udp -p 10000-10100:10000-10100/udp \
   -v monosip-data:/data \
   -e EXTERNAL_IP=<public IPv4> -e PUBLIC_HOST=<hostname> \
+  -e MONOSIP_TRUNK_SIP_PUBLISHED=1 -e MONOSIP_RTP_PUBLISHED=1 \
   ghcr.io/monosip/monosip:latest
 ```
 

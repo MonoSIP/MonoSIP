@@ -352,6 +352,7 @@ Simulate alone is insufficient. Mark LIVE.
 | K-09 | CDR export CSV/Excel | File valid | AUTO+MANUAL | |
 | K-10 | CDR timeline | Flow steps visible | MANUAL | |
 | K-11 | DND inbound flagged on CDR | Flag set | LIVE | |
+| K-12 | Inbound IVR → answer → transfer; caller BYE mid-talk | CDR disposition ANSWERED, billsec > 0, recording linked | LIVE | |
 | K-12 | Quality fields jitter/loss/MOS | Present when available | MANUAL | |
 | K-13 | Missed call list | Entry on missed inbound | LIVE | |
 | K-14 | Missed → called back | Status updates | LIVE | |

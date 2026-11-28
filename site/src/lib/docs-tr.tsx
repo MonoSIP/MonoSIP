@@ -218,7 +218,7 @@ export const docsTr = {
                 [
                   "5070/UDP",
                   "SIP operatörü (trunk)",
-                  "Yalnızca dışarı doğru kayıt. Operatör NAT’ın gördüğü adrese yanıt verir; içeri kural ya da port yönlendirme gerekmez.",
+                  "Yayımlanmalı. MonoSIP bu portta external_signaling_address duyurur; eşleme yoksa REGISTER başarılı olsa bile gelen INVITE ulaşmaz. Port açıkken MONOSIP_TRUNK_SIP_PUBLISHED=1 koyun.",
                 ],
                 [
                   "TURN / TURNS",
@@ -230,9 +230,12 @@ export const docsTr = {
             <p>
               Compose ALPN çoğullaması olmayan bir platform kenarında, RTP
               gerçekten yayınlanıyorsa kurulum rehberi{" "}
-              <code>MONOSIP_RTP_PUBLISHED=1</code> değerini, bilinçli yalnızca
-              STUN kurulumu için <code>MONOSIP_TURNS_ON_443=0</code> değerini
-              belgeler. İkisini de uygulamadan önce ağınızı gözden geçirin.
+              <code>MONOSIP_RTP_PUBLISHED=1</code> değerini, SIP operatörleri
+              için UDP 5070 yayınlandıysa{" "}
+              <code>MONOSIP_TRUNK_SIP_PUBLISHED=1</code> değerini, bilinçli
+              yalnızca STUN kurulumu için <code>MONOSIP_TURNS_ON_443=0</code>{" "}
+              değerini belgeler. Bunları uygulamadan önce ağınızı gözden
+              geçirin.
             </p>
             <p>
               <code>EXTERNAL_IP</code>, telefonlarınızın ve tarayıcılarınızın
@@ -910,10 +913,10 @@ export const docsTr = {
         content: (
           <>
             <p>
-              Ana dal satır içi dalga biçimleri, duyulmamış sayıları ve kayıtlı
-              sesli mesaj karşılama anonslarını ekler. Bu sürüm sonrası
-              değişiklikler, bu rehberlerin kullandığı v{site.version}{" "}
-              anlığından ayrı izlenir.
+              Ana dal yanıtlanan IVR aktarımlarında CDR disposition’ı, trunk
+              hangup’ta MixMonitor’ü ve yazılımsal telefon medya uyarılarını
+              sıkılaştırır. Sürüm sonrası değişiklikler, bu rehberlerin
+              kullandığı v{site.version} anlığından ayrı izlenir.
             </p>
             <Link className="text-link" href={href("/updates/#main-work")}>
               Geliştirmede olanlara bakın →
@@ -1309,20 +1312,23 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
       },
       {
         id: "nat",
-        title: "Port yönlendirmeden NAT arkasında çalışır",
+        title: "Gelen INVITE için UDP 5070’i yayınlayın",
         content: (
           <>
             <p>
-              Operatörler 5070 numaralı UDP portundaki kendi taşıyıcılarından
-              kayıt olur. Operatör gelen aramayı gördüğü adres ve porta
-              gönderir; kaynak portu değiştiren modemler de aramayı iletir.
-              Kayıt olan bir hat için gelen yönde güvenlik duvarı kuralı
-              gerekmez.
+              Operatörler UDP <code>5070</code> taşıyıcısından kayıt olur.
+              MonoSIP <code>external_signaling_address</code> değerini genel
+              IP’ye yazar; operatör gelen INVITE/ACK/BYE’yi{" "}
+              <code>&lt;genel IP&gt;:5070</code> adresine gönderir. Bu portu
+              sunucu veya konteynerde yayınlayın ve operatörün SIP aralıklarından
+              izin verin. Yalnızca REGISTER yetmez.
             </p>
             <Callout>
+              Port açıkken <code>MONOSIP_TRUNK_SIP_PUBLISHED=1</code> koyun.
+              Health medya uyarıları eksik yayını işaretler; yazılımsal telefon
+              bandı yalnızca RTP ve host sorunlarını gösterir.{" "}
               <code>EXTERNAL_IP</code> değerini telefonlarınızın ulaştığı adres
-              (LAN veya VPN) yapın. Operatörlere STUN ile bulunan genel adres
-              verilir; iki taraf da kullanabileceği adresi alır.
+              (LAN veya VPN) yapın; operatörler STUN ile genel adresi alır.
             </Callout>
           </>
         ),
@@ -1369,8 +1375,10 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
                 ve parolayı yeniden kontrol edin.
               </li>
               <li>
+                <code>5070/udp</code> yayını ve{" "}
+                <code>MONOSIP_TRUNK_SIP_PUBLISHED=1</code> ayarını doğrulayın.{" "}
                 <code>pjsip set logger on</code> çalıştırıp numarayı arayın. Hiç
-                INVITE gelmiyorsa operatör kayıttaki Contact adresine
+                INVITE gelmiyorsa operatör <code>:5070</code> adresine
                 ulaşamıyordur.
               </li>
               <li>

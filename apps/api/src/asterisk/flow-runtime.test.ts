@@ -642,6 +642,7 @@ describe("runFlowOnChannel", () => {
     await vi.advanceTimersByTimeAsync(MEDIA_SETTLE_MS + 100);
     await running;
     expect(ari.answer).toHaveBeenCalledWith("ch-f");
+    expect(cdrAnswered).toHaveBeenCalledWith("ch-f");
   });
 
   it("refuses to descend past the depth limit", async () => {

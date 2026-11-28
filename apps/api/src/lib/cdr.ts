@@ -326,6 +326,45 @@ export async function cdrEnd(
   }
 }
 
+/**
+ * Heal a finalized NOANSWER / billsec=0 row when a keepable recording proves
+ * the call was connected (e.g. caller BYE aborted dialplan CDR before curl).
+ */
+export async function cdrHealFromRecording(
+  callId: string,
+  durationSec: number,
+): Promise<boolean> {
+  if (durationSec < 2) return false;
+  try {
+    let healed = false;
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${callId}))`);
+      const [row] = await tx.select().from(cdr).where(eq(cdr.callId, callId)).limit(1);
+      if (!row) return;
+      const bill = row.billsec ?? 0;
+      if (bill > 0) return;
+      const disp = (row.disposition ?? "").toUpperCase();
+      if (disp && disp !== "NOANSWER" && disp !== "FAILED" && disp !== "BUSY") return;
+      const answeredAt = row.answeredAt ?? row.startedAt ?? new Date();
+      await tx
+        .update(cdr)
+        .set({
+          disposition: "ANSWERED",
+          billsec: durationSec,
+          duration: Math.max(row.duration ?? 0, durationSec),
+          answeredAt,
+          ...(row.endedAt ? {} : { endedAt: new Date() }),
+        })
+        .where(eq(cdr.id, row.id));
+      healed = true;
+      cdrMetrics.endEnriched++;
+    });
+    return healed;
+  } catch {
+    return false;
+  }
+}
+
 /** True if a CDR row is still open in memory (redirected calls awaiting hangup). */
 export function cdrIsOpen(callId: string): boolean {
   return open.has(callId);

@@ -101,8 +101,7 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              kaydına göre incelendi. Ana daldaki her şey v{site.version}
-              sürümündedir. 1.8.4’ten bu yana gelen düzeltmeler:
+              kaydına göre incelendi. v{site.version} sürümünden sonra ana dalda:
             </>
           ) : (
             <>
@@ -110,48 +109,47 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              on {site.reviewed}. Everything on the main branch is in the
-              v{site.version} release. Fixes since 1.8.4:
+              on {site.reviewed}. On main after v{site.version}:
             </>
           )}
         </p>
         <div className="development-grid">
           <article>
-            <h3>{L("The real caller ID.", "Gerçek arayan numarası.")}</h3>
+            <h3>{L("Answered calls stay answered.", "Yanıtlanan arama yanıtlı kalır.")}</h3>
             <p>
               {L(
-                "Inbound calls from a provider show the caller’s own number instead of the trunk’s, and a provider login without a DID no longer returns 404.",
-                "Operatörden gelen aramalarda trunk numarası yerine arayanın kendi numarası görünür; DID içermeyen operatör kaydı artık 404 vermez.",
+                "IVR → extension transfers with a recording no longer finish as NOANSWER when the caller hangs up mid-bridge. Hangup CDR and recording finalize keep disposition and billsec correct.",
+                "Kayıtlı IVR → dahili aktarımları, arayan köprüde kapatsa bile artık NOANSWER bitmez. Hangup CDR ve kayıt sonlandırma disposition ile billsec’i doğru tutar.",
               )}
             </p>
           </article>
           <article>
-            <h3>{L("Softphone on the right host.", "Doğru adreste yazılımsal telefon.")}</h3>
+            <h3>{L("Trunk UDP 5070 is required.", "Trunk için UDP 5070 şart.")}</h3>
             <p>
               {L(
-                "A redeploy can no longer point softphones at the container address. Set PUBLIC_HOST and the browser always connects to your hostname.",
-                "Yeniden dağıtım, yazılımsal telefonları artık konteyner adresine yönlendiremez. PUBLIC_HOST ayarlayın; tarayıcı her zaman alan adınıza bağlanır.",
+                "Publish 5070/udp and set MONOSIP_TRUNK_SIP_PUBLISHED=1. Health warns when it is missing; the softphone banner only shows RTP and host issues.",
+                "5070/udp yayınlayın ve MONOSIP_TRUNK_SIP_PUBLISHED=1 koyun. Eksikte health uyarır; yazılımsal telefon bandı yalnızca RTP ve host sorunlarını gösterir.",
               )}
             </p>
           </article>
           <article>
             <h3>
               {L(
-                "Flow tests that match live calls.",
-                "Canlı aramayla aynı akış testi.",
+                "Recordings after trunk continue.",
+                "Trunk continue sonrası kayıt.",
               )}
             </h3>
             <p>
               {L(
-                "The flow simulation sends the API node’s secret, headers and body, so a key that works on a call no longer fails with 401 in the test.",
-                "Akış simülasyonu API düğümünün gizli değerini, başlıklarını ve gövdesini gönderir; aramada çalışan bir anahtar testte artık 401 vermez.",
+                "MixMonitor registers on hangup after Stasis continue to trunk dial, so answered outbound legs keep their recording file.",
+                "Stasis continue ile trunk aramasından sonra MixMonitor hangup’ta kaydı kapatır; yanıtlanan dış bacakların ses dosyası kalır.",
               )}
             </p>
           </article>
         </div>
         <a
           className="text-link"
-          href={`${site.repo}/commits/v${site.version}`}
+          href={`${site.repo}/commits/main`}
         >
           {L("Follow the source changes", "Kaynak değişikliklerini izleyin")}{" "}
           <Icon name="external" />

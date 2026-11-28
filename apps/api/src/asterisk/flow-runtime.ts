@@ -315,6 +315,15 @@ export async function runFlowOnChannel(
   }
   if (!asSubflow) {
     await ari.answer(channelId);
+    // Inbound → flow never hit the monosip-flow StasisStart path that marks
+    // answered; without this, ChannelDestroyed finalizes as NOANSWER even when
+    // the caller talked through IVR / a later transfer (and a recording exists).
+    try {
+      const { cdrAnswered } = await import("../lib/cdr.js");
+      await cdrAnswered(channelId);
+    } catch {
+      /* optional — CDR may not have been started yet on synthetic tests */
+    }
     await playSilence(channelId, MEDIA_SETTLE_MS);
   }
 

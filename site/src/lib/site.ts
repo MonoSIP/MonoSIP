@@ -11,8 +11,8 @@ export const site = {
   sourceZip: `${repo}/archive/refs/tags/v${version}.zip`,
   image: `ghcr.io/monosip/monosip:${version}`,
   sourceRevision: "a88108a03650c4ef350725e5dd362c6dea2a2988",
-  developmentRevision: "a88108a",
-  reviewed: "25 November 2026",
+  developmentRevision: "pending",
+  reviewed: "28 November 2026",
   description:
     "A self-hosted Asterisk PBX for small offices. Connect SIP providers, route calls with visual IVR, and give your team a browser softphone and voicemail inbox. Run it with Docker on your Linux server.",
 };
@@ -26,8 +26,8 @@ export const sourceDoc = (file: string) =>
 export const releaseHighlights = [
   {
     icon: "network",
-    title: "SIP providers work behind NAT.",
-    text: "Providers register from their own port and send inbound calls back to the address they see, so calls arrive without a port forward. Callers keep their own number.",
+    title: "SIP providers keep the real caller ID.",
+    text: "Publish UDP 5070 for inbound INVITE/ACK (set MONOSIP_TRUNK_SIP_PUBLISHED=1 when it is open). Callers keep their own number on the display.",
   },
   {
     icon: "phone",
@@ -86,10 +86,13 @@ export const referenceDocs = [
 export const dockerCommand = `docker run -d --name monosip \\
   --restart unless-stopped \\
   -p 3000:3000 \\
+  -p 5070:5070/udp \\
   -p 10000-10100:10000-10100/udp \\
   -v monosip-data:/data \\
   -e EXTERNAL_IP=203.0.113.10 \\
   -e PUBLIC_HOST=pbx.example.com \\
+  -e MONOSIP_TRUNK_SIP_PUBLISHED=1 \\
+  -e MONOSIP_RTP_PUBLISHED=1 \\
   ${site.image}`;
 
 export const composeCommand = `git clone https://github.com/MonoSIP/MonoSIP.git

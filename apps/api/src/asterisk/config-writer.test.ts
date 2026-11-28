@@ -129,6 +129,15 @@ describe("writeAsteriskConfig emergency dialplan", () => {
     expect(trunkSection).toContain("exten => h,1,NoOp(Trunk dial hangup)");
     expect(trunkSection).toContain("Set(MONOSIP_CDR_DONE=1)");
   });
+
+  it("posts CDR on monosip-flow-dial hangup when caller BYEs mid-bridge", () => {
+    const flow = dialplan.indexOf("[monosip-flow-dial]");
+    expect(flow).toBeGreaterThanOrEqual(0);
+    const section = dialplan.slice(flow, dialplan.indexOf("[monosip-trunk-dial]", flow));
+    expect(section).toContain("exten => h,1,NoOp(Flow dial hangup)");
+    expect(section).toContain("Set(MONOSIP_CDR_DONE=1)");
+    expect(section).toContain("Flow dial answered — CDR");
+  });
 });
 
 describe("writeAsteriskConfig trunk transport NAT", () => {

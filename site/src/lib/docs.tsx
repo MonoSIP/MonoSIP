@@ -222,7 +222,7 @@ export const docs: Record<
                 [
                   "5070/UDP",
                   "SIP provider (trunk)",
-                  "Outbound registration only. The provider answers to the NAT-observed address, so no inbound rule or port forward is needed.",
+                  "Must be published. MonoSIP advertises external_signaling_address on this port; without the mapping, REGISTER can succeed while inbound INVITEs never arrive. Set MONOSIP_TRUNK_SIP_PUBLISHED=1 when it is open.",
                 ],
                 [
                   "TURN / TURNS",
@@ -234,9 +234,10 @@ export const docs: Record<
             <p>
               On a platform edge without the Compose ALPN mux, the install guide
               documents <code>MONOSIP_RTP_PUBLISHED=1</code> when RTP is
-              actually published, and <code>MONOSIP_TURNS_ON_443=0</code> for a
-              deliberate STUN-only deployment. Review your network before
-              applying either option.
+              actually published, <code>MONOSIP_TRUNK_SIP_PUBLISHED=1</code> when
+              UDP 5070 is published for SIP providers, and{" "}
+              <code>MONOSIP_TURNS_ON_443=0</code> for a deliberate STUN-only
+              deployment. Review your network before applying any of these.
             </p>
             <p>
               <code>EXTERNAL_IP</code> is the address your phones and browsers
@@ -903,9 +904,10 @@ export const docs: Record<
         content: (
           <>
             <p>
-              The main branch adds inline waveforms, unheard counts and saved
-              voicemail greetings. These post-release changes are tracked
-              separately from the v{site.version} snapshot used by these guides.
+              The main branch hardens CDR disposition for answered IVR
+              transfers, trunk MixMonitor on hangup, and softphone media
+              warnings. Post-release changes are tracked separately from the
+              v{site.version} snapshot used by these guides.
             </p>
             <Link className="text-link" href="/updates/#main-work">
               See what is in development →
@@ -1291,19 +1293,24 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
       },
       {
         id: "nat",
-        title: "Works behind NAT without a port forward",
+        title: "Publish UDP 5070 for inbound INVITEs",
         content: (
           <>
             <p>
-              Providers register from their own UDP transport on port 5070. The
-              provider sends inbound calls back to the address and port it saw,
-              so routers that rewrite the source port still deliver them. A
-              registering trunk needs no inbound firewall rule.
+              Providers register from UDP transport <code>5070</code>. MonoSIP
+              sets <code>external_signaling_address</code> to the public IP, so
+              the provider sends inbound INVITE/ACK/BYE to{" "}
+              <code>&lt;public IP&gt;:5070</code>. Publish that port on the
+              host or container and allow it from the provider&apos;s SIP ranges.
+              REGISTER alone is not enough.
             </p>
             <Callout>
-              Set <code>EXTERNAL_IP</code> to the address your phones reach (LAN
-              or VPN). Providers are given the public address found through
-              STUN, so both sides get an address they can use.
+              After the port is open, set{" "}
+              <code>MONOSIP_TRUNK_SIP_PUBLISHED=1</code>. Health media warnings
+              flag a missing publish; the softphone banner only shows RTP and
+              host issues. Set <code>EXTERNAL_IP</code> to the address your
+              phones reach (LAN or VPN); providers get the public address via
+              STUN.
             </Callout>
           </>
         ),
@@ -1350,8 +1357,10 @@ curl -sS "$PBX/api/v1/ext/recordings/RECORDING_ID/stream" \\
                 password.
               </li>
               <li>
-                Run <code>pjsip set logger on</code> and call the number. No
-                INVITE means the provider cannot reach the registration Contact.
+                Confirm <code>5070/udp</code> is published and{" "}
+                <code>MONOSIP_TRUNK_SIP_PUBLISHED=1</code> is set. Run{" "}
+                <code>pjsip set logger on</code> and call the number. No INVITE
+                means the provider cannot reach <code>:5070</code>.
               </li>
               <li>
                 An INVITE answered with 404 means the number is not listed on

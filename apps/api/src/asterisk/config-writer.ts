@@ -1618,7 +1618,21 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "cdr",
       `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${MONOSIP_DIAL_TARGET}","disposition":"ANSWERED","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_CDRDUR},"direction":"internal","extension":"\${MONOSIP_DIAL_TARGET}","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
     )}`,
+    " same => n,Set(MONOSIP_CDR_DONE=1)",
     " same => n,Hangup()",
+    "",
+    // Caller BYE during answered Dial aborts the lines after Dial(); catch CDR here
+    // so ChannelDestroyed does not finalize the inbound row as NOANSWER.
+    "exten => h,1,NoOp(Flow dial hangup)",
+    ` same => n,GotoIf($["\${MONOSIP_CDR_DONE}" = "1"]?fdone)`,
+    ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
+    ` same => n,Set(MONOSIP_DISP=\${IF($["\${ANSWEREDTIME}" != "" & \${ANSWEREDTIME} > 0]?ANSWER:\${IF($["\${DIALSTATUS}"=""]?NOANSWER:\${DIALSTATUS})})})`,
+    ` same => n,${internalPost(
+      "cdr",
+      `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${MONOSIP_DIAL_TARGET}","disposition":"\${MONOSIP_DISP}","billsec":\${IF($["\${ANSWEREDTIME}"!=""]?\${ANSWEREDTIME}:\${MONOSIP_BILL})},"duration":\${MONOSIP_CDRDUR},"direction":"internal","extension":"\${MONOSIP_DIAL_TARGET}","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
+    )}`,
+    " same => n,Set(MONOSIP_CDR_DONE=1)",
+    " same => n(fdone),NoOp(Flow dial hangup done)",
     "",
     // ARI continue: trunk_XXXXXXXX_<digits> → Dial(PJSIP/digits@trunk_XXXXXXXX)
     "[monosip-trunk-dial]",

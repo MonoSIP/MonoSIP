@@ -58,8 +58,8 @@ const referenceTr = [
 export const highlightsTr = [
   {
     icon: "network" as const,
-    title: "SIP operatörleri NAT arkasında çalışır.",
-    text: "Operatörler kendi portlarından kayıt olur ve gelen aramayı gördükleri adrese gönderir; aramalar port yönlendirme olmadan gelir. Arayanın numarası doğru görünür.",
+    title: "SIP operatörlerinde gerçek arayan numarası.",
+    text: "Gelen INVITE/ACK için UDP 5070’i yayınlayın (açıkken MONOSIP_TRUNK_SIP_PUBLISHED=1). Arayanın kendi numarası ekranda kalır.",
   },
   {
     icon: "phone" as const,
