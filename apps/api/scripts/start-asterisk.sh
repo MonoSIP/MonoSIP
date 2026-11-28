@@ -31,7 +31,7 @@ mkdir -p "$AST_CFG" /var/lib/asterisk /var/spool/asterisk /etc/asterisk/keys \
   /var/lib/asterisk/monosip/sounds/tr/digits /var/lib/asterisk/monosip/sounds/tr/qpos \
   /var/lib/asterisk/monosip/sounds/en/digits /var/lib/asterisk/monosip/sounds/en/qpos \
   /var/lib/asterisk/monosip/voicemail \
-  /var/lib/asterisk/moh/default \
+  /var/lib/asterisk/moh \
   /var/lib/asterisk/sounds/en \
   /var/log/asterisk /var/log/asterisk/cdr-csv
 
@@ -131,13 +131,28 @@ def write_tone(path: Path, secs: float, freq: float, duty: float = 1.0):
 moh = Path("/var/lib/asterisk/monosip/moh/default/wait.wav")
 if not moh.is_file():
     write_tone(moh, 4.0, 440, duty=0.2)
+# musiconhold.conf points at /var/lib/asterisk/moh/default — must be a symlink to
+# the MonoSIP pack. mkdir -p of that path (older scripts) left an empty dir and
+# Asterisk logged "Files not found … for moh class:default" on every reload.
 Path("/var/lib/asterisk/moh").mkdir(parents=True, exist_ok=True)
 legacy = Path("/var/lib/asterisk/moh/default")
-if not legacy.exists():
-    try:
-        os.symlink("/var/lib/asterisk/monosip/moh/default", str(legacy))
-    except OSError:
-        pass
+target = "/var/lib/asterisk/monosip/moh/default"
+try:
+    if legacy.is_symlink():
+        if os.readlink(str(legacy)) != target:
+            legacy.unlink()
+            os.symlink(target, str(legacy))
+    elif legacy.is_dir():
+        if not any(legacy.iterdir()):
+            legacy.rmdir()
+            os.symlink(target, str(legacy))
+    elif legacy.exists():
+        legacy.unlink()
+        os.symlink(target, str(legacy))
+    else:
+        os.symlink(target, str(legacy))
+except OSError:
+    pass
 beep = Path("/var/lib/asterisk/sounds/en/beep.wav")
 if not beep.is_file():
     write_tone(beep, 0.25, 880, duty=1.0)
@@ -279,14 +294,15 @@ EOF
         # reload makes res_pjsip reload asynchronously and the overlap never
         # finishes. A reload refused while another runs is retried, not dropped.
         rl() { i=0; while [ $i -lt 30 ]; do out=$(asterisk -rx "$1" 2>&1); case "$out" in *"didn't finish yet"*|*"already in progress"*) i=$((i+1)); sleep 1;; *) return 0;; esac; done; }
-        # `module load` revives a module that DECLINED at cold start (config was
-        # unreadable/empty before the API wrote it); on a running module it is a no-op.
-        rl "module load res_pjsip.so"
+        # `module load` revives a module that DECLINED at cold start; skip when
+        # already Running (otherwise loader.c logs WARNING every reload).
+        ensure() { asterisk -rx "module show like $1" 2>/dev/null | grep -q Running || rl "module load $1"; }
+        ensure res_pjsip.so
         rl "module reload res_pjsip.so"
-        rl "module load app_queue.so"
+        ensure app_queue.so
         rl "module reload app_queue.so"
         rl "module reload res_musiconhold.so"
-        rl "module load pbx_config.so"
+        ensure pbx_config.so
         rl "module reload pbx_config.so"
         echo "MonoSIP: Asterisk reloaded"
         flock -u 9 || true

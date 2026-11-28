@@ -315,12 +315,15 @@ export function reloadScript(cmds: string[]): string {
     "echo ok",
     // A reload refused because another is still running is retried, not dropped.
     `rl() { i=0; while [ $i -lt 30 ]; do out=$(asterisk -rx "$1" 2>&1); case "$out" in *"didn't finish yet"*|*"already in progress"*) i=$((i+1)); sleep 1;; *) return 0;; esac; done; }`,
-    ...cmds.map((c) =>
-      c === "module reload acl"
-        ? // let the ACL-triggered async res_pjsip reload finish inside the lock
-          `rl '${c}'; sleep 5`
-        : `rl '${c}'`,
-    ),
+    // `module load` on a Running module logs WARNING; only load when declined/absent.
+    `ensure() { asterisk -rx "module show like $1" 2>/dev/null | grep -q Running || rl "module load $1"; }`,
+    ...cmds.map((c) => {
+      const load = /^module load (.+)$/.exec(c);
+      if (load) return `ensure '${load[1]}'`;
+      // let the ACL-triggered async res_pjsip reload finish inside the lock
+      if (c === "module reload acl") return `rl '${c}'; sleep 5`;
+      return `rl '${c}'`;
+    }),
   ].join("\n");
 }
 

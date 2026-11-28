@@ -13,7 +13,7 @@ mkdir -p /var/lib/asterisk/monosip /var/lib/asterisk/monosip/sounds/monosip \
   /var/lib/asterisk/monosip/sounds/tr/digits /var/lib/asterisk/monosip/sounds/tr/qpos \
   /var/lib/asterisk/monosip/sounds/en/digits /var/lib/asterisk/monosip/sounds/en/qpos \
   /var/lib/asterisk/monosip/voicemail \
-  /var/lib/asterisk/moh/default \
+  /var/lib/asterisk/moh \
   /var/lib/asterisk/sounds/en \
   /var/spool/asterisk/recording /var/lib/asterisk/sounds /etc/asterisk/keys \
   /var/log/asterisk /var/log/asterisk/cdr-csv
@@ -73,16 +73,28 @@ moh = Path("/var/lib/asterisk/monosip/moh/default/wait.wav")
 if not moh.is_file():
     write_tone(moh, 4.0, 440, duty=0.2)
     print("moh default wait.wav written")
-# Compat for older musiconhold paths
+# musiconhold.conf → /var/lib/asterisk/moh/default must symlink to the MonoSIP pack.
+# An empty dir left by mkdir -p makes every reload log "Files not found".
 import os
 Path("/var/lib/asterisk/moh").mkdir(parents=True, exist_ok=True)
 legacy = Path("/var/lib/asterisk/moh/default")
-if not legacy.exists():
-    try:
-        os.symlink("/var/lib/asterisk/monosip/moh/default", str(legacy))
-    except OSError:
-        pass
-
+target = "/var/lib/asterisk/monosip/moh/default"
+try:
+    if legacy.is_symlink():
+        if os.readlink(str(legacy)) != target:
+            legacy.unlink()
+            os.symlink(target, str(legacy))
+    elif legacy.is_dir():
+        if not any(legacy.iterdir()):
+            legacy.rmdir()
+            os.symlink(target, str(legacy))
+    elif legacy.exists():
+        legacy.unlink()
+        os.symlink(target, str(legacy))
+    else:
+        os.symlink(target, str(legacy))
+except OSError:
+    pass
 
 beep = Path("/var/lib/asterisk/sounds/en/beep.wav")
 if not beep.is_file():
@@ -203,16 +215,15 @@ EOF
         overlay_en_sounds 2>/dev/null || true
         asterisk -rx "module reload acl" 2>/dev/null || true
         asterisk -rx "reload acl" 2>/dev/null || true
-        # `module load` first revives any module that DECLINED at cold start (config
-        # was unreadable/empty before the API wrote it); `reload` then refreshes the
-        # already-running ones. A declined module is NOT reloadable, so without the
-        # load pbx_config/app_queue stay down and every internal call 404s.
-        asterisk -rx "module load res_pjsip.so" 2>/dev/null || true
+        # `module load` revives a DECLINED module; skip when already Running to
+        # avoid loader.c WARNING spam. Declined modules are not reloadable.
+        ensure() { asterisk -rx "module show like $1" 2>/dev/null | grep -q Running || asterisk -rx "module load $1" 2>/dev/null || true; }
+        ensure res_pjsip.so
         asterisk -rx "module reload res_pjsip.so" 2>/dev/null || true
-        asterisk -rx "module load app_queue.so" 2>/dev/null || true
+        ensure app_queue.so
         asterisk -rx "module reload app_queue.so" 2>/dev/null || true
         asterisk -rx "module reload res_musiconhold.so" 2>/dev/null || true
-        asterisk -rx "module load pbx_config.so" 2>/dev/null || true
+        ensure pbx_config.so
         asterisk -rx "module reload pbx_config.so" 2>/dev/null || true
         echo "MonoSIP: Asterisk reloaded"
       fi

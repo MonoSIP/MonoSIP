@@ -151,6 +151,13 @@ describe("reloadScript", () => {
     expect(sh).toContain("rl 'module reload acl'; sleep 5");
     expect(sh).toContain("rl 'module reload app_queue.so'");
   });
+
+  it("loads declined modules via ensure, not a bare module load", () => {
+    const sh = reloadScript(["module load res_pjsip.so", "module reload res_pjsip.so"]);
+    expect(sh).toContain("ensure 'res_pjsip.so'");
+    expect(sh).toContain("grep -q Running");
+    expect(sh).not.toMatch(/rl 'module load res_pjsip\.so'/);
+  });
 });
 
 import { emergencyDialplanNumbers } from "./config-writer.js";
