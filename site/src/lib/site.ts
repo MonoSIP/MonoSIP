@@ -11,7 +11,7 @@ export const site = {
   sourceZip: `${repo}/archive/refs/tags/v${version}.zip`,
   image: `ghcr.io/monosip/monosip:${version}`,
   sourceRevision: "a88108a03650c4ef350725e5dd362c6dea2a2988",
-  developmentRevision: "pending",
+  developmentRevision: "6d138b2",
   reviewed: "28 November 2026",
   description:
     "A self-hosted Asterisk PBX for small offices. Connect SIP providers, route calls with visual IVR, and give your team a browser softphone and voicemail inbox. Run it with Docker on your Linux server.",
