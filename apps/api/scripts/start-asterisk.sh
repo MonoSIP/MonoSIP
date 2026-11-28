@@ -159,6 +159,9 @@ chown asterisk:asterisk /etc/asterisk/keys /etc/asterisk/keys/asterisk.pem 2>/de
 chmod 750 /etc/asterisk/keys 2>/dev/null || true
 chmod 640 /etc/asterisk/keys/asterisk.pem 2>/dev/null || true
 
+# Base image sample; MonoSIP never uses users.conf (PJSIP + Postgres).
+rm -f /etc/asterisk/users.conf
+
 sed -i "s|__ARI_USER__|${ARI_USER}|g" /etc/asterisk/ari.conf /etc/asterisk/http.conf 2>/dev/null || true
 sed -i "s|__ARI_PASS__|${ARI_PASS}|g" /etc/asterisk/ari.conf 2>/dev/null || true
 sed -i "s|__AMI_USER__|${AMI_USER}|g" /etc/asterisk/manager.conf 2>/dev/null || true

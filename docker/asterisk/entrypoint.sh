@@ -6,6 +6,9 @@ ARI_PASS="${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}"
 AMI_USER="${ASTERISK_AMI_USER:-monosip}"
 AMI_PASS="${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}"
 
+# Base image sample; MonoSIP never uses users.conf (PJSIP + Postgres).
+rm -f /etc/asterisk/users.conf
+
 mkdir -p /var/lib/asterisk/monosip /var/lib/asterisk/monosip/sounds/monosip \
   /var/lib/asterisk/monosip/sounds/tr/digits /var/lib/asterisk/monosip/sounds/tr/qpos \
   /var/lib/asterisk/monosip/sounds/en/digits /var/lib/asterisk/monosip/sounds/en/qpos \

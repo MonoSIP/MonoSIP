@@ -53,6 +53,9 @@ COPY --from=builder /app /app
 
 # MonoSIP Asterisk conf (same as docker/asterisk sidecar)
 COPY docker/asterisk/conf/ /etc/asterisk/
+# Base image sample users.conf triggers a deprecation WARN every boot; MonoSIP
+# never uses it (extensions live in PJSIP + Postgres).
+RUN rm -f /etc/asterisk/users.conf
 
 # Embedded TTS sources (server + deps). Models are baked below so offline synth works
 # on first boot without Hugging Face / GitHub at runtime.
