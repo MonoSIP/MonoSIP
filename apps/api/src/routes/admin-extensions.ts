@@ -114,6 +114,18 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     if (body.bossSecretaryOf !== undefined) patch.bossSecretaryOf = body.bossSecretaryOf;
     // Setting the password changes the SIP secret too (phones re-register with it).
     if (body.portalPassword) Object.assign(patch, extensionCredentials(body.portalPassword));
+    if (body.mobileForwardAllowed === false) {
+      const existingFwd = await db
+        .select()
+        .from(extensionForwarding)
+        .where(eq(extensionForwarding.extensionId, id));
+      if (existingFwd.some((r) => r.destType === "external")) {
+        return reply.code(403).send({
+          error:
+            "Cannot disable Mobile forward OK while an external forward rule exists — remove the rule first",
+        });
+      }
+    }
     const [row] = await db
       .update(extensions)
       .set(patch)
@@ -159,6 +171,14 @@ export async function adminExtensionRoutes(app: FastifyInstance) {
     if (!actor || "statusCode" in (actor as object)) return;
     const { id } = req.params as { id: string };
     const rules = z.array(ForwardingRuleSchema).parse(req.body);
+    const [extRow] = await db.select().from(extensions).where(eq(extensions.id, id)).limit(1);
+    if (!extRow) return reply.code(404).send({ error: "Not found" });
+    // Same gate as the portal: dialplan ignores external forwards when this is off.
+    if (rules.some((r) => r.destType === "external") && !extRow.mobileForwardAllowed) {
+      return reply.code(403).send({
+        error: "Mobile/external forward not allowed for this extension (enable Mobile forward OK)",
+      });
+    }
     await db.delete(extensionForwarding).where(eq(extensionForwarding.extensionId, id));
     if (rules.length) {
       await db.insert(extensionForwarding).values(

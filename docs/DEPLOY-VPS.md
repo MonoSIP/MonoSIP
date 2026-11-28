@@ -61,7 +61,7 @@ Open only what you need:
 | 443 | TCP | Everyone (panel + WSS softphone) |
 | 80 | TCP | ACME / redirect (optional) |
 | 5060 | UDP/TCP | Desk phones / classic softphones |
-| 5070 | UDP | SIP providers. Outbound only: a registering trunk needs **no** inbound rule or port forward |
+| 5070 | UDP | SIP providers (`transport-trunk`). **Must be published and reachable** — MonoSIP advertises `external_signaling_address` on this port, so providers send INVITE/ACK/BYE to `<public IP>:5070` |
 | 10000–10100 | UDP | RTP (same peers as SIP) |
 | 3478 | UDP/TCP | TURN (off-site WebRTC) |
 | 49152–49200 | UDP | TURN relay |
@@ -73,10 +73,12 @@ Prefer locking **5060 + RTP** to office / VPN / trunk IPs. Opening SIP to the wh
 sudo ufw allow 443/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow from OFFICE_OR_VPN_CIDR to any port 5060 proto udp
+sudo ufw allow from PROVIDER_SIP_CIDR to any port 5070 proto udp
 sudo ufw allow from OFFICE_OR_VPN_CIDR to any port 10000:10100 proto udp
 sudo ufw allow 3478
 sudo ufw enable
 ```
+
 
 Disable **SIP ALG** on the office router if desk phones sit behind NAT.
 
@@ -105,7 +107,7 @@ Desk phones that stay **Registered** in the phone UI but **Unavail** in MonoSIP 
 | Desk phones, classic softphones, portal softphone | `EXTERNAL_IP` | They reach it directly. Sending them the router's WAN IP hairpins RTP through the router and calls answered from a queue or IVR have no audio |
 | SIP providers, website widget guests | Public IP found via STUN (**Settings → STUN**) | They are on the internet |
 
-- **SIP providers** register from their own UDP transport on port `5070` with a private Contact and `contact_user` set to the SIP login. The provider sends inbound calls back to the address and port it saw, so routers that rewrite the source port (5060 → 63166) no longer drop them. No port forward is needed, the same way 3CX works behind NAT.
+- **SIP providers** register from UDP `5070` (`transport-trunk`) with `contact_user` set to the SIP login. MonoSIP sets `external_signaling_address` to the public IP, so the provider sends inbound INVITEs (and in-dialog ACK/BYE) to `<public IP>:5070`. Publish **`5070/udp`** on the host/container and allow it in the firewall (at least from the provider’s SIP ranges). Without that mapping, REGISTER can still succeed while inbound calls never arrive.
 - **WebRTC:** Docker gives Asterisk a `172.x` NIC that no browser can reach. Boot maps it to `EXTERNAL_IP` in `rtp.conf` (`[ice_host_candidates]`), so a browser that reaches `EXTERNAL_IP` (LAN/VPN) connects media directly.
 - **Set `PUBLIC_HOST`.** Without it the API adopts the Host of the first request. Container, LAN, loopback and single-label hosts are ignored, but an explicit value is the only reliable one.
 - Off-site browsers that cannot reach `EXTERNAL_IP` need RTP published on the WAN address or TURN (see [INSTALL.md](INSTALL.md#production-vps)).
@@ -179,7 +181,7 @@ Use bare metal only if your hoster forbids Docker or you need kernel-level RTP t
 - **Admin password forgotten:** on a single-image install the first-run password is in `docker logs` (`first-run admin login`). If it is lost, `docker compose exec api pnpm db:reset-admin` (single image: `docker exec monosip pnpm db:reset-admin`) temporarily restores the recovery password `Admin123!` — change it immediately after sign-in. Email and 2FA stay as they are. See [INSTALL.md](INSTALL.md).
 - **WSS fails:** nginx cert / `SIP_WSS_URL` host mismatch / port 443 closed.
 - **WebRTC one-way audio off-site:** TURN `EXTERNAL_IP` and relay UDP range must be open.
-- **Provider registered, inbound calls never arrive:** `pjsip set logger on` and call the DID. No INVITE at all means the provider cannot reach the Contact: check that the registration leaves from `transport-trunk` (5070). An INVITE answered with `404` means the Request-URI user is not a DID; MonoSIP sets `contact_user` and also maps `s` to the DID in the To header.
+- **Provider registered, inbound calls never arrive:** `pjsip set logger on` and call the DID. No INVITE at all means the provider cannot reach `:5070` — confirm host/container publish of `5070/udp` and firewall allow from the provider. An INVITE answered with `404` means the Request-URI user is not a DID; MonoSIP sets `contact_user` and also maps `s` to the DID in the To header.
 - **Inbound caller shows the trunk's own number:** fixed in 1.8.5 (trunks no longer set endpoint `callerid=`). Redeploy so the config is rewritten.
 - **Queue or IVR call to a desk phone has no audio:** `EXTERNAL_IP` must be the address the phones reach (LAN/VPN), not the router's WAN IP. See [4b](#4b-behind-nat-vpn-or-a-private-external_ip).
 - **Softphone shows "This browser is not receiving the call" on calls the PBX sends it (IVR, queue):** fixed in 1.8.9. Hard-refresh the portal (Ctrl+F5) so the browser loads the new softphone code.

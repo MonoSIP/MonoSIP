@@ -92,11 +92,60 @@ export async function amiAction(
 /** Normalize trunk status for DB varchar(32). */
 export function normalizeTrunkStatus(raw: string): string {
   const s = (raw || "unknown").toLowerCase().replace(/\s+/g, "-");
-  if (/avail|reachable|registered|ok|success/.test(s) || s === "0") return "registered";
+  // Negatives first: substring /avail|reachable/ wrongly matches unavail/unreachable.
+  if (
+    s === "unavailable" ||
+    s === "unreachable" ||
+    s.startsWith("unavail") ||
+    s.startsWith("unreach") ||
+    s.includes("unavailable") ||
+    s.includes("unreachable")
+  ) {
+    return "unreachable";
+  }
   if (s.startsWith("ami-error") || s.includes("unable") || s.includes("timeout")) {
     return "unreachable";
   }
+  // Idle / in-call device states stay as-is (refresh button); monitor maps them to up.
+  if (s === "not-in-use" || s === "in-use" || s === "ringing" || s === "busy") {
+    return s;
+  }
+  if (
+    s === "avail" ||
+    s === "available" ||
+    s === "reachable" ||
+    s === "registered" ||
+    s === "ok" ||
+    s === "success" ||
+    s === "0"
+  ) {
+    return "registered";
+  }
   return s.slice(0, 32) || "unknown";
+}
+
+/** Collapse a normalized AMI status into the panel monitor values up/down/unknown. */
+export function mapTrunkMonitorStatus(normalized: string): "up" | "down" | "unknown" {
+  const raw = (normalized || "unknown").toLowerCase();
+  if (raw === "unreachable" || raw === "unavailable" || raw.startsWith("ami-error")) {
+    return "down";
+  }
+  if (
+    raw === "registered" ||
+    raw === "not-in-use" ||
+    raw === "in-use" ||
+    raw === "ringing" ||
+    raw === "busy" ||
+    raw === "avail" ||
+    raw === "available" ||
+    raw === "reachable" ||
+    raw === "ok" ||
+    raw === "success"
+  ) {
+    return "up";
+  }
+  if (raw === "unknown") return "unknown";
+  return "down";
 }
 
 export async function fetchTrunkEndpointStatus(
@@ -119,9 +168,12 @@ export async function fetchTrunkEndpointStatus(
   }
   try {
     const events = await amiAction({ Action: "PJSIPShowEndpoint", Endpoint: endpointId });
-    const contact = events.find((e) => e.Event === "ContactStatusDetail" || e.ObjectType === "endpoint");
+    // Prefer contact Reachable/Unreachable over DeviceState (Not in use / Unavailable).
+    const contact = events.find((e) => e.Event === "ContactStatusDetail");
+    const endpoint = events.find((e) => e.ObjectType === "endpoint" || e.Event === "EndpointDetail");
     const state =
       contact?.Status ??
+      endpoint?.DeviceState ??
       events.find((e) => e.DeviceState)?.DeviceState ??
       events.find((e) => e.Response === "Success")?.Message ??
       "unknown";

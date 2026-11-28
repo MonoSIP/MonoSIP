@@ -30,11 +30,12 @@ volume:
 
 # SIP trunk + desk phones + softphone RTP — publish in the NineDeploy UI if the
 # platform does not map them from this file:
-#   UDP/TCP 5060 → container 5060   (Verimor / provider inbound INVITEs + phones)
+#   UDP/TCP 5060 → container 5060   (desk phones)
+#   UDP 5070 → container 5070       (SIP provider inbound INVITE/ACK — required)
 #   UDP 10000-10100 → container 10000-10100
-# Then set vault env MONOSIP_RTP_PUBLISHED=1. STUN (or EXTERNAL_IP) must be the
-# WAN IPv4 that receives those published ports. Deploy logs + /api/v1/health.media
-# warn when RTP ports are missing.
+# Then set vault env MONOSIP_RTP_PUBLISHED=1 and MONOSIP_TRUNK_SIP_PUBLISHED=1.
+# STUN (or EXTERNAL_IP) must be the WAN IPv4 that receives those published ports.
+# Deploy logs + /api/v1/health.media warn when ports are missing.
 
 resources:
   # Embedded Postgres + Asterisk + Node + ffmpeg

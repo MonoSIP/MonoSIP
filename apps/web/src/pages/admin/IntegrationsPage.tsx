@@ -14,7 +14,7 @@ function apiDocsHref(): string {
     : "https://www.monosip.com/docs/integrations/#api";
 }
 
-const ALL_PERMS = ["cdr", "originate", "recordings", "announce"] as const;
+const ALL_PERMS = ["cdr", "originate", "recordings", "announce", "status"] as const;
 
 type ApiKey = {
   id: string;

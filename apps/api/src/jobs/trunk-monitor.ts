@@ -3,7 +3,7 @@ import { SettingsSchema } from "@monosip/shared";
 import { ari } from "../asterisk/ari.js";
 import { db } from "../db/client.js";
 import { settings, trunks } from "../db/schema.js";
-import { fetchTrunkEndpointStatus } from "../lib/ami.js";
+import { fetchTrunkEndpointStatus, mapTrunkMonitorStatus } from "../lib/ami.js";
 
 const lastState = new Map<string, string>();
 
@@ -18,15 +18,7 @@ export function startTrunkMonitorJob(intervalMs = 60_000) {
       for (const t of rows) {
         const endpoint = `trunk_${t.id.slice(0, 8)}`;
         const live = await fetchTrunkEndpointStatus(endpoint);
-        const raw = (live.status ?? "unknown").toLowerCase();
-        const status =
-          raw === "unreachable" || raw === "unavailable"
-            ? "down"
-            : raw === "registered" || raw.includes("avail") || raw.includes("reachable")
-              ? "up"
-              : raw.startsWith("ami-error") || raw === "unknown"
-                ? "unknown"
-                : "down";
+        const status = mapTrunkMonitorStatus(live.status ?? "unknown");
 
         await db
           .update(trunks)

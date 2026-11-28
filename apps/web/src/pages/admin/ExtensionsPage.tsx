@@ -120,7 +120,12 @@ export function ExtensionsPage() {
   const saveEdit = useMutation({
     mutationFn: async () => {
       if (!edit) return;
-      await api.patch(`/api/v1/admin/extensions/${edit.id}`, {
+      if (fwdRules.some((r) => r.destType === "external") && !mobileFwd) {
+        throw new Error(
+          tr("Enable Mobile forward OK before saving an external forward rule"),
+        );
+      }
+      const patchBody = {
         name: editName,
         portalEnabled: editPortal,
         recordingMode: editRecording,
@@ -131,16 +136,22 @@ export function ExtensionsPage() {
         outboundCli: cli || null,
         // one password for the portal and SIP; empty keeps the current one
         ...(editPassword ? { portalPassword: editPassword } : {}),
-      });
-      await api.put(
-        `/api/v1/admin/extensions/${edit.id}/forwarding`,
-        fwdRules.map((r) => ({
-          condition: r.condition,
-          ringSeconds: r.ringSeconds,
-          destType: r.destType,
-          destId: r.destType === "hangup" ? null : r.destId || null,
-        })),
-      );
+      };
+      const fwdBody = fwdRules.map((r) => ({
+        condition: r.condition,
+        ringSeconds: r.ringSeconds,
+        destType: r.destType,
+        destId: r.destType === "hangup" ? null : r.destId || null,
+      }));
+      // Enable Mobile forward OK before writing external rules; clear rules
+      // before disabling it — both sides of the API gate.
+      if (mobileFwd) {
+        await api.patch(`/api/v1/admin/extensions/${edit.id}`, patchBody);
+        await api.put(`/api/v1/admin/extensions/${edit.id}/forwarding`, fwdBody);
+      } else {
+        await api.put(`/api/v1/admin/extensions/${edit.id}/forwarding`, fwdBody);
+        await api.patch(`/api/v1/admin/extensions/${edit.id}`, patchBody);
+      }
       await api.put(`/api/v1/admin/extensions/${edit.id}/spend-limit`, {
         dailyLimitMinutes: spendDaily === "" ? null : Number(spendDaily),
         monthlyLimitMinutes: spendMonthly === "" ? null : Number(spendMonthly),

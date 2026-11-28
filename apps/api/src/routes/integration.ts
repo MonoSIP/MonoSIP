@@ -1,8 +1,17 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db/client.js";
-import { announceCalls, apiKeys, cdr, recordings } from "../db/schema.js";
+import {
+  announceCalls,
+  apiKeys,
+  callEvents,
+  cdr,
+  extensions,
+  inboundRoutes,
+  recordings,
+  trunks,
+} from "../db/schema.js";
 import { hashToken } from "../lib/crypto.js";
 import { ari } from "../asterisk/ari.js";
 import { createReadStream, existsSync } from "node:fs";
@@ -13,6 +22,9 @@ import { authBlocked, clearAuthFailure, keyExpired, noteAuthFailure, verifyBarri
 import { audioContentType } from "../lib/audio-mime.js";
 
 type ApiKeyRow = typeof apiKeys.$inferSelect;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function keyHas(key: ApiKeyRow, perm: string): boolean {
   const perms = (key.permissions as string[]) ?? [];
@@ -102,7 +114,6 @@ export async function integrationRoutes(app: FastifyInstance) {
     }
     let callerId = body.callerId;
     if (!callerId) {
-      const { extensions } = await import("../db/schema.js");
       const [ext] = await db
         .select()
         .from(extensions)
@@ -121,7 +132,121 @@ export async function integrationRoutes(app: FastifyInstance) {
   app.get("/api/v1/ext/cdr", async (req, reply) => {
     const authn = await authenticate(req, "cdr");
     if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
-    return db.select().from(cdr).orderBy(desc(cdr.startedAt)).limit(200);
+    const q = z
+      .object({
+        callId: z.string().min(1).optional(),
+        from: z.string().min(1).optional(),
+        to: z.string().min(1).optional(),
+        direction: z.string().min(1).optional(),
+        disposition: z.string().min(1).optional(),
+        limit: z.coerce.number().int().min(1).max(500).optional(),
+        cursor: z.string().min(1).optional(),
+      })
+      .parse(req.query ?? {});
+
+    const clauses = [];
+    if (q.callId) clauses.push(eq(cdr.callId, q.callId));
+    if (q.direction) clauses.push(eq(cdr.direction, q.direction));
+    if (q.disposition) clauses.push(eq(cdr.disposition, q.disposition));
+    if (q.from) {
+      const d = new Date(q.from);
+      if (!Number.isNaN(d.getTime())) clauses.push(gte(cdr.startedAt, d));
+    }
+    if (q.to) {
+      const d = new Date(q.to);
+      if (!Number.isNaN(d.getTime())) clauses.push(lte(cdr.startedAt, d));
+    }
+    if (q.cursor) {
+      const d = new Date(q.cursor);
+      if (!Number.isNaN(d.getTime())) clauses.push(lte(cdr.startedAt, d));
+    }
+    const where = clauses.length ? and(...clauses) : undefined;
+    const limit = q.limit ?? 200;
+    return db
+      .select()
+      .from(cdr)
+      .where(where)
+      .orderBy(desc(cdr.startedAt))
+      .limit(limit);
+  });
+
+  app.get("/api/v1/ext/cdr/:id/timeline", async (req, reply) => {
+    const authn = await authenticate(req, "cdr");
+    if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
+    const { id } = req.params as { id: string };
+    if (!UUID_RE.test(id)) {
+      return reply.code(400).send({ error: "Invalid CDR id (expected UUID)" });
+    }
+    const [row] = await db.select().from(cdr).where(eq(cdr.id, id)).limit(1);
+    if (!row) return reply.code(404).send({ error: "Not found" });
+    const events = await db
+      .select()
+      .from(callEvents)
+      .where(eq(callEvents.callId, row.callId))
+      .orderBy(callEvents.at);
+    return { cdr: row, events };
+  });
+
+  app.get("/api/v1/ext/trunks", async (req, reply) => {
+    const authn = await authenticate(req, "status");
+    if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
+    const rows = await db
+      .select({
+        id: trunks.id,
+        name: trunks.name,
+        enabled: trunks.enabled,
+        status: trunks.status,
+        latencyMs: trunks.latencyMs,
+        host: trunks.host,
+        register: trunks.register,
+      })
+      .from(trunks)
+      .orderBy(trunks.name);
+    return rows;
+  });
+
+  app.get("/api/v1/ext/extensions", async (req, reply) => {
+    const authn = await authenticate(req, "status");
+    if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
+    const rows = await db
+      .select({
+        id: extensions.id,
+        number: extensions.number,
+        name: extensions.name,
+        dnd: extensions.dnd,
+        portalEnabled: extensions.portalEnabled,
+      })
+      .from(extensions)
+      .orderBy(extensions.number);
+    const out = [];
+    for (const r of rows) {
+      const state = await ari.endpointState(r.number);
+      out.push({
+        number: r.number,
+        name: r.name,
+        dnd: r.dnd,
+        portalEnabled: r.portalEnabled,
+        registered: state.online,
+        busy: state.busy,
+      });
+    }
+    return out;
+  });
+
+  app.get("/api/v1/ext/routes/inbound", async (req, reply) => {
+    const authn = await authenticate(req, "status");
+    if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
+    return db
+      .select({
+        id: inboundRoutes.id,
+        did: inboundRoutes.did,
+        callerPattern: inboundRoutes.callerPattern,
+        priority: inboundRoutes.priority,
+        destType: inboundRoutes.destType,
+        destId: inboundRoutes.destId,
+      })
+      .from(inboundRoutes)
+      .orderBy(inboundRoutes.priority);
   });
 
   app.get("/api/v1/ext/recordings/:id/stream", async (req, reply) => {
@@ -166,6 +291,9 @@ export async function integrationRoutes(app: FastifyInstance) {
     if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
     const key = authn.key;
     const { id } = req.params as { id: string };
+    if (!UUID_RE.test(id)) {
+      return reply.code(400).send({ error: "Invalid call id (expected UUID)" });
+    }
     const [row] = await db
       .select()
       .from(announceCalls)
@@ -180,6 +308,9 @@ export async function integrationRoutes(app: FastifyInstance) {
     if (!authn.ok) return reply.code(authn.status).send({ error: authn.error });
     const key = authn.key;
     const { id } = req.params as { id: string };
+    if (!UUID_RE.test(id)) {
+      return reply.code(400).send({ error: "Invalid call id (expected UUID)" });
+    }
     const [row] = await db
       .select()
       .from(announceCalls)
