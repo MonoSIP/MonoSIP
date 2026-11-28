@@ -116,6 +116,19 @@ describe("writeAsteriskConfig emergency dialplan", () => {
     expect(section).toContain('GotoIf($["${MONOSIP_QPAUSED}" != "1"]?hunpaused)');
     expect(section.indexOf("MONOSIP_QPAUSED")).toBeLessThan(section.indexOf("UnpauseQueueMember"));
   });
+
+  it("registers MixMonitor via hangup handler after Stasis trunk continue", () => {
+    // Always emitted; hangup_handler_push is wired per extension with an
+    // external forward (needs DB rows — covered by the dialplan fragment below).
+    expect(dialplan).toContain("[monosip-rec-hangup]");
+    expect(dialplan).toContain("Register MixMonitor on hangup");
+    expect(dialplan).toContain('GotoIf($["${MONOSIP_RECDUR}" = ""]?omitdur)');
+    const trunk = dialplan.indexOf("[monosip-trunk-dial]");
+    expect(trunk).toBeGreaterThanOrEqual(0);
+    const trunkSection = dialplan.slice(trunk, dialplan.indexOf("[monosip-rec-hangup]", trunk));
+    expect(trunkSection).toContain("exten => h,1,NoOp(Trunk dial hangup)");
+    expect(trunkSection).toContain("Set(MONOSIP_CDR_DONE=1)");
+  });
 });
 
 describe("writeAsteriskConfig trunk transport NAT", () => {

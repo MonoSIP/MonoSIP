@@ -1124,12 +1124,13 @@ async function writeAsteriskConfigNow(): Promise<void> {
       );
     }
     if (alwaysExternal) {
-      // Stasis outbound never posts StopMixMonitor / recording. The h hangup
-      // handler only registers when MONOSIP_CALLEE is set — stamp it here so
-      // always-forward externals do not leave orphan WAVs with null recordingId.
+      // Stasis → continue → [monosip-trunk-dial]. The from-internal `h` never
+      // runs there, so push a hangup handler that registers MixMonitor wherever
+      // the channel ends (answered BYE mid-bridge or after Dial returns).
       extensionsConf.push(
         ` same => n,Set(MONOSIP_CALLEE=${alwaysExternal})`,
         ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
+        ` same => n,Set(CHANNEL(hangup_handler_push)=monosip-rec-hangup,s,1)`,
         ` same => n,Stasis(monosip-outbound,${alwaysExternal})`,
         ` same => n,Hangup()`,
         ` same => n(dndbusy),Goto(s-BUSY-${ext.number},1)`,
@@ -1217,7 +1218,10 @@ async function writeAsteriskConfigNow(): Promise<void> {
         ext.mobileForwardAllowed
       ) {
         extensionsConf.push(
-          `exten => s-${st}-${ext.number},1,Stasis(monosip-outbound,${rule.destId})`,
+          `exten => s-${st}-${ext.number},1,Set(MONOSIP_CALLEE=${rule.destId})`,
+          ` same => n,Set(MONOSIP_CID=\${CALLERID(num)})`,
+          ` same => n,Set(CHANNEL(hangup_handler_push)=monosip-rec-hangup,s,1)`,
+          ` same => n,Stasis(monosip-outbound,${rule.destId})`,
           ` same => n,Hangup()`,
           "",
         );
@@ -1632,11 +1636,47 @@ async function writeAsteriskConfigNow(): Promise<void> {
       "cdr",
       `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${NUM}","disposition":"\${DIALSTATUS}","billsec":\${MONOSIP_BILL},"duration":\${MONOSIP_CDRDUR},"direction":"outbound","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
     )}`,
+    " same => n,Set(MONOSIP_CDR_DONE=1)",
     " same => n,Hangup()",
     " same => n(next),Set(TRUNK=${CUT(MONOSIP_TRUNK_FALLBACK,&,1)})",
     " same => n,Set(MONOSIP_TRUNK_FALLBACK=${CUT(MONOSIP_TRUNK_FALLBACK,&,2-)})",
     " same => n,NoOp(Trunk failover ${DIALSTATUS} → ${TRUNK})",
     " same => n,Goto(dial)",
+    "",
+    // Caller BYE during Dial aborts the lines after Dial(); catch CDR here.
+    // Recording is usually handled by monosip-rec-hangup (hangup_handler_push).
+    "exten => h,1,NoOp(Trunk dial hangup)",
+    ` same => n,GotoIf($["\${MONOSIP_CDR_DONE}" = "1"]?tdone)`,
+    ...qosPrepLines({ dialedTime: false, cdrDuration: true }),
+    ` same => n,Set(MONOSIP_DISP=\${IF($["\${ANSWEREDTIME}" != "" & \${ANSWEREDTIME} > 0]?ANSWER:\${IF($["\${DIALSTATUS}"=""]?NOANSWER:\${DIALSTATUS})})})`,
+    ` same => n,${internalPost(
+      "cdr",
+      `{"callId":"\${UNIQUEID}","caller":"\${MONOSIP_CID}","callee":"\${IF($["\${NUM}"=""]?\${MONOSIP_CALLEE}:\${NUM})}","disposition":"\${MONOSIP_DISP}","billsec":\${IF($["\${ANSWEREDTIME}"!=""]?\${ANSWEREDTIME}:\${MONOSIP_BILL})},"duration":\${MONOSIP_CDRDUR},"direction":"outbound","mos":"\${MONOSIP_MOS}","jitter":"\${MONOSIP_JIT}","packetLoss":"\${MONOSIP_LOSS}"}`,
+    )}`,
+    " same => n,Set(MONOSIP_CDR_DONE=1)",
+    " same => n(tdone),NoOp(Trunk dial hangup done)",
+    "",
+    // Runs wherever the channel hangs up after hangup_handler_push (Stasis continue
+    // to monosip-trunk-dial, mid-bridge BYE, or after Dial returns).
+    "[monosip-rec-hangup]",
+    "exten => s,1,NoOp(Register MixMonitor on hangup)",
+    ` same => n,GotoIf($["\${MONOSIP_REC_DONE}" = "1" | "\${MONOSIP_RECFILE}" = ""]?done)`,
+    " same => n,StopMixMonitor()",
+    // Prefer ANSWEREDTIME (available after bridged Dial). Omit duration when 0 so
+    // /internal/recording keeps the WAV and uses file length (explicit 0 deletes).
+    ` same => n,Set(MONOSIP_RECDUR=\${IF($["\${ANSWEREDTIME}" != "" & \${ANSWEREDTIME} > 0]?\${ANSWEREDTIME}:\${IF($["\${MONOSIP_BILL}" != "" & \${MONOSIP_BILL} > 0]?\${MONOSIP_BILL}:)})})`,
+    ` same => n,GotoIf($["\${MONOSIP_RECDUR}" = ""]?omitdur)`,
+    ` same => n,${internalPost(
+      "recording",
+      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}","duration":\${MONOSIP_RECDUR}}`,
+    )}`,
+    " same => n,Goto(mark)",
+    ` same => n(omitdur),${internalPost(
+      "recording",
+      `{"callId":"\${UNIQUEID}","file":"\${MONOSIP_RECFILE}"}`,
+    )}`,
+    " same => n(mark),Set(MONOSIP_REC_DONE=1)",
+    " same => n(done),Return()",
     "",
     "[monosip-trunk-cli]",
     ...trks.flatMap((t) => trunkCliNameLines(`trunk_${t.id.slice(0, 8)}`, t.callerId)),
