@@ -37,7 +37,10 @@ for (const width of [375, 768, 1024, 1440, 1920, 2560, 3840]) {
         await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
         await expect(page.locator("h1")).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
+        // Hidden/decorative imgs (aria-hidden panels, off-screen mockups) must
+        // not block scrollIntoView — only assert assets that are actually shown.
         for (const picture of await page.locator("img").all()) {
+          if (!(await picture.isVisible())) continue;
           await picture.scrollIntoViewIfNeeded();
           await expect
             .poll(() =>
@@ -59,18 +62,19 @@ for (const width of [375, 768, 1024, 1440, 1920, 2560, 3840]) {
           ),
           `${route} at ${width}`,
         ).toBe(true);
-        const broken = await page
-          .locator("img")
-          .evaluateAll((images) =>
-            images
-              .filter(
-                (image) =>
-                  image instanceof HTMLImageElement &&
-                  image.complete &&
-                  image.naturalWidth === 0,
-              )
-              .map((image) => (image as HTMLImageElement).src),
-          );
+        const broken = await page.locator("img").evaluateAll((images) =>
+          images
+            .filter((image) => {
+              if (!(image instanceof HTMLImageElement)) return false;
+              const style = getComputedStyle(image);
+              if (style.display === "none" || style.visibility === "hidden")
+                return false;
+              if (!(image.offsetWidth || image.offsetHeight || image.getClientRects().length))
+                return false;
+              return image.complete && image.naturalWidth === 0;
+            })
+            .map((image) => (image as HTMLImageElement).src),
+        );
         expect(broken, route).toEqual([]);
         expect(
           await page.locator(".product-mockup").evaluateAll((elements) =>

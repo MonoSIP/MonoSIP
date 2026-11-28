@@ -10,12 +10,12 @@
   --surface-accent: #dce8ea;
   --text: #152028;
   --muted: #4e6270;
-  --faint: #5a7080;
+  --faint: #4a5f6e;
   --line: #c3d0da;
   --line-strong: #7d96a8;
-  --accent: #0f766e;
+  --accent: #0d6b64;
   --accent-bright: #1aa892;
-  --accent-hover: #115e59;
+  --accent-hover: #0a554f;
   --on-accent: #ffffff;
   --success: #047857;
   --warning: #9a3412;
@@ -40,12 +40,12 @@
   --surface-accent: #243642;
   --text: #e6eef3;
   --muted: #9aafbe;
-  --faint: #8aa0b0;
+  --faint: #a0b4c2;
   --line: #3d5564;
   --line-strong: #4a6574;
-  --accent: #1aa892;
+  --accent: #22c3aa;
   --accent-bright: #7ee0cf;
-  --accent-hover: #148a78;
+  --accent-hover: #1aa892;
   --on-accent: #04211c;
   --success: #8ee0b8;
   --warning: #f0cf86;
@@ -614,7 +614,7 @@ td code {
   width: 100%;
 }
 .theme-preview > span:first-child {
-  background: #0f766e;
+  background: #0d6b64;
   width: 80%;
 }
 .theme-preview > .icon {
@@ -633,7 +633,7 @@ td code {
   background: #3d5564;
 }
 .theme-preview.dark > span:first-child {
-  background: #1aa892;
+  background: #22c3aa;
 }
 .theme-preview.dark > .icon {
   color: #9aafbe;
