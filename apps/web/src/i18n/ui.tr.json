@@ -160,6 +160,7 @@
   "Empty = no cap.": "Boş = sınır yok.",
   "Empty = generate": "Boş = otomatik üret",
   "Empty = global default": "Boş = genel varsayılan",
+  "Enable Mobile forward OK before saving an external forward rule": "Harici yönlendirme kuralı kaydetmeden önce Cebe yönlendirme serbest seçeneğini açın",
   "Enable call-back form": "Geri arama formunu etkinleştir",
   "End the call.": "Çağrıyı sonlandırır.",
   "Ended": "Bitti",
