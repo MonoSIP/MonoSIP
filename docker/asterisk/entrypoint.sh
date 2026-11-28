@@ -6,6 +6,12 @@ ARI_PASS="${ASTERISK_ARI_PASSWORD:-ari_secret_change_me}"
 AMI_USER="${ASTERISK_AMI_USER:-monosip}"
 AMI_PASS="${ASTERISK_AMI_PASSWORD:-ami_secret_change_me}"
 
+# Refresh managed confs every start. The andrius base declares VOLUME /etc/asterisk,
+# so Compose keeps a stale anonymous volume across `up --force-recreate` and would
+# otherwise boot with old modules.conf / features.conf (CDR declines, ADSI, …).
+if [ -d /usr/share/monosip/asterisk-conf ]; then
+  cp -a /usr/share/monosip/asterisk-conf/. /etc/asterisk/
+fi
 # Base image sample; MonoSIP never uses users.conf (PJSIP + Postgres).
 rm -f /etc/asterisk/users.conf
 
@@ -19,8 +25,12 @@ mkdir -p /var/lib/asterisk/monosip /var/lib/asterisk/monosip/sounds/monosip \
   /var/log/asterisk /var/log/asterisk/cdr-csv
 chmod 777 /var/spool/asterisk/recording /var/lib/asterisk/monosip/voicemail \
   /var/log/asterisk /var/log/asterisk/cdr-csv 2>/dev/null || true
-# Ensure log files exist for fail2ban before Asterisk starts
+# Ensure log files exist for fail2ban before Asterisk starts (runuser=asterisk).
 touch /var/log/asterisk/messages /var/log/asterisk/full /var/log/asterisk/security 2>/dev/null || true
+chown asterisk:asterisk /var/log/asterisk/messages /var/log/asterisk/full \
+  /var/log/asterisk/security 2>/dev/null || true
+chmod 666 /var/log/asterisk/messages /var/log/asterisk/full \
+  /var/log/asterisk/security 2>/dev/null || true
 # Expose MonoSIP prompt WAVs as sound:monosip/<id>
 ln -sfn /var/lib/asterisk/monosip/sounds/monosip /var/lib/asterisk/sounds/monosip
 # TR queue TTS: sounds/tr must be the symlink itself (not a dir containing a symlink)
