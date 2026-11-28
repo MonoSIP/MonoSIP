@@ -1,4 +1,4 @@
-const version = "1.9.9";
+const version = "1.10.0";
 const repo = "https://github.com/MonoSIP/MonoSIP";
 
 export const site = {
@@ -10,8 +10,8 @@ export const site = {
   release: `${repo}/releases/tag/v${version}`,
   sourceZip: `${repo}/archive/refs/tags/v${version}.zip`,
   image: `ghcr.io/monosip/monosip:${version}`,
-  sourceRevision: "a88108a03650c4ef350725e5dd362c6dea2a2988",
-  developmentRevision: "6d138b2",
+  sourceRevision: "1c30b9379c11b9e1ea7a6b539dbdbee761f3e3a7",
+  developmentRevision: "1c30b93",
   reviewed: "28 November 2026",
   description:
     "A self-hosted Asterisk PBX for small offices. Connect SIP providers, route calls with visual IVR, and give your team a browser softphone and voicemail inbox. Run it with Docker on your Linux server.",
@@ -25,19 +25,19 @@ export const sourceDoc = (file: string) =>
 
 export const releaseHighlights = [
   {
-    icon: "network",
-    title: "SIP providers keep the real caller ID.",
-    text: "Publish UDP 5070 for inbound INVITE/ACK (set MONOSIP_TRUNK_SIP_PUBLISHED=1 when it is open). Callers keep their own number on the display.",
-  },
-  {
     icon: "phone",
-    title: "Audio on every softphone call.",
-    text: "Calls the PBX sends to the browser, from an IVR, queue or ring group, now connect media. Desk phones on a private network are given the address they can reach.",
+    title: "Answered calls stay answered.",
+    text: "IVR → extension transfers with a recording no longer finish as NOANSWER when the caller hangs up mid-bridge. Hangup CDR and recording finalize keep disposition and billsec correct.",
   },
   {
-    icon: "clock",
-    title: "After-hours routing with Turkey's holidays.",
-    text: "This year's and next year's holidays in one click, sorted by date, with half-day eves open until noon. A robotic fallback voice is no longer cached.",
+    icon: "network",
+    title: "Trunk UDP 5070 is required.",
+    text: "Publish 5070/udp and set MONOSIP_TRUNK_SIP_PUBLISHED=1. Health warns when it is missing; the softphone banner only shows RTP and host issues.",
+  },
+  {
+    icon: "sound",
+    title: "Recordings after trunk continue.",
+    text: "MixMonitor registers on hangup after Stasis continue to trunk dial, so answered outbound legs keep their recording file.",
   },
 ];
 export const referenceDocs = [

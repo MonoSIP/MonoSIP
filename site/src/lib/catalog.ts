@@ -57,19 +57,19 @@ const referenceTr = [
 
 export const highlightsTr = [
   {
-    icon: "network" as const,
-    title: "SIP operatörlerinde gerçek arayan numarası.",
-    text: "Gelen INVITE/ACK için UDP 5070’i yayınlayın (açıkken MONOSIP_TRUNK_SIP_PUBLISHED=1). Arayanın kendi numarası ekranda kalır.",
-  },
-  {
     icon: "phone" as const,
-    title: "Her yazılımsal telefon aramasında ses.",
-    text: "Santralin tarayıcıya gönderdiği aramalarda (IVR, kuyruk, zil grubu) ses bağlanır. Özel ağdaki masa telefonlarına ulaşabildikleri adres verilir.",
+    title: "Yanıtlanan arama yanıtlı kalır.",
+    text: "Kayıtlı IVR → dahili aktarımları, arayan köprüde kapatsa bile artık NOANSWER bitmez. Hangup CDR ve kayıt sonlandırma disposition ile billsec’i doğru tutar.",
   },
   {
-    icon: "clock" as const,
-    title: "Türkiye tatilleriyle mesai dışı yönlendirme.",
-    text: "Bu yılın ve gelecek yılın tatilleri tek tıkla, tarihe göre sıralı; yarım günlük arifeler öğlene kadar açık. Robotik yedek ses artık önbelleğe alınmaz.",
+    icon: "network" as const,
+    title: "Trunk için UDP 5070 şart.",
+    text: "5070/udp yayınlayın ve MONOSIP_TRUNK_SIP_PUBLISHED=1 koyun. Eksikte health uyarır; yazılımsal telefon bandı yalnızca RTP ve host sorunlarını gösterir.",
+  },
+  {
+    icon: "sound" as const,
+    title: "Trunk continue sonrası kayıt.",
+    text: "Stasis continue ile trunk aramasından sonra MixMonitor hangup’ta kaydı kapatır; yanıtlanan dış bacakların ses dosyası kalır.",
   },
 ];
 

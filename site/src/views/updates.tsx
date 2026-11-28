@@ -45,8 +45,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
             <h2 id="stable-release">MonoSIP {site.version}</h2>
             <p>
               {L(
-                "Released 25 November 2026 · Linux / AMD64 · MIT",
-                "25 Kasım 2026’da yayımlandı · Linux / AMD64 · MIT",
+                "Released 28 November 2026 · Linux / AMD64 · MIT",
+                "28 Kasım 2026’da yayımlandı · Linux / AMD64 · MIT",
               )}
             </p>
           </div>
@@ -93,7 +93,7 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
         <span className="release-status development">
           {L("MAIN BRANCH / AFTER", "ANA DAL / SONRA")} v{site.version}
         </span>
-        <h2 id="main-work">{L("In the works.", "Geliştirmede.")}</h2>
+        <h2 id="main-work">{L("Also in this release.", "Bu sürümde ayrıca.")}</h2>
         <p>
           {tr ? (
             <>
@@ -101,7 +101,8 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              kaydına göre incelendi. v{site.version} sürümünden sonra ana dalda:
+              kaydına göre incelendi. Ana daldaki her şey v{site.version}{" "}
+              sürümündedir.
             </>
           ) : (
             <>
@@ -109,47 +110,43 @@ export function UpdatesPage({ locale = "en" }: { locale?: Locale }) {
               <a href={`${site.repo}/commit/${site.developmentRevision}`}>
                 <code>{site.developmentRevision}</code>
               </a>{" "}
-              on {site.reviewed}. On main after v{site.version}:
+              on {site.reviewed}. Everything on the main branch is in the
+              v{site.version} release.
             </>
           )}
         </p>
         <div className="development-grid">
           <article>
-            <h3>{L("Answered calls stay answered.", "Yanıtlanan arama yanıtlı kalır.")}</h3>
+            <h3>{L("Marketing site on Next.js 16.4.6.", "Tanıtım sitesi Next.js 16.4.6.")}</h3>
             <p>
               {L(
-                "IVR → extension transfers with a recording no longer finish as NOANSWER when the caller hangs up mid-bridge. Hangup CDR and recording finalize keep disposition and billsec correct.",
-                "Kayıtlı IVR → dahili aktarımları, arayan köprüde kapatsa bile artık NOANSWER bitmez. Hangup CDR ve kayıt sonlandırma disposition ile billsec’i doğru tutar.",
+                "The public site ships on a patched Next.js release with WCAG AA contrast fixes for light and dark themes.",
+                "Herkese açık site, yamalı bir Next.js sürümünde ve açık/koyu temalar için WCAG AA kontrast düzeltmeleriyle geliyor.",
               )}
             </p>
           </article>
           <article>
-            <h3>{L("Trunk UDP 5070 is required.", "Trunk için UDP 5070 şart.")}</h3>
+            <h3>{L("External forward guard copy.", "Harici yönlendirme uyarısı.")}</h3>
             <p>
               {L(
-                "Publish 5070/udp and set MONOSIP_TRUNK_SIP_PUBLISHED=1. Health warns when it is missing; the softphone banner only shows RTP and host issues.",
-                "5070/udp yayınlayın ve MONOSIP_TRUNK_SIP_PUBLISHED=1 koyun. Eksikte health uyarır; yazılımsal telefon bandı yalnızca RTP ve host sorunlarını gösterir.",
+                "Enabling an external forward without Mobile forward OK now shows a clear Turkish and English message before save.",
+                "Cebe yönlendirme serbest olmadan harici yönlendirme kaydı, kayıt öncesi net bir Türkçe ve İngilizce uyarı gösterir.",
               )}
             </p>
           </article>
           <article>
-            <h3>
-              {L(
-                "Recordings after trunk continue.",
-                "Trunk continue sonrası kayıt.",
-              )}
-            </h3>
+            <h3>{L("Trunk status from AMI.", "AMI’den hat durumu.")}</h3>
             <p>
               {L(
-                "MixMonitor registers on hangup after Stasis continue to trunk dial, so answered outbound legs keep their recording file.",
-                "Stasis continue ile trunk aramasından sonra MixMonitor hangup’ta kaydı kapatır; yanıtlanan dış bacakların ses dosyası kalır.",
+                "Registered and idle trunks map to up; unreachable and AMI errors map to down, so the panel no longer inverts live status.",
+                "Kayıtlı ve boşta hatlar up, ulaşılamayan ve AMI hataları down olur; panel canlı durumu ters göstermez.",
               )}
             </p>
           </article>
         </div>
         <a
           className="text-link"
-          href={`${site.repo}/commits/main`}
+          href={`${site.repo}/commits/v${site.version}`}
         >
           {L("Follow the source changes", "Kaynak değişikliklerini izleyin")}{" "}
           <Icon name="external" />
