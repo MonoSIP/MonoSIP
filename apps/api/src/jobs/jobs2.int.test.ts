@@ -22,11 +22,15 @@ import { startTrunkMonitorJob } from "../jobs/trunk-monitor.js";
 import { runNightlyBackup, startNightlyBackupJob } from "../jobs/nightly-backup.js";
 import { sendSummaryReport, startSummaryEmailJob } from "../jobs/summary-email.js";
 
-vi.mock("../lib/ami.js", () => ({
-  fetchQueueWaiting: vi.fn(async () => 0),
-  fetchQueueAvailableAgents: vi.fn(async () => 1),
-  fetchTrunkEndpointStatus: vi.fn(async () => ({ status: "registered", latencyMs: 5 })),
-}));
+vi.mock("../lib/ami.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/ami.js")>();
+  return {
+    ...actual,
+    fetchQueueWaiting: vi.fn(async () => 0),
+    fetchQueueAvailableAgents: vi.fn(async () => 1),
+    fetchTrunkEndpointStatus: vi.fn(async () => ({ status: "registered", latencyMs: 5 })),
+  };
+});
 
 vi.mock("../lib/smtp.js", () => ({ sendSmtpMail: vi.fn(async () => undefined) }));
 
@@ -368,7 +372,7 @@ describe("startTrunkMonitorJob", () => {
     clearInterval(timer);
   });
 
-  it("classifies an AMI error as unknown rather than down", async () => {
+  it("classifies an AMI error as down (unreachable), not unknown", async () => {
     const trunk = await seedTrunk("Ami");
     vi.mocked(fetchTrunkEndpointStatus).mockResolvedValue({
       status: "AMI-ERROR-unauthorized",
@@ -379,7 +383,7 @@ describe("startTrunkMonitorJob", () => {
     cap.restore();
     const ok = await settle(async () => {
       const [r] = await db.select().from(trunks).where(eq(trunks.id, trunk.id));
-      return r?.status === "unknown";
+      return r?.status === "down";
     });
     expect(ok).toBe(true);
     clearInterval(timer);
